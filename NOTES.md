@@ -7,3 +7,4 @@
 	- [ ] src/utils/fsrs-helper.ts
 	- [ ] src/commands/review-current-card.ts
 
+- [ ] Исправить предупреждения при раст-билде. Нужно убрать не используемые элементы.
