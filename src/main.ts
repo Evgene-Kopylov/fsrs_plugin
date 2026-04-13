@@ -109,10 +109,6 @@ class FsrsNowRenderer extends MarkdownRenderChild {
 				content += `<span class="fsrs-now-field"><strong>Дата повторения:</strong> ${dueDate.toLocaleString()}</span><br>`;
 				content += `</small>`;
 				content += `</div>`;
-				content += `<div class="fsrs-now-card-actions">`;
-				content += `<button class="fsrs-now-action-btn" data-file-path="${card.filePath}" data-action="open">Открыть</button>`;
-				content += `<button class="fsrs-now-action-btn" data-file-path="${card.filePath}" data-action="review">Повторить</button>`;
-				content += `</div>`;
 				content += `</div><br>`;
 			});
 
@@ -125,9 +121,7 @@ class FsrsNowRenderer extends MarkdownRenderChild {
 			}
 
 			content += `<div class="fsrs-now-footer">`;
-			content += `<small>Для обновления списка: </small>`;
-			content += `<button class="fsrs-now-action-btn" data-action="refresh">Обновить</button>`;
-			content += `<small> или выполните команду "Найти карточки для повторения"</small>`;
+			content += `<small>Для обновления списка выполните команду "Найти карточки для повторения"</small>`;
 			content += `</div>`;
 			content += `</div>`;
 
@@ -156,25 +150,6 @@ class FsrsNowRenderer extends MarkdownRenderChild {
 				}
 			});
 		});
-
-		// Обработчики для кнопок действий
-		this.container
-			.querySelectorAll(".fsrs-now-action-btn")
-			.forEach((button) => {
-				button.addEventListener("click", (e) => {
-					const filePath = (button as HTMLElement).dataset.filePath;
-					const action = (button as HTMLElement).dataset.action;
-					if (action === "refresh") {
-						this.refresh();
-					} else if (filePath && action) {
-						if (action === "open") {
-							this.openFile(filePath);
-						} else if (action === "review") {
-							this.reviewCard(filePath);
-						}
-					}
-				});
-			});
 	}
 
 	async openFile(filePath: string) {
@@ -191,31 +166,6 @@ class FsrsNowRenderer extends MarkdownRenderChild {
 			console.error("Ошибка при открытии файла:", error);
 			new Notice(`Не удалось открыть файл: ${filePath}`);
 		}
-	}
-
-	async reviewCard(filePath: string) {
-		try {
-			const file = this.plugin.app.vault.getFileByPath(filePath);
-			if (file) {
-				// Активируем файл для повторения
-				await this.plugin.app.workspace.openLinkText(
-					filePath,
-					"",
-					true,
-				);
-				// Здесь можно добавить логику для автоматического начала повторения
-				new Notice(`Открыта карточка для повторения: ${filePath}`);
-			}
-		} catch (error) {
-			console.error("Ошибка при повторении карточки:", error);
-			new Notice(
-				`Не удалось открыть карточку для повторения: ${filePath}`,
-			);
-		}
-	}
-
-	async refresh() {
-		await this.renderContent();
 	}
 }
 

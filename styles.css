@@ -75,39 +75,6 @@ If your plugin does not need CSS, delete this file.
 	color: var(--text-normal);
 }
 
-.fsrs-now-card-actions {
-	display: flex;
-	gap: 0.5em;
-	margin-top: 0.5em;
-}
-
-.fsrs-now-action-btn {
-	padding: 0.25em 0.75em;
-	font-size: 0.85em;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 4px;
-	background-color: var(--background-primary);
-	color: var(--text-normal);
-	cursor: pointer;
-	transition: all 0.2s ease;
-}
-
-.fsrs-now-action-btn:hover {
-	background-color: var(--interactive-accent-hover);
-	color: var(--text-on-accent);
-	border-color: var(--interactive-accent);
-}
-
-.fsrs-now-action-btn[data-action="review"] {
-	background-color: var(--interactive-accent);
-	color: var(--text-on-accent);
-	border-color: var(--interactive-accent);
-}
-
-.fsrs-now-action-btn[data-action="review"]:hover {
-	background-color: var(--interactive-accent-hover);
-}
-
 .fsrs-now-info {
 	margin-top: 1em;
 	padding: 0.5em;
@@ -148,13 +115,5 @@ If your plugin does not need CSS, delete this file.
 	.fsrs-now-field {
 		display: block;
 		margin-right: 0;
-	}
-
-	.fsrs-now-card-actions {
-		flex-direction: column;
-	}
-
-	.fsrs-now-action-btn {
-		width: 100%;
 	}
 }
