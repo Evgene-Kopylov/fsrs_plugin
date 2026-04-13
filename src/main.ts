@@ -107,6 +107,7 @@ export default class FsrsPlugin extends Plugin {
 			const cards: ModernFSRSCard[] = [];
 
 			for (const file of files) {
+				console.log(`Обработка файла: ${file.path}`);
 				try {
 					const content = await this.app.vault.read(file);
 
@@ -123,7 +124,14 @@ export default class FsrsPlugin extends Plugin {
 							file.path,
 						);
 						if (parseResult.success && parseResult.card) {
+							console.log(
+								`  ✅ Найдена карточка FSRS: ${file.path}, reviews: ${parseResult.card.reviews.length}`,
+							);
 							cards.push(parseResult.card);
+						} else if (parseResult.error) {
+							console.log(
+								`  ⚠️  Файл не является карточкой FSRS: ${file.path}, ошибка: ${parseResult.error}`,
+							);
 						}
 					}
 				} catch (error) {

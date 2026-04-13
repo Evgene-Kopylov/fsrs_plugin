@@ -84,30 +84,14 @@ fn create_fsrs_parameters(params: &FsrsParameters) -> Parameters {
     default_params
 }
 
-/// Создает Card из последней сессии reviews
+/// Создает Card из истории reviews
 fn create_card_from_last_session(
-    last_session: Option<&ReviewSession>,
+    reviews: &[ReviewSession],
     default_stability: f64,
     default_difficulty: f64,
+    parameters: &FsrsParameters,
 ) -> Card {
-    if let Some(session) = last_session {
-        // Парсим дату последней сессии
-        let last_review: DateTime<Utc> = session.date.parse()
-            .unwrap_or_else(|_| Utc::now());
-
-        // Создаем карточку с данными из последней сессии
-        Card {
-            stability: session.stability,
-            difficulty: session.difficulty,
-            elapsed_days: 0, // будет вычислено при следующем повторении
-            scheduled_days: 0,
-            reps: 0,
-            lapses: 0,
-            state: State::New, // будет обновлено при вычислении
-            due: last_review,
-            last_review: last_review,
-        }
-    } else {
+    if reviews.is_empty() {
         // Нет сессий - создаем новую карточку с дефолтными значениями
         let now = Utc::now();
         Card {
@@ -120,6 +104,75 @@ fn create_card_from_last_session(
             state: State::New,
             due: now,
             last_review: now,
+        }
+    } else {
+        // Парсим дату последней сессии
+        let last_session = reviews.last().unwrap();
+        let last_review: DateTime<Utc> = last_session.date.parse()
+            .unwrap_or_else(|_| Utc::now());
+
+        // Вычисляем reps и lapses на основе истории
+        let mut reps = 0;
+        let mut lapses = 0;
+        let mut had_successful_review = false;
+
+        for session in reviews {
+            match session.rating.as_str() {
+                "Again" => {
+                    if had_successful_review {
+                        lapses += 1;
+                    }
+                }
+                _ => {
+                    reps += 1;
+                    had_successful_review = true;
+                }
+            }
+        }
+
+        // Определяем состояние карточки на основе стабильности
+        let state = if last_session.stability < 1.0 {
+            State::Learning
+        } else {
+            State::Review
+        };
+
+        // Вычисляем интервал по формуле FSRS: I = S * ln(r) / ln(0.9)
+        // где I - интервал, S - стабильность, r - целевая запоминаемость
+        let request_retention = parameters.request_retention;
+        let stability = last_session.stability;
+
+        let mut interval_days = if request_retention > 0.0 && request_retention <= 1.0 {
+            (stability * request_retention.ln() / 0.9f64.ln()).max(1.0)
+        } else {
+            stability.max(1.0)
+        };
+
+        // Применяем максимальный интервал
+        interval_days = interval_days.min(parameters.maximum_interval);
+
+        // Применяем случайное изменение интервала (fuzz) если включено
+        if parameters.enable_fuzz {
+            // Простая детерминированная вариация на основе timestamp
+            let timestamp = last_review.timestamp() as u32;
+            let variation = (timestamp % 100) as f64 / 1000.0; // 0.00 до 0.10
+            interval_days *= 0.95 + variation; // ±5% вариация
+        }
+
+        // Вычисляем дату следующего повторения
+        let due_date = last_review + chrono::Duration::days(interval_days as i64);
+
+        // Создаем карточку с данными из последней сессии
+        Card {
+            stability: last_session.stability,
+            difficulty: last_session.difficulty,
+            elapsed_days: 0, // будет вычислено при следующем повторении
+            scheduled_days: interval_days as i64,
+            reps: reps as i32,
+            lapses: lapses as i32,
+            state: state,
+            due: due_date,
+            last_review: last_review,
         }
     }
 }
@@ -177,21 +230,22 @@ pub fn review_card(
     // Конвертируем рейтинг
     let rating = rating_from_str(&rating_str);
 
-    // Получаем последнюю сессию (если есть)
-    let last_session = card.reviews.last();
-
-    // Создаем Card для алгоритма FSRS
+    // Создаем Card для алгоритма FSRS из истории reviews
     let mut fsrs_card = create_card_from_last_session(
-        last_session,
+        &card.reviews,
         default_stability,
         default_difficulty,
+        &parameters,
     );
+
+    // Получаем последнюю сессию (если есть)
+    let last_session = card.reviews.last();
 
     // Если есть последняя сессия, обновляем elapsed_days
     if let Some(last_session) = last_session {
         if let Ok(last_date) = last_session.date.parse::<DateTime<Utc>>() {
-            let elapsed_days = (now - last_date).num_days().max(0) as u64;
-            fsrs_card.elapsed_days = elapsed_days as i64;
+            let elapsed_days = (now - last_date).num_days().max(0) as i64;
+            fsrs_card.elapsed_days = elapsed_days;
         }
     }
 
@@ -286,28 +340,29 @@ pub fn compute_current_state(
     let now: DateTime<Utc> = now_str.parse()
         .unwrap_or_else(|_| Utc::now());
 
-    // Получаем последнюю сессию (если есть)
-    let last_session = card.reviews.last();
-
-    // Создаем Card для алгоритма FSRS
+    // Создаем Card для алгоритма FSRS из истории reviews
     let mut fsrs_card = create_card_from_last_session(
-        last_session,
+        &card.reviews,
         default_stability,
         default_difficulty,
+        &parameters,
     );
+
+    // Получаем последнюю сессию (если есть)
+    let last_session = card.reviews.last();
 
     // Если есть последняя сессия, обновляем elapsed_days
     if let Some(last_session) = last_session {
         if let Ok(last_date) = last_session.date.parse::<DateTime<Utc>>() {
-            let elapsed_days = (now - last_date).num_days().max(0) as u64;
-            fsrs_card.elapsed_days = elapsed_days as i64;
+            let elapsed_days = (now - last_date).num_days().max(0) as i64;
+            fsrs_card.elapsed_days = elapsed_days;
             fsrs_card.last_review = last_date;
 
             // Рассчитываем извлекаемость
             let retrievability = fsrs_card.get_retrievability(now);
 
             // Проверяем, просрочена ли карточка
-            let is_due = fsrs_card.due <= now;
+            let _is_due = fsrs_card.due <= now;
 
             // Создаем вычисляемое состояние
             let computed_state = ComputedState {
@@ -376,14 +431,12 @@ pub fn get_next_review_dates(
     let now: DateTime<Utc> = now_str.parse()
         .unwrap_or_else(|_| Utc::now());
 
-    // Получаем последнюю сессию
-    let last_session = card.reviews.last();
-
-    // Создаем Card для алгоритма FSRS
+    // Создаем Card для алгоритма FSRS из истории reviews
     let fsrs_card = create_card_from_last_session(
-        last_session,
+        &card.reviews,
         default_stability,
         default_difficulty,
+        &parameters,
     );
 
     // Создаем экземпляр FSRS с пользовательскими параметрами

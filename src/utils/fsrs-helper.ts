@@ -98,85 +98,129 @@ export function parseModernFsrsFromFrontmatter(
 	}
 }
 
-/**
- * Простой парсер YAML (базовый)
- */
+// Улучшенный парсер YAML с поддержкой отступов и многострочных значений
 function parseYaml(yaml: string): any {
 	try {
-		// Простая реализация парсинга YAML для основных случаев
 		const lines = yaml.split("\n");
-		const result: any = {};
-		let currentArray: any[] | null = null;
-		let currentArrayKey: string | null = null;
+		const stack: Array<{ obj: any; key: string | null; indent: number }> =
+			[];
+		const root: any = {};
+		let current: { obj: any; key: string | null; indent: number } = {
+			obj: root,
+			key: null,
+			indent: -1,
+		};
+		let i = 0;
 
-		for (let i = 0; i < lines.length; i++) {
-			const line = lines[i]?.trim();
-			if (!line || line === "" || line.startsWith("#")) {
+		while (i < lines.length) {
+			const line = lines[i]!;
+			const trimmed = line.trim();
+
+			// Пропускаем пустые строки и комментарии
+			if (trimmed === "" || trimmed.startsWith("#")) {
+				i++;
 				continue;
 			}
 
-			// Обработка массива
-			if (line.startsWith("- ")) {
-				if (currentArray === null) {
-					continue; // Пропускаем элементы массива без родительского ключа
-				}
-
-				const itemContent = line.substring(2);
-				if (itemContent.includes(":")) {
-					const item: any = {};
-					const parts = itemContent.split(":").map((p) => p.trim());
-					if (parts.length >= 2 && parts[0]) {
-						item[parts[0]] = parseYamlValue(
-							parts.slice(1).join(":"),
-						);
-					}
-					currentArray.push(item);
-				} else {
-					currentArray.push(parseYamlValue(itemContent));
-				}
+			// Определяем уровень отступа
+			const indent = line.search(/\S/);
+			if (indent === -1) {
+				i++;
 				continue;
 			}
 
-			// Конец массива
-			if (
-				currentArray !== null &&
-				!line.startsWith("  ") &&
-				line.includes(":")
+			// Возвращаемся на нужный уровень в стеке
+			while (
+				stack.length > 0 &&
+				indent <= stack[stack.length - 1]!.indent
 			) {
-				result[currentArrayKey!] = currentArray;
-				currentArray = null;
-				currentArrayKey = null;
+				stack.pop();
+			}
+			if (stack.length > 0) {
+				current = stack[stack.length - 1]!;
+			} else {
+				current = { obj: root, key: null, indent: -1 };
 			}
 
-			// Обработка ключ-значение
-			if (line.includes(":")) {
-				const colonIndex = line.indexOf(":");
-				const key = line.substring(0, colonIndex).trim();
-				const valueStr = line.substring(colonIndex + 1).trim();
+			// Обработка элемента массива
+			if (trimmed.startsWith("- ")) {
+				const content = trimmed.substring(2).trim();
 
-				// Проверяем, является ли значение массивом
-				if (valueStr === "") {
-					// Следующая строка может начать массив
+				// Если текущий объект не массив, создаем его
+				if (!Array.isArray(current.obj[current.key!])) {
+					current.obj[current.key!] = [];
+				}
+
+				const array = current.obj[current.key!] as any[];
+
+				if (content.includes(":")) {
+					// Объект внутри массива - делим только по первому двоеточию
+					const colonIndex = content.indexOf(":");
+					const key = content.substring(0, colonIndex).trim();
+					const value = content.substring(colonIndex + 1).trim();
+
+					const item: any = {};
+					item[key] = parseYamlValue(value);
+					array.push(item);
+
+					// Добавляем в стек для возможных вложенных элементов
+					stack.push({
+						obj: item,
+						key: key,
+						indent: indent,
+					});
+				} else {
+					// Простое значение в массиве
+					array.push(parseYamlValue(content));
+				}
+			} else if (trimmed.includes(":")) {
+				// Обработка пары ключ-значение
+				const colonIndex = trimmed.indexOf(":");
+				const key = trimmed.substring(0, colonIndex).trim();
+				let value = trimmed.substring(colonIndex + 1).trim();
+
+				// Проверяем, является ли значение массивом (следующая строка начинается с "-")
+				if (value === "" && i + 1 < lines.length) {
+					const nextLine = lines[i + 1]!;
+					const nextIndent = nextLine.search(/\S/);
 					if (
-						i + 1 < lines.length &&
-						lines[i + 1]?.trim().startsWith("- ")
+						nextIndent > indent &&
+						nextLine.trim().startsWith("-")
 					) {
-						currentArray = [];
-						currentArrayKey = key;
+						// Это начало массива
+						current.obj[key] = [];
+						stack.push({
+							obj: current.obj,
+							key: key,
+							indent: indent,
+						});
+						i++;
 						continue;
 					}
 				}
 
-				result[key] = parseYamlValue(valueStr);
+				// Обычное значение
+				current.obj[key] = parseYamlValue(value);
+
+				// Если значение объект (пустая строка после двоеточия), добавляем в стек
+				if (value === "" && i + 1 < lines.length) {
+					const nextLine = lines[i + 1]!;
+					const nextIndent = nextLine.search(/\S/);
+					if (nextIndent > indent && nextLine.includes(":")) {
+						current.obj[key] = {};
+						stack.push({
+							obj: current.obj[key],
+							key: null,
+							indent: indent,
+						});
+					}
+				}
 			}
+
+			i++;
 		}
 
-		// Добавляем последний массив если есть
-		if (currentArray !== null && currentArrayKey !== null) {
-			result[currentArrayKey] = currentArray;
-		}
-
-		return result;
+		return root;
 	} catch (error) {
 		console.error("Ошибка при парсинге YAML:", error);
 		return null;
@@ -190,11 +234,14 @@ function parseYamlValue(valueStr: string): any {
 	if (valueStr === "true") return true;
 	if (valueStr === "false") return false;
 	if (valueStr === "null") return null;
+	if (valueStr === "[]") return [];
+	if (valueStr === "{}") return {};
 
 	// Числа
-	const num = parseFloat(valueStr);
-	if (!isNaN(num) && valueStr.trim() === num.toString()) {
-		return num;
+	const trimmed = valueStr.trim();
+	if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
+		const num = parseFloat(trimmed);
+		return isNaN(num) ? trimmed : num;
 	}
 
 	// Строки в кавычках
