@@ -1,7 +1,5 @@
 # AGENT_GUIDELINES.md - Руководство для агента по работе с FSRS плагином для Obsidian
 
-
-
 ## 📁 Структура проекта
 
 ```
@@ -13,7 +11,6 @@ obsidian-sample-plugin/
 ├── wasm-lib/              # Rust код для WASM модуля
 │   ├── src/lib.rs         # Основной Rust код (FSRS логика)
 │   ├── Cargo.toml         # Rust зависимости
-
 ├── scripts/               # Скрипты сборки
 │   └── encode-wasm.js     # Кодирует WASM в base64
 ├── node_modules/          # Node.js зависимости
