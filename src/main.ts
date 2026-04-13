@@ -11,7 +11,7 @@ import init, {
 	get_current_time,
 	card_state_to_string,
 } from "../wasm-lib/pkg/wasm_lib";
-import { WASM_BASE64 } from "./wasm_base64";
+import { WASM_BASE64 } from "../generated/wasm_base64";
 import { MyPluginSettings, DEFAULT_SETTINGS } from "./settings";
 import { SampleSettingTab } from "./settings";
 

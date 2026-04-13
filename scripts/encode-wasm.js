@@ -5,7 +5,7 @@ const wasmFilePath = path.resolve(
 	process.cwd(),
 	"wasm-lib/pkg/wasm_lib_bg.wasm",
 );
-const outputFilePath = path.resolve(process.cwd(), "src/wasm_base64.ts");
+const outputFilePath = path.resolve(process.cwd(), "generated/wasm_base64.ts");
 
 try {
 	// Проверяем существование входного файла
