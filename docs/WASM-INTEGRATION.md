@@ -8,7 +8,7 @@ WASM-код исполняется внутри плагина, результа
 ### Итоговая архитектура
 - **Rust-часть** – `wasm-lib/` с одной экспортируемой функцией `my_wasm_function`.
 - **Сборка WASM** – `wasm-pack build --target web` (генерирует ES-модуль, подходящий для `import` в CommonJS-среде Obsidian).
-- **Встраивание** – бинарный `.wasm` преобразуется в base64 и сохраняется как TypeScript-константа (`src/wasm_base64.ts`).
+- **Встраивание** – бинарный `.wasm` преобразуется в base64 и сохраняется как TypeScript-константа (`wasm-lib/pkg/wasm_lib_base64.ts`).
 - **Загрузка** – в коде плагина base64 декодируется в `Uint8Array`, передаётся в `init({ module_or_path: bytes })`, после чего можно вызывать экспортированную функцию.
 - **Сборка плагина** – `esbuild` собирает всё в `main.js` без специальных плагинов для WASM (массив `plugins` пуст).
 
@@ -49,7 +49,7 @@ wasm-pack build wasm-lib --target web --out-dir pkg --out-name wasm_lib
 
 #### 3. Встройте WASM как base64
 ```bash
-echo "export const WASM_BASE64 = \"$(base64 wasm-lib/pkg/wasm_lib_bg.wasm | tr -d '\n')\";" > src/wasm_base64.ts
+echo "export const WASM_BASE64 = \"$(base64 wasm-lib/pkg/wasm_lib_bg.wasm | tr -d '\n')\";" > wasm-lib/pkg/wasm_lib_base64.ts
 ```
 
 #### 4. Настройте `esbuild.config.mjs`
@@ -83,7 +83,7 @@ else await context.watch();
 ```typescript
 import { Plugin, Notice } from "obsidian";
 import init, { my_wasm_function } from "../wasm-lib/pkg/wasm_lib";
-import { WASM_BASE64 } from "./wasm_base64";
+import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
 
 function base64ToBytes(base64: string): Uint8Array {
     const binary = atob(base64);

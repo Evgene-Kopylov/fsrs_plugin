@@ -97,7 +97,6 @@ fsrs_last_review: "2024-01-01T00:00:00Z"
 src/
 ├── main.ts                  # Точка входа, жизненный цикл плагина
 ├── settings.ts              # Настройки и вкладка настроек
-├── wasm_base64.ts           # Base64 encoded WASM (генерируется автоматически)
 ├── interfaces/              # Интерфейсы TypeScript
 │   ├── fsrs.ts             # Интерфейсы FSRS карточек
 │   └── settings.ts         # Расширенные настройки

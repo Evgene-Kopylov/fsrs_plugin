@@ -14,7 +14,7 @@ const requiredFiles = [
 	"package.json",
 	"manifest.json",
 	"src/main.ts",
-	"src/wasm_base64.ts",
+	"wasm-lib/pkg/wasm_lib_base64.ts",
 	"wasm-lib/src/lib.rs",
 	"esbuild.config.mjs",
 ];
@@ -70,11 +70,16 @@ try {
 	console.log("   Запуск npm run encode-wasm...");
 	execSync("npm run encode-wasm", { cwd: projectRoot, stdio: "pipe" });
 
-	const wasmBase64Path = path.join(projectRoot, "src/wasm_base64.ts");
+	const wasmBase64Path = path.join(
+		projectRoot,
+		"wasm-lib/pkg/wasm_lib_base64.ts",
+	);
 	const wasmBase64Content = fs.readFileSync(wasmBase64Path, "utf8");
 
 	if (!wasmBase64Content.includes('export const WASM_BASE64 = "')) {
-		throw new Error("src/wasm_base64.ts не содержит экспорт WASM_BASE64");
+		throw new Error(
+			"wasm-lib/pkg/wasm_lib_base64.ts не содержит экспорт WASM_BASE64",
+		);
 	}
 
 	console.log("   ✅ WASM успешно закодирован в base64");

@@ -16,7 +16,7 @@ import type { FSRSCard } from "./interfaces/fsrs";
 
 // Импорт WASM функций
 import init, { my_wasm_function } from "../wasm-lib/pkg/wasm_lib";
-import { WASM_BASE64 } from "../generated/wasm_base64";
+import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
 
 /**
  * Основной класс плагина FSRS для Obsidian
