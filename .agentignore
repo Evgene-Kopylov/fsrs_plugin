@@ -1,0 +1,64 @@
+# Patterns for agents to ignore when analyzing this project
+# These files are generated or not needed for source code analysis
+
+# Build artifacts
+main.js
+*.map
+dist/
+build/
+out/
+output/
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# Development environment
+.vscode/
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+
+# Obsidian plugin data
+data.json
+
+# Rust build artifacts (if using wasm-lib)
+Cargo.lock
+target/
+
+# Test output
+coverage/
+*.log
+
+# Large binary files
+*.wasm
+*.pdf
+*.zip
+*.tar.gz
+
+# Configuration files that may contain sensitive data
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Editor backup files
+*~
+*.swp
+*.swo
+
+# Version control
+.git/
+
+# Documentation build
+docs/_build/
+docs/_site/
