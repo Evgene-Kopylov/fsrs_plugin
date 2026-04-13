@@ -1,11 +1,8 @@
 import { Notice, App } from "obsidian";
-import {
-	get_fsrs_yaml,
-	create_fsrs_card_json,
-} from "../../wasm-lib/pkg/wasm_lib";
+import { getNewCardYaml } from "../utils/fsrs-helper";
 
 /**
- * Добавляет поля FSRS в текущий активный файл
+ * Добавляет поля FSRS в новый формате (с reviews) в текущий активный файл
  * @param app - Экземпляр приложения Obsidian
  * @returns Promise<void>
  */
@@ -18,9 +15,9 @@ export async function addFsrsFieldsToCurrentFile(app: App): Promise<void> {
 			return;
 		}
 
-		console.log("Получение YAML полей FSRS из Rust...");
-		const fsrsYaml = get_fsrs_yaml();
-		console.log("FSRS YAML поля:", fsrsYaml);
+		console.log("Получение YAML полей FSRS в новом формате...");
+		const fsrsYaml = await getNewCardYaml();
+		console.log("FSRS YAML поля (новый формат):", fsrsYaml);
 
 		// Читаем содержимое файла
 		const fileContent = await app.vault.read(activeFile);
@@ -31,8 +28,20 @@ export async function addFsrsFieldsToCurrentFile(app: App): Promise<void> {
 		const match = frontmatterRegex.exec(fileContent);
 
 		if (match) {
-			// Есть frontmatter - добавляем поля FSRS после существующего frontmatter
+			// Есть frontmatter - проверяем, есть ли уже поля FSRS
 			const existingFrontmatter = match[0];
+			const existingContent = match[1];
+
+			// Проверяем, есть ли уже srs: true
+			if (existingContent && /^srs\s*:/m.test(existingContent)) {
+				// Уже есть поля FSRS - обновляем их
+				new Notice(
+					"В файле уже есть поля FSRS. Используйте команду повторения для обновления.",
+				);
+				return;
+			}
+
+			// Добавляем поля FSRS после существующего frontmatter
 			const afterFrontmatter = fileContent.slice(match[0].length);
 			newContent =
 				existingFrontmatter + "\n" + fsrsYaml + "\n" + afterFrontmatter;
@@ -44,11 +53,16 @@ export async function addFsrsFieldsToCurrentFile(app: App): Promise<void> {
 		// Сохраняем изменения
 		await app.vault.modify(activeFile, newContent);
 
-		new Notice("Поля FSRS добавлены в файл");
+		new Notice("Поля FSRS (новый формат) добавлены в файл");
 		console.log("Поля FSRS успешно добавлены в файл:", activeFile.name);
 
-		// Также показываем JSON версию в консоли для отладки
-		console.log("JSON версия карточки FSRS:", create_fsrs_card_json());
+		// Показываем информацию о формате
+		console.log("Новый формат карточки FSRS:");
+		console.log("- Хранит историю повторений в массиве reviews");
+		console.log("- Параметры алгоритма вынесены в настройки плагина");
+		console.log(
+			"- Текущее состояние вычисляется на основе последней сессии",
+		);
 	} catch (error) {
 		console.error("Ошибка при добавлении полей FSRS:", error);
 		const errorMessage =

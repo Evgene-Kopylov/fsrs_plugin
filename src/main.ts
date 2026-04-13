@@ -8,11 +8,11 @@ import { MyPluginSettings, DEFAULT_SETTINGS } from "./settings";
 import { SampleSettingTab } from "./settings";
 import { base64ToBytes } from "./utils/fsrs-helper";
 import {
-	parseFSRSFromFrontmatter,
+	parseModernFsrsFromFrontmatter,
 	filterCardsForReview,
 	sortCardsByPriority,
 } from "./utils/fsrs-helper";
-import type { FSRSCard } from "./interfaces/fsrs";
+import type { ModernFSRSCard, FSRSCard } from "./interfaces/fsrs";
 
 // Импорт WASM функций
 import init, { my_wasm_function } from "../wasm-lib/pkg/wasm_lib";
@@ -94,15 +94,17 @@ export default class FsrsPlugin extends Plugin {
 	}
 
 	/**
-	 * Получает все карточки FSRS из хранилища
+	 * Получает все карточки FSRS из хранилища (новый формат с reviews)
 	 */
-	async getCardsForReview(): Promise<FSRSCard[]> {
+	async getCardsForReview(): Promise<ModernFSRSCard[]> {
 		try {
-			console.log("Сканирование хранилища на наличие карточек FSRS...");
+			console.log(
+				"Сканирование хранилища на наличие карточек FSRS (новый формат)...",
+			);
 
 			// Получаем все markdown файлы
 			const files = this.app.vault.getMarkdownFiles();
-			const cards: FSRSCard[] = [];
+			const cards: ModernFSRSCard[] = [];
 
 			for (const file of files) {
 				try {
@@ -115,13 +117,13 @@ export default class FsrsPlugin extends Plugin {
 					if (match && match[1]) {
 						const frontmatter = match[1]!;
 
-						// Парсим поля FSRS
-						const card = parseFSRSFromFrontmatter(
+						// Парсим карточку в новом формате
+						const parseResult = parseModernFsrsFromFrontmatter(
 							frontmatter,
 							file.path,
 						);
-						if (card) {
-							cards.push(card);
+						if (parseResult.success && parseResult.card) {
+							cards.push(parseResult.card);
 						}
 					}
 				} catch (error) {
@@ -132,7 +134,9 @@ export default class FsrsPlugin extends Plugin {
 				}
 			}
 
-			console.log(`Найдено карточек FSRS: ${cards.length}`);
+			console.log(
+				`Найдено карточек FSRS (новый формат): ${cards.length}`,
+			);
 			return cards;
 		} catch (error) {
 			console.error(
@@ -164,7 +168,7 @@ export default class FsrsPlugin extends Plugin {
 	 * Реализация для команды плагина
 	 */
 	async reviewCurrentCard(): Promise<void> {
-		await reviewCurrentCard(this.app);
+		await reviewCurrentCard(this.app, this);
 	}
 
 	/**

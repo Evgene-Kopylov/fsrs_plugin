@@ -44,16 +44,28 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 			const now = new Date();
 
 			// Фильтруем и сортируем карточки
-			const dueCards = filterCardsForReview(cardsForReview, now);
-			const sortedCards = sortCardsByPriority(dueCards, now);
+			const dueCards = await filterCardsForReview(
+				cardsForReview,
+				this.plugin.settings,
+				now,
+			);
+			const sortedCards = await sortCardsByPriority(
+				dueCards,
+				this.plugin.settings,
+				now,
+			);
 
-			if (sortedCards.length === 0) {
+			if (dueCards.length === 0) {
 				this.renderEmptyState();
 				return;
 			}
 
 			// Генерируем и отображаем HTML
-			const html = generateFsrsNowHTML(sortedCards, now);
+			const html = await generateFsrsNowHTML(
+				dueCards,
+				this.plugin.settings,
+				now,
+			);
 			this.container.innerHTML = html;
 
 			// Добавляем обработчики событий для кликабельных ссылок
