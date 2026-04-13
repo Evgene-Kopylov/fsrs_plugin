@@ -61,6 +61,7 @@ npm run build
     types.ts         # TypeScript interfaces and types
   ```
 - **Do not commit build artifacts**: Never commit `node_modules/`, `main.js`, or other generated files to version control.
+- **Agent context considerations**: When working with agents, use the `.agentignore` file (included in this project) to exclude generated files, binaries, and other non-source artifacts from agent analysis.
 - Keep the plugin small. Avoid large dependencies. Prefer browser-compatible packages.
 - Generated output should be placed at the plugin root or `dist/` depending on your build setup. Release artifacts must end up at the top level of the plugin folder in the vault (`main.js`, `manifest.json`, `styles.css`).
 
