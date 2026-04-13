@@ -5,7 +5,6 @@
 **НЕ ЧИТАЙТЕ файлы в директории `generated/`**:
 
 - `generated/wasm_base64.ts` (~236KB) - содержит base64-кодированный WASM модуль
-- `generated/wasm_base64.txt` (~20KB) - текстовое представление WASM
 
 Эти файлы занимают огромное количество контекстных токенов и НЕ содержат полезной для анализа информации. Они используются только для встраивания WASM в сборку.
 
@@ -23,7 +22,7 @@ obsidian-sample-plugin/
 │   └── pkg/               # Скомпилированный WASM
 ├── generated/             # ⚠️ СГЕНЕРИРОВАННЫЕ файлы (НЕ ЧИТАТЬ!)
 │   ├── wasm_base64.ts     # ⚠️ ОЧЕНЬ БОЛЬШОЙ файл (НЕ ЧИТАТЬ!)
-│   └── wasm_base64.txt    # ⚠️ Текстовый WASM (НЕ ЧИТАТЬ!)
+│   
 ├── scripts/               # Скрипты сборки
 │   └── encode-wasm.js     # Кодирует WASM в base64
 ├── node_modules/          # Node.js зависимости
@@ -54,7 +53,6 @@ obsidian-sample-plugin/
 ## 🚫 Файлы, которые НЕЛЬЗЯ читать (опасные)
 
 1. **`generated/wasm_base64.ts`** - Base64 строка WASM модуля (~236KB)
-2. **`generated/wasm_base64.txt`** - Текстовое представление WASM (~20KB)
 3. **`node_modules/`** - Зависимости (очень большая директория)
 4. **`wasm-lib/target/`** - Скомпилированные Rust артефакты
 5. **`main.js`** - Скомпилированный выходной файл (генерируется)
@@ -118,7 +116,6 @@ import { WASM_BASE64 } from "../generated/wasm_base64";
 ```bash
 # Проверить размер файлов
 du -h generated/wasm_base64.ts
-du -h generated/wasm_base64.txt
 
 # Проверить структуру
 find . -name "*.ts" -o -name "*.rs" -o -name "*.json" | grep -v node_modules | grep -v generated
