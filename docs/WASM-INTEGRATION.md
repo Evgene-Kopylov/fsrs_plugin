@@ -92,7 +92,7 @@ function base64ToBytes(base64: string): Uint8Array {
     return bytes;
 }
 
-export default class MyWasmPlugin extends Plugin {
+export default class FsrsPlugin extends Plugin {
     async onload() {
         try {
             const wasmBytes = base64ToBytes(WASM_BASE64);
