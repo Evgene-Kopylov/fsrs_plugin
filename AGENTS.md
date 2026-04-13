@@ -5,6 +5,8 @@
 - Target: Obsidian Community Plugin (TypeScript → bundled JavaScript).
 - Entry point: `main.ts` compiled to `main.js` and loaded by Obsidian.
 - Required release artifacts: `main.js`, `manifest.json`, and optional `styles.css`.
+Важно: НЕ ЧИТАЙ main.js. Этот файл генерируется автоматически, он слишком большой, с очень длинными строками. Ты истратишь контекстное окно и провалишь задание. Игнорируй этот файл.
+
 
 ## Environment & tooling
 

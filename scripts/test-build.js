@@ -121,7 +121,6 @@ const expectedPatterns = [
 	{ pattern: /console\.log/, name: "console.log" },
 	{ pattern: /console\.error/, name: "console.error" },
 	{ pattern: /my_wasm_function/, name: "my_wasm_function" },
-	{ pattern: /e\.Notice/, name: "e.Notice" },
 ];
 
 let allPatternsFound = true;
@@ -135,7 +134,7 @@ for (const { pattern, name } of expectedPatterns) {
 }
 
 // Проверка наличия уведомления (Notice)
-const noticePattern = /new\s+Notice|e\.Notice/;
+const noticePattern = /new\s+\w+\.Notice|e\.Notice|new\s+Notice/;
 if (noticePattern.test(mainJsContent)) {
 	console.log("   ✅ Плагин создает уведомление (Notice)");
 } else {
