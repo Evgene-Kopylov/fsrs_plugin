@@ -6,3 +6,155 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+
+/* Стили для блока fsrs-now */
+.fsrs-now-render-container {
+	margin: 1em 0;
+	padding: 1em;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	background-color: var(--background-primary);
+}
+
+.fsrs-now-container {
+	font-family: var(--font-text);
+	color: var(--text-normal);
+}
+
+.fsrs-now-loading,
+.fsrs-now-empty,
+.fsrs-now-error {
+	padding: 1em;
+	text-align: center;
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+.fsrs-now-card {
+	margin-bottom: 1em;
+	padding: 0.75em;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	background-color: var(--background-secondary);
+	transition: border-color 0.2s ease;
+}
+
+.fsrs-now-card:hover {
+	border-color: var(--interactive-accent);
+}
+
+.fsrs-now-card-header {
+	margin-bottom: 0.5em;
+	padding-bottom: 0.5em;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.fsrs-now-link {
+	color: var(--text-accent);
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.fsrs-now-link:hover {
+	text-decoration: underline;
+}
+
+.fsrs-now-card-content {
+	margin-bottom: 0.5em;
+	line-height: 1.4;
+}
+
+.fsrs-now-field {
+	display: inline-block;
+	margin-right: 1em;
+	margin-bottom: 0.25em;
+	color: var(--text-muted);
+}
+
+.fsrs-now-field strong {
+	color: var(--text-normal);
+}
+
+.fsrs-now-card-actions {
+	display: flex;
+	gap: 0.5em;
+	margin-top: 0.5em;
+}
+
+.fsrs-now-action-btn {
+	padding: 0.25em 0.75em;
+	font-size: 0.85em;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	background-color: var(--background-primary);
+	color: var(--text-normal);
+	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.fsrs-now-action-btn:hover {
+	background-color: var(--interactive-accent-hover);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+.fsrs-now-action-btn[data-action="review"] {
+	background-color: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border-color: var(--interactive-accent);
+}
+
+.fsrs-now-action-btn[data-action="review"]:hover {
+	background-color: var(--interactive-accent-hover);
+}
+
+.fsrs-now-info {
+	margin-top: 1em;
+	padding: 0.5em;
+	text-align: center;
+	color: var(--text-muted);
+	font-size: 0.9em;
+	border-top: 1px dashed var(--background-modifier-border);
+}
+
+.fsrs-now-footer {
+	margin-top: 1em;
+	padding-top: 0.5em;
+	text-align: center;
+	color: var(--text-muted);
+	font-size: 0.85em;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+/* Состояния карточек по цветам */
+.fsrs-now-card[data-state="New"] {
+	border-left: 3px solid var(--text-muted);
+}
+
+.fsrs-now-card[data-state="Learning"] {
+	border-left: 3px solid var(--color-blue);
+}
+
+.fsrs-now-card[data-state="Review"] {
+	border-left: 3px solid var(--color-green);
+}
+
+.fsrs-now-card[data-state="Relearning"] {
+	border-left: 3px solid var(--color-orange);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+	.fsrs-now-field {
+		display: block;
+		margin-right: 0;
+	}
+
+	.fsrs-now-card-actions {
+		flex-direction: column;
+	}
+
+	.fsrs-now-action-btn {
+		width: 100%;
+	}
+}

@@ -1,4 +1,10 @@
-import { Plugin, Notice } from "obsidian";
+import {
+	Plugin,
+	Notice,
+	MarkdownPostProcessor,
+	MarkdownRenderChild,
+	Component,
+} from "obsidian";
 import init, {
 	my_wasm_function,
 	get_fsrs_yaml,
@@ -36,6 +42,181 @@ function base64ToBytes(base64: string): Uint8Array {
 		bytes[i] = binary.charCodeAt(i);
 	}
 	return bytes;
+}
+
+// Класс для рендеринга блока fsrs-now
+class FsrsNowRenderer extends MarkdownRenderChild {
+	constructor(
+		private plugin: MyWasmPlugin,
+		private container: HTMLElement,
+		private sourcePath: string,
+	) {
+		super(container);
+	}
+
+	async onload() {
+		await this.renderContent();
+	}
+
+	async renderContent() {
+		try {
+			// Показываем индикатор загрузки
+			this.container.innerHTML = `
+				<div class="fsrs-now-loading">
+					<small>Загрузка карточек FSRS...</small>
+				</div>
+			`;
+
+			// Получаем карточки для повторения
+			const cardsForReview = await this.plugin.getCardsForReview();
+			const now = new Date();
+
+			if (cardsForReview.length === 0) {
+				this.container.innerHTML = `
+					<div class="fsrs-now-empty">
+						<small>Нет карточек для повторения 🎉</small>
+					</div>
+				`;
+				return;
+			}
+
+			// Создаем содержимое для отображения
+			let content = `<div class="fsrs-now-container">`;
+			content += `<h4>Карточки для повторения (${cardsForReview.length})</h4>`;
+			content += `<small>Обновлено: ${new Date().toLocaleString()}</small><br><br>`;
+
+			// Ограничиваем вывод 30 карточками
+			const maxCardsToShow = 30;
+			const cardsToShow = cardsForReview.slice(0, maxCardsToShow);
+
+			cardsToShow.forEach((card, index) => {
+				const dueDate = new Date(card.due);
+				const hoursDiff = Math.floor(
+					(now.getTime() - dueDate.getTime()) / (1000 * 60 * 60),
+				);
+				const daysDiff = Math.floor(hoursDiff / 24);
+				const remainingHours = hoursDiff % 24;
+
+				content += `<div class="fsrs-now-card" data-state="${card.state}">`;
+				content += `<div class="fsrs-now-card-header">`;
+				content += `<strong>${index + 1}. <a href="#" data-file-path="${card.filePath}" class="internal-link fsrs-now-link">${card.filePath}</a></strong>`;
+				content += `</div>`;
+				content += `<div class="fsrs-now-card-content">`;
+				content += `<small>`;
+				content += `<span class="fsrs-now-field"><strong>Просрочено:</strong> ${daysDiff > 0 ? `${daysDiff} дней ` : ""}${remainingHours} часов</span><br>`;
+				content += `<span class="fsrs-now-field"><strong>Состояние:</strong> ${card.state} | <strong>Повторений:</strong> ${card.reps} | <strong>Ошибок:</strong> ${card.lapses}</span><br>`;
+				content += `<span class="fsrs-now-field"><strong>Стабильность:</strong> ${card.stability.toFixed(2)} | <strong>Сложность:</strong> ${card.difficulty.toFixed(2)}</span><br>`;
+				content += `<span class="fsrs-now-field"><strong>Дата повторения:</strong> ${dueDate.toLocaleString()}</span><br>`;
+				content += `</small>`;
+				content += `</div>`;
+				content += `<div class="fsrs-now-card-actions">`;
+				content += `<button class="fsrs-now-action-btn" data-file-path="${card.filePath}" data-action="open">Открыть</button>`;
+				content += `<button class="fsrs-now-action-btn" data-file-path="${card.filePath}" data-action="review">Повторить</button>`;
+				content += `</div>`;
+				content += `</div><br>`;
+			});
+
+			// Добавляем информацию о скрытых карточках
+			if (cardsForReview.length > maxCardsToShow) {
+				const hiddenCount = cardsForReview.length - maxCardsToShow;
+				content += `<div class="fsrs-now-info">`;
+				content += `<small>Показано: ${maxCardsToShow} из ${cardsForReview.length} карточек (${hiddenCount} скрыто)</small>`;
+				content += `</div>`;
+			}
+
+			content += `<div class="fsrs-now-footer">`;
+			content += `<small>Для обновления списка: </small>`;
+			content += `<button class="fsrs-now-action-btn" data-action="refresh">Обновить</button>`;
+			content += `<small> или выполните команду "Найти карточки для повторения"</small>`;
+			content += `</div>`;
+			content += `</div>`;
+
+			this.container.innerHTML = content;
+
+			// Добавляем обработчики событий для кнопок
+			this.addEventListeners();
+		} catch (error) {
+			console.error("Ошибка при рендеринге блока fsrs-now:", error);
+			this.container.innerHTML = `
+				<div class="fsrs-now-error">
+					<small>Ошибка при загрузке карточек FSRS</small>
+				</div>
+			`;
+		}
+	}
+
+	addEventListeners() {
+		// Обработчики для ссылок на файлы
+		this.container.querySelectorAll(".fsrs-now-link").forEach((link) => {
+			link.addEventListener("click", (e) => {
+				e.preventDefault();
+				const filePath = (link as HTMLElement).dataset.filePath;
+				if (filePath) {
+					this.openFile(filePath);
+				}
+			});
+		});
+
+		// Обработчики для кнопок действий
+		this.container
+			.querySelectorAll(".fsrs-now-action-btn")
+			.forEach((button) => {
+				button.addEventListener("click", (e) => {
+					const filePath = (button as HTMLElement).dataset.filePath;
+					const action = (button as HTMLElement).dataset.action;
+					if (action === "refresh") {
+						this.refresh();
+					} else if (filePath && action) {
+						if (action === "open") {
+							this.openFile(filePath);
+						} else if (action === "review") {
+							this.reviewCard(filePath);
+						}
+					}
+				});
+			});
+	}
+
+	async openFile(filePath: string) {
+		try {
+			const file = this.plugin.app.vault.getFileByPath(filePath);
+			if (file) {
+				await this.plugin.app.workspace.openLinkText(
+					filePath,
+					"",
+					true,
+				);
+			}
+		} catch (error) {
+			console.error("Ошибка при открытии файла:", error);
+			new Notice(`Не удалось открыть файл: ${filePath}`);
+		}
+	}
+
+	async reviewCard(filePath: string) {
+		try {
+			const file = this.plugin.app.vault.getFileByPath(filePath);
+			if (file) {
+				// Активируем файл для повторения
+				await this.plugin.app.workspace.openLinkText(
+					filePath,
+					"",
+					true,
+				);
+				// Здесь можно добавить логику для автоматического начала повторения
+				new Notice(`Открыта карточка для повторения: ${filePath}`);
+			}
+		} catch (error) {
+			console.error("Ошибка при повторении карточки:", error);
+			new Notice(
+				`Не удалось открыть карточку для повторения: ${filePath}`,
+			);
+		}
+	}
+
+	async refresh() {
+		await this.renderContent();
+	}
 }
 
 export default class MyWasmPlugin extends Plugin {
@@ -93,6 +274,25 @@ export default class MyWasmPlugin extends Plugin {
 				await this.reviewCurrentCard();
 			},
 		});
+
+		// Регистрируем MarkdownCodeBlockProcessor для блоков fsrs-now
+		this.registerMarkdownCodeBlockProcessor(
+			"fsrs-now",
+			async (source, el, ctx) => {
+				// Создаем контейнер для рендеринга
+				const renderContainer = document.createElement("div");
+				renderContainer.className = "fsrs-now-render-container";
+				el.appendChild(renderContainer);
+
+				// Создаем и добавляем рендерер
+				const renderer = new FsrsNowRenderer(
+					this,
+					renderContainer,
+					ctx.sourcePath,
+				);
+				ctx.addChild(renderer);
+			},
+		);
 	}
 
 	onunload() {
@@ -162,10 +362,10 @@ export default class MyWasmPlugin extends Plugin {
 		}
 	}
 
-	// Метод для поиска карточек, готовых к повторению
-	async findCardsForReview() {
+	// Метод для получения карточек, готовых к повторению (возвращает массив)
+	async getCardsForReview(): Promise<FSRSCard[]> {
 		try {
-			console.log("Поиск карточек FSRS для повторения...");
+			console.log("Получение карточек FSRS для повторения...");
 
 			// Получаем все файлы в хранилище
 			const files = this.app.vault.getMarkdownFiles();
@@ -284,42 +484,79 @@ export default class MyWasmPlugin extends Plugin {
 				}
 			}
 
-			console.log(
-				`Найдено карточек для повторения: ${cardsForReview.length}`,
-			);
-
-			if (cardsForReview.length === 0) {
-				new Notice("Нет карточек для повторения");
-				return;
-			}
-
 			// Сортируем по дате повторения (самые старые первыми)
 			cardsForReview.sort(
 				(a, b) => new Date(a.due).getTime() - new Date(b.due).getTime(),
 			);
 
-			// Создаем сообщение для пользователя
-			let message = `Карточки для повторения (${cardsForReview.length}):\n\n`;
+			console.log(
+				`Найдено карточек для повторения: ${cardsForReview.length}`,
+			);
 
-			cardsForReview.slice(0, 10).forEach((card, index) => {
-				const dueDate = new Date(card.due);
-				const hoursDiff = Math.floor(
-					(now.getTime() - dueDate.getTime()) / (1000 * 60 * 60),
+			return cardsForReview;
+		} catch (error) {
+			console.error(
+				"Ошибка при получении карточек для повторения:",
+				error,
+			);
+			throw error;
+		}
+	}
+
+	// Метод для поиска карточек, готовых к повторению и вставки пустого блока fsrs-now
+	async findCardsForReview() {
+		try {
+			const cardsForReview = await this.getCardsForReview();
+
+			// Показываем уведомление о количестве найденных карточек
+			if (cardsForReview.length === 0) {
+				new Notice("Нет карточек для повторения");
+			} else {
+				new Notice(
+					`Найдено ${cardsForReview.length} карточек для повторения`,
 				);
-
-				message += `${index + 1}. ${card.filePath}\n`;
-				message += `   Просрочено: ${hoursDiff} часов\n`;
-				message += `   Состояние: ${card.state}, Повторений: ${card.reps}\n\n`;
-			});
-
-			if (cardsForReview.length > 10) {
-				message += `... и еще ${cardsForReview.length - 10} карточек`;
 			}
 
-			new Notice(message);
+			// Получаем активный файл
+			const activeFile = this.app.workspace.getActiveFile();
+			if (!activeFile) {
+				new Notice("Нет активного файла для вставки блока кода");
+				return;
+			}
 
-			// Также выводим в консоль для отладки
-			console.log("Карточки для повторения:", cardsForReview);
+			// Читаем содержимое активного файла
+			const fileContent = await this.app.vault.read(activeFile);
+
+			// Ищем существующий блок кода fsrs-now
+			const fsrsNowBlockRegex = /```fsrs-now\n([\s\S]*?)\n```/g;
+			const emptyBlock = "```fsrs-now\n```";
+
+			let newContent: string;
+
+			// Проверяем, есть ли уже блок fsrs-now в файле
+			if (fsrsNowBlockRegex.test(fileContent)) {
+				// Сбрасываем lastIndex для корректной работы replace
+				fsrsNowBlockRegex.lastIndex = 0;
+				// Заменяем первый найденный блок на пустой
+				newContent = fileContent.replace(fsrsNowBlockRegex, emptyBlock);
+			} else {
+				// Добавляем пустой блок в конец файла
+				newContent = fileContent + "\n\n" + emptyBlock;
+			}
+
+			// Сохраняем изменения
+			await this.app.vault.modify(activeFile, newContent);
+
+			if (cardsForReview.length > 0) {
+				new Notice(
+					`Добавлен блок fsrs-now с ${cardsForReview.length} карточками для повторения`,
+				);
+			}
+
+			console.log(
+				"Найдено карточек для повторения:",
+				cardsForReview.length,
+			);
 		} catch (error) {
 			console.error("Ошибка при поиске карточек для повторения:", error);
 			const errorMessage =
