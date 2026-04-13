@@ -25,6 +25,5 @@ data.json
 # Rust
 Cargo.lock
 target/
-wasm_base64.txt
 wasm_base64.ts
 generated/
