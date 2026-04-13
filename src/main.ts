@@ -1,231 +1,47 @@
-import {
-	Plugin,
-	Notice,
-	MarkdownPostProcessor,
-	MarkdownRenderChild,
-	Component,
-} from "obsidian";
-import init, {
-	my_wasm_function,
-	get_fsrs_yaml,
-	create_fsrs_card_json,
-	review_card,
-	get_fsrs_yaml_after_review,
-	get_next_review_dates,
-	is_card_due,
-	get_retrievability,
-	get_current_time,
-	card_state_to_string,
-} from "../wasm-lib/pkg/wasm_lib";
-import { WASM_BASE64 } from "../generated/wasm_base64";
+import { Plugin, Notice } from "obsidian";
+import { registerCommands } from "./commands/index";
+import { addFsrsFieldsToCurrentFile } from "./commands/add-fsrs-fields";
+import { findFsrsCards } from "./commands/find-fsrs-cards";
+import { reviewCurrentCard } from "./commands/review-current-card";
+import { FsrsNowRenderer } from "./ui/fsrs-now-renderer";
 import { MyPluginSettings, DEFAULT_SETTINGS } from "./settings";
 import { SampleSettingTab } from "./settings";
+import { base64ToBytes } from "./utils/fsrs-helper";
+import {
+	parseFSRSFromFrontmatter,
+	filterCardsForReview,
+	sortCardsByPriority,
+} from "./utils/fsrs-helper";
+import type { FSRSCard } from "./interfaces/fsrs";
 
-// Интерфейс для карточки FSRS
-interface FSRSCard {
-	due: string; // ISO 8601 строка
-	stability: number;
-	difficulty: number;
-	elapsed_days: number;
-	scheduled_days: number;
-	reps: number;
-	lapses: number;
-	state: string;
-	last_review: string;
-	filePath: string; // путь к файлу
-}
+// Импорт WASM функций
+import init, { my_wasm_function } from "../wasm-lib/pkg/wasm_lib";
+import { WASM_BASE64 } from "../generated/wasm_base64";
 
-function base64ToBytes(base64: string): Uint8Array {
-	const binary = atob(base64);
-	const bytes = new Uint8Array(binary.length);
-	for (let i = 0; i < binary.length; i++) {
-		bytes[i] = binary.charCodeAt(i);
-	}
-	return bytes;
-}
-
-// Класс для рендеринга блока fsrs-now
-class FsrsNowRenderer extends MarkdownRenderChild {
-	constructor(
-		private plugin: MyWasmPlugin,
-		private container: HTMLElement,
-		private sourcePath: string,
-	) {
-		super(container);
-	}
-
-	async onload() {
-		await this.renderContent();
-	}
-
-	async renderContent() {
-		try {
-			// Показываем индикатор загрузки
-			this.container.innerHTML = `
-				<div class="fsrs-now-loading">
-					<small>Загрузка карточек FSRS...</small>
-				</div>
-			`;
-
-			// Получаем карточки для повторения
-			const cardsForReview = await this.plugin.getCardsForReview();
-			const now = new Date();
-
-			if (cardsForReview.length === 0) {
-				this.container.innerHTML = `
-					<div class="fsrs-now-empty">
-						<small>Нет карточек для повторения 🎉</small>
-					</div>
-				`;
-				return;
-			}
-
-			// Создаем содержимое для отображения
-			let content = `<div class="fsrs-now-container">`;
-			content += `<h4>Карточки для повторения (${cardsForReview.length})</h4>`;
-			content += `<small>Обновлено: ${new Date().toLocaleString()}</small><br><br>`;
-
-			// Ограничиваем вывод 30 карточками
-			const maxCardsToShow = 30;
-			const cardsToShow = cardsForReview.slice(0, maxCardsToShow);
-
-			cardsToShow.forEach((card, index) => {
-				const dueDate = new Date(card.due);
-				const hoursDiff = Math.floor(
-					(now.getTime() - dueDate.getTime()) / (1000 * 60 * 60),
-				);
-				const daysDiff = Math.floor(hoursDiff / 24);
-				const remainingHours = hoursDiff % 24;
-
-				content += `<div class="fsrs-now-card" data-state="${card.state}">`;
-				content += `<div class="fsrs-now-card-header">`;
-				content += `<strong>${index + 1}. <a href="#" data-file-path="${card.filePath}" class="internal-link fsrs-now-link">${card.filePath}</a></strong>`;
-				content += `</div>`;
-				content += `<div class="fsrs-now-card-content">`;
-				content += `<small>`;
-				content += `<span class="fsrs-now-field"><strong>Просрочено:</strong> ${daysDiff > 0 ? `${daysDiff} дней ` : ""}${remainingHours} часов</span><br>`;
-				content += `<span class="fsrs-now-field"><strong>Состояние:</strong> ${card.state} | <strong>Повторений:</strong> ${card.reps} | <strong>Ошибок:</strong> ${card.lapses}</span><br>`;
-				content += `<span class="fsrs-now-field"><strong>Стабильность:</strong> ${card.stability.toFixed(2)} | <strong>Сложность:</strong> ${card.difficulty.toFixed(2)}</span><br>`;
-				content += `<span class="fsrs-now-field"><strong>Дата повторения:</strong> ${dueDate.toLocaleString()}</span><br>`;
-				content += `</small>`;
-				content += `</div>`;
-				content += `</div><br>`;
-			});
-
-			// Добавляем информацию о скрытых карточках
-			if (cardsForReview.length > maxCardsToShow) {
-				const hiddenCount = cardsForReview.length - maxCardsToShow;
-				content += `<div class="fsrs-now-info">`;
-				content += `<small>Показано: ${maxCardsToShow} из ${cardsForReview.length} карточек (${hiddenCount} скрыто)</small>`;
-				content += `</div>`;
-			}
-
-			content += `<div class="fsrs-now-footer">`;
-			content += `<small>Для обновления списка выполните команду "Найти карточки для повторения"</small>`;
-			content += `</div>`;
-			content += `</div>`;
-
-			this.container.innerHTML = content;
-
-			// Добавляем обработчики событий для кнопок
-			this.addEventListeners();
-		} catch (error) {
-			console.error("Ошибка при рендеринге блока fsrs-now:", error);
-			this.container.innerHTML = `
-				<div class="fsrs-now-error">
-					<small>Ошибка при загрузке карточек FSRS</small>
-				</div>
-			`;
-		}
-	}
-
-	addEventListeners() {
-		// Обработчики для ссылок на файлы
-		this.container.querySelectorAll(".fsrs-now-link").forEach((link) => {
-			link.addEventListener("click", (e) => {
-				e.preventDefault();
-				const filePath = (link as HTMLElement).dataset.filePath;
-				if (filePath) {
-					this.openFile(filePath);
-				}
-			});
-		});
-	}
-
-	async openFile(filePath: string) {
-		try {
-			const file = this.plugin.app.vault.getFileByPath(filePath);
-			if (file) {
-				await this.plugin.app.workspace.openLinkText(
-					filePath,
-					"",
-					true,
-				);
-			}
-		} catch (error) {
-			console.error("Ошибка при открытии файла:", error);
-			new Notice(`Не удалось открыть файл: ${filePath}`);
-		}
-	}
-}
-
-export default class MyWasmPlugin extends Plugin {
+/**
+ * Основной класс плагина FSRS для Obsidian
+ * Интегрирует алгоритм интервального повторения FSRS в Obsidian
+ */
+export default class FsrsPlugin extends Plugin {
 	settings: MyPluginSettings;
+	private isWasmInitialized = false;
+
+	/**
+	 * Загрузка плагина
+	 */
 	async onload() {
 		await this.loadSettings();
 		this.addSettingTab(new SampleSettingTab(this.app, this));
 
-		console.log("=== Загрузка плагина с WASM ===");
+		console.log("=== Загрузка FSRS плагина с WASM ===");
 
-		try {
-			console.log("1. Конвертируем base64 в байты...");
-			const wasmBytes = base64ToBytes(WASM_BASE64);
-			console.log("2. Длина WASM байтов:", wasmBytes.length);
+		// Инициализация WASM модуля
+		await this.initializeWasm();
 
-			console.log("3. Вызываем init...");
-			await init({ module_or_path: wasmBytes });
-			console.log("4. WASM инициализирован");
+		// Регистрация команд плагина
+		registerCommands(this);
 
-			console.log("5. Вызываем my_wasm_function...");
-			const result = my_wasm_function("тестовые данные из Obsidian");
-			console.log("6. Результат из Rust:", result);
-
-			console.log("7. Показываем Notice...");
-			new Notice(result);
-			console.log("8. Notice показано");
-		} catch (e) {
-			console.error("Ошибка загрузки WASM модуля:", e);
-			new Notice("Ошибка загрузки WASM компонента");
-		}
-
-		// Добавляем команду для вставки полей FSRS в шапку файла
-		this.addCommand({
-			id: "add-fsrs-fields",
-			name: "Добавить поля FSRS в шапку файла",
-			callback: async () => {
-				await this.addFsrsFieldsToCurrentFile();
-			},
-		});
-
-		// Добавляем команду для поиска карточек, готовых к повторению
-		this.addCommand({
-			id: "find-fsrs-cards",
-			name: "Найти карточки для повторения",
-			callback: async () => {
-				await this.findCardsForReview();
-			},
-		});
-
-		// Добавляем команду для повторения текущей карточки
-		this.addCommand({
-			id: "review-current-card",
-			name: "Повторить текущую карточку",
-			callback: async () => {
-				await this.reviewCurrentCard();
-			},
-		});
-
-		// Регистрируем MarkdownCodeBlockProcessor для блоков fsrs-now
+		// Регистрация MarkdownCodeBlockProcessor для блоков fsrs-now
 		this.registerMarkdownCodeBlockProcessor(
 			"fsrs-now",
 			async (source, el, ctx) => {
@@ -243,84 +59,50 @@ export default class MyWasmPlugin extends Plugin {
 				ctx.addChild(renderer);
 			},
 		);
+
+		console.log("FSRS плагин успешно загружен");
 	}
 
-	onunload() {
-		console.log("Выгрузка плагина");
-	}
-
-	async loadSettings() {
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			await this.loadData(),
-		);
-	}
-
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
-
-	// Метод для добавления полей FSRS в текущий файл
-	async addFsrsFieldsToCurrentFile() {
+	/**
+	 * Инициализация WASM модуля
+	 */
+	private async initializeWasm(): Promise<void> {
 		try {
-			const activeFile = this.app.workspace.getActiveFile();
-			if (!activeFile) {
-				new Notice("Нет активного файла");
-				return;
-			}
+			console.log("1. Конвертируем base64 в байты...");
+			const wasmBytes = base64ToBytes(WASM_BASE64);
+			console.log("2. Длина WASM байтов:", wasmBytes.length);
 
-			console.log("Получение YAML полей FSRS из Rust...");
-			const fsrsYaml = get_fsrs_yaml();
-			console.log("FSRS YAML поля:", fsrsYaml);
+			console.log("3. Вызываем init...");
+			await init({ module_or_path: wasmBytes });
+			console.log("4. WASM инициализирован");
 
-			const fileContent = await this.app.vault.read(activeFile);
-			let newContent = fileContent;
+			// Тестовая функция для проверки работы WASM
+			console.log("5. Вызываем тестовую функцию...");
+			const result = my_wasm_function("тестовые данные из FSRS плагина");
+			console.log("6. Результат из Rust:", result);
 
-			// Проверяем, есть ли уже frontmatter в файле
-			const frontmatterRegex = /^---\s*$([\s\S]*?)^---\s*$/m;
-			const match = frontmatterRegex.exec(fileContent);
+			console.log("7. Показываем Notice...");
+			new Notice(result);
+			console.log("8. Notice показано");
 
-			if (match) {
-				// Есть frontmatter - добавляем поля FSRS после существующего frontmatter
-				const existingFrontmatter = match[0];
-				const afterFrontmatter = fileContent.slice(match[0].length);
-				newContent =
-					existingFrontmatter +
-					"\n" +
-					fsrsYaml +
-					"\n" +
-					afterFrontmatter;
-			} else {
-				// Нет frontmatter - создаем новый с полями FSRS
-				newContent = "---\n" + fsrsYaml + "\n---\n\n" + fileContent;
-			}
-
-			// Сохраняем изменения
-			await this.app.vault.modify(activeFile, newContent);
-
-			new Notice("Поля FSRS добавлены в файл");
-			console.log("Поля FSRS успешно добавлены в файл:", activeFile.name);
-
-			// Также показываем JSON версию в консоли для отладки
-			console.log("JSON версия карточки FSRS:", create_fsrs_card_json());
+			this.isWasmInitialized = true;
 		} catch (error) {
-			console.error("Ошибка при добавлении полей FSRS:", error);
-			const errorMessage =
-				error instanceof Error ? error.message : String(error);
-			new Notice("Ошибка при добавлении полей FSRS: " + errorMessage);
+			console.error("Ошибка загрузки WASM модуля:", error);
+			new Notice("Ошибка загрузки WASM компонента FSRS");
+			this.isWasmInitialized = false;
 		}
 	}
 
-	// Метод для получения карточек, готовых к повторению (возвращает массив)
+	/**
+	 * Получает все карточки FSRS из хранилища
+	 */
 	async getCardsForReview(): Promise<FSRSCard[]> {
 		try {
-			console.log("Получение карточек FSRS для повторения...");
+			console.log("Сканирование хранилища на наличие карточек FSRS...");
 
-			// Получаем все файлы в хранилище
+			// Получаем все markdown файлы
 			const files = this.app.vault.getMarkdownFiles();
-			const cardsForReview: FSRSCard[] = [];
-			const now = new Date();
+			const cards: FSRSCard[] = [];
 
 			for (const file of files) {
 				try {
@@ -333,97 +115,13 @@ export default class MyWasmPlugin extends Plugin {
 					if (match && match[1]) {
 						const frontmatter = match[1]!;
 
-						// Проверяем наличие полей FSRS
-						const hasFsrsDue = /^fsrs_due:/m.test(frontmatter);
-						const hasFsrsState = /^fsrs_state:/m.test(frontmatter);
-
-						if (hasFsrsDue && hasFsrsState) {
-							// Парсим поля FSRS
-							const dueMatch = /^fsrs_due:\s*"([^"]+)"/m.exec(
-								frontmatter,
-							);
-							const stabilityMatch =
-								/^fsrs_stability:\s*([0-9.]+)/m.exec(
-									frontmatter,
-								);
-							const difficultyMatch =
-								/^fsrs_difficulty:\s*([0-9.]+)/m.exec(
-									frontmatter,
-								);
-							const elapsedDaysMatch =
-								/^fsrs_elapsed_days:\s*([0-9]+)/m.exec(
-									frontmatter,
-								);
-							const scheduledDaysMatch =
-								/^fsrs_scheduled_days:\s*([0-9]+)/m.exec(
-									frontmatter,
-								);
-							const repsMatch = /^fsrs_reps:\s*([0-9]+)/m.exec(
-								frontmatter,
-							);
-							const lapsesMatch =
-								/^fsrs_lapses:\s*([0-9]+)/m.exec(frontmatter);
-							const stateMatch = /^fsrs_state:\s*"([^"]+)"/m.exec(
-								frontmatter,
-							);
-							const lastReviewMatch =
-								/^fsrs_last_review:\s*"([^"]+)"/m.exec(
-									frontmatter,
-								);
-
-							if (dueMatch && dueMatch[1]) {
-								const dueDate = new Date(dueMatch[1]!);
-
-								// Проверяем, прошла ли дата повторения
-								if (dueDate <= now) {
-									const card: FSRSCard = {
-										due: dueMatch[1]!,
-										stability:
-											stabilityMatch && stabilityMatch[1]
-												? parseFloat(stabilityMatch[1]!)
-												: 0,
-										difficulty:
-											difficultyMatch &&
-											difficultyMatch[1]
-												? parseFloat(
-														difficultyMatch[1]!,
-													)
-												: 0,
-										elapsed_days:
-											elapsedDaysMatch &&
-											elapsedDaysMatch[1]
-												? parseInt(elapsedDaysMatch[1]!)
-												: 0,
-										scheduled_days:
-											scheduledDaysMatch &&
-											scheduledDaysMatch[1]
-												? parseInt(
-														scheduledDaysMatch[1]!,
-													)
-												: 0,
-										reps:
-											repsMatch && repsMatch[1]
-												? parseInt(repsMatch[1]!)
-												: 0,
-										lapses:
-											lapsesMatch && lapsesMatch[1]
-												? parseInt(lapsesMatch[1]!)
-												: 0,
-										state:
-											stateMatch && stateMatch[1]
-												? stateMatch[1]!
-												: "New",
-										last_review:
-											lastReviewMatch &&
-											lastReviewMatch[1]
-												? lastReviewMatch[1]!
-												: new Date().toISOString(),
-										filePath: file.path,
-									};
-
-									cardsForReview.push(card);
-								}
-							}
+						// Парсим поля FSRS
+						const card = parseFSRSFromFrontmatter(
+							frontmatter,
+							file.path,
+						);
+						if (card) {
+							cards.push(card);
 						}
 					}
 				} catch (error) {
@@ -434,16 +132,8 @@ export default class MyWasmPlugin extends Plugin {
 				}
 			}
 
-			// Сортируем по дате повторения (самые старые первыми)
-			cardsForReview.sort(
-				(a, b) => new Date(a.due).getTime() - new Date(b.due).getTime(),
-			);
-
-			console.log(
-				`Найдено карточек для повторения: ${cardsForReview.length}`,
-			);
-
-			return cardsForReview;
+			console.log(`Найдено карточек FSRS: ${cards.length}`);
+			return cards;
 		} catch (error) {
 			console.error(
 				"Ошибка при получении карточек для повторения:",
@@ -453,209 +143,60 @@ export default class MyWasmPlugin extends Plugin {
 		}
 	}
 
-	// Метод для поиска карточек, готовых к повторению и вставки пустого блока fsrs-now
-	async findCardsForReview() {
-		try {
-			const cardsForReview = await this.getCardsForReview();
-
-			// Показываем уведомление о количестве найденных карточек
-			if (cardsForReview.length === 0) {
-				new Notice("Нет карточек для повторения");
-			} else {
-				new Notice(
-					`Найдено ${cardsForReview.length} карточек для повторения`,
-				);
-			}
-
-			// Получаем активный файл
-			const activeFile = this.app.workspace.getActiveFile();
-			if (!activeFile) {
-				new Notice("Нет активного файла для вставки блока кода");
-				return;
-			}
-
-			// Читаем содержимое активного файла
-			const fileContent = await this.app.vault.read(activeFile);
-
-			// Ищем существующий блок кода fsrs-now
-			const fsrsNowBlockRegex = /```fsrs-now\n([\s\S]*?)\n```/g;
-			const emptyBlock = "```fsrs-now\n```";
-
-			let newContent: string;
-
-			// Проверяем, есть ли уже блок fsrs-now в файле
-			if (fsrsNowBlockRegex.test(fileContent)) {
-				// Сбрасываем lastIndex для корректной работы replace
-				fsrsNowBlockRegex.lastIndex = 0;
-				// Заменяем первый найденный блок на пустой
-				newContent = fileContent.replace(fsrsNowBlockRegex, emptyBlock);
-			} else {
-				// Добавляем пустой блок в конец файла
-				newContent = fileContent + "\n\n" + emptyBlock;
-			}
-
-			// Сохраняем изменения
-			await this.app.vault.modify(activeFile, newContent);
-
-			if (cardsForReview.length > 0) {
-				new Notice(
-					`Добавлен блок fsrs-now с ${cardsForReview.length} карточками для повторения`,
-				);
-			}
-
-			console.log(
-				"Найдено карточек для повторения:",
-				cardsForReview.length,
-			);
-		} catch (error) {
-			console.error("Ошибка при поиске карточек для повторения:", error);
-			const errorMessage =
-				error instanceof Error ? error.message : String(error);
-			new Notice(
-				"Ошибка при поиске карточек для повторения: " + errorMessage,
-			);
-		}
+	/**
+	 * Добавляет поля FSRS в текущий файл
+	 * Реализация для команды плагина
+	 */
+	async addFsrsFieldsToCurrentFile(): Promise<void> {
+		await addFsrsFieldsToCurrentFile(this.app);
 	}
 
-	// Метод для повторения текущей карточки
-	async reviewCurrentCard() {
-		try {
-			const activeFile = this.app.workspace.getActiveFile();
-			if (!activeFile) {
-				new Notice("Нет активного файла");
-				return;
-			}
+	/**
+	 * Находит карточки для повторения и вставляет блок fsrs-now
+	 * Реализация для команды плагина
+	 */
+	async findCardsForReview(): Promise<void> {
+		await findFsrsCards(this);
+	}
 
-			const content = await this.app.vault.read(activeFile);
+	/**
+	 * Повторяет текущую карточку
+	 * Реализация для команды плагина
+	 */
+	async reviewCurrentCard(): Promise<void> {
+		await reviewCurrentCard(this.app);
+	}
 
-			// Ищем frontmatter с полями FSRS
-			const frontmatterRegex = /^---\s*$([\s\S]*?)^---\s*$/m;
-			const match = frontmatterRegex.exec(content);
+	/**
+	 * Загружает настройки плагина
+	 */
+	async loadSettings() {
+		this.settings = Object.assign(
+			{},
+			DEFAULT_SETTINGS,
+			await this.loadData(),
+		);
+	}
 
-			if (!match || !match[1]) {
-				new Notice("Файл не содержит полей FSRS в frontmatter");
-				return;
-			}
+	/**
+	 * Сохраняет настройки плагина
+	 */
+	async saveSettings() {
+		await this.saveData(this.settings);
+	}
 
-			const frontmatter = match[1]!;
+	/**
+	 * Проверяет, инициализирован ли WASM модуль
+	 */
+	isWasmReady(): boolean {
+		return this.isWasmInitialized;
+	}
 
-			// Проверяем наличие полей FSRS
-			const hasFsrsDue = /^fsrs_due:/m.test(frontmatter);
-			if (!hasFsrsDue) {
-				new Notice("Файл не содержит полей FSRS");
-				return;
-			}
-
-			// Собираем поля FSRS в JSON
-			const dueMatch = /^fsrs_due:\s*"([^"]+)"/m.exec(frontmatter);
-			const stabilityMatch = /^fsrs_stability:\s*([0-9.]+)/m.exec(
-				frontmatter,
-			);
-			const difficultyMatch = /^fsrs_difficulty:\s*([0-9.]+)/m.exec(
-				frontmatter,
-			);
-			const elapsedDaysMatch = /^fsrs_elapsed_days:\s*([0-9]+)/m.exec(
-				frontmatter,
-			);
-			const scheduledDaysMatch = /^fsrs_scheduled_days:\s*([0-9]+)/m.exec(
-				frontmatter,
-			);
-			const repsMatch = /^fsrs_reps:\s*([0-9]+)/m.exec(frontmatter);
-			const lapsesMatch = /^fsrs_lapses:\s*([0-9]+)/m.exec(frontmatter);
-			const stateMatch = /^fsrs_state:\s*"([^"]+)"/m.exec(frontmatter);
-			const lastReviewMatch = /^fsrs_last_review:\s*"([^"]+)"/m.exec(
-				frontmatter,
-			);
-
-			if (!dueMatch || !dueMatch[1]) {
-				new Notice("Не удалось найти поле fsrs_due");
-				return;
-			}
-
-			// Создаем JSON карточки
-			const cardData = {
-				due: dueMatch[1]!,
-				stability:
-					stabilityMatch && stabilityMatch[1]
-						? parseFloat(stabilityMatch[1]!)
-						: 0,
-				difficulty:
-					difficultyMatch && difficultyMatch[1]
-						? parseFloat(difficultyMatch[1]!)
-						: 0,
-				elapsed_days:
-					elapsedDaysMatch && elapsedDaysMatch[1]
-						? parseInt(elapsedDaysMatch[1]!)
-						: 0,
-				scheduled_days:
-					scheduledDaysMatch && scheduledDaysMatch[1]
-						? parseInt(scheduledDaysMatch[1]!)
-						: 0,
-				reps: repsMatch && repsMatch[1] ? parseInt(repsMatch[1]!) : 0,
-				lapses:
-					lapsesMatch && lapsesMatch[1]
-						? parseInt(lapsesMatch[1]!)
-						: 0,
-				state: stateMatch && stateMatch[1] ? stateMatch[1]! : "New",
-				last_review:
-					lastReviewMatch && lastReviewMatch[1]
-						? lastReviewMatch[1]!
-						: new Date().toISOString(),
-			};
-
-			const cardJson = JSON.stringify(cardData);
-			const now = get_current_time();
-
-			// Показываем меню с оценками
-			const ratings = [
-				{ name: "Again (Забыл)", value: "Again" },
-				{ name: "Hard (С трудом)", value: "Hard" },
-				{ name: "Good (Хорошо)", value: "Good" },
-				{ name: "Easy (Очень легко)", value: "Easy" },
-			];
-
-			// В Obsidian можно использовать modal или заметку, для простоты используем Notice с кнопками
-			// Здесь простейшая реализация - спрашиваем через prompt или создаем отдельный modal
-			// Для простоты используем фиксированную оценку "Good" и сразу обновляем
-
-			const rating = "Good"; // По умолчанию Good
-
-			console.log("Обновление карточки с оценкой:", rating);
-			console.log("JSON карточки:", cardJson);
-			console.log("Текущее время:", now);
-
-			// Обновляем карточку через WASM
-			const updatedCardJson = review_card(cardJson, rating, now);
-			console.log("Обновленная карточка:", updatedCardJson);
-
-			// Получаем YAML с обновленными полями
-			const updatedYaml = get_fsrs_yaml_after_review(
-				cardJson,
-				rating,
-				now,
-			);
-
-			// Заменяем старый frontmatter на новый
-			const newContent = content.replace(
-				frontmatterRegex,
-				"---\n" + updatedYaml + "\n---",
-			);
-
-			// Сохраняем изменения
-			await this.app.vault.modify(activeFile, newContent);
-
-			new Notice(`Карточка повторена с оценкой: ${rating}`);
-			console.log("Карточка успешно обновлена");
-
-			// Показываем следующие даты повторения
-			const nextDatesJson = get_next_review_dates(updatedCardJson, now);
-			const nextDates = JSON.parse(nextDatesJson);
-			console.log("Следующие даты повторения:", nextDates);
-		} catch (error) {
-			console.error("Ошибка при повторении карточки:", error);
-			const errorMessage =
-				error instanceof Error ? error.message : String(error);
-			new Notice("Ошибка при повторении карточки: " + errorMessage);
-		}
+	/**
+	 * Выгрузка плагина
+	 */
+	onunload() {
+		console.log("Выгрузка FSRS плагина");
+		this.isWasmInitialized = false;
 	}
 }
