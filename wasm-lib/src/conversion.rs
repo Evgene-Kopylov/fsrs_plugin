@@ -1,7 +1,5 @@
-use crate::types::{FsrsParameters, ReviewSession};
-use rs_fsrs::{Card, Parameters, Rating, State};
-use chrono::{Utc};
-use serde_json::{Result as JsonResult};
+use crate::types::FsrsParameters;
+use rs_fsrs::{Parameters, Rating, State};
 
 /// Конвертирует строковый рейтинг в Rating enum
 pub fn rating_from_str(rating: &str) -> Rating {
@@ -41,14 +39,4 @@ pub fn create_fsrs_parameters(params: &FsrsParameters) -> Parameters {
     default_params.maximum_interval = params.maximum_interval as i32;
     default_params.enable_fuzz = params.enable_fuzz;
     default_params
-}
-
-/// Конвертирует сессию в JSON строку (вспомогательная функция)
-pub fn session_to_json(session: &ReviewSession) -> JsonResult<String> {
-    serde_json::to_string(session)
-}
-
-/// Конвертирует JSON строку в сессию (вспомогательная функция)
-pub fn session_from_json(json_str: &str) -> JsonResult<ReviewSession> {
-    serde_json::from_str(json_str)
 }

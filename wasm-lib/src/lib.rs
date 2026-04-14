@@ -4,12 +4,14 @@ use wasm_bindgen::prelude::*;
 mod types;
 mod conversion;
 mod fsrs_logic;
-mod wasm_api;
+mod json_parsing;
+mod review_functions;
+mod state_functions;
 
 // Функция для получения YAML строки для новой карточки
 #[wasm_bindgen]
 pub fn get_fsrs_yaml() -> String {
-    wasm_api::get_fsrs_yaml()
+    json_parsing::get_fsrs_yaml()
 }
 
 // Функция для обновления карточки FSRS на основе оценки
@@ -22,7 +24,7 @@ pub fn review_card(
     default_stability: f64,
     default_difficulty: f64,
 ) -> String {
-    wasm_api::review_card(
+    review_functions::review_card(
         card_json,
         rating_str,
         now_str,
@@ -42,7 +44,7 @@ pub fn get_fsrs_yaml_after_review(
     default_stability: f64,
     default_difficulty: f64,
 ) -> String {
-    wasm_api::get_fsrs_yaml_after_review(
+    review_functions::get_fsrs_yaml_after_review(
         card_json,
         rating_str,
         now_str,
@@ -61,7 +63,7 @@ pub fn compute_current_state(
     default_stability: f64,
     default_difficulty: f64,
 ) -> String {
-    wasm_api::compute_current_state(
+    state_functions::compute_current_state(
         card_json,
         now_str,
         parameters_json,
@@ -79,7 +81,7 @@ pub fn get_next_review_dates(
     default_stability: f64,
     default_difficulty: f64,
 ) -> String {
-    wasm_api::get_next_review_dates(
+    state_functions::get_next_review_dates(
         card_json,
         now_str,
         parameters_json,
@@ -97,7 +99,7 @@ pub fn is_card_due(
     default_stability: f64,
     default_difficulty: f64,
 ) -> String {
-    wasm_api::is_card_due(
+    state_functions::is_card_due(
         card_json,
         now_str,
         parameters_json,
@@ -115,7 +117,7 @@ pub fn get_retrievability(
     default_stability: f64,
     default_difficulty: f64,
 ) -> String {
-    wasm_api::get_retrievability(
+    state_functions::get_retrievability(
         card_json,
         now_str,
         parameters_json,
@@ -127,11 +129,11 @@ pub fn get_retrievability(
 // Функция для получения текущего времени в формате ISO 8601
 #[wasm_bindgen]
 pub fn get_current_time() -> String {
-    wasm_api::get_current_time()
+    json_parsing::get_current_time()
 }
 
 // Оригинальная функция для обратной совместимости
 #[wasm_bindgen]
 pub fn my_wasm_function(input: String) -> String {
-    wasm_api::my_wasm_function(input)
+    format!("Hello from Rust with FSRS! Your input: {}", input)
 }
