@@ -254,8 +254,8 @@ If your plugin does not need CSS, delete this file.
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 32px;
-	height: 32px;
+	width: 28px;
+	height: 28px;
 	background: var(--background-modifier-border);
 	color: var(--text-muted);
 	border: none;
