@@ -8,6 +8,7 @@ mod json_parsing;
 mod review_functions;
 mod state_functions;
 mod yaml_parsing;
+mod sort_functions;
 
 // Функция для получения YAML строки для новой карточки
 #[wasm_bindgen]
@@ -197,6 +198,54 @@ pub fn parse_fsrs_parameters_yaml(yaml: String) -> String {
 
     let params = parse_yaml_to_parameters(&yaml);
     parameters_to_json(&params)
+}
+
+// Фильтрация и сортировка карточек
+#[wasm_bindgen]
+pub fn filter_cards_for_review(
+    cards_json: String,
+    settings_json: String,
+    now_iso: String,
+) -> String {
+    sort_functions::filter_cards_for_review(cards_json, settings_json, now_iso)
+}
+
+#[wasm_bindgen]
+pub fn sort_cards_by_priority(
+    cards_json: String,
+    settings_json: String,
+    now_iso: String,
+) -> String {
+    sort_functions::sort_cards_by_priority(cards_json, settings_json, now_iso)
+}
+
+#[wasm_bindgen]
+pub fn group_cards_by_state(
+    cards_json: String,
+    settings_json: String,
+    now_iso: String,
+) -> String {
+    sort_functions::group_cards_by_state(cards_json, settings_json, now_iso)
+}
+
+#[wasm_bindgen]
+pub fn get_overdue_hours(due_iso: String, now_iso: String) -> String {
+    sort_functions::get_overdue_hours(due_iso, now_iso)
+}
+
+#[wasm_bindgen]
+pub fn get_hours_until_due(due_iso: String, now_iso: String) -> String {
+    sort_functions::get_hours_until_due(due_iso, now_iso)
+}
+
+#[wasm_bindgen]
+pub fn is_card_overdue(due_iso: String, now_iso: String) -> String {
+    sort_functions::is_card_overdue(due_iso, now_iso)
+}
+
+#[wasm_bindgen]
+pub fn get_card_age_days(card_json: String, now_iso: String) -> String {
+    sort_functions::get_card_age_days(card_json, now_iso)
 }
 
 // Оригинальная функция для обратной совместимости

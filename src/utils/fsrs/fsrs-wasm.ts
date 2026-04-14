@@ -18,6 +18,13 @@ import {
 	get_fsrs_yaml_after_review,
 	get_next_review_dates,
 	get_current_time,
+	filter_cards_for_review,
+	sort_cards_by_priority,
+	group_cards_by_state,
+	get_overdue_hours,
+	get_hours_until_due,
+	is_card_overdue,
+	get_card_age_days,
 } from "../../../wasm-lib/pkg/wasm_lib";
 
 /**
@@ -312,4 +319,154 @@ export function createDefaultFSRSCard(filePath: string): ModernFSRSCard {
 		reviews: [],
 		filePath,
 	};
+}
+
+/**
+ * Фильтрует карточки для повторения через WASM
+ */
+export async function filterCardsForReview(
+	cards: ModernFSRSCard[],
+	settings: FSRSSettings,
+	now: Date = new Date(),
+): Promise<ModernFSRSCard[]> {
+	try {
+		const cardsJson = JSON.stringify(cards);
+		const settingsJson = JSON.stringify(settings);
+		const nowStr = now.toISOString();
+
+		const filteredJson = filter_cards_for_review(
+			cardsJson,
+			settingsJson,
+			nowStr,
+		);
+		return JSON.parse(filteredJson);
+	} catch (error) {
+		console.error("Ошибка при фильтрации карточек:", error);
+		return cards; // Возвращаем оригинальный массив в случае ошибки
+	}
+}
+
+/**
+ * Сортирует карточки по приоритету через WASM
+ */
+export async function sortCardsByPriority(
+	cards: ModernFSRSCard[],
+	settings: FSRSSettings,
+	now: Date = new Date(),
+): Promise<ModernFSRSCard[]> {
+	try {
+		const cardsJson = JSON.stringify(cards);
+		const settingsJson = JSON.stringify(settings);
+		const nowStr = now.toISOString();
+
+		const sortedJson = sort_cards_by_priority(
+			cardsJson,
+			settingsJson,
+			nowStr,
+		);
+		return JSON.parse(sortedJson);
+	} catch (error) {
+		console.error("Ошибка при сортировке карточек:", error);
+		return cards; // Возвращаем оригинальный массив в случае ошибки
+	}
+}
+
+/**
+ * Группирует карточки по состоянию через WASM
+ */
+export async function groupCardsByState(
+	cards: ModernFSRSCard[],
+	settings: FSRSSettings,
+	now: Date = new Date(),
+): Promise<{
+	overdue: ModernFSRSCard[];
+	due: ModernFSRSCard[];
+	notDue: ModernFSRSCard[];
+}> {
+	try {
+		const cardsJson = JSON.stringify(cards);
+		const settingsJson = JSON.stringify(settings);
+		const nowStr = now.toISOString();
+
+		const groupedJson = group_cards_by_state(
+			cardsJson,
+			settingsJson,
+			nowStr,
+		);
+		return JSON.parse(groupedJson);
+	} catch (error) {
+		console.error("Ошибка при группировке карточек:", error);
+		return { overdue: [], due: [], notDue: cards }; // Возвращаем дефолтную группировку
+	}
+}
+
+/**
+ * Рассчитывает время просрочки карточки в часах через WASM
+ */
+export function getOverdueHours(dueDate: Date, now: Date = new Date()): number {
+	try {
+		const dueIso = dueDate.toISOString();
+		const nowIso = now.toISOString();
+
+		const hoursJson = get_overdue_hours(dueIso, nowIso);
+		return JSON.parse(hoursJson);
+	} catch (error) {
+		console.error("Ошибка при расчете просрочки:", error);
+		return 0;
+	}
+}
+
+/**
+ * Рассчитывает оставшееся время до повторения карточки в часах через WASM
+ * Возвращает отрицательное значение если карточка просрочена
+ */
+export function getHoursUntilDue(
+	dueDate: Date,
+	now: Date = new Date(),
+): number {
+	try {
+		const dueIso = dueDate.toISOString();
+		const nowIso = now.toISOString();
+
+		const hoursJson = get_hours_until_due(dueIso, nowIso);
+		return JSON.parse(hoursJson);
+	} catch (error) {
+		console.error("Ошибка при расчете оставшегося времени:", error);
+		return 0;
+	}
+}
+
+/**
+ * Проверяет, просрочена ли карточка через WASM
+ */
+export function isCardOverdue(dueDate: Date, now: Date = new Date()): boolean {
+	try {
+		const dueIso = dueDate.toISOString();
+		const nowIso = now.toISOString();
+
+		const overdueJson = is_card_overdue(dueIso, nowIso);
+		return JSON.parse(overdueJson);
+	} catch (error) {
+		console.error("Ошибка при проверке просрочки:", error);
+		return false;
+	}
+}
+
+/**
+ * Рассчитывает возраст карточки в днях через WASM (от первого повторения или создания)
+ */
+export function getCardAgeInDaysRust(
+	card: ModernFSRSCard,
+	now: Date = new Date(),
+): number {
+	try {
+		const cardJson = JSON.stringify(card);
+		const nowIso = now.toISOString();
+
+		const ageJson = get_card_age_days(cardJson, nowIso);
+		return JSON.parse(ageJson);
+	} catch (error) {
+		console.error("Ошибка при расчете возраста карточки:", error);
+		return 0;
+	}
 }

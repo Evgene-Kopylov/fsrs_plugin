@@ -2,6 +2,16 @@
 
 use crate::types::{ModernFsrsCard, FsrsParameters};
 use chrono::{DateTime, Utc};
+use serde::{Serialize, Deserialize};
+
+/// Результат парсинга с информацией об ошибке
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(unused)]
+pub struct ParseResult<T> {
+    pub had_error: bool,
+    pub value: T,
+    pub error_message: Option<String>,
+}
 
 /// Парсит карточку из JSON строки
 pub fn parse_card_from_json(card_json: &str) -> ModernFsrsCard {
@@ -51,7 +61,7 @@ pub fn create_default_card() -> ModernFsrsCard {
     }
 }
 
-/// Создает параметры с дефолтными значениями
+/// Создает дефолтные параметры
 pub fn create_default_parameters() -> FsrsParameters {
     FsrsParameters {
         request_retention: 0.9,
@@ -60,31 +70,37 @@ pub fn create_default_parameters() -> FsrsParameters {
     }
 }
 
-/// Вспомогательная структура для результатов парсинга с обработкой ошибок
-pub struct ParseResult<T> {
-    pub value: T,
-    pub had_error: bool,
-}
-
-impl<T> ParseResult<T> {
-    pub fn new(value: T, had_error: bool) -> Self {
-        ParseResult { value, had_error }
-    }
-}
-
-/// Парсит карточку с сохранением информации об ошибке
+/// Парсит карточку с информацией об ошибке
+#[allow(unused)]
 pub fn parse_card_with_error_info(card_json: &str) -> ParseResult<ModernFsrsCard> {
-    match serde_json::from_str(card_json) {
-        Ok(card) => ParseResult::new(card, false),
-        Err(_) => ParseResult::new(create_default_card(), true),
+    match serde_json::from_str::<ModernFsrsCard>(card_json) {
+        Ok(card) => ParseResult {
+            had_error: false,
+            value: card,
+            error_message: None,
+        },
+        Err(e) => ParseResult {
+            had_error: true,
+            value: create_default_card(),
+            error_message: Some(e.to_string()),
+        },
     }
 }
 
-/// Парсит параметры с сохранением информации об ошибке
+/// Парсит параметры с информацией об ошибке
+#[allow(unused)]
 pub fn parse_parameters_with_error_info(parameters_json: &str) -> ParseResult<FsrsParameters> {
-    match serde_json::from_str(parameters_json) {
-        Ok(params) => ParseResult::new(params, false),
-        Err(_) => ParseResult::new(create_default_parameters(), true),
+    match serde_json::from_str::<FsrsParameters>(parameters_json) {
+        Ok(params) => ParseResult {
+            had_error: false,
+            value: params,
+            error_message: None,
+        },
+        Err(e) => ParseResult {
+            had_error: true,
+            value: create_default_parameters(),
+            error_message: Some(e.to_string()),
+        },
     }
 }
 

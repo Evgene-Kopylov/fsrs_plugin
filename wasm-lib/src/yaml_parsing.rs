@@ -2,7 +2,7 @@
 
 use serde_yaml;
 use chrono;
-use crate::types::{ModernFsrsCard, ReviewSession, FsrsParameters};
+use crate::types::{ModernFsrsCard, FsrsParameters};
 
 /// Парсит YAML строку в карточку FSRS
 pub fn parse_yaml_to_card(yaml_str: &str) -> ModernFsrsCard {
@@ -38,16 +38,7 @@ pub fn parse_yaml_to_parameters(yaml_str: &str) -> FsrsParameters {
     }
 }
 
-/// Преобразует параметры в YAML строку
-pub fn parameters_to_yaml(params: &FsrsParameters) -> String {
-    match serde_yaml::to_string(params) {
-        Ok(yaml) => yaml,
-        Err(e) => {
-            eprintln!("Ошибка сериализации параметров в YAML: {}", e);
-            create_default_parameters_yaml()
-        }
-    }
-}
+
 
 /// Извлекает FSRS карточку из frontmatter Obsidian
 pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<ModernFsrsCard> {
@@ -98,7 +89,7 @@ pub fn create_frontmatter_with_fsrs(card: &ModernFsrsCard) -> String {
 }
 
 /// Создает дефолтную карточку
-fn create_default_card() -> ModernFsrsCard {
+pub fn create_default_card() -> ModernFsrsCard {
     ModernFsrsCard {
         reviews: Vec::new(),
     }
@@ -110,7 +101,7 @@ fn create_default_yaml() -> String {
 }
 
 /// Создает дефолтные параметры
-fn create_default_parameters() -> FsrsParameters {
+pub fn create_default_parameters() -> FsrsParameters {
     FsrsParameters {
         request_retention: 0.9,
         maximum_interval: 36500.0,
@@ -118,44 +109,9 @@ fn create_default_parameters() -> FsrsParameters {
     }
 }
 
-/// Создает дефолтный YAML для параметров
-fn create_default_parameters_yaml() -> String {
-    "request_retention: 0.9\nmaximum_interval: 36500.0\nenable_fuzz: true".to_string()
-}
 
-/// Структура для результатов парсинга с детальной информацией об ошибках
-pub struct YamlParseResult<T> {
-    pub value: T,
-    pub had_error: bool,
-    pub error_message: Option<String>,
-}
 
-impl<T> YamlParseResult<T> {
-    pub fn new(value: T, had_error: bool, error_message: Option<String>) -> Self {
-        YamlParseResult { value, had_error, error_message }
-    }
 
-    pub fn success(value: T) -> Self {
-        Self::new(value, false, None)
-    }
-
-    pub fn error(value: T, error_msg: &str) -> Self {
-        Self::new(value, true, Some(error_msg.to_string()))
-    }
-}
-
-/// Парсит YAML с детальной информацией об ошибке
-pub fn parse_yaml_to_card_with_error(yaml_str: &str) -> YamlParseResult<ModernFsrsCard> {
-    match serde_yaml::from_str::<ModernFsrsCard>(yaml_str) {
-        Ok(card) => YamlParseResult::success(card),
-        Err(e) => {
-            YamlParseResult::error(
-                create_default_card(),
-                &format!("YAML parsing error: {}", e),
-            )
-        }
-    }
-}
 
 /// Валидирует сессии повторений в карточке
 pub fn validate_review_sessions(card: &ModernFsrsCard) -> Vec<String> {
@@ -194,6 +150,7 @@ pub fn validate_review_sessions(card: &ModernFsrsCard) -> Vec<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::types::ReviewSession;
 
     #[test]
     fn test_parse_yaml_to_card_empty() {
@@ -240,18 +197,7 @@ reviews:
         assert!(card.reviews.is_empty());
     }
 
-    #[test]
-    fn test_parse_yaml_to_card_no_reviews_field() {
-        let yaml = r#"{}
-"#;
-        let card = parse_yaml_to_card(yaml);
-        assert!(card.reviews.is_empty());
 
-        // parse_yaml_to_card_with_error также должна быть успешной
-        let result = parse_yaml_to_card_with_error(yaml);
-        assert!(!result.had_error);
-        assert!(result.value.reviews.is_empty());
-    }
 
     #[test]
     fn test_card_to_yaml_and_back() {
@@ -290,21 +236,7 @@ enable_fuzz: false
         assert_eq!(params.enable_fuzz, false);
     }
 
-    #[test]
-    fn test_parameters_to_yaml_and_back() {
-        let original_params = FsrsParameters {
-            request_retention: 0.85,
-            maximum_interval: 1000.0,
-            enable_fuzz: false,
-        };
 
-        let yaml = parameters_to_yaml(&original_params);
-        let parsed_params = parse_yaml_to_parameters(&yaml);
-
-        assert_eq!(parsed_params.request_retention, original_params.request_retention);
-        assert_eq!(parsed_params.maximum_interval, original_params.maximum_interval);
-        assert_eq!(parsed_params.enable_fuzz, original_params.enable_fuzz);
-    }
 
     #[test]
     fn test_extract_fsrs_from_frontmatter() {
@@ -366,42 +298,7 @@ Content"#;
         assert!(!frontmatter.contains("srs:")); // Поле srs больше не должно быть
     }
 
-    #[test]
-    fn test_parse_yaml_to_card_with_error_valid() {
-        let yaml = r#"
-reviews:
-  - date: "2025-01-01T10:00:00Z"
-    rating: "Good"
-    stability: 5.0
-    difficulty: 3.0
-"#;
-        let result = parse_yaml_to_card_with_error(yaml);
 
-        assert!(!result.had_error);
-        assert!(result.error_message.is_none());
-        assert_eq!(result.value.reviews.len(), 1);
-    }
-
-    #[test]
-    fn test_parse_yaml_to_card_with_error_invalid_yaml() {
-        let yaml = "invalid: [yaml";
-        let result = parse_yaml_to_card_with_error(yaml);
-
-        assert!(result.had_error);
-        assert!(result.error_message.unwrap().contains("YAML parsing error"));
-        // Должна вернуться дефолтная карточка
-        assert!(result.value.reviews.is_empty());
-    }
-
-    #[test]
-    fn test_parse_yaml_to_card_with_error_no_reviews() {
-        let yaml = r#"{}
-"#;
-        let result = parse_yaml_to_card_with_error(yaml);
-
-        assert!(!result.had_error);
-        assert!(result.value.reviews.is_empty());
-    }
 
     #[test]
     fn test_validate_review_sessions_valid() {
