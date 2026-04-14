@@ -345,8 +345,8 @@ pub fn get_overdue_hours(due_iso: String, now_iso: String) -> String {
     let result = match (due_iso.parse::<DateTime<Utc>>(), now_iso.parse::<DateTime<Utc>>()) {
         (Ok(due_date), Ok(now)) => {
             let diff_ms = now.timestamp_millis() - due_date.timestamp_millis();
-            let hours = (diff_ms as f64 / (1000.0 * 60.0 * 60.0)).floor().max(0.0);
-            hours
+            
+            (diff_ms as f64 / (1000.0 * 60.0 * 60.0)).floor().max(0.0)
         }
         _ => 0.0,
     };

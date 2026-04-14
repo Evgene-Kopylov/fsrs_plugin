@@ -2,7 +2,6 @@
 
 use rs_fsrs::{FSRS, Rating};
 use chrono::{DateTime, Utc};
-use serde_json;
 use serde::Serialize;
 
 use crate::types::ComputedState;
@@ -35,8 +34,8 @@ pub fn compute_current_state(
     let last_session = card.reviews.last();
 
     // Если есть последняя сессия, обновляем elapsed_days
-    if let Some(last_session) = last_session {
-        if let Ok(last_date) = last_session.date.parse::<DateTime<Utc>>() {
+    if let Some(last_session) = last_session
+        && let Ok(last_date) = last_session.date.parse::<DateTime<Utc>>() {
             let elapsed_days = (now - last_date).num_days().max(0) as i64;
             fsrs_card.elapsed_days = elapsed_days;
             fsrs_card.last_review = last_date;
@@ -60,7 +59,6 @@ pub fn compute_current_state(
             return serde_json::to_string(&computed_state)
                 .unwrap_or_else(|_| "{}".to_string());
         }
-    }
 
     // Если нет сессий, возвращаем дефолтное состояние
     let computed_state = ComputedState {

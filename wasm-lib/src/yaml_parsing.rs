@@ -1,7 +1,5 @@
 // Модуль для парсинга YAML в Rust с использованием serde_yaml
 
-use serde_yaml;
-use chrono;
 use crate::types::{ModernFsrsCard, FsrsParameters, ReviewSession};
 
 #[cfg(target_arch = "wasm32")]

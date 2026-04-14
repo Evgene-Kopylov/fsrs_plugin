@@ -2,8 +2,6 @@
 
 use rs_fsrs::FSRS;
 use chrono::{DateTime, Utc};
-use serde_json;
-use serde_yaml;
 
 use crate::types::{ModernFsrsCard, ReviewSession};
 use crate::conversion::{rating_from_str, rating_to_string, create_fsrs_parameters};
@@ -34,12 +32,11 @@ pub fn review_card(
     );
 
     // Обновляем elapsed_days на основе последней сессии
-    if let Some(last_session) = card.reviews.last() {
-        if let Ok(last_date) = last_session.date.parse::<DateTime<Utc>>() {
+    if let Some(last_session) = card.reviews.last()
+        && let Ok(last_date) = last_session.date.parse::<DateTime<Utc>>() {
             let elapsed_days = (now - last_date).num_days().max(0) as i64;
             fsrs_card.elapsed_days = elapsed_days;
         }
-    }
 
     // Применяем алгоритм FSRS
     let fsrs_params = create_fsrs_parameters(&parameters);

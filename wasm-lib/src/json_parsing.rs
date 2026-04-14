@@ -28,7 +28,7 @@ pub fn parse_card_from_json(card_json: &str) -> ModernFsrsCard {
 /// Парсит параметры алгоритма из JSON строки
 pub fn parse_parameters_from_json(parameters_json: &str) -> FsrsParameters {
     serde_json::from_str(parameters_json)
-        .unwrap_or_else(|_| {
+        .unwrap_or({
             // Дефолтные параметры
             FsrsParameters {
                 request_retention: 0.9,
