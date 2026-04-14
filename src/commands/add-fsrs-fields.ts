@@ -32,8 +32,8 @@ export async function addFsrsFieldsToCurrentFile(app: App): Promise<void> {
 			const existingFrontmatter = match[0];
 			const existingContent = match[1];
 
-			// Проверяем, есть ли уже srs: true
-			if (existingContent && /^srs\s*:/m.test(existingContent)) {
+			// Проверяем, есть ли уже reviews поле (FSRS карточка)
+			if (existingContent && /^reviews\s*:/m.test(existingContent)) {
 				// Уже есть поля FSRS - обновляем их
 				new Notice(
 					"В файле уже есть поля FSRS. Используйте команду повторения для обновления.",

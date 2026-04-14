@@ -56,11 +56,10 @@ pub fn review_card(
     };
 
     card.reviews.push(new_session);
-    card.srs = true;
 
     // Возвращаем обновленную карточку в формате JSON
     serde_json::to_string(&card)
-        .unwrap_or_else(|_| r#"{"srs": true, "reviews": []}"#.to_string())
+        .unwrap_or_else(|_| r#"{"reviews": []}"#.to_string())
 }
 
 /// Получает YAML строку после повторения карточки
@@ -86,14 +85,13 @@ pub fn get_fsrs_yaml_after_review(
     let card: ModernFsrsCard = serde_json::from_str(&updated_card_json)
         .unwrap_or_else(|_| {
             ModernFsrsCard {
-                srs: true,
                 reviews: Vec::new(),
             }
         });
 
     // Сериализуем в YAML
     serde_yaml::to_string(&card)
-        .unwrap_or_else(|_| "srs: true\nreviews: []".to_string())
+        .unwrap_or_else(|_| "reviews: []".to_string())
 }
 
 #[cfg(test)]
@@ -107,12 +105,11 @@ mod tests {
     }
 
     fn create_empty_card_json() -> String {
-        r#"{"srs": true, "reviews": []}"#.to_string()
+        r#"{"reviews": []}"#.to_string()
     }
 
     fn create_card_with_reviews_json() -> String {
         r#"{
-            "srs": true,
             "reviews": [
                 {
                     "date": "2025-01-01T10:00:00Z",
@@ -147,7 +144,6 @@ mod tests {
         assert!(parsed_result.is_ok());
 
         let card = parsed_result.unwrap();
-        assert_eq!(card.srs, true);
         assert_eq!(card.reviews.len(), 1); // Добавилась одна сессия
 
         let new_session = &card.reviews[0];
@@ -182,7 +178,6 @@ mod tests {
         assert!(parsed_result.is_ok());
 
         let card = parsed_result.unwrap();
-        assert_eq!(card.srs, true);
         assert_eq!(card.reviews.len(), 2); // Старая + новая сессия
 
         // Проверяем, что старая сессия сохранилась
@@ -253,7 +248,6 @@ mod tests {
         assert!(parsed_result.is_ok());
 
         let card = parsed_result.unwrap();
-        assert_eq!(card.srs, true);
         assert_eq!(card.reviews.len(), 1); // Добавилась сессия
     }
 
@@ -306,7 +300,7 @@ mod tests {
         );
 
         // Проверяем, что это валидный YAML
-        assert!(yaml_result.contains("srs: true"));
+        assert!(!yaml_result.contains("srs: true"));
         assert!(yaml_result.contains("reviews:"));
         assert!(yaml_result.contains("- date:"));
         assert!(yaml_result.contains("rating: Good"));
@@ -316,7 +310,6 @@ mod tests {
         assert!(parsed_yaml.is_ok(), "Invalid YAML generated: {}", yaml_result);
 
         let card = parsed_yaml.unwrap();
-        assert_eq!(card.srs, true);
         assert_eq!(card.reviews.len(), 1);
         assert_eq!(card.reviews[0].rating, "Good");
     }
@@ -339,7 +332,7 @@ mod tests {
             default_difficulty,
         );
 
-        assert!(yaml_result.contains("srs: true"));
+        assert!(!yaml_result.contains("srs: true"));
         assert!(yaml_result.contains("reviews:"));
 
         // Должно быть два элемента в массиве reviews
@@ -364,7 +357,6 @@ mod tests {
     #[test]
     fn test_review_card_elapsed_days_calculation() {
         let card_json = r#"{
-            "srs": true,
             "reviews": [
                 {
                     "date": "2025-01-01T10:00:00Z",

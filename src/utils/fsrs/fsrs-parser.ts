@@ -5,6 +5,7 @@ import type {
 	ReviewSession,
 	ParseResult,
 } from "../../interfaces/fsrs";
+import { extract_fsrs_from_frontmatter_wrapped } from "../../../wasm-lib/pkg/wasm_lib.js";
 
 /**
  * Парсит frontmatter файла и извлекает карточку в новом формате
@@ -14,27 +15,22 @@ export function parseModernFsrsFromFrontmatter(
 	filePath: string,
 ): ParseResult {
 	try {
-		// Пробуем распарсить YAML
-		const parsed = parseYaml(frontmatter);
-		if (!parsed) {
+		// Проверяем, содержит ли frontmatter поле reviews (базовая проверка перед вызовом WASM)
+		if (!/^reviews\s*:/m.test(frontmatter)) {
 			return {
 				success: false,
 				card: null,
-				error: "Failed to parse YAML",
+				error: "not a FSRS card (missing reviews field)",
 			};
 		}
 
-		// Проверяем наличие флага srs
-		if (parsed.srs !== true) {
-			return {
-				success: false,
-				card: null,
-				error: "srs flag is not true",
-			};
-		}
+		// Используем WASM для извлечения FSRS карточки из frontmatter
+		const cardJson = extract_fsrs_from_frontmatter_wrapped(frontmatter);
 
-		// Проверяем наличие массива reviews
-		if (!parsed.reviews || !Array.isArray(parsed.reviews)) {
+		// Парсим JSON результат из WASM
+		const parsedCard = JSON.parse(cardJson);
+
+		if (!parsedCard.reviews || !Array.isArray(parsedCard.reviews)) {
 			return {
 				success: false,
 				card: null,
@@ -44,7 +40,7 @@ export function parseModernFsrsFromFrontmatter(
 
 		// Валидируем каждую сессию
 		const reviews: ReviewSession[] = [];
-		for (const session of parsed.reviews) {
+		for (const session of parsedCard.reviews) {
 			if (
 				!session.date ||
 				!session.rating ||
@@ -64,7 +60,6 @@ export function parseModernFsrsFromFrontmatter(
 		}
 
 		const card: ModernFSRSCard = {
-			srs: true,
 			reviews,
 			filePath,
 		};

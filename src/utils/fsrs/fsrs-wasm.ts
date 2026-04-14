@@ -41,7 +41,6 @@ export async function computeCardState(
 ): Promise<ComputedCardState> {
 	try {
 		const cardJson = JSON.stringify({
-			srs: card.srs,
 			reviews: card.reviews,
 		});
 
@@ -85,7 +84,6 @@ export async function isCardDue(
 ): Promise<boolean> {
 	try {
 		const cardJson = JSON.stringify({
-			srs: card.srs,
 			reviews: card.reviews,
 		});
 
@@ -117,7 +115,6 @@ export async function getCardRetrievability(
 ): Promise<number> {
 	try {
 		const cardJson = JSON.stringify({
-			srs: card.srs,
 			reviews: card.reviews,
 		});
 
@@ -150,7 +147,6 @@ export async function addReviewSession(
 ): Promise<ModernFSRSCard> {
 	try {
 		const cardJson = JSON.stringify({
-			srs: card.srs,
 			reviews: card.reviews,
 		});
 
@@ -186,7 +182,7 @@ export async function getNewCardYaml(): Promise<string> {
 		return get_fsrs_yaml();
 	} catch (error) {
 		console.error("Ошибка при получении YAML новой карточки:", error);
-		return "srs: true\nreviews: []";
+		return "reviews: []";
 	}
 }
 
@@ -201,7 +197,6 @@ export async function getCardYamlAfterReview(
 ): Promise<string> {
 	try {
 		const cardJson = JSON.stringify({
-			srs: card.srs,
 			reviews: card.reviews,
 		});
 
@@ -218,7 +213,7 @@ export async function getCardYamlAfterReview(
 		);
 	} catch (error) {
 		console.error("Ошибка при получении YAML после повторения:", error);
-		return "srs: true\nreviews: []";
+		return "reviews: []";
 	}
 }
 
@@ -232,7 +227,6 @@ export async function getNextReviewDates(
 ): Promise<Record<FSRSRating, string | null>> {
 	try {
 		const cardJson = JSON.stringify({
-			srs: card.srs,
 			reviews: card.reviews,
 		});
 
@@ -296,7 +290,6 @@ export function validateFSRSCardJSON(json: string): boolean {
 	try {
 		const card = JSON.parse(json);
 		return (
-			typeof card.srs === "boolean" &&
 			Array.isArray(card.reviews) &&
 			card.reviews.every(
 				(session: any) =>
@@ -316,7 +309,6 @@ export function validateFSRSCardJSON(json: string): boolean {
  */
 export function createDefaultFSRSCard(filePath: string): ModernFSRSCard {
 	return {
-		srs: true,
 		reviews: [],
 		filePath,
 	};

@@ -16,7 +16,6 @@ export interface ReviewSession {
 
 // Современная карточка FSRS (новый формат)
 export interface ModernFSRSCard {
-	srs: boolean; // флаг включения SRS
 	reviews: ReviewSession[]; // история сессий повторения
 	filePath: string; // путь к файлу в хранилище Obsidian
 }

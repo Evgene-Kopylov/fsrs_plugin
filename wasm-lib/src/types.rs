@@ -14,9 +14,11 @@ pub struct ReviewSession {
 /// Современная карточка FSRS с reviews
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModernFsrsCard {
-    pub srs: bool,
+    #[serde(default)]
     pub reviews: Vec<ReviewSession>,
 }
+
+
 
 /// Параметры алгоритма FSRS из настроек плагина
 #[derive(Debug, Clone, Serialize, Deserialize)]

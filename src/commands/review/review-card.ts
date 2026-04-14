@@ -54,12 +54,6 @@ export async function reviewCurrentCard(
 
 		const card = parseResult.card;
 
-		// Проверяем, включен ли SRS для этой карточки
-		if (!card.srs) {
-			new Notice("SRS не включен для этой карточки");
-			return;
-		}
-
 		console.log("Карточка для повторения:", card);
 
 		// Показываем модальное окно для выбора оценки
@@ -179,11 +173,6 @@ export async function reviewCurrentCardSimple(app: App): Promise<void> {
 		}
 
 		const card = parseResult.card;
-
-		if (!card.srs) {
-			new Notice("SRS не включен для этой карточки");
-			return;
-		}
 
 		// Используем фиксированную оценку Good
 		const rating: FSRSRating = "Good";

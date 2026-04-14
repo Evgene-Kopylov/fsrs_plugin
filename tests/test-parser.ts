@@ -10,7 +10,6 @@ interface ReviewSession {
 }
 
 interface ModernFSRSCard {
-	srs: boolean;
 	reviews: ReviewSession[];
 	filePath: string;
 }
@@ -180,15 +179,6 @@ function parseModernFsrsFromFrontmatter(
 			};
 		}
 
-		// Проверяем наличие флага srs
-		if (parsed.srs !== true) {
-			return {
-				success: false,
-				card: null,
-				error: "srs flag is not true",
-			};
-		}
-
 		// Проверяем наличие массива reviews
 		if (!parsed.reviews || !Array.isArray(parsed.reviews)) {
 			return {
@@ -220,7 +210,6 @@ function parseModernFsrsFromFrontmatter(
 		}
 
 		const card: ModernFSRSCard = {
-			srs: true,
 			reviews,
 			filePath,
 		};
@@ -250,19 +239,16 @@ function extractFrontmatter(content: string): string | null {
 const testYamlCases = [
 	{
 		name: "Simple YAML with ISO date with colon in timezone",
-		yaml: `srs: true
-reviews:
+		yaml: `reviews:
   - date: 2026-04-12T10:30:00+02:00
     rating: Good
     stability: 2.5
     difficulty: 4.8`,
-		expectedSrs: true,
 		expectedReviewsLength: 1,
 	},
 	{
 		name: "Multiple reviews",
-		yaml: `srs: true
-reviews:
+		yaml: `reviews:
   - date: 2025-05-14T10:00:00
     rating: Good
     stability: 6.5
@@ -271,24 +257,22 @@ reviews:
     rating: Easy
     stability: 3.2
     difficulty: 3.0`,
-		expectedSrs: true,
 		expectedReviewsLength: 2,
 	},
 	{
 		name: "Empty reviews array",
-		yaml: `srs: true
-reviews: []`,
-		expectedSrs: true,
+		yaml: `reviews: []`,
 		expectedReviewsLength: 0,
 	},
 	{
-		name: "No srs flag",
-		yaml: `reviews:
-  - date: 2025-05-14T10:00:00
-    rating: Good
-    stability: 6.5
-    difficulty: 3.2`,
-		expectedSrs: undefined,
+		name: "No reviews field",
+		yaml: `title: Test`,
+		expectedReviewsLength: undefined,
+		shouldFail: true,
+	},
+	{
+		name: "Invalid reviews (not array)",
+		yaml: `reviews: not_an_array`,
 		expectedReviewsLength: undefined,
 		shouldFail: true,
 	},
@@ -308,9 +292,9 @@ async function runYamlTests() {
 			const parsed = parseYaml(testCase.yaml);
 
 			if (testCase.shouldFail) {
-				if (parsed && parsed.srs === true) {
+				if (parsed && parsed.reviews && Array.isArray(parsed.reviews)) {
 					console.log(
-						"❌ FAIL: Expected parse to fail or srs not true, but got:",
+						"❌ FAIL: Expected parse to fail or reviews invalid, but got valid reviews:",
 						parsed,
 					);
 					failed++;
@@ -321,11 +305,6 @@ async function runYamlTests() {
 			} else {
 				if (!parsed) {
 					console.log("❌ FAIL: Parse returned null");
-					failed++;
-				} else if (parsed.srs !== testCase.expectedSrs) {
-					console.log(
-						`❌ FAIL: Expected srs=${testCase.expectedSrs}, got srs=${parsed.srs}`,
-					);
 					failed++;
 				} else if (!Array.isArray(parsed.reviews)) {
 					console.log("❌ FAIL: reviews is not an array");
@@ -396,7 +375,6 @@ async function runTestCards() {
 
 				if (result.success) {
 					console.log(`  ✅ Successfully parsed`);
-					console.log(`     SRS: ${result.card!.srs}`);
 					console.log(`     Reviews: ${result.card!.reviews.length}`);
 					if (result.card!.reviews.length > 0) {
 						const lastReview =

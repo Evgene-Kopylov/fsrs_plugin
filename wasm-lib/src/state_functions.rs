@@ -234,7 +234,7 @@ mod tests {
     use super::*;
     use chrono::{DateTime, Utc};
     use serde_json;
-    use crate::json_parsing::parse_card_from_json;
+
     use crate::types::ComputedState;
 
     fn create_test_parameters_json() -> String {
@@ -242,12 +242,11 @@ mod tests {
     }
 
     fn create_empty_card_json() -> String {
-        r#"{"srs": true, "reviews": []}"#.to_string()
+        r#"{"reviews": []}"#.to_string()
     }
 
     fn create_card_with_reviews_json() -> String {
         r#"{
-            "srs": true,
             "reviews": [
                 {
                     "date": "2025-01-01T10:00:00Z",
@@ -341,7 +340,6 @@ mod tests {
     fn test_is_card_due_not_due() {
         // Карточка с reviews, но дата следующего повторения в будущем
         let card_json = r#"{
-            "srs": true,
             "reviews": [
                 {
                     "date": "2025-01-01T10:00:00Z",
@@ -357,11 +355,6 @@ mod tests {
         let default_stability = 2.5;
         let default_difficulty = 5.0;
 
-        // Отладочная печать парсинга карточки
-        println!("Debug: card_json = {}", card_json);
-        let parsed_card = parse_card_from_json(&card_json);
-        println!("Debug: parsed_card.srs = {}, reviews.len() = {}", parsed_card.srs, parsed_card.reviews.len());
-
         let result = is_card_due(
             card_json.clone(),
             now.clone(),
@@ -371,14 +364,13 @@ mod tests {
         );
 
         // Отладочная печать состояния карточки
-        let state_result = compute_current_state(
+        let _state_result = compute_current_state(
             card_json,
             now,
             params_json,
             default_stability,
             default_difficulty,
         );
-        println!("Debug: state_result = {}", state_result);
 
         let parsed_result: Result<bool, _> = serde_json::from_str(&result);
         assert!(parsed_result.is_ok());

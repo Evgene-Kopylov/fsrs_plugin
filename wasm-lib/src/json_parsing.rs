@@ -9,7 +9,6 @@ pub fn parse_card_from_json(card_json: &str) -> ModernFsrsCard {
         .unwrap_or_else(|_| {
             // Дефолтная карточка при ошибке парсинга
             ModernFsrsCard {
-                srs: true,
                 reviews: Vec::new(),
             }
         })
@@ -36,7 +35,7 @@ pub fn parse_datetime_from_iso(iso_str: &str) -> DateTime<Utc> {
 /// Преобразует карточку в JSON строку
 pub fn card_to_json(card: &ModernFsrsCard) -> String {
     serde_json::to_string(card)
-        .unwrap_or_else(|_| r#"{"srs": true, "reviews": []}"#.to_string())
+        .unwrap_or_else(|_| r#"{"reviews": []}"#.to_string())
 }
 
 /// Преобразует параметры в JSON строку
@@ -48,7 +47,6 @@ pub fn parameters_to_json(parameters: &FsrsParameters) -> String {
 /// Создает карточку с дефолтными значениями
 pub fn create_default_card() -> ModernFsrsCard {
     ModernFsrsCard {
-        srs: true,
         reviews: Vec::new(),
     }
 }
@@ -95,7 +93,7 @@ pub fn get_fsrs_yaml() -> String {
     use serde_yaml;
     let card = create_default_card();
     serde_yaml::to_string(&card)
-        .unwrap_or_else(|_| "srs: true\nreviews: []".to_string())
+        .unwrap_or_else(|_| "reviews: []".to_string())
 }
 
 /// Получает текущее время в формате ISO 8601
@@ -113,7 +111,6 @@ mod tests {
     #[test]
     fn test_parse_card_from_json_valid() {
         let json = r#"{
-            "srs": true,
             "reviews": [
                 {
                     "date": "2025-01-01T10:00:00Z",
@@ -125,7 +122,6 @@ mod tests {
         }"#;
 
         let card = parse_card_from_json(json);
-        assert_eq!(card.srs, true);
         assert_eq!(card.reviews.len(), 1);
         assert_eq!(card.reviews[0].date, "2025-01-01T10:00:00Z");
         assert_eq!(card.reviews[0].rating, "Good");
@@ -138,16 +134,14 @@ mod tests {
         // Невалидный JSON должен вернуть дефолтную карточку
         let json = r#"{invalid json}"#;
         let card = parse_card_from_json(json);
-        assert_eq!(card.srs, true);
         assert!(card.reviews.is_empty());
     }
 
     #[test]
     fn test_parse_card_from_json_missing_fields() {
         // JSON с неполными данными - должен парситься, но с дефолтными значениями
-        let json = r#"{"srs": true}"#;
+        let json = r#"{}"#;
         let card = parse_card_from_json(json);
-        assert_eq!(card.srs, true);
         assert!(card.reviews.is_empty());
     }
 
@@ -200,7 +194,6 @@ mod tests {
     #[test]
     fn test_card_to_json_and_back() {
         let original_card = ModernFsrsCard {
-            srs: true,
             reviews: vec![
                 ReviewSession {
                     date: "2025-01-01T10:00:00Z".to_string(),
@@ -214,7 +207,6 @@ mod tests {
         let json = card_to_json(&original_card);
         let parsed_card = parse_card_from_json(&json);
 
-        assert_eq!(parsed_card.srs, original_card.srs);
         assert_eq!(parsed_card.reviews.len(), original_card.reviews.len());
         assert_eq!(parsed_card.reviews[0].date, original_card.reviews[0].date);
         assert_eq!(parsed_card.reviews[0].rating, original_card.reviews[0].rating);
@@ -241,7 +233,6 @@ mod tests {
     #[test]
     fn test_create_default_card() {
         let card = create_default_card();
-        assert_eq!(card.srs, true);
         assert!(card.reviews.is_empty());
     }
 
@@ -255,11 +246,10 @@ mod tests {
 
     #[test]
     fn test_parse_card_with_error_info_valid() {
-        let json = r#"{"srs": true, "reviews": []}"#;
+        let json = r#"{"reviews": []}"#;
         let result = parse_card_with_error_info(json);
 
         assert!(!result.had_error);
-        assert_eq!(result.value.srs, true);
         assert!(result.value.reviews.is_empty());
     }
 
@@ -270,7 +260,6 @@ mod tests {
 
         assert!(result.had_error);
         // Должна вернуться дефолтная карточка
-        assert_eq!(result.value.srs, true);
         assert!(result.value.reviews.is_empty());
     }
 
@@ -293,7 +282,6 @@ mod tests {
     fn test_get_fsrs_yaml() {
         let yaml = get_fsrs_yaml();
         // YAML должен содержать ожидаемые поля
-        assert!(yaml.contains("srs: true"));
         assert!(yaml.contains("reviews: []"));
     }
 

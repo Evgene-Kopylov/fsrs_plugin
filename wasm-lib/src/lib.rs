@@ -7,6 +7,7 @@ mod fsrs_logic;
 mod json_parsing;
 mod review_functions;
 mod state_functions;
+mod yaml_parsing;
 
 // Функция для получения YAML строки для новой карточки
 #[wasm_bindgen]
@@ -130,6 +131,72 @@ pub fn get_retrievability(
 #[wasm_bindgen]
 pub fn get_current_time() -> String {
     json_parsing::get_current_time()
+}
+
+// Парсит YAML строку в карточку FSRS (JSON строка)
+#[wasm_bindgen]
+pub fn parse_fsrs_yaml(yaml: String) -> String {
+    use crate::yaml_parsing::parse_yaml_to_card;
+    use crate::json_parsing::card_to_json;
+
+    let card = parse_yaml_to_card(&yaml);
+    card_to_json(&card)
+}
+
+// Преобразует JSON карточки в YAML строку
+#[wasm_bindgen]
+pub fn card_to_fsrs_yaml(card_json: String) -> String {
+    use crate::json_parsing::parse_card_from_json;
+    use crate::yaml_parsing::card_to_yaml;
+
+    let card = parse_card_from_json(&card_json);
+    card_to_yaml(&card)
+}
+
+// Извлекает FSRS карточку из frontmatter Obsidian
+#[wasm_bindgen]
+pub fn extract_fsrs_from_frontmatter_wrapped(frontmatter: String) -> String {
+    use crate::yaml_parsing::extract_fsrs_from_frontmatter;
+    use crate::json_parsing::card_to_json;
+    use crate::json_parsing::create_default_card;
+
+    match extract_fsrs_from_frontmatter(&frontmatter) {
+        Some(card) => card_to_json(&card),
+        None => card_to_json(&create_default_card()),
+    }
+}
+
+// Создает frontmatter с FSRS карточкой
+#[wasm_bindgen]
+pub fn create_frontmatter_with_fsrs_wrapped(card_json: String) -> String {
+    use crate::json_parsing::parse_card_from_json;
+    use crate::yaml_parsing::create_frontmatter_with_fsrs;
+
+    let card = parse_card_from_json(&card_json);
+    create_frontmatter_with_fsrs(&card)
+}
+
+// Валидирует сессии повторений в карточке
+#[wasm_bindgen]
+pub fn validate_fsrs_card(card_json: String) -> String {
+    use crate::json_parsing::parse_card_from_json;
+    use crate::yaml_parsing::validate_review_sessions;
+
+
+    let card = parse_card_from_json(&card_json);
+    let errors = validate_review_sessions(&card);
+
+    serde_json::to_string(&errors).unwrap_or_else(|_| "[]".to_string())
+}
+
+// Парсит YAML с параметрами FSRS
+#[wasm_bindgen]
+pub fn parse_fsrs_parameters_yaml(yaml: String) -> String {
+    use crate::yaml_parsing::parse_yaml_to_parameters;
+    use crate::json_parsing::parameters_to_json;
+
+    let params = parse_yaml_to_parameters(&yaml);
+    parameters_to_json(&params)
 }
 
 // Оригинальная функция для обратной совместимости
