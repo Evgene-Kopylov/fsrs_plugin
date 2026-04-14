@@ -28,7 +28,7 @@ export async function addFsrsFieldsToCurrentFile(
 		let newContent = fileContent;
 
 		// Проверяем, есть ли уже frontmatter в файле
-		const frontmatterRegex = /^---\s*$([\s\S]*?)^---\s*$/m;
+		const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
 		const match = frontmatterRegex.exec(fileContent);
 
 		if (match) {
@@ -63,7 +63,9 @@ export async function addFsrsFieldsToCurrentFile(
 				"---\n" + updatedFrontmatterContent + "\n---";
 
 			// Блок кнопки добавляется после frontmatter
-			const afterFrontmatter = fileContent.slice(match[0].length);
+			const afterFrontmatter = fileContent.slice(
+				match.index! + match[0].length,
+			);
 			let buttonBlock = "";
 			if (settings?.auto_add_review_button) {
 				// Проверяем, есть ли уже блок fsrs-review-button в файле

@@ -134,7 +134,7 @@ export default class FsrsPlugin extends Plugin {
 					const content = await this.app.vault.read(file);
 
 					// Ищем frontmatter
-					const frontmatterRegex = /^---\s*$([\s\S]*?)^---\s*$/m;
+					const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
 					const match = frontmatterRegex.exec(content);
 
 					if (match && match[1]) {

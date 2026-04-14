@@ -32,7 +32,7 @@ export async function reviewCurrentCard(
 		const content = await app.vault.read(activeFile);
 
 		// Ищем frontmatter
-		const frontmatterRegex = /^---\s*$([\s\S]*?)^---\s*$/m;
+		const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
 		const match = frontmatterRegex.exec(content);
 
 		if (!match || !match[1]) {
@@ -98,11 +98,17 @@ export async function reviewCurrentCard(
 			updatedCard.reviews,
 		);
 
-		// Заменяем старый frontmatter на новый, сохраняя все остальные поля
-		const newContent = content.replace(
-			frontmatterRegex,
-			"---\n" + updatedYaml + "\n---",
+		// Заменяем старый frontmatter на новый, сохраняя все остальные поля и пустые строки
+		const beforeFrontmatter = content.substring(0, match.index!);
+		const afterFrontmatter = content.substring(
+			match.index! + match[0].length,
 		);
+		const newContent =
+			beforeFrontmatter +
+			"---\n" +
+			updatedYaml +
+			"\n---" +
+			afterFrontmatter;
 
 		// Сохраняем изменения
 		await app.vault.modify(activeFile, newContent);
@@ -155,7 +161,7 @@ export async function reviewCurrentCardSimple(app: App): Promise<void> {
 		const content = await app.vault.read(activeFile);
 
 		// Ищем frontmatter
-		const frontmatterRegex = /^---\s*$([\s\S]*?)^---\s*$/m;
+		const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
 		const match = frontmatterRegex.exec(content);
 
 		if (!match || !match[1]) {
@@ -213,10 +219,17 @@ export async function reviewCurrentCardSimple(app: App): Promise<void> {
 			updatedCard.reviews,
 		);
 
-		const newContent = content.replace(
-			frontmatterRegex,
-			"---\n" + updatedYaml + "\n---",
+		// Заменяем старый frontmatter на новый, сохраняя все остальные поля и пустые строки
+		const beforeFrontmatter = content.substring(0, match.index!);
+		const afterFrontmatter = content.substring(
+			match.index! + match[0].length,
 		);
+		const newContent =
+			beforeFrontmatter +
+			"---\n" +
+			updatedYaml +
+			"\n---" +
+			afterFrontmatter;
 
 		await app.vault.modify(activeFile, newContent);
 		new Notice(`Карточка повторена с оценкой: ${rating}`);
@@ -246,7 +259,7 @@ export async function reviewCardByPath(
 		const content = await app.vault.read(file);
 
 		// Ищем frontmatter
-		const frontmatterRegex = /^---\s*$([\s\S]*?)^---\s*$/m;
+		const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
 		const match = frontmatterRegex.exec(content);
 
 		if (!match || !match[1]) {
@@ -312,11 +325,17 @@ export async function reviewCardByPath(
 			updatedCard.reviews,
 		);
 
-		// Заменяем старый frontmatter на новый, сохраняя все остальные поля
-		const newContent = content.replace(
-			frontmatterRegex,
-			"---\n" + updatedYaml + "\n---",
+		// Заменяем старый frontmatter на новый, сохраняя все остальные поля и пустые строки
+		const beforeFrontmatter = content.substring(0, match.index!);
+		const afterFrontmatter = content.substring(
+			match.index! + match[0].length,
 		);
+		const newContent =
+			beforeFrontmatter +
+			"---\n" +
+			updatedYaml +
+			"\n---" +
+			afterFrontmatter;
 
 		// Сохраняем изменения
 		await app.vault.modify(file, newContent);

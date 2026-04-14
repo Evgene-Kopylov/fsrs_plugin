@@ -95,7 +95,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			}
 
 			const content = await this.plugin.app.vault.read(file);
-			const frontmatterRegex = /^---\s*$([\s\S]*?)^---\s*$/m;
+			const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
 			const match = frontmatterRegex.exec(content);
 
 			if (!match || !match[1]) {
@@ -235,7 +235,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			}
 
 			const content = await this.plugin.app.vault.read(file);
-			const frontmatterRegex = /^---\s*$([\s\S]*?)^---\s*$/m;
+			const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
 			const match = frontmatterRegex.exec(content);
 
 			if (!match || !match[1]) {
@@ -310,7 +310,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			}
 
 			const content = await this.plugin.app.vault.read(file);
-			const frontmatterRegex = /^---\s*$([\s\S]*?)^---\s*$/m;
+			const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
 			const match = frontmatterRegex.exec(content);
 
 			if (!match || !match[1]) {
