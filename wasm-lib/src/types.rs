@@ -16,7 +16,7 @@ pub struct ReviewSession {
 pub struct ModernFsrsCard {
     #[serde(default)]
     pub reviews: Vec<ReviewSession>,
-    #[serde(default, rename = "filePath")]
+    #[serde(default, rename = "filePath", skip_serializing_if = "Option::is_none")]
     pub file_path: Option<String>, // путь к файлу в хранилище Obsidian
 }
 

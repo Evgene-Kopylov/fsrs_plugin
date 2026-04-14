@@ -15,8 +15,16 @@ export function parseModernFsrsFromFrontmatter(
 	filePath: string,
 ): ParseResult {
 	try {
+		console.log(
+			`DEBUG parseModernFsrsFromFrontmatter: filePath=${filePath}, frontmatter length=${frontmatter.length}`,
+		);
+		console.log(
+			`DEBUG frontmatter preview: ${frontmatter.substring(0, 200)}...`,
+		);
+
 		// Проверяем, содержит ли frontmatter поле reviews (базовая проверка перед вызовом WASM)
-		if (!/^reviews\s*:/m.test(frontmatter)) {
+		if (!/reviews\s*:/m.test(frontmatter)) {
+			console.log(`DEBUG: frontmatter does NOT contain reviews field`);
 			return {
 				success: false,
 				card: null,
@@ -25,22 +33,47 @@ export function parseModernFsrsFromFrontmatter(
 		}
 
 		// Используем WASM для извлечения FSRS карточки из frontmatter
-		const cardJson = extract_fsrs_from_frontmatter_wrapped(frontmatter);
+		// WASM ожидает полный frontmatter с ---, поэтому оборачиваем
+		const wrappedFrontmatter = `---\n${frontmatter}\n---`;
+		console.log(
+			`DEBUG: Calling WASM extract_fsrs_from_frontmatter_wrapped with wrapped frontmatter`,
+		);
+		console.log(
+			`DEBUG: wrappedFrontmatter: ${wrappedFrontmatter.substring(0, 200)}...`,
+		);
+		const cardJson =
+			extract_fsrs_from_frontmatter_wrapped(wrappedFrontmatter);
+		console.log(
+			`DEBUG: WASM returned cardJson (length=${cardJson.length}): ${cardJson.substring(0, 200)}...`,
+		);
 
 		// Парсим JSON результат из WASM
+		console.log(`DEBUG: Parsing JSON from WASM result`);
 		const parsedCard = JSON.parse(cardJson);
+		console.log(`DEBUG: Parsed card structure:`, parsedCard);
 
 		if (!parsedCard.reviews || !Array.isArray(parsedCard.reviews)) {
+			console.log(
+				`DEBUG: parsedCard.reviews is missing or not an array:`,
+				parsedCard.reviews,
+			);
 			return {
 				success: false,
 				card: null,
 				error: "reviews array is missing or invalid",
 			};
 		}
+		console.log(
+			`DEBUG: parsedCard.reviews array length: ${parsedCard.reviews.length}`,
+		);
 
 		// Валидируем каждую сессию
+		console.log(`DEBUG: Validating review sessions`);
 		const reviews: ReviewSession[] = [];
-		for (const session of parsedCard.reviews) {
+		for (let i = 0; i < parsedCard.reviews.length; i++) {
+			const session = parsedCard.reviews[i];
+			console.log(`DEBUG: Session ${i}:`, session);
+
 			if (
 				!session.date ||
 				!session.rating ||
@@ -48,6 +81,9 @@ export function parseModernFsrsFromFrontmatter(
 				typeof session.difficulty !== "number"
 			) {
 				console.warn(`Invalid review session in ${filePath}:`, session);
+				console.log(
+					`DEBUG: Session validation failed - missing required fields`,
+				);
 				continue;
 			}
 
@@ -57,13 +93,20 @@ export function parseModernFsrsFromFrontmatter(
 				stability: session.stability,
 				difficulty: session.difficulty,
 			});
+			console.log(`DEBUG: Session ${i} added to reviews`);
 		}
 
+		console.log(
+			`DEBUG: Creating ModernFSRSCard with ${reviews.length} reviews, filePath=${filePath}`,
+		);
 		const card: ModernFSRSCard = {
 			reviews,
 			filePath,
 		};
 
+		console.log(
+			`DEBUG: parseModernFsrsFromFrontmatter SUCCESS for ${filePath}`,
+		);
 		return { success: true, card, error: undefined };
 	} catch (error) {
 		console.error(

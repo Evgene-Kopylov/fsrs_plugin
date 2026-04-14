@@ -42,44 +42,141 @@ pub fn parse_yaml_to_parameters(yaml_str: &str) -> FsrsParameters {
 
 /// Извлекает FSRS карточку из frontmatter Obsidian
 pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<ModernFsrsCard> {
+    #[cfg(target_arch = "wasm32")]
+    console::log_1(&format!("extract_fsrs_from_frontmatter called with frontmatter length: {}", frontmatter.len()).into());
+    #[cfg(not(target_arch = "wasm32"))]
+    eprintln!("extract_fsrs_from_frontmatter called with frontmatter length: {}", frontmatter.len());
+
     // Извлекаем YAML между первым и вторым "---"
     let trimmed = frontmatter.trim();
+    #[cfg(target_arch = "wasm32")]
+    console::log_1(&format!("trimmed frontmatter length: {}", trimmed.len()).into());
+    #[cfg(not(target_arch = "wasm32"))]
+    eprintln!("trimmed frontmatter length: {}", trimmed.len());
+
     let parts: Vec<&str> = trimmed.splitn(3, "---").collect();
+    #[cfg(target_arch = "wasm32")]
+    console::log_1(&format!("parts length: {}", parts.len()).into());
+    #[cfg(not(target_arch = "wasm32"))]
+    eprintln!("parts length: {}", parts.len());
 
     if parts.len() < 3 {
         // Нет закрывающего "---" или недостаточно частей
+        #[cfg(target_arch = "wasm32")]
+        console::log_1(&"Not enough parts (missing closing '---')".into());
+        #[cfg(not(target_arch = "wasm32"))]
+        eprintln!("Not enough parts (missing closing '---')");
         return None;
     }
 
     let yaml_content = parts[1].trim();
+    #[cfg(target_arch = "wasm32")]
+    console::log_1(&format!("yaml_content length: {}", yaml_content.len()).into());
+    #[cfg(target_arch = "wasm32")]
+    console::log_1(&format!("yaml_content first 200 chars: {}", &yaml_content[..yaml_content.len().min(200)]).into());
+    #[cfg(not(target_arch = "wasm32"))]
+    eprintln!("yaml_content length: {}", yaml_content.len());
+    #[cfg(not(target_arch = "wasm32"))]
+    eprintln!("yaml_content first 200 chars: {}", &yaml_content[..yaml_content.len().min(200)]);
 
     if yaml_content.is_empty() {
+        #[cfg(target_arch = "wasm32")]
+        console::log_1(&"yaml_content is empty".into());
+        #[cfg(not(target_arch = "wasm32"))]
+        eprintln!("yaml_content is empty");
         return None;
     }
 
     // Парсим как общее значение YAML
+    #[cfg(target_arch = "wasm32")]
+    console::log_1(&"Parsing YAML with serde_yaml".into());
+    #[cfg(not(target_arch = "wasm32"))]
+    eprintln!("Parsing YAML with serde_yaml");
     let yaml_value: serde_yaml::Value = match serde_yaml::from_str(yaml_content) {
-        Ok(value) => value,
-        Err(_) => return None, // невалидный YAML
+        Ok(value) => {
+            #[cfg(target_arch = "wasm32")]
+            console::log_1(&format!("YAML parsed successfully, type: {:?}", value).into());
+            #[cfg(not(target_arch = "wasm32"))]
+            eprintln!("YAML parsed successfully, type: {:?}", value);
+            value
+        },
+        Err(e) => {
+            #[cfg(target_arch = "wasm32")]
+            console::log_1(&format!("YAML parsing error: {}", e).into());
+            #[cfg(not(target_arch = "wasm32"))]
+            eprintln!("YAML parsing error: {}", e);
+            return None; // невалидный YAML
+        }
     };
 
     // Проверяем, содержит ли YAML поле "reviews"
-    if let serde_yaml::Value::Mapping(mapping) = &yaml_value {
+    #[cfg(target_arch = "wasm32")]
+    console::log_1(&"Checking for 'reviews' field".into());
+    #[cfg(not(target_arch = "wasm32"))]
+    eprintln!("Checking for 'reviews' field");
+    let reviews = if let serde_yaml::Value::Mapping(mapping) = &yaml_value {
         if !mapping.contains_key("reviews") {
+            #[cfg(target_arch = "wasm32")]
+            console::log_1(&"YAML does not contain 'reviews' field".into());
+            #[cfg(not(target_arch = "wasm32"))]
+            eprintln!("YAML does not contain 'reviews' field");
             return None; // нет поля reviews - не FSRS карточка
         }
-    } else {
-        return None; // не mapping
-    }
 
-    // Теперь пытаемся десериализовать в ModernFsrsCard
-    match serde_yaml::from_value(yaml_value) {
-        Ok(card) => Some(card),
-        Err(e) => {
-            eprintln!("Ошибка десериализации YAML в extract_fsrs_from_frontmatter: {}", e);
-            None
+        #[cfg(target_arch = "wasm32")]
+        console::log_1(&"'reviews' field found".into());
+        #[cfg(not(target_arch = "wasm32"))]
+        eprintln!("'reviews' field found");
+        // Извлекаем только поле reviews
+        match mapping.get("reviews") {
+            Some(serde_yaml::Value::Sequence(seq)) => {
+                #[cfg(target_arch = "wasm32")]
+                console::log_1(&format!("reviews is a sequence with {} elements", seq.len()).into());
+                #[cfg(not(target_arch = "wasm32"))]
+                eprintln!("reviews is a sequence with {} elements", seq.len());
+                // Десериализуем reviews
+                match serde_yaml::from_value::<Vec<ReviewSession>>(serde_yaml::Value::Sequence(seq.clone())) {
+                    Ok(reviews) => {
+                        #[cfg(target_arch = "wasm32")]
+                        console::log_1(&format!("Successfully deserialized {} review sessions", reviews.len()).into());
+                        #[cfg(not(target_arch = "wasm32"))]
+                        eprintln!("Successfully deserialized {} review sessions", reviews.len());
+                        reviews
+                    },
+                    Err(e) => {
+                        #[cfg(target_arch = "wasm32")]
+                        console::log_1(&format!("Error deserializing reviews: {}", e).into());
+                        #[cfg(not(target_arch = "wasm32"))]
+                        eprintln!("Error deserializing reviews: {}", e);
+                        return None;
+                    }
+                }
+            }
+            other => {
+                #[cfg(target_arch = "wasm32")]
+                console::log_1(&format!("reviews is not a sequence, type: {:?}", other).into());
+                #[cfg(not(target_arch = "wasm32"))]
+                eprintln!("reviews is not a sequence, type: {:?}", other);
+                return None; // reviews не является массивом
+            }
         }
-    }
+    } else {
+        #[cfg(target_arch = "wasm32")]
+        console::log_1(&"YAML is not a mapping".into());
+        #[cfg(not(target_arch = "wasm32"))]
+        eprintln!("YAML is not a mapping");
+        return None; // не mapping
+    };
+
+    #[cfg(target_arch = "wasm32")]
+    console::log_1(&format!("Creating ModernFsrsCard with {} reviews", reviews.len()).into());
+    #[cfg(not(target_arch = "wasm32"))]
+    eprintln!("Creating ModernFsrsCard with {} reviews", reviews.len());
+    // Создаем карточку с reviews и без file_path (он будет добавлен позже)
+    Some(ModernFsrsCard {
+        reviews,
+        file_path: None,
+    })
 }
 
 /// Создает frontmatter с FSRS карточкой
@@ -377,5 +474,59 @@ Content"#;
         assert_eq!(errors.len(), 2);
         assert!(errors[0].contains("stability out of range"));
         assert!(errors[1].contains("difficulty out of range"));
+    }
+
+    #[test]
+    fn test_extract_fsrs_from_frontmatter_real_example() {
+        // Реальный пример из тестового файла 04-Высокая-стабильность.md
+        let frontmatter = r#"---
+reviews:
+  - date: 2026-04-13T09:00:00+02:00
+    rating: Good
+    stability: 25.8
+    difficulty: 2.3
+---"#;
+
+        let card = extract_fsrs_from_frontmatter(frontmatter).unwrap();
+
+        assert_eq!(card.reviews.len(), 1);
+        assert_eq!(card.reviews[0].date, "2026-04-13T09:00:00+02:00");
+        assert_eq!(card.reviews[0].rating, "Good");
+        assert_eq!(card.reviews[0].stability, 25.8);
+        assert_eq!(card.reviews[0].difficulty, 2.3);
+    }
+
+    #[test]
+    fn test_extract_fsrs_from_frontmatter_with_srs_field() {
+        // Пример с полем srs: true (старый формат, но должен работать)
+        let frontmatter = r#"---
+srs: true
+reviews:
+  - date: 2026-04-13T09:00:00+02:00
+    rating: Good
+    stability: 25.8
+    difficulty: 2.3
+---"#;
+
+        let card = extract_fsrs_from_frontmatter(frontmatter).unwrap();
+
+        assert_eq!(card.reviews.len(), 1);
+        assert_eq!(card.reviews[0].date, "2026-04-13T09:00:00+02:00");
+        assert_eq!(card.reviews[0].rating, "Good");
+        assert_eq!(card.reviews[0].stability, 25.8);
+        assert_eq!(card.reviews[0].difficulty, 2.3);
+    }
+
+    #[test]
+    fn test_extract_fsrs_from_frontmatter_with_srs_and_empty_reviews() {
+        // Пример с полем srs: true и пустым массивом reviews
+        let frontmatter = r#"---
+srs: true
+reviews: []
+---"#;
+
+        let card = extract_fsrs_from_frontmatter(frontmatter).unwrap();
+
+        assert_eq!(card.reviews.len(), 0);
     }
 }

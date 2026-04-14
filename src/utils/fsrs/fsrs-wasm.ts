@@ -47,12 +47,21 @@ export async function computeCardState(
 	now: Date = new Date(),
 ): Promise<ComputedCardState> {
 	try {
+		console.log("DEBUG computeCardState: called", {
+			filePath: card.filePath,
+			reviewsCount: card.reviews.length,
+			now: now.toISOString(),
+		});
+
 		const cardJson = JSON.stringify({
 			reviews: card.reviews,
 		});
 
 		const parametersJson = parametersToJson(settings.parameters);
 		const nowStr = now.toISOString();
+
+		console.log("DEBUG computeCardState: cardJson length", cardJson.length);
+		console.log("DEBUG computeCardState: parametersJson", parametersJson);
 
 		const stateJson = compute_current_state(
 			cardJson,
@@ -62,7 +71,9 @@ export async function computeCardState(
 			settings.default_initial_difficulty,
 		);
 
+		console.log("DEBUG computeCardState: stateJson", stateJson);
 		const state: ComputedCardState = JSON.parse(stateJson);
+		console.log("DEBUG computeCardState: parsed state", state);
 		return state;
 	} catch (error) {
 		console.error("Ошибка при вычислении состояния карточки:", error);
