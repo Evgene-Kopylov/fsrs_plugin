@@ -1,12 +1,16 @@
 import { Notice, App } from "obsidian";
 import { getNewCardYaml } from "../utils/fsrs-helper";
+import type { MyPluginSettings } from "../settings";
 
 /**
  * Добавляет поля FSRS в новый формате (с reviews) в текущий активный файл
  * @param app - Экземпляр приложения Obsidian
  * @returns Promise<void>
  */
-export async function addFsrsFieldsToCurrentFile(app: App): Promise<void> {
+export async function addFsrsFieldsToCurrentFile(
+	app: App,
+	settings?: MyPluginSettings,
+): Promise<void> {
 	try {
 		// Получаем активный файл
 		const activeFile = app.workspace.getActiveFile();
@@ -43,11 +47,30 @@ export async function addFsrsFieldsToCurrentFile(app: App): Promise<void> {
 
 			// Добавляем поля FSRS после существующего frontmatter
 			const afterFrontmatter = fileContent.slice(match[0].length);
+			let buttonBlock = "";
+			if (settings?.auto_add_review_button) {
+				// Проверяем, есть ли уже блок fsrs-review-button в файле
+				if (!fileContent.includes("```fsrs-review-button")) {
+					buttonBlock = "```fsrs-review-button\n```\n";
+				}
+			}
 			newContent =
-				existingFrontmatter + "\n" + fsrsYaml + "\n" + afterFrontmatter;
+				existingFrontmatter +
+				"\n" +
+				fsrsYaml +
+				buttonBlock +
+				afterFrontmatter;
 		} else {
 			// Нет frontmatter - создаем новый с полями FSRS
-			newContent = "---\n" + fsrsYaml + "\n---\n\n" + fileContent;
+			let buttonBlock = "";
+			if (settings?.auto_add_review_button) {
+				// Проверяем, есть ли уже блок fsrs-review-button в файле
+				if (!fileContent.includes("```fsrs-review-button")) {
+					buttonBlock = "```fsrs-review-button\n```\n";
+				}
+			}
+			newContent =
+				"---\n" + fsrsYaml + "\n---\n" + buttonBlock + fileContent;
 		}
 
 		// Сохраняем изменения

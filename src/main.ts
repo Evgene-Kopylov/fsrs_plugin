@@ -1,6 +1,6 @@
 import { Plugin, Notice } from "obsidian";
 import { registerCommands } from "./commands/index";
-import { addFsrsFieldsToCurrentFile } from "./commands/add-fsrs-fields";
+import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from "./commands/add-fsrs-fields";
 import { findFsrsCards } from "./commands/find-fsrs-cards";
 import { reviewCurrentCard, reviewCardByPath } from "./commands/review";
 import { FsrsNowRenderer } from "./ui/fsrs-now-renderer";
@@ -223,7 +223,7 @@ export default class FsrsPlugin extends Plugin {
 	 * Реализация для команды плагина
 	 */
 	async addFsrsFieldsToCurrentFile(): Promise<void> {
-		await addFsrsFieldsToCurrentFile(this.app);
+		await addFsrsFieldsToCurrentFileFunction(this.app, this.settings);
 	}
 
 	/**

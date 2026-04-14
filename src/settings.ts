@@ -29,6 +29,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	show_retrievability: true,
 	show_advanced_stats: false,
 	max_cards_to_show: 30,
+	auto_add_review_button: true,
 
 	// Настройки обновления
 	auto_refresh: true,
@@ -237,6 +238,21 @@ export class SampleSettingTab extends PluginSettingTab {
 							this.plugin.settings.max_cards_to_show = num;
 							await this.plugin.saveSettings();
 						}
+					}),
+			);
+
+		// auto_add_review_button
+		new Setting(containerEl)
+			.setName("Auto Add Review Button")
+			.setDesc(
+				"Automatically insert review button block after frontmatter when adding FSRS fields.",
+			)
+			.addToggle((toggle) =>
+				toggle
+					.setValue(this.plugin.settings.auto_add_review_button)
+					.onChange(async (value) => {
+						this.plugin.settings.auto_add_review_button = value;
+						await this.plugin.saveSettings();
 					}),
 			);
 

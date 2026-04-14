@@ -65,6 +65,9 @@ export interface FSRSSettings {
 	show_advanced_stats: boolean;
 	max_cards_to_show: number;
 
+	// Настройка для автоматического добавления кнопки повторения
+	auto_add_review_button: boolean;
+
 	// Настройки обновления
 	auto_refresh: boolean;
 	refresh_interval: number; // в минутах
