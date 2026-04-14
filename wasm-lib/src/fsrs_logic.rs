@@ -87,8 +87,8 @@ pub fn create_card_from_last_session(
             difficulty: last_session.difficulty,
             elapsed_days: 0, // будет вычислено при следующем повторении
             scheduled_days: interval_days as i64,
-            reps: reps,
-            lapses: lapses,
+            reps,
+            lapses,
             state,
             due: due_date,
             last_review,
