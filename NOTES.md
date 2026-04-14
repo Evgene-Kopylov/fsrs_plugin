@@ -25,3 +25,5 @@
 - [-] Возможно, в main.ts васм записан второй раз в комментарии
 	//# sourceMappingURL=data:application/jso
 > пропало
+
+- [ ] если возможно, держать _base64 рядом а не в main.js
