@@ -147,3 +147,22 @@ export function getCardAgeInDays(card: ModernFSRSCard): number {
 	const diffMs = now.getTime() - firstReviewDate.getTime();
 	return Math.floor(diffMs / (1000 * 60 * 60 * 24));
 }
+
+/**
+ * Рассчитывает количество минут с последнего повторения карточки
+ * Возвращает Infinity, если повторений еще не было
+ */
+export function getMinutesSinceLastReview(
+	card: ModernFSRSCard,
+	now: Date = new Date(),
+): number {
+	if (card.reviews.length === 0) {
+		return Infinity; // Карточка еще не повторялась
+	}
+
+	const lastReviewDate = new Date(
+		card.reviews[card.reviews.length - 1]!.date,
+	);
+	const diffMs = now.getTime() - lastReviewDate.getTime();
+	return Math.floor(diffMs / (1000 * 60));
+}

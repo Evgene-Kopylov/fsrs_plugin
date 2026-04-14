@@ -33,6 +33,7 @@ export {
 	formatTimeUntilDue,
 	describeCardState,
 	getCardAgeInDays,
+	getMinutesSinceLastReview,
 } from "./fsrs-time";
 
 // Экспорт функций генерации HTML

@@ -34,6 +34,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	// Настройки обновления
 	auto_refresh: true,
 	refresh_interval: 5, // 5 минут
+	minimum_review_interval_minutes: 40, // минимальный интервал для досрочного повторения
 
 	// Настройки фильтрации
 	filter_by_folders: [],
@@ -325,6 +326,28 @@ export class SampleSettingTab extends PluginSettingTab {
 						const num = parseInt(value);
 						if (!isNaN(num) && num > 0) {
 							this.plugin.settings.refresh_interval = num;
+							await this.plugin.saveSettings();
+						}
+					}),
+			);
+
+		// minimum_review_interval_minutes
+		new Setting(containerEl)
+			.setName("Minimum Early Review Interval (minutes)")
+			.setDesc(
+				"Minimum minutes before a card can be reviewed early. Set to 0 to allow immediate review.",
+			)
+			.addText((text) =>
+				text
+					.setPlaceholder("40")
+					.setValue(
+						this.plugin.settings.minimum_review_interval_minutes.toString(),
+					)
+					.onChange(async (value) => {
+						const num = parseInt(value);
+						if (!isNaN(num) && num >= 0) {
+							this.plugin.settings.minimum_review_interval_minutes =
+								num;
 							await this.plugin.saveSettings();
 						}
 					}),

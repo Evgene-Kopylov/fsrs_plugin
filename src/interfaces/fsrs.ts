@@ -71,6 +71,7 @@ export interface FSRSSettings {
 	// Настройки обновления
 	auto_refresh: boolean;
 	refresh_interval: number; // в минутах
+	minimum_review_interval_minutes: number; // минимальный интервал для досрочного повторения (40 минут)
 
 	// Настройки фильтрации
 	filter_by_folders: string[];

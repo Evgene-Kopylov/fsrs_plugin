@@ -7,6 +7,8 @@ import {
 	computeCardState,
 	formatLocalDate,
 	updateReviewsInYaml,
+	getMinutesSinceLastReview,
+	getRussianNoun,
 } from "../../utils/fsrs-helper";
 import type { ModernFSRSCard, FSRSRating } from "../../interfaces/fsrs";
 import type MyPlugin from "../../main";
@@ -61,16 +63,34 @@ export async function reviewCurrentCard(
 		const isDue = await isCardDue(card, plugin.settings);
 
 		if (!isDue) {
-			// Карточка не готова к повторению - показываем информацию
-			const state = await computeCardState(card, plugin.settings);
-			const nextDate = new Date(state.due);
-			new Notice(
-				`Карточка уже повторена. Следующее повторение: ${formatLocalDate(nextDate)}`,
-			);
-			return;
+			// Карточка не готова к повторению - проверяем возможность досрочного повторения
+			const minutesSinceLastReview = getMinutesSinceLastReview(card);
+			const minInterval = plugin.settings.minimum_review_interval_minutes;
+
+			if (minutesSinceLastReview >= minInterval) {
+				// Достаточно времени прошло - разрешаем досрочное повторение
+				console.debug(
+					`Карточка не по графику, но разрешено досрочное повторение (прошло ${minutesSinceLastReview} минут, минимум ${minInterval})`,
+				);
+				// Продолжаем показ модального окна
+			} else {
+				// Недостаточно времени прошло - показываем информацию
+				const remainingMinutes = minInterval - minutesSinceLastReview;
+				const state = await computeCardState(card, plugin.settings);
+				const nextDate = new Date(state.due);
+
+				let message = `Карточка уже повторена. `;
+				if (remainingMinutes > 0) {
+					message += `Досрочное повторение возможно через ${remainingMinutes} ${getRussianNoun(remainingMinutes, "минуту", "минуты", "минут")}. `;
+				}
+				message += `Следующее повторение по графику: ${formatLocalDate(nextDate)}`;
+
+				new Notice(message);
+				return;
+			}
 		}
 
-		console.log("Карточка для повторения:", card);
+		console.debug("Карточка для повторения:", card);
 
 		// Показываем модальное окно для выбора оценки
 		const modal = new ReviewModal(app, plugin, card);
@@ -81,7 +101,7 @@ export async function reviewCurrentCard(
 			return;
 		}
 
-		console.log("Выбранная оценка:", rating);
+		console.debug("Выбранная оценка:", rating);
 
 		// Добавляем сессию повторения
 		const updatedCard = await addReviewSession(
@@ -90,7 +110,7 @@ export async function reviewCurrentCard(
 			plugin.settings,
 		);
 
-		console.log("Обновленная карточка:", updatedCard);
+		console.debug("Обновленная карточка:", updatedCard);
 
 		// Обновляем только поле reviews в YAML
 		const updatedYaml = updateReviewsInYaml(
@@ -127,13 +147,13 @@ export async function reviewCurrentCard(
 		}
 
 		new Notice(message);
-		console.log("Карточка успешно обновлена");
+		console.debug("Карточка успешно обновлена");
 
 		// Логируем следующие даты для всех оценок
-		console.log("Следующие даты повторения:");
+		console.debug("Следующие даты повторения:");
 		Object.entries(nextDates).forEach(([rating, date]) => {
 			if (date) {
-				console.log(
+				console.debug(
 					`  ${rating}: ${new Date(date as string).toLocaleString()}`,
 				);
 			}
@@ -288,16 +308,34 @@ export async function reviewCardByPath(
 		const isDue = await isCardDue(card, plugin.settings);
 
 		if (!isDue) {
-			// Карточка не готова к повторению - показываем информацию
-			const state = await computeCardState(card, plugin.settings);
-			const nextDate = new Date(state.due);
-			new Notice(
-				`Карточка уже повторена. Следующее повторение: ${formatLocalDate(nextDate)}`,
-			);
-			return null;
+			// Карточка не готова к повторению - проверяем возможность досрочного повторения
+			const minutesSinceLastReview = getMinutesSinceLastReview(card);
+			const minInterval = plugin.settings.minimum_review_interval_minutes;
+
+			if (minutesSinceLastReview >= minInterval) {
+				// Достаточно времени прошло - разрешаем досрочное повторение
+				console.debug(
+					`Карточка не по графику, но разрешено досрочное повторение (прошло ${minutesSinceLastReview} минут, минимум ${minInterval})`,
+				);
+				// Продолжаем показ модального окна
+			} else {
+				// Недостаточно времени прошло - показываем информацию
+				const remainingMinutes = minInterval - minutesSinceLastReview;
+				const state = await computeCardState(card, plugin.settings);
+				const nextDate = new Date(state.due);
+
+				let message = `Карточка уже повторена. `;
+				if (remainingMinutes > 0) {
+					message += `Досрочное повторение возможно через ${remainingMinutes} ${getRussianNoun(remainingMinutes, "минуту", "минуты", "минут")}. `;
+				}
+				message += `Следующее повторение по графику: ${formatLocalDate(nextDate)}`;
+
+				new Notice(message);
+				return null;
+			}
 		}
 
-		console.log("Карточка для повторения:", card);
+		console.debug("Карточка для повторения:", card);
 
 		// Показываем модальное окно для выбора оценки
 		const modal = new ReviewModal(app, plugin, card);
@@ -308,7 +346,7 @@ export async function reviewCardByPath(
 			return null;
 		}
 
-		console.log("Выбранная оценка:", rating);
+		console.debug("Выбранная оценка:", rating);
 
 		// Добавляем сессию повторения
 		const updatedCard = await addReviewSession(
@@ -317,7 +355,7 @@ export async function reviewCardByPath(
 			plugin.settings,
 		);
 
-		console.log("Обновленная карточка:", updatedCard);
+		console.debug("Обновленная карточка:", updatedCard);
 
 		// Обновляем только поле reviews в YAML
 		const updatedYaml = updateReviewsInYaml(
@@ -354,13 +392,13 @@ export async function reviewCardByPath(
 		}
 
 		new Notice(message);
-		console.log("Карточка успешно обновлена");
+		console.debug("Карточка успешно обновлена");
 
 		// Логируем следующие даты для всех оценок
-		console.log("Следующие даты повторения:");
+		console.debug("Следующие даты повторения:");
 		Object.entries(nextDates).forEach(([rating, date]) => {
 			if (date) {
-				console.log(
+				console.debug(
 					`  ${rating}: ${new Date(date as string).toLocaleString()}`,
 				);
 			}

@@ -5,6 +5,8 @@ import {
 	computeCardState,
 	formatLocalDate,
 	updateReviewsInYaml,
+	getMinutesSinceLastReview,
+	getRussianNoun,
 } from "../utils/fsrs-helper";
 import type FsrsPlugin from "../main";
 import type { ModernFSRSCard, ReviewSession } from "../interfaces/fsrs";
@@ -262,17 +264,37 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			const isDue = await isCardDue(card, this.plugin.settings);
 
 			if (!isDue) {
-				// Карточка уже повторена - показываем информацию
-				const state = await computeCardState(
-					card,
-					this.plugin.settings,
-				);
-				const nextDate = new Date(state.due);
-				new Notice(
-					`Карточка уже повторена. Следующее повторение: ${formatLocalDate(nextDate)}`,
-				);
-				await this.updateButtonState();
-				return;
+				// Карточка не готова к повторению - проверяем возможность досрочного повторения
+				const minutesSinceLastReview = getMinutesSinceLastReview(card);
+				const minInterval =
+					this.plugin.settings.minimum_review_interval_minutes;
+
+				if (minutesSinceLastReview >= minInterval) {
+					// Достаточно времени прошло - разрешаем досрочное повторение
+					console.debug(
+						`Карточка не по графику, но разрешено досрочное повторение (прошло ${minutesSinceLastReview} минут, минимум ${minInterval})`,
+					);
+					// Продолжаем показ модального окна
+				} else {
+					// Недостаточно времени прошло - показываем информацию
+					const remainingMinutes =
+						minInterval - minutesSinceLastReview;
+					const state = await computeCardState(
+						card,
+						this.plugin.settings,
+					);
+					const nextDate = new Date(state.due);
+
+					let message = `Карточка уже повторена. `;
+					if (remainingMinutes > 0) {
+						message += `Досрочное повторение возможно через ${remainingMinutes} ${getRussianNoun(remainingMinutes, "минуту", "минуты", "минут")}. `;
+					}
+					message += `Следующее повторение по графику: ${formatLocalDate(nextDate)}`;
+
+					new Notice(message);
+					await this.updateButtonState();
+					return;
+				}
 			}
 
 			// Карточка готова к повторению - вызываем стандартный ревью
