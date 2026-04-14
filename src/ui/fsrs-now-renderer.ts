@@ -110,7 +110,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 	 */
 	private addEventListeners() {
 		// Обработчики для ссылок на файлы
-		this.container.querySelectorAll(".fsrs-now-link").forEach((link) => {
+		this.container.querySelectorAll(".internal-link").forEach((link) => {
 			link.addEventListener("click", (e) => {
 				e.preventDefault();
 				const filePath = (link as HTMLElement).dataset.filePath;
@@ -119,19 +119,6 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 				}
 			});
 		});
-
-		// Обработчики для кнопок повторения
-		this.container
-			.querySelectorAll(".fsrs-now-review-btn")
-			.forEach((button) => {
-				button.addEventListener("click", async (e) => {
-					e.preventDefault();
-					const filePath = (button as HTMLElement).dataset.filePath;
-					if (filePath) {
-						await this.reviewCard(filePath);
-					}
-				});
-			});
 	}
 
 	/**

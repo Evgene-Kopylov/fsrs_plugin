@@ -9,6 +9,27 @@ import { computeCardState } from "./fsrs-wasm";
 import { getOverdueHours, formatOverdueTime } from "./fsrs-time";
 
 /**
+ * Извлекает имя файла из пути
+ */
+function extractFileName(filePath: string): string {
+	const parts = filePath.split("/");
+	return parts[parts.length - 1] || filePath;
+}
+
+/**
+ * Создает отображаемое имя для карточки
+ * Убирает расширение .md и форматирует для отображения
+ */
+function extractDisplayName(filePath: string): string {
+	const fileName = extractFileName(filePath);
+	// Убираем расширение .md если есть
+	if (fileName.endsWith(".md")) {
+		return fileName.slice(0, -3);
+	}
+	return fileName;
+}
+
+/**
  * Генерирует HTML для одной карточки FSRS
  */
 export function generateCardHTML(
@@ -21,57 +42,40 @@ export function generateCardHTML(
 	const overdueHours = getOverdueHours(new Date(computedState.due), now);
 	const overdueText = formatOverdueTime(overdueHours);
 
-	// Форматируем дату следующего повторения
 	const dueDate = new Date(computedState.due);
 	const dueDateStr = dueDate.toLocaleString();
 
+	const displayName = extractDisplayName(card.filePath);
+
 	let html = `<div class="fsrs-now-card" data-state="${computedState.state}">`;
 	html += `<div class="fsrs-now-card-header">`;
-	html += `<strong>${index + 1}. <a href="#" data-file-path="${
-		card.filePath
-	}" class="internal-link fsrs-now-link">${card.filePath}</a></strong>`;
+	// Используем href с прямым путём к файлу (без [[...]]), чтобы Hover Preview работал
+	html += `<strong>${index + 1}. <a href="${card.filePath}" data-file-path="${card.filePath}" class="internal-link">${displayName}</a></strong>`;
 	html += `</div>`;
 	html += `<div class="fsrs-now-card-content">`;
 	html += `<small>`;
 
-	// Основная информация
 	html += `<span class="fsrs-now-field"><strong>Просрочено:</strong> ${overdueText}</span><br>`;
 	html += `<span class="fsrs-now-field"><strong>Состояние:</strong> ${computedState.state}`;
 	html += ` | <strong>Повторений:</strong> ${card.reviews.length}`;
 	html += `</span><br>`;
 
-	// Статистика (если включена в настройках)
 	if (settings.show_stability) {
-		html += `<span class="fsrs-now-field"><strong>Стабильность:</strong> ${computedState.stability.toFixed(
-			2,
-		)}</span><br>`;
+		html += `<span class="fsrs-now-field"><strong>Стабильность:</strong> ${computedState.stability.toFixed(2)}</span><br>`;
 	}
-
 	if (settings.show_difficulty) {
-		html += `<span class="fsrs-now-field"><strong>Сложность:</strong> ${computedState.difficulty.toFixed(
-			2,
-		)}</span><br>`;
+		html += `<span class="fsrs-now-field"><strong>Сложность:</strong> ${computedState.difficulty.toFixed(2)}</span><br>`;
 	}
-
 	if (settings.show_retrievability) {
-		html += `<span class="fsrs-now-field"><strong>Извлекаемость:</strong> ${(
-			computedState.retrievability * 100
-		).toFixed(1)}%</span><br>`;
+		html += `<span class="fsrs-now-field"><strong>Извлекаемость:</strong> ${(computedState.retrievability * 100).toFixed(1)}%</span><br>`;
 	}
-
-	// Расширенная статистика (если включена)
 	if (settings.show_advanced_stats) {
 		html += `<span class="fsrs-now-field"><strong>Прошло дней:</strong> ${computedState.elapsed_days}`;
 		html += ` | <strong>Запланировано:</strong> ${computedState.scheduled_days}</span><br>`;
 		html += `<span class="fsrs-now-field"><strong>Всего повторений:</strong> ${computedState.reps}`;
 		html += ` | <strong>Ошибок:</strong> ${computedState.lapses}</span><br>`;
 	}
-
-	// Дата следующего повторения
 	html += `<span class="fsrs-now-field"><strong>Дата повторения:</strong> ${dueDateStr}</span><br>`;
-
-	// Кнопка повторения
-	html += `<button class="fsrs-now-review-btn" data-file-path="${card.filePath}">Повторить</button><br>`;
 
 	html += `</small>`;
 	html += `</div>`;
