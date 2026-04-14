@@ -2,14 +2,28 @@
 
 use serde_yaml;
 use chrono;
-use crate::types::{ModernFsrsCard, FsrsParameters};
+use crate::types::{ModernFsrsCard, FsrsParameters, ReviewSession};
+
+#[cfg(target_arch = "wasm32")]
+#[allow(unused_imports)]
+use web_sys::console;
+
+/// Макрос для логирования, работающий как в WASM, так и в нативных тестах
+macro_rules! log_debug {
+    ($($arg:tt)*) => {
+        #[cfg(target_arch = "wasm32")]
+        web_sys::console::log_1(&format!($($arg)*).into());
+        #[cfg(not(target_arch = "wasm32"))]
+        eprintln!($($arg)*);
+    };
+}
 
 /// Парсит YAML строку в карточку FSRS
 pub fn parse_yaml_to_card(yaml_str: &str) -> ModernFsrsCard {
     match serde_yaml::from_str::<ModernFsrsCard>(yaml_str) {
         Ok(card) => card,
         Err(e) => {
-            eprintln!("Ошибка парсинга YAML: {}", e);
+            log_debug!("Ошибка парсинга YAML: {}", e);
             create_default_card()
         }
     }
@@ -20,7 +34,7 @@ pub fn card_to_yaml(card: &ModernFsrsCard) -> String {
     match serde_yaml::to_string(card) {
         Ok(yaml) => yaml,
         Err(e) => {
-            eprintln!("Ошибка сериализации карточки в YAML: {}", e);
+            log_debug!("Ошибка сериализации карточки в YAML: {}", e);
             create_default_yaml()
         }
     }
@@ -31,147 +45,88 @@ pub fn parse_yaml_to_parameters(yaml_str: &str) -> FsrsParameters {
     match serde_yaml::from_str::<FsrsParameters>(yaml_str) {
         Ok(params) => params,
         Err(e) => {
-            eprintln!("Ошибка парсинга параметров YAML: {}", e);
+            log_debug!("Ошибка парсинга параметров YAML: {}", e);
             // Возвращаем дефолтные параметры
             create_default_parameters()
         }
     }
 }
 
-
-
 /// Извлекает FSRS карточку из frontmatter Obsidian
 pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<ModernFsrsCard> {
-    #[cfg(target_arch = "wasm32")]
-    console::log_1(&format!("extract_fsrs_from_frontmatter called with frontmatter length: {}", frontmatter.len()).into());
-    #[cfg(not(target_arch = "wasm32"))]
-    eprintln!("extract_fsrs_from_frontmatter called with frontmatter length: {}", frontmatter.len());
+    log_debug!("extract_fsrs_from_frontmatter called with frontmatter length: {}", frontmatter.len());
 
     // Извлекаем YAML между первым и вторым "---"
     let trimmed = frontmatter.trim();
-    #[cfg(target_arch = "wasm32")]
-    console::log_1(&format!("trimmed frontmatter length: {}", trimmed.len()).into());
-    #[cfg(not(target_arch = "wasm32"))]
-    eprintln!("trimmed frontmatter length: {}", trimmed.len());
+    log_debug!("trimmed frontmatter length: {}", trimmed.len());
 
     let parts: Vec<&str> = trimmed.splitn(3, "---").collect();
-    #[cfg(target_arch = "wasm32")]
-    console::log_1(&format!("parts length: {}", parts.len()).into());
-    #[cfg(not(target_arch = "wasm32"))]
-    eprintln!("parts length: {}", parts.len());
+    log_debug!("parts length: {}", parts.len());
 
     if parts.len() < 3 {
         // Нет закрывающего "---" или недостаточно частей
-        #[cfg(target_arch = "wasm32")]
-        console::log_1(&"Not enough parts (missing closing '---')".into());
-        #[cfg(not(target_arch = "wasm32"))]
-        eprintln!("Not enough parts (missing closing '---')");
+        log_debug!("Not enough parts (missing closing '---')");
         return None;
     }
 
     let yaml_content = parts[1].trim();
-    #[cfg(target_arch = "wasm32")]
-    console::log_1(&format!("yaml_content length: {}", yaml_content.len()).into());
-    #[cfg(target_arch = "wasm32")]
-    console::log_1(&format!("yaml_content first 200 chars: {}", &yaml_content[..yaml_content.len().min(200)]).into());
-    #[cfg(not(target_arch = "wasm32"))]
-    eprintln!("yaml_content length: {}", yaml_content.len());
-    #[cfg(not(target_arch = "wasm32"))]
-    eprintln!("yaml_content first 200 chars: {}", &yaml_content[..yaml_content.len().min(200)]);
+    log_debug!("yaml_content length: {}", yaml_content.len());
+    log_debug!("yaml_content first 200 chars: {}", &yaml_content[..yaml_content.len().min(200)]);
 
     if yaml_content.is_empty() {
-        #[cfg(target_arch = "wasm32")]
-        console::log_1(&"yaml_content is empty".into());
-        #[cfg(not(target_arch = "wasm32"))]
-        eprintln!("yaml_content is empty");
+        log_debug!("yaml_content is empty");
         return None;
     }
 
     // Парсим как общее значение YAML
-    #[cfg(target_arch = "wasm32")]
-    console::log_1(&"Parsing YAML with serde_yaml".into());
-    #[cfg(not(target_arch = "wasm32"))]
-    eprintln!("Parsing YAML with serde_yaml");
+    log_debug!("Parsing YAML with serde_yaml");
     let yaml_value: serde_yaml::Value = match serde_yaml::from_str(yaml_content) {
         Ok(value) => {
-            #[cfg(target_arch = "wasm32")]
-            console::log_1(&format!("YAML parsed successfully, type: {:?}", value).into());
-            #[cfg(not(target_arch = "wasm32"))]
-            eprintln!("YAML parsed successfully, type: {:?}", value);
+            log_debug!("YAML parsed successfully, type: {:?}", value);
             value
         },
         Err(e) => {
-            #[cfg(target_arch = "wasm32")]
-            console::log_1(&format!("YAML parsing error: {}", e).into());
-            #[cfg(not(target_arch = "wasm32"))]
-            eprintln!("YAML parsing error: {}", e);
+            log_debug!("YAML parsing error: {}", e);
             return None; // невалидный YAML
         }
     };
 
     // Проверяем, содержит ли YAML поле "reviews"
-    #[cfg(target_arch = "wasm32")]
-    console::log_1(&"Checking for 'reviews' field".into());
-    #[cfg(not(target_arch = "wasm32"))]
-    eprintln!("Checking for 'reviews' field");
+    log_debug!("Checking for 'reviews' field");
     let reviews = if let serde_yaml::Value::Mapping(mapping) = &yaml_value {
         if !mapping.contains_key("reviews") {
-            #[cfg(target_arch = "wasm32")]
-            console::log_1(&"YAML does not contain 'reviews' field".into());
-            #[cfg(not(target_arch = "wasm32"))]
-            eprintln!("YAML does not contain 'reviews' field");
+            log_debug!("YAML does not contain 'reviews' field");
             return None; // нет поля reviews - не FSRS карточка
         }
 
-        #[cfg(target_arch = "wasm32")]
-        console::log_1(&"'reviews' field found".into());
-        #[cfg(not(target_arch = "wasm32"))]
-        eprintln!("'reviews' field found");
+        log_debug!("'reviews' field found");
         // Извлекаем только поле reviews
         match mapping.get("reviews") {
             Some(serde_yaml::Value::Sequence(seq)) => {
-                #[cfg(target_arch = "wasm32")]
-                console::log_1(&format!("reviews is a sequence with {} elements", seq.len()).into());
-                #[cfg(not(target_arch = "wasm32"))]
-                eprintln!("reviews is a sequence with {} elements", seq.len());
+                log_debug!("reviews is a sequence with {} elements", seq.len());
                 // Десериализуем reviews
                 match serde_yaml::from_value::<Vec<ReviewSession>>(serde_yaml::Value::Sequence(seq.clone())) {
                     Ok(reviews) => {
-                        #[cfg(target_arch = "wasm32")]
-                        console::log_1(&format!("Successfully deserialized {} review sessions", reviews.len()).into());
-                        #[cfg(not(target_arch = "wasm32"))]
-                        eprintln!("Successfully deserialized {} review sessions", reviews.len());
+                        log_debug!("Successfully deserialized {} review sessions", reviews.len());
                         reviews
                     },
                     Err(e) => {
-                        #[cfg(target_arch = "wasm32")]
-                        console::log_1(&format!("Error deserializing reviews: {}", e).into());
-                        #[cfg(not(target_arch = "wasm32"))]
-                        eprintln!("Error deserializing reviews: {}", e);
+                        log_debug!("Error deserializing reviews: {}", e);
                         return None;
                     }
                 }
             }
             other => {
-                #[cfg(target_arch = "wasm32")]
-                console::log_1(&format!("reviews is not a sequence, type: {:?}", other).into());
-                #[cfg(not(target_arch = "wasm32"))]
-                eprintln!("reviews is not a sequence, type: {:?}", other);
+                log_debug!("reviews is not a sequence, type: {:?}", other);
                 return None; // reviews не является массивом
             }
         }
     } else {
-        #[cfg(target_arch = "wasm32")]
-        console::log_1(&"YAML is not a mapping".into());
-        #[cfg(not(target_arch = "wasm32"))]
-        eprintln!("YAML is not a mapping");
+        log_debug!("YAML is not a mapping");
         return None; // не mapping
     };
 
-    #[cfg(target_arch = "wasm32")]
-    console::log_1(&format!("Creating ModernFsrsCard with {} reviews", reviews.len()).into());
-    #[cfg(not(target_arch = "wasm32"))]
-    eprintln!("Creating ModernFsrsCard with {} reviews", reviews.len());
+    log_debug!("Creating ModernFsrsCard with {} reviews", reviews.len());
     // Создаем карточку с reviews и без file_path (он будет добавлен позже)
     Some(ModernFsrsCard {
         reviews,
@@ -206,10 +161,6 @@ pub fn create_default_parameters() -> FsrsParameters {
         enable_fuzz: true,
     }
 }
-
-
-
-
 
 /// Валидирует сессии повторений в карточке
 pub fn validate_review_sessions(card: &ModernFsrsCard) -> Vec<String> {
@@ -295,8 +246,6 @@ reviews:
         assert!(card.reviews.is_empty());
     }
 
-
-
     #[test]
     fn test_card_to_yaml_and_back() {
         let original_card = ModernFsrsCard {
@@ -334,8 +283,6 @@ enable_fuzz: false
         assert_eq!(params.maximum_interval, 1000.0);
         assert_eq!(params.enable_fuzz, false);
     }
-
-
 
     #[test]
     fn test_extract_fsrs_from_frontmatter() {
@@ -397,8 +344,6 @@ Content"#;
         assert!(frontmatter.contains("rating: Good"));
         assert!(!frontmatter.contains("srs:")); // Поле srs больше не должно быть
     }
-
-
 
     #[test]
     fn test_validate_review_sessions_valid() {
