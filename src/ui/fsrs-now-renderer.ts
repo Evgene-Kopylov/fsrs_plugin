@@ -119,6 +119,18 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 				}
 			});
 		});
+
+		// Обработчики для строк таблицы (клик на всю строку)
+		this.container.querySelectorAll(".fsrs-now-row").forEach((row) => {
+			row.addEventListener("click", (e) => {
+				// Чтобы не конфликтовать с кликом по ссылке
+				if ((e.target as HTMLElement).tagName === "A") return;
+				const filePath = (row as HTMLElement).dataset.filePath;
+				if (filePath) {
+					this.openFile(filePath);
+				}
+			});
+		});
 	}
 
 	/**

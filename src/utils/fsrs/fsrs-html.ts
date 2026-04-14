@@ -1,4 +1,4 @@
-// Генерация HTML для отображения карточек FSRS
+// Генерация HTML для табличного отображения карточек FSRS в блоке fsrs-now
 
 import type {
 	ModernFSRSCard,
@@ -22,15 +22,11 @@ function extractFileName(filePath: string): string {
  */
 function extractDisplayName(filePath: string): string {
 	const fileName = extractFileName(filePath);
-	// Убираем расширение .md если есть
-	if (fileName.endsWith(".md")) {
-		return fileName.slice(0, -3);
-	}
-	return fileName;
+	return fileName.endsWith(".md") ? fileName.slice(0, -3) : fileName;
 }
 
 /**
- * Генерирует HTML для одной карточки FSRS
+ * Заглушка для обратной совместимости (используется в других местах плагина)
  */
 export function generateCardHTML(
 	card: ModernFSRSCard,
@@ -39,53 +35,13 @@ export function generateCardHTML(
 	settings: FSRSSettings,
 	now: Date = new Date(),
 ): string {
-	const overdueHours = getOverdueHours(new Date(computedState.due), now);
-	const overdueText = formatOverdueTime(overdueHours);
-
-	const dueDate = new Date(computedState.due);
-	const dueDateStr = dueDate.toLocaleString();
-
-	const displayName = extractDisplayName(card.filePath);
-
-	let html = `<div class="fsrs-now-card" data-state="${computedState.state}">`;
-	html += `<div class="fsrs-now-card-header">`;
-	// Используем href с прямым путём к файлу (без [[...]]), чтобы Hover Preview работал
-	html += `<strong>${index + 1}. <a href="${card.filePath}" data-file-path="${card.filePath}" class="internal-link">${displayName}</a></strong>`;
-	html += `</div>`;
-	html += `<div class="fsrs-now-card-content">`;
-	html += `<small>`;
-
-	html += `<span class="fsrs-now-field"><strong>Просрочено:</strong> ${overdueText}</span><br>`;
-	html += `<span class="fsrs-now-field"><strong>Состояние:</strong> ${computedState.state}`;
-	html += ` | <strong>Повторений:</strong> ${card.reviews.length}`;
-	html += `</span><br>`;
-
-	if (settings.show_stability) {
-		html += `<span class="fsrs-now-field"><strong>Стабильность:</strong> ${computedState.stability.toFixed(2)}</span><br>`;
-	}
-	if (settings.show_difficulty) {
-		html += `<span class="fsrs-now-field"><strong>Сложность:</strong> ${computedState.difficulty.toFixed(2)}</span><br>`;
-	}
-	if (settings.show_retrievability) {
-		html += `<span class="fsrs-now-field"><strong>Извлекаемость:</strong> ${(computedState.retrievability * 100).toFixed(1)}%</span><br>`;
-	}
-	if (settings.show_advanced_stats) {
-		html += `<span class="fsrs-now-field"><strong>Прошло дней:</strong> ${computedState.elapsed_days}`;
-		html += ` | <strong>Запланировано:</strong> ${computedState.scheduled_days}</span><br>`;
-		html += `<span class="fsrs-now-field"><strong>Всего повторений:</strong> ${computedState.reps}`;
-		html += ` | <strong>Ошибок:</strong> ${computedState.lapses}</span><br>`;
-	}
-	html += `<span class="fsrs-now-field"><strong>Дата повторения:</strong> ${dueDateStr}</span><br>`;
-
-	html += `</small>`;
-	html += `</div>`;
-	html += `</div><br>`;
-
-	return html;
+	// Возвращаем пустую строку, так как карточки теперь отображаются таблицей
+	// Эта функция остается для совместимости с другими частями кода
+	return "";
 }
 
 /**
- * Генерирует полный HTML для блока fsrs-now
+ * Генерирует HTML таблицы для списка карточек
  */
 export async function generateFsrsNowHTML(
 	cards: ModernFSRSCard[],
@@ -95,38 +51,105 @@ export async function generateFsrsNowHTML(
 	const maxCardsToShow = settings.max_cards_to_show || 30;
 	const cardsToShow = cards.slice(0, maxCardsToShow);
 
+	// Для каждой карточки заранее получаем computedState (асинхронно)
+	const cardsWithState: { card: ModernFSRSCard; state: ComputedCardState }[] =
+		[];
+	for (const card of cardsToShow) {
+		try {
+			const state = await computeCardState(card, settings, now);
+			cardsWithState.push({ card, state });
+		} catch (error) {
+			console.error(
+				`Ошибка вычисления состояния для ${card.filePath}:`,
+				error,
+			);
+			// Добавляем fallback-состояние
+			cardsWithState.push({
+				card,
+				state: {
+					due: now.toISOString(),
+					stability: 0,
+					difficulty: 0,
+					state: "Review",
+					elapsed_days: 0,
+					scheduled_days: 0,
+					reps: 0,
+					lapses: 0,
+					retrievability: 0,
+				},
+			});
+		}
+	}
+
 	let html = `<div class="fsrs-now-container">`;
 	html += `<h4>Карточки для повторения (${cards.length})</h4>`;
 	html += `<small>Обновлено: ${now.toLocaleString()}</small><br><br>`;
 
-	for (let i = 0; i < cardsToShow.length; i++) {
-		const card = cardsToShow[i];
-		if (!card) continue;
-		try {
-			const computedState = await computeCardState(card, settings, now);
-			html += generateCardHTML(card, computedState, i, settings, now);
-		} catch (error) {
-			console.error(
-				`Ошибка при генерации HTML для карточки ${card.filePath}:`,
-				error,
-			);
-			html += `<div class="fsrs-now-card fsrs-now-error">`;
-			html += `<strong>${i + 1}. ${card.filePath}</strong><br>`;
-			html += `<small>Ошибка при загрузке карточки</small>`;
-			html += `</div><br>`;
+	// Начинаем таблицу
+	html += `<table class="fsrs-now-table">`;
+	html += `<thead>`;
+	html += `<tr>`;
+	html += `<th>#</th>`;
+	html += `<th>Файл</th>`;
+	html += `<th>Повторений</th>`;
+	html += `<th>Просрочка</th>`;
+
+	// Колонки со статистикой показываются в зависимости от настроек
+	if (settings.show_stability) {
+		html += `<th>Стабильность</th>`;
+	}
+	if (settings.show_difficulty) {
+		html += `<th>Сложность</th>`;
+	}
+	// Извлекаемость пока не добавляем в таблицу для компактности
+	// if (settings.show_retrievability) { ... }
+
+	html += `<th>Дата повторения</th>`;
+	html += `</tr>`;
+	html += `</thead>`;
+	html += `<tbody>`;
+
+	// Заполняем строки таблицы
+	for (let i = 0; i < cardsWithState.length; i++) {
+		const cardState = cardsWithState[i];
+		if (!cardState) continue;
+		const { card, state } = cardState;
+		const displayName = extractDisplayName(card.filePath);
+		const overdueHours = getOverdueHours(new Date(state.due), now);
+		const overdueText = formatOverdueTime(overdueHours);
+		const dueDate = new Date(state.due);
+		const dueDateStr = dueDate.toLocaleString();
+
+		html += `<tr class="fsrs-now-row" data-file-path="${card.filePath}">`;
+		html += `<td>${i + 1}</td>`;
+		// Ссылка на файл
+		html += `<td><a href="${card.filePath}" data-file-path="${card.filePath}" class="internal-link">${displayName}</a></td>`;
+		html += `<td>${card.reviews.length}</td>`;
+		html += `<td>${overdueText}</td>`;
+
+		// Колонки статистики
+		if (settings.show_stability) {
+			html += `<td>${state.stability.toFixed(2)}</td>`;
 		}
+		if (settings.show_difficulty) {
+			html += `<td>${state.difficulty.toFixed(2)}</td>`;
+		}
+
+		html += `<td>${dueDateStr}</td>`;
+		html += `</tr>`;
 	}
 
+	html += `</tbody>`;
+	html += `</table>`;
+
+	// Если карточек больше, чем можно показать
 	if (cards.length > maxCardsToShow) {
 		const hiddenCount = cards.length - maxCardsToShow;
-		html += `<div class="fsrs-now-info">`;
-		html += `<small>Показано: ${maxCardsToShow} из ${cards.length} карточек (${hiddenCount} скрыто)</small>`;
-		html += `</div>`;
+		html += `<div class="fsrs-now-info"><small>Показано: ${maxCardsToShow} из ${cards.length} карточек (${hiddenCount} скрыто)</small></div>`;
 	}
 
-	html += `<div class="fsrs-now-footer">`;
-	html += `<small>Для обновления списка выполните команду "Найти карточки для повторения"</small>`;
-	html += `</div>`;
+	// Футер с инструкцией
+	html += `<div class="fsrs-now-footer"><small>Для обновления списка выполните команду "Найти карточки для повторения"</small></div>`;
 	html += `</div>`;
 
 	return html;
@@ -136,12 +159,11 @@ export async function generateFsrsNowHTML(
  * Генерирует HTML для пустого списка карточек
  */
 export function generateEmptyStateHTML(): string {
-	let html = `<div class="fsrs-now-container">`;
-	html += `<h4>Карточки для повторения</h4>`;
-	html += `<div class="fsrs-now-empty">`;
-	html += `<p>Нет карточки для повторения.</p>`;
-	html += `<small>Используйте команду "Добавить FSRS поля" для создания новых карточек.</small>`;
-	html += `</div>`;
-	html += `</div>`;
-	return html;
+	return `<div class="fsrs-now-container">
+		<h4>Карточки для повторения</h4>
+		<div class="fsrs-now-empty">
+			<p>Нет карточек для повторения.</p>
+			<small>Используйте команду "Добавить FSRS поля" для создания новых карточек.</small>
+		</div>
+	</div>`;
 }

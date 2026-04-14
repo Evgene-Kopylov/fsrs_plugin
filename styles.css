@@ -248,6 +248,31 @@ If your plugin does not need CSS, delete this file.
 	transform: translateY(0);
 }
 
+/* Таблица для блока fsrs-now */
+.fsrs-now-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.9em;
+}
+.fsrs-now-table th,
+.fsrs-now-table td {
+	border: 1px solid var(--background-modifier-border);
+	padding: 6px 8px;
+	text-align: left;
+	vertical-align: top;
+}
+.fsrs-now-table th {
+	background-color: var(--background-secondary);
+	font-weight: 600;
+}
+.fsrs-now-table tr:hover {
+	background-color: var(--background-modifier-hover);
+	cursor: pointer;
+}
+.fsrs-now-table a.internal-link {
+	cursor: pointer;
+}
+
 .fsrs-delete-button:disabled {
 	background: var(--background-modifier-border);
 	color: var(--text-muted);
