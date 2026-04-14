@@ -40,3 +40,102 @@ pub fn create_fsrs_parameters(params: &FsrsParameters) -> Parameters {
     default_params.enable_fuzz = params.enable_fuzz;
     default_params
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rs_fsrs::{Parameters, Rating, State};
+
+    #[test]
+    fn test_rating_from_str_valid() {
+        assert_eq!(rating_from_str("Again"), Rating::Again);
+        assert_eq!(rating_from_str("Hard"), Rating::Hard);
+        assert_eq!(rating_from_str("Good"), Rating::Good);
+        assert_eq!(rating_from_str("Easy"), Rating::Easy);
+    }
+
+    #[test]
+    fn test_rating_from_str_invalid() {
+        // Для некорректных строк возвращается Good как значение по умолчанию
+        assert_eq!(rating_from_str(""), Rating::Good);
+        assert_eq!(rating_from_str("Unknown"), Rating::Good);
+        assert_eq!(rating_from_str("AGAIN"), Rating::Good); // чувствительность к регистру
+    }
+
+    #[test]
+    fn test_rating_to_string() {
+        assert_eq!(rating_to_string(Rating::Again), "Again");
+        assert_eq!(rating_to_string(Rating::Hard), "Hard");
+        assert_eq!(rating_to_string(Rating::Good), "Good");
+        assert_eq!(rating_to_string(Rating::Easy), "Easy");
+    }
+
+    #[test]
+    fn test_state_to_string() {
+        assert_eq!(state_to_string(State::New), "New");
+        assert_eq!(state_to_string(State::Learning), "Learning");
+        assert_eq!(state_to_string(State::Review), "Review");
+        assert_eq!(state_to_string(State::Relearning), "Relearning");
+    }
+
+    #[test]
+    fn test_create_fsrs_parameters() {
+        let custom_params = FsrsParameters {
+            request_retention: 0.85,
+            maximum_interval: 365.0,
+            enable_fuzz: false,
+        };
+
+        let fsrs_params = create_fsrs_parameters(&custom_params);
+
+        // Проверяем, что пользовательские параметры установлены
+        assert_eq!(fsrs_params.request_retention, 0.85);
+        assert_eq!(fsrs_params.maximum_interval, 365);
+        assert_eq!(fsrs_params.enable_fuzz, false);
+
+        // Проверяем, что остальные параметры имеют значения по умолчанию
+        let default_params = Parameters::default();
+        assert_eq!(fsrs_params.w, default_params.w);
+        assert_eq!(fsrs_params.decay, default_params.decay);
+        assert_eq!(fsrs_params.factor, default_params.factor);
+    }
+
+    #[test]
+    fn test_create_fsrs_parameters_with_fuzz_enabled() {
+        let custom_params = FsrsParameters {
+            request_retention: 0.9,
+            maximum_interval: 1000.0,
+            enable_fuzz: true,
+        };
+
+        let fsrs_params = create_fsrs_parameters(&custom_params);
+        assert_eq!(fsrs_params.enable_fuzz, true);
+        assert_eq!(fsrs_params.maximum_interval, 1000);
+        assert_eq!(fsrs_params.request_retention, 0.9);
+    }
+
+    #[test]
+    fn test_rating_conversion_roundtrip() {
+        // Проверяем, что конвертация туда-обратно сохраняет значение
+        let ratings = vec![Rating::Again, Rating::Hard, Rating::Good, Rating::Easy];
+
+        for rating in ratings {
+            let string_repr = rating_to_string(rating);
+            let converted_back = rating_from_str(&string_repr);
+            assert_eq!(converted_back, rating);
+        }
+    }
+
+    #[test]
+    fn test_state_conversion_consistency() {
+        // Проверяем, что каждое состояние имеет уникальное строковое представление
+        let states = vec![State::New, State::Learning, State::Review, State::Relearning];
+        let mut seen_strings = std::collections::HashSet::new();
+
+        for state in states {
+            let string_repr = state_to_string(state);
+            assert!(!seen_strings.contains(&string_repr), "Duplicate string representation for state");
+            seen_strings.insert(string_repr);
+        }
+    }
+}
