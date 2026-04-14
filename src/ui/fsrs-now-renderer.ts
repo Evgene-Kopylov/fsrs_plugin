@@ -5,6 +5,10 @@ import {
 	generateFsrsNowHTML,
 	sortCardsByPriority,
 	filterCardsForReview,
+	isCardDue,
+	computeCardState,
+	formatLocalDate,
+	parseModernFsrsFromFrontmatter,
 } from "../utils/fsrs-helper";
 
 /**
@@ -163,7 +167,50 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 	 */
 	private async reviewCard(filePath: string) {
 		try {
-			// Вызываем метод плагина для повторения карточки
+			// Сначала читаем файл и проверяем статус карточки
+			const file = this.plugin.app.vault.getFileByPath(filePath);
+			if (!file) {
+				new Notice("Файл не найден");
+				return;
+			}
+
+			const content = await this.plugin.app.vault.read(file);
+			const frontmatterRegex = /^---\s*$([\s\S]*?)^---\s*$/m;
+			const match = frontmatterRegex.exec(content);
+
+			if (!match || !match[1]) {
+				new Notice("Файл не содержит frontmatter");
+				return;
+			}
+
+			const frontmatter = match[1];
+			const parseResult = parseModernFsrsFromFrontmatter(
+				frontmatter,
+				filePath,
+			);
+
+			if (!parseResult.success || !parseResult.card) {
+				new Notice("Не FSRS карточка");
+				return;
+			}
+
+			const card = parseResult.card;
+			const isDue = await isCardDue(card, this.plugin.settings);
+
+			if (!isDue) {
+				// Карточка не готова к повторению - показываем информацию
+				const state = await computeCardState(
+					card,
+					this.plugin.settings,
+				);
+				const nextDate = new Date(state.due);
+				new Notice(
+					`Карточка уже повторена. Следующее повторение: ${formatLocalDate(nextDate)}`,
+				);
+				return;
+			}
+
+			// Карточка готова к повторению - вызываем стандартный ревью
 			const rating = await this.plugin.reviewCardByPath(filePath);
 
 			if (rating) {

@@ -4,6 +4,9 @@ import {
 	addReviewSession,
 	getCardYamlAfterReview,
 	getNextReviewDates,
+	isCardDue,
+	computeCardState,
+	formatLocalDate,
 } from "../../utils/fsrs-helper";
 import type { ModernFSRSCard, FSRSRating } from "../../interfaces/fsrs";
 import type MyPlugin from "../../main";
@@ -53,6 +56,19 @@ export async function reviewCurrentCard(
 		}
 
 		const card = parseResult.card;
+
+		// Проверяем, готова ли карточка к повторению
+		const isDue = await isCardDue(card, plugin.settings);
+
+		if (!isDue) {
+			// Карточка не готова к повторению - показываем информацию
+			const state = await computeCardState(card, plugin.settings);
+			const nextDate = new Date(state.due);
+			new Notice(
+				`Карточка уже повторена. Следующее повторение: ${formatLocalDate(nextDate)}`,
+			);
+			return;
+		}
 
 		console.log("Карточка для повторения:", card);
 
@@ -256,6 +272,19 @@ export async function reviewCardByPath(
 		}
 
 		const card = parseResult.card;
+
+		// Проверяем, готова ли карточка к повторению
+		const isDue = await isCardDue(card, plugin.settings);
+
+		if (!isDue) {
+			// Карточка не готова к повторению - показываем информацию
+			const state = await computeCardState(card, plugin.settings);
+			const nextDate = new Date(state.due);
+			new Notice(
+				`Карточка уже повторена. Следующее повторение: ${formatLocalDate(nextDate)}`,
+			);
+			return null;
+		}
 
 		console.log("Карточка для повторения:", card);
 
