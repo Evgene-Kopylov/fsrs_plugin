@@ -51,7 +51,7 @@ export async function addFsrsFieldsToCurrentFile(
 			if (settings?.auto_add_review_button) {
 				// Проверяем, есть ли уже блок fsrs-review-button в файле
 				if (!fileContent.includes("```fsrs-review-button")) {
-					buttonBlock = "```fsrs-review-button\n```\n";
+					buttonBlock = "\n```fsrs-review-button\n```\n";
 				}
 			}
 			newContent =
@@ -66,7 +66,7 @@ export async function addFsrsFieldsToCurrentFile(
 			if (settings?.auto_add_review_button) {
 				// Проверяем, есть ли уже блок fsrs-review-button в файле
 				if (!fileContent.includes("```fsrs-review-button")) {
-					buttonBlock = "```fsrs-review-button\n```\n";
+					buttonBlock = "\n```fsrs-review-button\n```\n";
 				}
 			}
 			newContent =
