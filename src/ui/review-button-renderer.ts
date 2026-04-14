@@ -4,9 +4,10 @@ import {
 	isCardDue,
 	computeCardState,
 	formatLocalDate,
+	updateReviewsInYaml,
 } from "../utils/fsrs-helper";
 import type FsrsPlugin from "../main";
-import type { ModernFSRSCard } from "../interfaces/fsrs";
+import type { ModernFSRSCard, ReviewSession } from "../interfaces/fsrs";
 
 /**
  * Рендерер кнопки повторения карточки FSRS для блока `fsrs-review-button`
@@ -14,7 +15,9 @@ import type { ModernFSRSCard } from "../interfaces/fsrs";
  * Интегрируется с Obsidian's Markdown render lifecycle через MarkdownRenderChild
  */
 export class ReviewButtonRenderer extends MarkdownRenderChild {
-	private button: HTMLButtonElement;
+	private mainButton: HTMLButtonElement;
+	private deleteButton: HTMLButtonElement;
+	private buttonsContainer: HTMLDivElement;
 	private currentState:
 		| "not-fsrs"
 		| "reviewed"
@@ -36,10 +39,27 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	) {
 		super(container);
 
-		this.button = document.createElement("button");
-		this.button.className = "fsrs-review-button";
+		// Создаем контейнер для кнопок
+		this.buttonsContainer = document.createElement("div");
+		this.buttonsContainer.className = "fsrs-buttons-container";
+		container.appendChild(this.buttonsContainer);
+
+		// Создаем основную кнопку с фиксированной шириной
+		this.mainButton = document.createElement("button");
+		this.mainButton.className = "fsrs-review-button";
+
+		// Создаем кнопку удаления
+		this.deleteButton = document.createElement("button");
+		this.deleteButton.className = "fsrs-delete-button";
+		this.deleteButton.innerHTML = "✕";
+		this.deleteButton.title = "Удалить последнее повторение";
+
+		// Добавляем кнопки в контейнер
+		this.buttonsContainer.appendChild(this.mainButton);
+		this.buttonsContainer.appendChild(this.deleteButton);
+
+		// Устанавливаем фиксированный класс для контейнера
 		container.className = "fsrs-review-button-container";
-		container.appendChild(this.button);
 	}
 
 	/**
@@ -47,7 +67,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	 */
 	async onload(): Promise<void> {
 		await this.updateButtonState();
-		this.setupClickHandler();
+		this.setupClickHandlers();
 		this.setupFileWatcher();
 	}
 
@@ -67,9 +87,10 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 		try {
 			const file = this.plugin.app.vault.getFileByPath(this.sourcePath);
 			if (!file) {
-				this.button.textContent = "Файл не найден";
-				this.button.disabled = true;
+				this.mainButton.textContent = "Файл не найден";
+				this.mainButton.disabled = true;
 				this.updateButtonClass("error");
+				this.deleteButton.disabled = true;
 				return;
 			}
 
@@ -78,9 +99,10 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			const match = frontmatterRegex.exec(content);
 
 			if (!match || !match[1]) {
-				this.button.textContent = "Нет frontmatter";
-				this.button.disabled = true;
+				this.mainButton.textContent = "Нет frontmatter";
+				this.mainButton.disabled = true;
 				this.updateButtonClass("error");
+				this.deleteButton.disabled = true;
 				return;
 			}
 
@@ -92,9 +114,10 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 
 			if (!parseResult.success || !parseResult.card) {
 				// Карточка не является FSRS карточкой - кнопка активна, но затемнена
-				this.button.textContent = "Не FSRS карточка";
-				this.button.disabled = false;
+				this.mainButton.textContent = "Не FSRS карточка";
+				this.mainButton.disabled = false;
 				this.updateButtonClass("not-fsrs");
+				this.deleteButton.disabled = true; // Нет повторений для удаления
 				return;
 			}
 
@@ -106,26 +129,30 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 				if (card.reviews.length > 0) {
 					const lastReview = card.reviews[card.reviews.length - 1];
 					if (lastReview) {
-						this.button.textContent = `Повторено: ${lastReview.rating}`;
+						this.mainButton.textContent = `Повторено: ${lastReview.rating}`;
 					} else {
-						this.button.textContent = "Повторено";
+						this.mainButton.textContent = "Повторено";
 					}
 				} else {
-					this.button.textContent = "Повторено";
+					this.mainButton.textContent = "Повторено";
 				}
-				this.button.disabled = false;
+				this.mainButton.disabled = false;
 				this.updateButtonClass("reviewed");
 			} else {
 				// Карточка готова к повторению
-				this.button.textContent = "Повторить карточку";
-				this.button.disabled = false;
+				this.mainButton.textContent = "Повторить карточку";
+				this.mainButton.disabled = false;
 				this.updateButtonClass("due");
 			}
+
+			// Кнопка удаления активна только если есть повторения
+			this.deleteButton.disabled = card.reviews.length === 0;
 		} catch (error) {
 			console.error("Ошибка при обновлении состояния кнопки:", error);
-			this.button.textContent = "Ошибка загрузки";
-			this.button.disabled = true;
+			this.mainButton.textContent = "Ошибка загрузки";
+			this.mainButton.disabled = true;
 			this.updateButtonClass("error");
+			this.deleteButton.disabled = true;
 		}
 	}
 
@@ -138,7 +165,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 		this.currentState = state;
 
 		// Удаляем все классы состояний
-		this.button.classList.remove(
+		this.mainButton.classList.remove(
 			"fsrs-review-button--not-fsrs",
 			"fsrs-review-button--reviewed",
 			"fsrs-review-button--due",
@@ -147,42 +174,57 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 		);
 
 		// Добавляем текущий класс состояния
-		this.button.classList.add(`fsrs-review-button--${state}`);
+		this.mainButton.classList.add(`fsrs-review-button--${state}`);
 	}
 
 	/**
-	 * Настраивает обработчик клика на кнопке
+	 * Настраивает обработчики клика на кнопках
 	 */
-	private setupClickHandler(): void {
-		// Используем arrow function для сохранения контекста this
-		const clickHandler = async () => {
-			await this.handleButtonClick();
+	private setupClickHandlers(): void {
+		// Основная кнопка
+		const mainClickHandler = async () => {
+			await this.handleMainButtonClick();
 		};
-		this.button.addEventListener("click", clickHandler);
-		// Сохраняем ссылку на обработчик для правильной очистки
-		(this.button as any)._clickHandler = clickHandler;
+		this.mainButton.addEventListener("click", mainClickHandler);
+		(this.mainButton as any)._clickHandler = mainClickHandler;
+
+		// Кнопка удаления
+		const deleteClickHandler = async () => {
+			await this.handleDeleteButtonClick();
+		};
+		this.deleteButton.addEventListener("click", deleteClickHandler);
+		(this.deleteButton as any)._clickHandler = deleteClickHandler;
 	}
 
 	/**
 	 * Очищает обработчики событий
 	 */
 	private cleanup(): void {
-		if (this.button && (this.button as any)._clickHandler) {
-			this.button.removeEventListener(
+		if (this.mainButton && (this.mainButton as any)._clickHandler) {
+			this.mainButton.removeEventListener(
 				"click",
-				(this.button as any)._clickHandler,
+				(this.mainButton as any)._clickHandler,
 			);
-			delete (this.button as any)._clickHandler;
+			delete (this.mainButton as any)._clickHandler;
+		}
+
+		if (this.deleteButton && (this.deleteButton as any)._clickHandler) {
+			this.deleteButton.removeEventListener(
+				"click",
+				(this.deleteButton as any)._clickHandler,
+			);
+			delete (this.deleteButton as any)._clickHandler;
 		}
 	}
 
 	/**
-	 * Обрабатывает клик на кнопке
+	 * Обрабатывает клик на основной кнопке
 	 */
-	private async handleButtonClick(): Promise<void> {
+	private async handleMainButtonClick(): Promise<void> {
 		try {
-			// Блокируем кнопку на время обработки
-			this.button.disabled = true;
+			// Блокируем кнопки на время обработки
+			this.mainButton.disabled = true;
+			this.deleteButton.disabled = true;
 
 			// Проверяем статус карточки перед открытием модального окна
 			const file = this.plugin.app.vault.getFileByPath(this.sourcePath);
@@ -252,8 +294,89 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	}
 
 	/**
-	 * Обновляет рендерер (например, при изменении файла)
-	 * Может быть вызван извне для принудительного обновления
+	 * Обрабатывает клик на кнопке удаления
+	 */
+	private async handleDeleteButtonClick(): Promise<void> {
+		try {
+			// Блокируем кнопки на время обработки
+			this.mainButton.disabled = true;
+			this.deleteButton.disabled = true;
+
+			const file = this.plugin.app.vault.getFileByPath(this.sourcePath);
+			if (!file) {
+				new Notice("Файл не найден");
+				await this.updateButtonState();
+				return;
+			}
+
+			const content = await this.plugin.app.vault.read(file);
+			const frontmatterRegex = /^---\s*$([\s\S]*?)^---\s*$/m;
+			const match = frontmatterRegex.exec(content);
+
+			if (!match || !match[1]) {
+				new Notice("Файл не содержит frontmatter");
+				await this.updateButtonState();
+				return;
+			}
+
+			const frontmatter = match[1];
+			const parseResult = parseModernFsrsFromFrontmatter(
+				frontmatter,
+				this.sourcePath,
+			);
+
+			if (!parseResult.success || !parseResult.card) {
+				new Notice("Не FSRS карточка. Удалять нечего.");
+				await this.updateButtonState();
+				return;
+			}
+
+			const card = parseResult.card;
+
+			// Проверяем, есть ли что удалять
+			if (card.reviews.length === 0) {
+				new Notice("Нет повторений для удаления");
+				await this.updateButtonState();
+				return;
+			}
+
+			// Удаляем последнее повторение
+			const updatedReviews = [...card.reviews];
+			updatedReviews.pop();
+
+			// Обновляем frontmatter
+			const updatedFrontmatter = updateReviewsInYaml(
+				frontmatter,
+				updatedReviews,
+			);
+
+			// Собираем обновленное содержимое файла
+			const beforeFrontmatter = content.substring(0, match.index!);
+			const afterFrontmatter = content.substring(
+				match.index! + match[0].length,
+			);
+			const newContent =
+				beforeFrontmatter +
+				"---\n" +
+				updatedFrontmatter +
+				"\n---" +
+				afterFrontmatter;
+
+			// Сохраняем изменения
+			await this.plugin.app.vault.modify(file, newContent);
+
+			new Notice("Последнее повторение удалено");
+			await this.updateButtonState();
+		} catch (error) {
+			console.error("Ошибка при удалении повторения:", error);
+			new Notice("Ошибка при удалении повторения");
+			// Восстанавливаем состояние при ошибке
+			await this.updateButtonState();
+		}
+	}
+
+	/**
+	 * Настраивает отслеживание изменений файла
 	 */
 	private setupFileWatcher(): void {
 		this.fileChangeHandler = (file: any) => {
@@ -271,6 +394,10 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 		}
 	}
 
+	/**
+	 * Обновляет рендерер (например, при изменении файла)
+	 * Может быть вызван извне для принудительного обновления
+	 */
 	async refresh(): Promise<void> {
 		await this.updateButtonState();
 	}

@@ -147,9 +147,18 @@ If your plugin does not need CSS, delete this file.
 /* Контейнер для кнопки повторения в frontmatter */
 .fsrs-review-button-container {
 	margin: 1em 0;
-	text-align: center;
 }
 
+/* Контейнер для кнопок */
+.fsrs-buttons-container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	margin: 0 auto;
+}
+
+/* Основная кнопка с фиксированной шириной */
 .fsrs-review-button {
 	padding: 8px 16px;
 	background: var(--interactive-accent);
@@ -164,6 +173,11 @@ If your plugin does not need CSS, delete this file.
 		background-color 0.2s ease,
 		opacity 0.2s ease,
 		transform 0.1s ease;
+	min-width: 160px; /* Фиксированная минимальная ширина */
+	text-align: center;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .fsrs-review-button:hover {
@@ -233,4 +247,46 @@ If your plugin does not need CSS, delete this file.
 	color: var(--text-muted);
 	cursor: wait;
 	opacity: 0.7;
+}
+
+/* Кнопка удаления */
+.fsrs-delete-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	background: var(--background-modifier-border);
+	color: var(--text-muted);
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 20px;
+	font-weight: bold;
+	line-height: 1;
+	padding: 0;
+	transition:
+		background-color 0.2s ease,
+		opacity 0.2s ease,
+		transform 0.1s ease;
+}
+
+.fsrs-delete-button:hover {
+	background: var(--background-modifier-border-hover);
+	color: var(--text-normal);
+	opacity: 0.9;
+	transform: translateY(-1px);
+}
+
+.fsrs-delete-button:active {
+	background: var(--background-modifier-border-hover);
+	opacity: 0.8;
+	transform: translateY(0);
+}
+
+.fsrs-delete-button:disabled {
+	background: var(--background-modifier-border);
+	color: var(--text-muted);
+	cursor: not-allowed;
+	opacity: 0.5;
 }
