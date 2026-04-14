@@ -2,11 +2,11 @@ import { Notice, App } from "obsidian";
 import {
 	parseModernFsrsFromFrontmatter,
 	addReviewSession,
-	getCardYamlAfterReview,
 	getNextReviewDates,
 	isCardDue,
 	computeCardState,
 	formatLocalDate,
+	updateReviewsInYaml,
 } from "../../utils/fsrs-helper";
 import type { ModernFSRSCard, FSRSRating } from "../../interfaces/fsrs";
 import type MyPlugin from "../../main";
@@ -92,14 +92,13 @@ export async function reviewCurrentCard(
 
 		console.log("Обновленная карточка:", updatedCard);
 
-		// Получаем YAML с обновленными полями
-		const updatedYaml = await getCardYamlAfterReview(
-			card,
-			rating,
-			plugin.settings,
+		// Обновляем только поле reviews в YAML
+		const updatedYaml = updateReviewsInYaml(
+			frontmatter,
+			updatedCard.reviews,
 		);
 
-		// Заменяем старый frontmatter на новый
+		// Заменяем старый frontmatter на новый, сохраняя все остальные поля
 		const newContent = content.replace(
 			frontmatterRegex,
 			"---\n" + updatedYaml + "\n---",
@@ -209,10 +208,9 @@ export async function reviewCurrentCardSimple(app: App): Promise<void> {
 			rating,
 			defaultSettings,
 		);
-		const updatedYaml = await getCardYamlAfterReview(
-			card,
-			rating,
-			defaultSettings,
+		const updatedYaml = updateReviewsInYaml(
+			frontmatter,
+			updatedCard.reviews,
 		);
 
 		const newContent = content.replace(
@@ -308,14 +306,13 @@ export async function reviewCardByPath(
 
 		console.log("Обновленная карточка:", updatedCard);
 
-		// Получаем YAML с обновленными полями
-		const updatedYaml = await getCardYamlAfterReview(
-			card,
-			rating,
-			plugin.settings,
+		// Обновляем только поле reviews в YAML
+		const updatedYaml = updateReviewsInYaml(
+			frontmatter,
+			updatedCard.reviews,
 		);
 
-		// Заменяем старый frontmatter на новый
+		// Заменяем старый frontmatter на новый, сохраняя все остальные поля
 		const newContent = content.replace(
 			frontmatterRegex,
 			"---\n" + updatedYaml + "\n---",

@@ -15,7 +15,6 @@ export {
 	getCardRetrievability,
 	addReviewSession,
 	getNewCardYaml,
-	getCardYamlAfterReview,
 	getNextReviewDates,
 	getCurrentISOTime,
 	base64ToBytes,
@@ -51,6 +50,14 @@ export {
 	calculateCardPriorityScore,
 	groupCardsByState,
 } from "./fsrs-sort";
+
+// Экспорт функций работы с YAML
+export {
+	updateReviewsInYaml,
+	extractReviewsFromYaml,
+	hasReviewsField,
+	createNewReviewsYaml,
+} from "./fsrs-yaml-helper";
 
 // Реэкспорт типов для удобства
 export type {
