@@ -20,6 +20,7 @@ pub fn parse_card_from_json(card_json: &str) -> ModernFsrsCard {
             // Дефолтная карточка при ошибке парсинга
             ModernFsrsCard {
                 reviews: Vec::new(),
+                file_path: None,
             }
         })
 }
@@ -58,6 +59,7 @@ pub fn parameters_to_json(parameters: &FsrsParameters) -> String {
 pub fn create_default_card() -> ModernFsrsCard {
     ModernFsrsCard {
         reviews: Vec::new(),
+        file_path: None,
     }
 }
 
@@ -218,6 +220,7 @@ mod tests {
                     difficulty: 3.0,
                 }
             ],
+            file_path: None,
         };
 
         let json = card_to_json(&original_card);
@@ -250,6 +253,7 @@ mod tests {
     fn test_create_default_card() {
         let card = create_default_card();
         assert!(card.reviews.is_empty());
+        assert!(card.file_path.is_none());
     }
 
     #[test]

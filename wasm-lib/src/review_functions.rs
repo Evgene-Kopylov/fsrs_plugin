@@ -86,6 +86,7 @@ pub fn get_fsrs_yaml_after_review(
         .unwrap_or_else(|_| {
             ModernFsrsCard {
                 reviews: Vec::new(),
+                file_path: None,
             }
         });
 

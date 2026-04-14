@@ -12,10 +12,12 @@ pub struct ReviewSession {
 }
 
 /// Современная карточка FSRS с reviews
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ModernFsrsCard {
     #[serde(default)]
     pub reviews: Vec<ReviewSession>,
+    #[serde(default, rename = "filePath")]
+    pub file_path: Option<String>, // путь к файлу в хранилище Obsidian
 }
 
 

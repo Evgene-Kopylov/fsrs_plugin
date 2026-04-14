@@ -92,6 +92,7 @@ pub fn create_frontmatter_with_fsrs(card: &ModernFsrsCard) -> String {
 pub fn create_default_card() -> ModernFsrsCard {
     ModernFsrsCard {
         reviews: Vec::new(),
+        file_path: None,
     }
 }
 
@@ -210,6 +211,7 @@ reviews:
                     difficulty: 3.0,
                 }
             ],
+            file_path: None,
         };
 
         let yaml = card_to_yaml(&original_card);
@@ -287,6 +289,7 @@ Content"#;
                     difficulty: 3.0,
                 }
             ],
+            file_path: None,
         };
 
         let frontmatter = create_frontmatter_with_fsrs(&card);
@@ -311,6 +314,7 @@ Content"#;
                     difficulty: 3.0,
                 }
             ],
+            file_path: None,
         };
 
         let errors = validate_review_sessions(&card);
@@ -328,6 +332,7 @@ Content"#;
                     difficulty: 3.0,
                 }
             ],
+            file_path: None,
         };
 
         let errors = validate_review_sessions(&card);
@@ -346,6 +351,7 @@ Content"#;
                     difficulty: 3.0,
                 }
             ],
+            file_path: None,
         };
 
         let errors = validate_review_sessions(&card);
@@ -364,6 +370,7 @@ Content"#;
                     difficulty: 15.0, // сложность вне диапазона
                 }
             ],
+            file_path: None,
         };
 
         let errors = validate_review_sessions(&card);
