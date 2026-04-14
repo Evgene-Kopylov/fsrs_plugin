@@ -1,5 +1,5 @@
 import { Notice, App } from "obsidian";
-import { getNewCardYaml } from "../utils/fsrs-helper";
+import { createNewReviewsYaml } from "../utils/fsrs-helper";
 import type { MyPluginSettings } from "../settings";
 
 /**
@@ -20,7 +20,7 @@ export async function addFsrsFieldsToCurrentFile(
 		}
 
 		console.log("Получение YAML полей FSRS в новом формате...");
-		const fsrsYaml = await getNewCardYaml();
+		const fsrsYaml = createNewReviewsYaml([]);
 		console.log("FSRS YAML поля (новый формат):", fsrsYaml);
 
 		// Читаем содержимое файла
@@ -35,9 +35,13 @@ export async function addFsrsFieldsToCurrentFile(
 			// Есть frontmatter - проверяем, есть ли уже поля FSRS
 			const existingFrontmatter = match[0];
 			const existingContent = match[1];
+			if (!existingContent) {
+				new Notice("Ошибка: frontmatter пуст");
+				return;
+			}
 
 			// Проверяем, есть ли уже reviews поле (FSRS карточка)
-			if (existingContent && /^reviews\s*:/m.test(existingContent)) {
+			if (/^reviews\s*:/m.test(existingContent)) {
 				// Уже есть поля FSRS - обновляем их
 				new Notice(
 					"В файле уже есть поля FSRS. Используйте команду повторения для обновления.",
@@ -45,7 +49,20 @@ export async function addFsrsFieldsToCurrentFile(
 				return;
 			}
 
-			// Добавляем поля FSRS после существующего frontmatter
+			// Добавляем поля FSRS внутрь существующего frontmatter
+			let updatedFrontmatterContent;
+			if (existingContent.trim() !== "") {
+				updatedFrontmatterContent =
+					existingContent +
+					(existingContent.endsWith("\n") ? "" : "\n") +
+					fsrsYaml;
+			} else {
+				updatedFrontmatterContent = fsrsYaml;
+			}
+			const updatedFrontmatter =
+				"---\n" + updatedFrontmatterContent + "\n---";
+
+			// Блок кнопки добавляется после frontmatter
 			const afterFrontmatter = fileContent.slice(match[0].length);
 			let buttonBlock = "";
 			if (settings?.auto_add_review_button) {
@@ -54,12 +71,7 @@ export async function addFsrsFieldsToCurrentFile(
 					buttonBlock = "\n```fsrs-review-button\n```\n";
 				}
 			}
-			newContent =
-				existingFrontmatter +
-				"\n" +
-				fsrsYaml +
-				buttonBlock +
-				afterFrontmatter;
+			newContent = updatedFrontmatter + buttonBlock + afterFrontmatter;
 		} else {
 			// Нет frontmatter - создаем новый с полями FSRS
 			let buttonBlock = "";
