@@ -20,3 +20,5 @@
 
 - [ ] рефакторинг больших файлов
 	- [ ] src/utils/fsrs/fsrs-wasm.ts
+
+- [ ] cargo clippy --fix
