@@ -15,6 +15,13 @@ import type { ModernFSRSCard } from "../interfaces/fsrs";
  */
 export class ReviewButtonRenderer extends MarkdownRenderChild {
 	private button: HTMLButtonElement;
+	private currentState:
+		| "not-fsrs"
+		| "reviewed"
+		| "due"
+		| "error"
+		| "loading" = "loading";
+	private fileChangeHandler?: (file: any) => void;
 
 	/**
 	 * Создает новый рендерер кнопки
@@ -41,6 +48,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	async onload(): Promise<void> {
 		await this.updateButtonState();
 		this.setupClickHandler();
+		this.setupFileWatcher();
 	}
 
 	/**
@@ -48,6 +56,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	 */
 	onunload(): void {
 		this.cleanup();
+		this.removeFileWatcher();
 	}
 
 	/**
@@ -60,6 +69,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			if (!file) {
 				this.button.textContent = "Файл не найден";
 				this.button.disabled = true;
+				this.updateButtonClass("error");
 				return;
 			}
 
@@ -70,6 +80,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			if (!match || !match[1]) {
 				this.button.textContent = "Нет frontmatter";
 				this.button.disabled = true;
+				this.updateButtonClass("error");
 				return;
 			}
 
@@ -80,8 +91,10 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			);
 
 			if (!parseResult.success || !parseResult.card) {
+				// Карточка не является FSRS карточкой - кнопка активна, но затемнена
 				this.button.textContent = "Не FSRS карточка";
-				this.button.disabled = true;
+				this.button.disabled = false;
+				this.updateButtonClass("not-fsrs");
 				return;
 			}
 
@@ -101,16 +114,40 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 					this.button.textContent = "Повторено";
 				}
 				this.button.disabled = false;
+				this.updateButtonClass("reviewed");
 			} else {
 				// Карточка готова к повторению
 				this.button.textContent = "Повторить карточку";
 				this.button.disabled = false;
+				this.updateButtonClass("due");
 			}
 		} catch (error) {
 			console.error("Ошибка при обновлении состояния кнопки:", error);
 			this.button.textContent = "Ошибка загрузки";
 			this.button.disabled = true;
+			this.updateButtonClass("error");
 		}
+	}
+
+	/**
+	 * Обновляет CSS класс кнопки в зависимости от состояния
+	 */
+	private updateButtonClass(
+		state: "not-fsrs" | "reviewed" | "due" | "error" | "loading",
+	): void {
+		this.currentState = state;
+
+		// Удаляем все классы состояний
+		this.button.classList.remove(
+			"fsrs-review-button--not-fsrs",
+			"fsrs-review-button--reviewed",
+			"fsrs-review-button--due",
+			"fsrs-review-button--error",
+			"fsrs-review-button--loading",
+		);
+
+		// Добавляем текущий класс состояния
+		this.button.classList.add(`fsrs-review-button--${state}`);
 	}
 
 	/**
@@ -172,7 +209,9 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			);
 
 			if (!parseResult.success || !parseResult.card) {
+				// Карточка не является FSRS карточкой - показываем уведомление
 				new Notice("Не FSRS карточка");
+				// Обновляем состояние кнопки (на случай, если статус изменился)
 				await this.updateButtonState();
 				return;
 			}
@@ -216,6 +255,22 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	 * Обновляет рендерер (например, при изменении файла)
 	 * Может быть вызван извне для принудительного обновления
 	 */
+	private setupFileWatcher(): void {
+		this.fileChangeHandler = (file: any) => {
+			if (file.path === this.sourcePath) {
+				this.refresh();
+			}
+		};
+		this.plugin.app.vault.on("modify", this.fileChangeHandler);
+	}
+
+	private removeFileWatcher(): void {
+		if (this.fileChangeHandler) {
+			this.plugin.app.vault.off("modify", this.fileChangeHandler);
+			this.fileChangeHandler = undefined;
+		}
+	}
+
 	async refresh(): Promise<void> {
 		await this.updateButtonState();
 	}

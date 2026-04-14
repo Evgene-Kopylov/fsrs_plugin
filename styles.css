@@ -184,3 +184,53 @@ If your plugin does not need CSS, delete this file.
 	cursor: not-allowed;
 	opacity: 0.7;
 }
+
+/* Состояния кнопки повторения */
+.fsrs-review-button--not-fsrs {
+	background: var(--background-modifier-border);
+	color: var(--text-muted);
+	opacity: 0.7;
+}
+
+.fsrs-review-button--not-fsrs:hover {
+	background: var(--background-modifier-border);
+	color: var(--text-muted);
+	opacity: 0.8;
+}
+
+.fsrs-review-button--reviewed {
+	background: var(--color-green);
+	color: var(--text-on-accent);
+}
+
+.fsrs-review-button--reviewed:hover {
+	background: var(--color-green);
+	opacity: 0.9;
+}
+
+.fsrs-review-button--due {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.fsrs-review-button--due:hover {
+	background: var(--interactive-accent-hover);
+	opacity: 0.9;
+}
+
+.fsrs-review-button--error {
+	background: var(--color-red);
+	color: var(--text-on-accent);
+}
+
+.fsrs-review-button--error:hover {
+	background: var(--color-red);
+	opacity: 0.9;
+}
+
+.fsrs-review-button--loading {
+	background: var(--background-modifier-border);
+	color: var(--text-muted);
+	cursor: wait;
+	opacity: 0.7;
+}
