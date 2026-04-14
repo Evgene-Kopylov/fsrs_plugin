@@ -100,7 +100,7 @@ pub fn get_fsrs_yaml_after_review(
 mod tests {
     use super::*;
     use serde_json;
-    use chrono::{DateTime, Utc, TimeZone};
+    use chrono::{DateTime, Utc};
 
     fn create_test_parameters_json() -> String {
         r#"{"request_retention": 0.9, "maximum_interval": 365.0, "enable_fuzz": false}"#.to_string()

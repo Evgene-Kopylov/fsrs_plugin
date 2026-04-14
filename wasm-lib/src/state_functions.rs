@@ -228,3 +228,237 @@ pub fn get_next_review_dates(
     serde_json::to_string(&result)
         .unwrap_or_else(|_| "{}".to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::{DateTime, Utc};
+    use serde_json;
+    use crate::json_parsing::parse_card_from_json;
+    use crate::types::ComputedState;
+
+    fn create_test_parameters_json() -> String {
+        r#"{"request_retention": 0.9, "maximum_interval": 365.0, "enable_fuzz": false}"#.to_string()
+    }
+
+    fn create_empty_card_json() -> String {
+        r#"{"srs": true, "reviews": []}"#.to_string()
+    }
+
+    fn create_card_with_reviews_json() -> String {
+        r#"{
+            "srs": true,
+            "reviews": [
+                {
+                    "date": "2025-01-01T10:00:00Z",
+                    "rating": "Good",
+                    "stability": 5.0,
+                    "difficulty": 3.0
+                }
+            ]
+        }"#.to_string()
+    }
+
+    #[test]
+    fn test_compute_current_state_empty_card() {
+        let card_json = create_empty_card_json();
+        let now = "2025-01-01T12:00:00Z".to_string();
+        let params_json = create_test_parameters_json();
+        let default_stability = 2.5;
+        let default_difficulty = 5.0;
+
+        let result = compute_current_state(
+            card_json,
+            now,
+            params_json,
+            default_stability,
+            default_difficulty,
+        );
+
+        let parsed_result: Result<ComputedState, _> = serde_json::from_str(&result);
+        assert!(parsed_result.is_ok());
+
+        let state = parsed_result.unwrap();
+        assert_eq!(state.state, "New");
+        assert_eq!(state.stability, default_stability);
+        assert_eq!(state.difficulty, default_difficulty);
+        assert_eq!(state.reps, 0);
+        assert_eq!(state.lapses, 0);
+        assert_eq!(state.retrievability, 1.0);
+    }
+
+    #[test]
+    fn test_compute_current_state_with_reviews() {
+        let card_json = create_card_with_reviews_json();
+        let now = "2025-01-02T14:00:00Z".to_string();
+        let params_json = create_test_parameters_json();
+        let default_stability = 2.5;
+        let default_difficulty = 5.0;
+
+        let result = compute_current_state(
+            card_json,
+            now,
+            params_json,
+            default_stability,
+            default_difficulty,
+        );
+
+        let parsed_result: Result<ComputedState, _> = serde_json::from_str(&result);
+        assert!(parsed_result.is_ok());
+
+        let state = parsed_result.unwrap();
+        assert!(state.stability > 0.0);
+        assert!(state.difficulty > 0.0);
+        // Проверяем, что due позже последней сессии
+        let last_review_date: DateTime<Utc> = "2025-01-01T10:00:00Z".parse().unwrap();
+        let due_date: DateTime<Utc> = state.due.parse().unwrap();
+        assert!(due_date > last_review_date);
+    }
+
+    #[test]
+    fn test_is_card_due() {
+        // Тест для карточки без сессий (новая)
+        let card_json = create_empty_card_json();
+        let now = "2025-01-01T12:00:00Z".to_string();
+        let params_json = create_test_parameters_json();
+        let default_stability = 2.5;
+        let default_difficulty = 5.0;
+
+        let result = is_card_due(
+            card_json,
+            now,
+            params_json,
+            default_stability,
+            default_difficulty,
+        );
+
+        let parsed_result: Result<bool, _> = serde_json::from_str(&result);
+        assert!(parsed_result.is_ok());
+        assert!(parsed_result.unwrap()); // Новая карточка готова к повторению
+    }
+
+    #[test]
+    fn test_is_card_due_not_due() {
+        // Карточка с reviews, но дата следующего повторения в будущем
+        let card_json = r#"{
+            "srs": true,
+            "reviews": [
+                {
+                    "date": "2025-01-01T10:00:00Z",
+                    "rating": "Good",
+                    "stability": 2.0,
+                    "difficulty": 3.0
+                }
+            ]
+        }"#.to_string();
+
+        let now = "2025-01-02T10:00:00Z".to_string(); // Через 1 день после последнего повторения
+        let params_json = create_test_parameters_json();
+        let default_stability = 2.5;
+        let default_difficulty = 5.0;
+
+        // Отладочная печать парсинга карточки
+        println!("Debug: card_json = {}", card_json);
+        let parsed_card = parse_card_from_json(&card_json);
+        println!("Debug: parsed_card.srs = {}, reviews.len() = {}", parsed_card.srs, parsed_card.reviews.len());
+
+        let result = is_card_due(
+            card_json.clone(),
+            now.clone(),
+            params_json.clone(),
+            default_stability,
+            default_difficulty,
+        );
+
+        // Отладочная печать состояния карточки
+        let state_result = compute_current_state(
+            card_json,
+            now,
+            params_json,
+            default_stability,
+            default_difficulty,
+        );
+        println!("Debug: state_result = {}", state_result);
+
+        let parsed_result: Result<bool, _> = serde_json::from_str(&result);
+        assert!(parsed_result.is_ok());
+        let is_due = parsed_result.unwrap();
+        // Карточка не должна быть готова к повторению (ещё 1 день до due)
+        assert!(!is_due, "Карточка не должна быть готова к повторению, но is_due = {}", is_due);
+    }
+
+    #[test]
+    fn test_get_retrievability() {
+        let card_json = create_card_with_reviews_json();
+        let now = "2025-01-01T11:00:00Z".to_string(); // Через час после повторения
+        let params_json = create_test_parameters_json();
+        let default_stability = 2.5;
+        let default_difficulty = 5.0;
+
+        let result = get_retrievability(
+            card_json,
+            now,
+            params_json,
+            default_stability,
+            default_difficulty,
+        );
+
+        let parsed_result: Result<f64, _> = serde_json::from_str(&result);
+        assert!(parsed_result.is_ok());
+        let retrievability = parsed_result.unwrap();
+        assert!(retrievability > 0.0 && retrievability <= 1.0);
+    }
+
+    #[test]
+    fn test_get_next_review_dates() {
+        let card_json = create_empty_card_json();
+        let now = "2025-01-01T12:00:00Z".to_string();
+        let params_json = create_test_parameters_json();
+        let default_stability = 2.5;
+        let default_difficulty = 5.0;
+
+        let result = get_next_review_dates(
+            card_json,
+            now,
+            params_json,
+            default_stability,
+            default_difficulty,
+        );
+
+        let parsed_result: Result<serde_json::Value, _> = serde_json::from_str(&result);
+        assert!(parsed_result.is_ok());
+
+        let dates = parsed_result.unwrap();
+        // Проверяем, что все поля присутствуют
+        assert!(dates.get("again").is_some());
+        assert!(dates.get("hard").is_some());
+        assert!(dates.get("good").is_some());
+        assert!(dates.get("easy").is_some());
+    }
+
+    #[test]
+    fn test_compute_current_state_invalid_json() {
+        let invalid_json = r#"{invalid json}"#.to_string();
+        let now = "2025-01-01T12:00:00Z".to_string();
+        let params_json = create_test_parameters_json();
+        let default_stability = 2.5;
+        let default_difficulty = 5.0;
+
+        // Не должно паниковать, должно вернуть дефолтное состояние
+        let result = compute_current_state(
+            invalid_json,
+            now,
+            params_json,
+            default_stability,
+            default_difficulty,
+        );
+
+        let parsed_result: Result<ComputedState, _> = serde_json::from_str(&result);
+        assert!(parsed_result.is_ok());
+
+        let state = parsed_result.unwrap();
+        assert_eq!(state.state, "New");
+        assert_eq!(state.stability, default_stability);
+        assert_eq!(state.difficulty, default_difficulty);
+    }
+}
