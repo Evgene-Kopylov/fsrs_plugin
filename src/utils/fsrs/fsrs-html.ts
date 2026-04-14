@@ -70,6 +70,9 @@ export function generateCardHTML(
 	// Дата следующего повторения
 	html += `<span class="fsrs-now-field"><strong>Дата повторения:</strong> ${dueDateStr}</span><br>`;
 
+	// Кнопка повторения
+	html += `<button class="fsrs-now-review-btn" data-file-path="${card.filePath}">Повторить</button><br>`;
+
 	html += `</small>`;
 	html += `</div>`;
 	html += `</div><br>`;
@@ -132,7 +135,7 @@ export function generateEmptyStateHTML(): string {
 	let html = `<div class="fsrs-now-container">`;
 	html += `<h4>Карточки для повторения</h4>`;
 	html += `<div class="fsrs-now-empty">`;
-	html += `<p>Нет карточек для повторения.</p>`;
+	html += `<p>Нет карточки для повторения.</p>`;
 	html += `<small>Используйте команду "Добавить FSRS поля" для создания новых карточек.</small>`;
 	html += `</div>`;
 	html += `</div>`;

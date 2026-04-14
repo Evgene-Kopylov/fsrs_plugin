@@ -211,3 +211,122 @@ export async function reviewCurrentCardSimple(app: App): Promise<void> {
 		new Notice("Ошибка при повторении карточки");
 	}
 }
+
+/**
+ * Повторяет карточку по указанному пути файла
+ * Может быть вызвана из frontmatter или других мест
+ */
+export async function reviewCardByPath(
+	app: App,
+	plugin: MyPlugin,
+	filePath: string,
+): Promise<FSRSRating | null> {
+	try {
+		// Получаем файл по пути
+		const file = app.vault.getFileByPath(filePath);
+		if (!file) {
+			new Notice(`Файл не найден: ${filePath}`);
+			return null;
+		}
+
+		const content = await app.vault.read(file);
+
+		// Ищем frontmatter
+		const frontmatterRegex = /^---\s*$([\s\S]*?)^---\s*$/m;
+		const match = frontmatterRegex.exec(content);
+
+		if (!match || !match[1]) {
+			new Notice("Файл не содержит frontmatter");
+			return null;
+		}
+
+		const frontmatter = match[1];
+
+		// Парсим карточку в новом формате
+		const parseResult = parseModernFsrsFromFrontmatter(
+			frontmatter,
+			filePath,
+		);
+
+		if (!parseResult.success || !parseResult.card) {
+			new Notice(
+				parseResult.error || "Не удалось распарсить карточку FSRS",
+			);
+			return null;
+		}
+
+		const card = parseResult.card;
+
+		console.log("Карточка для повторения:", card);
+
+		// Показываем модальное окно для выбора оценки
+		const modal = new ReviewModal(app, plugin, card);
+		const rating = await modal.show();
+
+		if (!rating) {
+			new Notice("Повторение отменено");
+			return null;
+		}
+
+		console.log("Выбранная оценка:", rating);
+
+		// Добавляем сессию повторения
+		const updatedCard = await addReviewSession(
+			card,
+			rating,
+			plugin.settings,
+		);
+
+		console.log("Обновленная карточка:", updatedCard);
+
+		// Получаем YAML с обновленными полями
+		const updatedYaml = await getCardYamlAfterReview(
+			card,
+			rating,
+			plugin.settings,
+		);
+
+		// Заменяем старый frontmatter на новый
+		const newContent = content.replace(
+			frontmatterRegex,
+			"---\n" + updatedYaml + "\n---",
+		);
+
+		// Сохраняем изменения
+		await app.vault.modify(file, newContent);
+
+		// Получаем следующие даты повторения
+		const nextDates = await getNextReviewDates(
+			updatedCard,
+			plugin.settings,
+		);
+
+		// Показываем уведомление с информацией
+		let message = `Карточка повторена: ${rating}`;
+		if (nextDates[rating]) {
+			const nextDate = new Date(nextDates[rating]!);
+			message += `\nСледующее повторение: ${nextDate.toLocaleDateString()}`;
+		}
+
+		new Notice(message);
+		console.log("Карточка успешно обновлена");
+
+		// Логируем следующие даты для всех оценок
+		console.log("Следующие даты повторения:");
+		Object.entries(nextDates).forEach(([rating, date]) => {
+			if (date) {
+				console.log(
+					`  ${rating}: ${new Date(date as string).toLocaleString()}`,
+				);
+			}
+		});
+
+		return rating;
+	} catch (error) {
+		console.error("Ошибка при повторении карточки по пути:", error);
+		const errorMessage =
+			error instanceof Error ? error.message : String(error);
+		new Notice("Ошибка при повторении карточки: " + errorMessage);
+		return null;
+	}
+}

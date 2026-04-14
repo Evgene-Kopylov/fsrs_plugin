@@ -115,6 +115,19 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 				}
 			});
 		});
+
+		// Обработчики для кнопок повторения
+		this.container
+			.querySelectorAll(".fsrs-now-review-btn")
+			.forEach((button) => {
+				button.addEventListener("click", async (e) => {
+					e.preventDefault();
+					const filePath = (button as HTMLElement).dataset.filePath;
+					if (filePath) {
+						await this.reviewCard(filePath);
+					}
+				});
+			});
 	}
 
 	/**
@@ -143,5 +156,26 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 	 */
 	async refresh() {
 		await this.renderContent();
+	}
+
+	/**
+	 * Повторяет карточку по указанному пути файла
+	 */
+	private async reviewCard(filePath: string) {
+		try {
+			// Вызываем метод плагина для повторения карточки
+			const rating = await this.plugin.reviewCardByPath(filePath);
+
+			if (rating) {
+				// После успешного повторения обновляем отображение
+				await this.refresh();
+				new Notice(`Карточка повторена с оценкой: ${rating}`);
+			}
+		} catch (error) {
+			console.error("Ошибка при повторении карточки:", error);
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
+			new Notice(`Ошибка при повторении карточки: ${errorMessage}`);
+		}
 	}
 }

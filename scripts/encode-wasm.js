@@ -10,6 +10,49 @@ const outputFilePath = path.resolve(
 	"wasm-lib/pkg/wasm_lib_base64.ts",
 );
 
+/**
+ * Разбивает длинную строку на чанки фиксированного размера
+ * @param {string} str Исходная строка
+ * @param {number} chunkSize Размер чанка (по умолчанию 65536)
+ * @returns {string[]} Массив чанков
+ */
+function chunkString(str, chunkSize = 65536) {
+	const chunks = [];
+	for (let i = 0; i < str.length; i += chunkSize) {
+		chunks.push(str.slice(i, i + chunkSize));
+	}
+	return chunks;
+}
+
+/**
+ * Генерирует TypeScript код с разбитой на чанки строкой
+ * @param {string} base64String Base64 строка
+ * @returns {string} TypeScript код
+ */
+function generateTsContent(base64String) {
+	const chunks = chunkString(base64String, 65536);
+
+	if (chunks.length === 1) {
+		// Если строка короткая, используем шаблонный литерал
+		return `export const WASM_BASE64 = \`${base64String}\`;`;
+	}
+
+	// Для длинных строк используем конкатенацию чанков с шаблонными литералами
+	let tsContent = "export const WASM_BASE64 = \n";
+
+	for (let i = 0; i < chunks.length; i++) {
+		const chunk = chunks[i];
+		if (i === 0) {
+			tsContent += `  \`${chunk}\``;
+		} else {
+			tsContent += `\n  + \`${chunk}\``;
+		}
+	}
+
+	tsContent += ";\n";
+	return tsContent;
+}
+
 try {
 	// Проверяем существование входного файла
 	if (!fs.existsSync(wasmFilePath)) {
@@ -25,8 +68,8 @@ try {
 	// Кодируем в base64
 	const base64String = wasmBuffer.toString("base64");
 
-	// Создаем содержимое TypeScript файла
-	const tsContent = `export const WASM_BASE64 = "${base64String}";`;
+	// Генерируем содержимое TypeScript файла
+	const tsContent = generateTsContent(base64String);
 
 	// Убеждаемся, что директория существует
 	const outputDir = path.dirname(outputFilePath);
@@ -40,6 +83,7 @@ try {
 	console.log(`Файл создан: ${outputFilePath}`);
 	console.log(`Размер WASM: ${wasmBuffer.length} байт`);
 	console.log(`Размер base64: ${base64String.length} символов`);
+	console.log(`Чанков: ${Math.ceil(base64String.length / 65536)}`);
 } catch (error) {
 	console.error("Ошибка при кодировании WASM:", error.message);
 	process.exit(1);

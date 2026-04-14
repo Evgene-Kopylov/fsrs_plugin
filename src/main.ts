@@ -2,7 +2,7 @@ import { Plugin, Notice } from "obsidian";
 import { registerCommands } from "./commands/index";
 import { addFsrsFieldsToCurrentFile } from "./commands/add-fsrs-fields";
 import { findFsrsCards } from "./commands/find-fsrs-cards";
-import { reviewCurrentCard } from "./commands/review-current-card";
+import { reviewCurrentCard, reviewCardByPath } from "./commands/review";
 import { FsrsNowRenderer } from "./ui/fsrs-now-renderer";
 import { MyPluginSettings, DEFAULT_SETTINGS } from "./settings";
 import { SampleSettingTab } from "./settings";
@@ -12,7 +12,7 @@ import {
 	filterCardsForReview,
 	sortCardsByPriority,
 } from "./utils/fsrs-helper";
-import type { ModernFSRSCard, FSRSCard } from "./interfaces/fsrs";
+import type { ModernFSRSCard, FSRSCard, FSRSRating } from "./interfaces/fsrs";
 
 // Импорт WASM функций
 import init, { my_wasm_function } from "../wasm-lib/pkg/wasm_lib";
@@ -57,6 +57,47 @@ export default class FsrsPlugin extends Plugin {
 					ctx.sourcePath,
 				);
 				ctx.addChild(renderer);
+			},
+		);
+
+		// Регистрация процессора для кнопки повторения карточки
+		this.registerMarkdownCodeBlockProcessor(
+			"fsrs-review-button",
+			(source, el, ctx) => {
+				// Создаем контейнер для кнопки
+				const buttonContainer = document.createElement("div");
+				buttonContainer.className = "fsrs-review-button-container";
+				el.appendChild(buttonContainer);
+
+				// Создаем кнопку
+				const button = document.createElement("button");
+				button.className = "fsrs-review-button";
+				button.textContent = "Повторить карточку";
+				buttonContainer.appendChild(button);
+
+				// Сохраняем ссылку на плагин для использования в обработчике
+				const plugin = this;
+
+				// Добавляем обработчик клика
+				button.addEventListener("click", async () => {
+					try {
+						const rating = await plugin.reviewCardByPath(
+							ctx.sourcePath,
+						);
+						if (rating) {
+							new Notice(
+								`Карточка повторена с оценкой: ${rating}`,
+							);
+							// Обновляем текст кнопки
+							button.textContent = `Повторено: ${rating}`;
+							button.disabled = true;
+							button.style.opacity = "0.7";
+						}
+					} catch (error) {
+						console.error("Ошибка при повторении карточки:", error);
+						new Notice("Ошибка при повторении карточки");
+					}
+				});
 			},
 		);
 
@@ -199,6 +240,14 @@ export default class FsrsPlugin extends Plugin {
 	 */
 	async reviewCurrentCard(): Promise<void> {
 		await reviewCurrentCard(this.app, this);
+	}
+
+	/**
+	 * Повторяет карточку по указанному пути файла
+	 * Можно вызывать из frontmatter через кнопку
+	 */
+	async reviewCardByPath(filePath: string): Promise<FSRSRating | null> {
+		return await reviewCardByPath(this.app, this, filePath);
 	}
 
 	/**
