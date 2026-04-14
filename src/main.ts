@@ -4,6 +4,7 @@ import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from
 import { findFsrsCards } from "./commands/find-fsrs-cards";
 import { reviewCurrentCard, reviewCardByPath } from "./commands/review";
 import { FsrsNowRenderer } from "./ui/fsrs-now-renderer";
+import { ReviewButtonRenderer } from "./ui/review-button-renderer";
 import { MyPluginSettings, DEFAULT_SETTINGS } from "./settings";
 import { SampleSettingTab } from "./settings";
 import { base64ToBytes } from "./utils/fsrs-helper";
@@ -11,9 +12,6 @@ import {
 	parseModernFsrsFromFrontmatter,
 	filterCardsForReview,
 	sortCardsByPriority,
-	isCardDue,
-	computeCardState,
-	formatLocalDate,
 } from "./utils/fsrs-helper";
 import type { ModernFSRSCard, FSRSCard, FSRSRating } from "./interfaces/fsrs";
 
@@ -72,158 +70,13 @@ export default class FsrsPlugin extends Plugin {
 				buttonContainer.className = "fsrs-review-button-container";
 				el.appendChild(buttonContainer);
 
-				// Создаем кнопку
-				const button = document.createElement("button");
-				button.className = "fsrs-review-button";
-				buttonContainer.appendChild(button);
-
-				// Сохраняем ссылку на плагин для использования в обработчике
-				const plugin = this;
-
-				// Функция для обновления состояния кнопки на основе статуса карточки
-				const updateButtonState = async () => {
-					try {
-						const file = plugin.app.vault.getFileByPath(
-							ctx.sourcePath,
-						);
-						if (!file) {
-							button.textContent = "Файл не найден";
-							button.disabled = true;
-							return;
-						}
-
-						const content = await plugin.app.vault.read(file);
-						const frontmatterRegex = /^---\s*$([\s\S]*?)^---\s*$/m;
-						const match = frontmatterRegex.exec(content);
-
-						if (!match || !match[1]) {
-							button.textContent = "Нет frontmatter";
-							button.disabled = true;
-							return;
-						}
-
-						const frontmatter = match[1];
-						const parseResult = parseModernFsrsFromFrontmatter(
-							frontmatter,
-							ctx.sourcePath,
-						);
-
-						if (!parseResult.success || !parseResult.card) {
-							button.textContent = "Не FSRS карточка";
-							button.disabled = true;
-							return;
-						}
-
-						const card = parseResult.card;
-						const isDue = await isCardDue(card, plugin.settings);
-
-						if (!isDue) {
-							// Карточка уже повторена - показываем последнюю оценку
-							if (card.reviews.length > 0) {
-								const lastReview =
-									card.reviews[card.reviews.length - 1];
-								if (lastReview) {
-									button.textContent = `Повторено: ${lastReview.rating}`;
-								} else {
-									button.textContent = "Повторено";
-								}
-							} else {
-								button.textContent = "Повторено";
-							}
-							button.disabled = false;
-						} else {
-							// Карточка готова к повторению
-							button.textContent = "Повторить карточку";
-							button.disabled = false;
-						}
-					} catch (error) {
-						console.error(
-							"Ошибка при обновлении состояния кнопки:",
-							error,
-						);
-						button.textContent = "Ошибка загрузки";
-						button.disabled = true;
-					}
-				};
-
-				// Инициализируем состояние кнопки при рендеринге
-				await updateButtonState();
-
-				// Добавляем обработчик клика
-				button.addEventListener("click", async () => {
-					try {
-						// Блокируем кнопку на время обработки
-						button.disabled = true;
-						const originalText = button.textContent;
-
-						// Проверяем статус карточки перед открытием модального окна
-						const file = plugin.app.vault.getFileByPath(
-							ctx.sourcePath,
-						);
-						if (!file) {
-							new Notice("Файл не найден");
-							await updateButtonState();
-							return;
-						}
-
-						const content = await plugin.app.vault.read(file);
-						const frontmatterRegex = /^---\s*$([\s\S]*?)^---\s*$/m;
-						const match = frontmatterRegex.exec(content);
-
-						if (!match || !match[1]) {
-							new Notice("Файл не содержит frontmatter");
-							await updateButtonState();
-							return;
-						}
-
-						const frontmatter = match[1];
-						const parseResult = parseModernFsrsFromFrontmatter(
-							frontmatter,
-							ctx.sourcePath,
-						);
-
-						if (!parseResult.success || !parseResult.card) {
-							new Notice("Не FSRS карточка");
-							await updateButtonState();
-							return;
-						}
-
-						const card = parseResult.card;
-						const isDue = await isCardDue(card, plugin.settings);
-
-						if (!isDue) {
-							// Карточка уже повторена - показываем информацию
-							const state = await computeCardState(
-								card,
-								plugin.settings,
-							);
-							const nextDate = new Date(state.due);
-							new Notice(
-								`Карточка уже повторена. Следующее повторение: ${formatLocalDate(nextDate)}`,
-							);
-							await updateButtonState();
-							return;
-						}
-
-						// Карточка готова к повторению - вызываем стандартный ревью
-						const rating = await plugin.reviewCardByPath(
-							ctx.sourcePath,
-						);
-
-						if (rating) {
-							// После успешного ревью сразу обновляем состояние кнопки
-							await updateButtonState();
-						} else {
-							// Ревью отменено - восстанавливаем состояние
-							await updateButtonState();
-						}
-					} catch (error) {
-						console.error("Ошибка при обработке карточки:", error);
-						new Notice("Ошибка при обработке карточки");
-						// Восстанавливаем состояние при ошибке
-						await updateButtonState();
-					}
-				});
+				// Создаем рендерер кнопки
+				const renderer = new ReviewButtonRenderer(
+					this,
+					buttonContainer,
+					ctx.sourcePath,
+				);
+				ctx.addChild(renderer);
 			},
 		);
 
