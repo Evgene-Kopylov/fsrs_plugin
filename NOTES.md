@@ -22,5 +22,6 @@
 	- [ ] src/utils/fsrs/fsrs-wasm.ts
 
 - [ ] cargo clippy --fix
-- [ ] Возможно, в main.ts васм записан второй раз в комментарии
+- [-] Возможно, в main.ts васм записан второй раз в комментарии
 	//# sourceMappingURL=data:application/jso
+> пропало
