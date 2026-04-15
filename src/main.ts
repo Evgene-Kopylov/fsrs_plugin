@@ -157,45 +157,28 @@ export default class FsrsPlugin extends Plugin {
 			for (const file of files) {
 				// Пропускаем файлы, соответствующие паттернам игнорирования
 				if (shouldIgnoreFileWithSettings(file.path, this.settings)) {
-					console.log(`  ⏭️  Игнорируем файл: ${file.path}`);
 					continue;
 				}
 
-				console.log(`=== Обработка файла: ${file.path} ===`);
 				try {
 					const content = await this.app.vault.read(file);
 
 					// Быстрая проверка: пропускаем файлы без признаков FSRS
 					// 📊 Оптимизация дает ускорение >1000x (с ~950-1000 мс до ~0.7-0.8 мс)
 					if (!shouldProcessFile(content)) {
-						console.log(
-							`  ⏭️  Пропускаем файл без FSRS полей: ${file.path}`,
-						);
 						continue;
 					}
 
 					// Извлекаем frontmatter
 					const frontmatter = extractFrontmatter(content);
 					if (!frontmatter) {
-						console.log(
-							`  ⚠️  Не найден frontmatter в файле с FSRS полями: ${file.path}`,
-						);
 						continue;
 					}
-
-					console.log(
-						`Найден frontmatter с FSRS полями, длина: ${frontmatter.length}`,
-					);
 
 					// Парсим карточку в новом формате
 					const parseResult = parseModernFsrsFromFrontmatter(
 						frontmatter,
 						file.path,
-					);
-
-					console.log(
-						`Результат парсинга для ${file.path}:`,
-						parseResult,
 					);
 
 					if (parseResult.success && parseResult.card) {
