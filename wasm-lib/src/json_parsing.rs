@@ -39,6 +39,7 @@ pub fn parse_parameters_from_json(parameters_json: &str) -> FsrsParameters {
 }
 
 /// Парсит дату из строки ISO 8601
+#[allow(dead_code)]
 pub fn parse_datetime_from_iso(iso_str: &str) -> DateTime<Utc> {
     parse_datetime_flexible(iso_str).unwrap_or_else(Utc::now)
 }
@@ -55,6 +56,7 @@ pub fn parse_datetime_flexible(date_str: &str) -> Option<DateTime<Utc>> {
     }
 
     // 2. Пробуем как DateTime<Utc> напрямую (для строк с 'Z' на конце)
+    #[allow(clippy::collapsible_if)]
     if date_str.ends_with('Z') {
         if let Ok(dt) = date_str.parse::<DateTime<Utc>>() {
             return Some(dt);
@@ -79,10 +81,7 @@ pub fn parse_datetime_flexible(date_str: &str) -> Option<DateTime<Utc>> {
     }
 
     // 5. Последняя попытка: стандартный парсер
-    match date_str.parse::<DateTime<Utc>>() {
-        Ok(dt) => Some(dt),
-        Err(_) => None,
-    }
+    date_str.parse::<DateTime<Utc>>().ok()
 }
 
 /// Преобразует карточку в JSON строку
@@ -166,7 +165,7 @@ pub fn get_current_time() -> String {
 mod tests {
     use super::*;
     use crate::types::{ModernFsrsCard, FsrsParameters, ReviewSession};
-    use chrono::{DateTime, Utc, TimeZone};
+    use chrono::{DateTime, Utc, TimeZone, Datelike, Timelike};
 
     #[test]
     fn test_parse_card_from_json_valid() {

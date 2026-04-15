@@ -16,23 +16,9 @@ macro_rules! log_trace {
     };
 }
 
-macro_rules! log_debug {
-    ($($arg:tt)*) => {
-        #[cfg(target_arch = "wasm32")]
-        web_sys::console::debug_1(&format!($($arg)*).into());
-        #[cfg(not(target_arch = "wasm32"))]
-        eprintln!("DEBUG: {}", format!($($arg)*));
-    };
-}
 
-macro_rules! log_info {
-    ($($arg:tt)*) => {
-        #[cfg(target_arch = "wasm32")]
-        web_sys::console::log_1(&format!($($arg)*).into());
-        #[cfg(not(target_arch = "wasm32"))]
-        eprintln!("INFO: {}", format!($($arg)*));
-    };
-}
+
+
 
 macro_rules! log_warn {
     ($($arg:tt)*) => {
@@ -43,14 +29,7 @@ macro_rules! log_warn {
     };
 }
 
-macro_rules! log_error {
-    ($($arg:tt)*) => {
-        #[cfg(target_arch = "wasm32")]
-        web_sys::console::error_1(&format!($($arg)*).into());
-        #[cfg(not(target_arch = "wasm32"))]
-        eprintln!("ERROR: {}", format!($($arg)*));
-    };
-}
+
 
 /// Парсит YAML строку в карточку FSRS
 pub fn parse_yaml_to_card(yaml_str: &str) -> ModernFsrsCard {

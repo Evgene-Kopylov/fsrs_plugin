@@ -20,7 +20,7 @@ pub fn compute_current_state(
     // Парсим входные данные
     let card = parse_card_from_json(&card_json);
     let parameters = parse_parameters_from_json(&parameters_json);
-    let now = parse_datetime_flexible(&now_str).unwrap_or_else(|| Utc::now());
+    let now = parse_datetime_flexible(&now_str).unwrap_or_else(Utc::now);
 
     // Создаем Card для алгоритма FSRS из истории reviews
     let mut fsrs_card = create_card_from_last_session(
@@ -112,9 +112,9 @@ pub fn is_card_due(
 
     // Проверяем, просрочена ли карточка
     let due_date: DateTime<Utc> = parse_datetime_flexible(&state.due)
-        .unwrap_or_else(|| Utc::now());
+        .unwrap_or_else(Utc::now);
     let now: DateTime<Utc> = parse_datetime_flexible(&now_str)
-        .unwrap_or_else(|| Utc::now());
+        .unwrap_or_else(Utc::now);
 
     let is_due = due_date <= now;
 
@@ -181,7 +181,7 @@ pub fn get_next_review_dates(
     // Парсим входные данные
     let card = parse_card_from_json(&card_json);
     let parameters = parse_parameters_from_json(&parameters_json);
-    let now = parse_datetime_flexible(&now_str).unwrap_or_else(|| Utc::now());
+    let now = parse_datetime_flexible(&now_str).unwrap_or_else(Utc::now);
 
     // Создаем Card для алгоритма FSRS из истории reviews
     let fsrs_card = create_card_from_last_session(

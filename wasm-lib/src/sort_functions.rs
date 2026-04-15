@@ -93,7 +93,6 @@ fn calculate_priority_score(due_date: DateTime<Utc>, retrievability: f64, now: D
 }
 
 /// Фильтрует карточки для повторения
-
 pub fn filter_cards_for_review(
     cards_json: String,
     settings_json: String,
@@ -126,7 +125,7 @@ fn filter_cards_for_review_internal(
         }
     };
 
-    let now = parse_datetime_flexible(&now_iso).unwrap_or_else(|| Utc::now());
+    let now = parse_datetime_flexible(&now_iso).unwrap_or_else(Utc::now);
 
     // Извлекаем параметры из настроек
     let parameters = parse_parameters_from_json(
@@ -202,7 +201,7 @@ fn sort_cards_by_priority_internal(
         }
     };
 
-    let now = parse_datetime_flexible(&now_iso).unwrap_or_else(|| Utc::now());
+    let now = parse_datetime_flexible(&now_iso).unwrap_or_else(Utc::now);
 
     // Извлекаем параметры из настроек
     let parameters = parse_parameters_from_json(
@@ -288,7 +287,7 @@ fn group_cards_by_state_internal(
         }
     };
 
-    let now = parse_datetime_flexible(&now_iso).unwrap_or_else(|| Utc::now());
+    let now = parse_datetime_flexible(&now_iso).unwrap_or_else(Utc::now);
 
     // Извлекаем параметры из настроек
     let parameters = parse_parameters_from_json(
@@ -338,9 +337,7 @@ fn group_cards_by_state_internal(
 }
 
 /// Функции для работы со временем
-
 /// Рассчитывает время просрочки карточки в часах
-
 pub fn get_overdue_hours(due_iso: String, now_iso: String) -> String {
     let result = match (parse_datetime_flexible(&due_iso), parse_datetime_flexible(&now_iso)) {
         (Some(due_date), Some(now)) => {
@@ -356,7 +353,6 @@ pub fn get_overdue_hours(due_iso: String, now_iso: String) -> String {
 
 /// Рассчитывает оставшееся время до повторения карточки в часах
 /// Возвращает отрицательное значение если карточка просрочена
-
 pub fn get_hours_until_due(due_iso: String, now_iso: String) -> String {
     let result = match (parse_datetime_flexible(&due_iso), parse_datetime_flexible(&now_iso)) {
         (Some(due_date), Some(now)) => {
@@ -370,7 +366,6 @@ pub fn get_hours_until_due(due_iso: String, now_iso: String) -> String {
 }
 
 /// Проверяет, просрочена ли карточка
-
 pub fn is_card_overdue(due_iso: String, now_iso: String) -> String {
     let result = match (parse_datetime_flexible(&due_iso), parse_datetime_flexible(&now_iso)) {
         (Some(due_date), Some(now)) => due_date <= now,
@@ -381,7 +376,6 @@ pub fn is_card_overdue(due_iso: String, now_iso: String) -> String {
 }
 
 /// Рассчитывает возраст карточки в днях (от первого повторения или создания)
-
 pub fn get_card_age_days(card_json: String, now_iso: String) -> String {
     let result = match (serde_json::from_str::<ModernFsrsCard>(&card_json), parse_datetime_flexible(&now_iso)) {
         (Ok(card), Some(now)) => {

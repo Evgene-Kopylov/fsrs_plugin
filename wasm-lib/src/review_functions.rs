@@ -1,7 +1,7 @@
 // Модуль для функций обработки повторения карточек FSRS
 
 use rs_fsrs::FSRS;
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 
 use crate::types::{ModernFsrsCard, ReviewSession};
 use crate::conversion::{rating_from_str, rating_to_string, create_fsrs_parameters};
@@ -20,7 +20,7 @@ pub fn review_card(
     // Парсим входные данные
     let mut card = parse_card_from_json(&card_json);
     let parameters = parse_parameters_from_json(&parameters_json);
-    let now = parse_datetime_flexible(&now_str).unwrap_or_else(|| Utc::now());
+    let now = parse_datetime_flexible(&now_str).unwrap_or_else(Utc::now);
     let rating = rating_from_str(&rating_str);
 
     // Создаем Card для алгоритма FSRS из истории reviews
