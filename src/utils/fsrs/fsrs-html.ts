@@ -80,7 +80,7 @@ export async function generateFsrsNowHTML(
 	}
 
 	let html = `<div class="fsrs-now-container">`;
-	html += `<h4 class="fsrs-now-header"><span class="fsrs-header-text">Карточек для повторения сегодня: ${cards.length}</span><span class="fsrs-info-icon" title="Обновлено: ${now.toLocaleString()}">(i)</span></h4>`;
+	html += `<h4 class="fsrs-now-header"><span class="fsrs-header-text">Карточек для повторения сегодня: ${cards.length}</span><span class="fsrs-info-icon" title="Отобраны и отсортированы по алгоритму FSRS:&#10;сначала карточки с наименьшей извлекаемостью (retrievability).&#10;&#10;Данные обновлены: ${now.toLocaleString()}">(?)</span></h4>`;
 
 	html += `<table class="fsrs-now-table">`;
 	html += `<thead><tr>`;
