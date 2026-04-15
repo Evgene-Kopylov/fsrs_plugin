@@ -6,13 +6,49 @@ use crate::types::{ModernFsrsCard, FsrsParameters, ReviewSession};
 #[allow(unused_imports)]
 use web_sys::console;
 
-/// Макрос для логирования, работающий как в WASM, так и в нативных тестах
+/// Макросы для логирования с разными уровнями, работающие как в WASM, так и в нативных тестах
+macro_rules! log_trace {
+    ($($arg:tt)*) => {
+        #[cfg(target_arch = "wasm32")]
+        web_sys::console::debug_1(&format!($($arg)*).into());
+        #[cfg(not(target_arch = "wasm32"))]
+        eprintln!("TRACE: {}", format!($($arg)*));
+    };
+}
+
 macro_rules! log_debug {
+    ($($arg:tt)*) => {
+        #[cfg(target_arch = "wasm32")]
+        web_sys::console::debug_1(&format!($($arg)*).into());
+        #[cfg(not(target_arch = "wasm32"))]
+        eprintln!("DEBUG: {}", format!($($arg)*));
+    };
+}
+
+macro_rules! log_info {
     ($($arg:tt)*) => {
         #[cfg(target_arch = "wasm32")]
         web_sys::console::log_1(&format!($($arg)*).into());
         #[cfg(not(target_arch = "wasm32"))]
-        eprintln!($($arg)*);
+        eprintln!("INFO: {}", format!($($arg)*));
+    };
+}
+
+macro_rules! log_warn {
+    ($($arg:tt)*) => {
+        #[cfg(target_arch = "wasm32")]
+        web_sys::console::warn_1(&format!($($arg)*).into());
+        #[cfg(not(target_arch = "wasm32"))]
+        eprintln!("WARN: {}", format!($($arg)*));
+    };
+}
+
+macro_rules! log_error {
+    ($($arg:tt)*) => {
+        #[cfg(target_arch = "wasm32")]
+        web_sys::console::error_1(&format!($($arg)*).into());
+        #[cfg(not(target_arch = "wasm32"))]
+        eprintln!("ERROR: {}", format!($($arg)*));
     };
 }
 
@@ -21,7 +57,7 @@ pub fn parse_yaml_to_card(yaml_str: &str) -> ModernFsrsCard {
     match serde_yaml::from_str::<ModernFsrsCard>(yaml_str) {
         Ok(card) => card,
         Err(e) => {
-            log_debug!("Ошибка парсинга YAML: {}", e);
+            log_warn!("Ошибка парсинга YAML: {}", e);
             create_default_card()
         }
     }
@@ -32,7 +68,7 @@ pub fn card_to_yaml(card: &ModernFsrsCard) -> String {
     match serde_yaml::to_string(card) {
         Ok(yaml) => yaml,
         Err(e) => {
-            log_debug!("Ошибка сериализации карточки в YAML: {}", e);
+            log_warn!("Ошибка сериализации карточки в YAML: {}", e);
             create_default_yaml()
         }
     }
@@ -43,7 +79,7 @@ pub fn parse_yaml_to_parameters(yaml_str: &str) -> FsrsParameters {
     match serde_yaml::from_str::<FsrsParameters>(yaml_str) {
         Ok(params) => params,
         Err(e) => {
-            log_debug!("Ошибка парсинга параметров YAML: {}", e);
+            log_warn!("Ошибка парсинга параметров YAML: {}", e);
             // Возвращаем дефолтные параметры
             create_default_parameters()
         }
@@ -52,79 +88,79 @@ pub fn parse_yaml_to_parameters(yaml_str: &str) -> FsrsParameters {
 
 /// Извлекает FSRS карточку из frontmatter Obsidian
 pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<ModernFsrsCard> {
-    log_debug!("extract_fsrs_from_frontmatter called with frontmatter length: {}", frontmatter.len());
+    log_trace!("extract_fsrs_from_frontmatter called with frontmatter length: {}", frontmatter.len());
 
     // Извлекаем YAML между первым и вторым "---"
     let trimmed = frontmatter.trim();
-    log_debug!("trimmed frontmatter length: {}", trimmed.len());
+    log_trace!("trimmed frontmatter length: {}", trimmed.len());
 
     let parts: Vec<&str> = trimmed.splitn(3, "---").collect();
-    log_debug!("parts length: {}", parts.len());
+    log_trace!("parts length: {}", parts.len());
 
     if parts.len() < 3 {
         // Нет закрывающего "---" или недостаточно частей
-        log_debug!("Not enough parts (missing closing '---')");
+        log_trace!("Not enough parts (missing closing '---')");
         return None;
     }
 
     let yaml_content = parts[1].trim();
-    log_debug!("yaml_content length: {}", yaml_content.len());
-    log_debug!("yaml_content first 200 chars: {}", &yaml_content[..yaml_content.len().min(200)]);
+    log_trace!("yaml_content length: {}", yaml_content.len());
+    log_trace!("yaml_content first 200 chars: {}", &yaml_content[..yaml_content.len().min(200)]);
 
     if yaml_content.is_empty() {
-        log_debug!("yaml_content is empty");
+        log_trace!("yaml_content is empty");
         return None;
     }
 
     // Парсим как общее значение YAML
-    log_debug!("Parsing YAML with serde_yaml");
+    log_trace!("Parsing YAML with serde_yaml");
     let yaml_value: serde_yaml::Value = match serde_yaml::from_str(yaml_content) {
         Ok(value) => {
-            log_debug!("YAML parsed successfully, type: {:?}", value);
+            log_trace!("YAML parsed successfully, type: {:?}", value);
             value
         },
         Err(e) => {
-            log_debug!("YAML parsing error: {}", e);
+            log_warn!("YAML parsing error: {}", e);
             return None; // невалидный YAML
         }
     };
 
     // Проверяем, содержит ли YAML поле "reviews"
-    log_debug!("Checking for 'reviews' field");
+    log_trace!("Checking for 'reviews' field");
     let reviews = if let serde_yaml::Value::Mapping(mapping) = &yaml_value {
         if !mapping.contains_key("reviews") {
-            log_debug!("YAML does not contain 'reviews' field");
+            log_trace!("YAML does not contain 'reviews' field");
             return None; // нет поля reviews - не FSRS карточка
         }
 
-        log_debug!("'reviews' field found");
+        log_trace!("'reviews' field found");
         // Извлекаем только поле reviews
         match mapping.get("reviews") {
             Some(serde_yaml::Value::Sequence(seq)) => {
-                log_debug!("reviews is a sequence with {} elements", seq.len());
+                log_trace!("reviews is a sequence with {} elements", seq.len());
                 // Десериализуем reviews
                 match serde_yaml::from_value::<Vec<ReviewSession>>(serde_yaml::Value::Sequence(seq.clone())) {
                     Ok(reviews) => {
-                        log_debug!("Successfully deserialized {} review sessions", reviews.len());
+                        log_trace!("Successfully deserialized {} review sessions", reviews.len());
                         reviews
                     },
                     Err(e) => {
-                        log_debug!("Error deserializing reviews: {}", e);
+                        log_warn!("Error deserializing reviews: {}", e);
                         return None;
                     }
                 }
             }
             other => {
-                log_debug!("reviews is not a sequence, type: {:?}", other);
+                log_warn!("reviews is not a sequence, type: {:?}", other);
                 return None; // reviews не является массивом
             }
         }
     } else {
-        log_debug!("YAML is not a mapping");
+        log_warn!("YAML is not a mapping");
         return None; // не mapping
     };
 
-    log_debug!("Creating ModernFsrsCard with {} reviews", reviews.len());
+    log_trace!("Creating ModernFsrsCard with {} reviews", reviews.len());
     // Создаем карточку с reviews и без file_path (он будет добавлен позже)
     Some(ModernFsrsCard {
         reviews,
@@ -189,6 +225,10 @@ pub fn validate_review_sessions(card: &ModernFsrsCard) -> Vec<String> {
         if session.difficulty < 1.0 || session.difficulty > 10.0 {
             errors.push(format!("Session {}: difficulty out of range: {}", i, session.difficulty));
         }
+    }
+
+    if !errors.is_empty() {
+        log_warn!("Review session validation errors: {:?}", errors);
     }
 
     errors
