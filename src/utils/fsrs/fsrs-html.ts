@@ -80,7 +80,7 @@ export async function generateFsrsNowHTML(
 	}
 
 	let html = `<div class="fsrs-now-container">`;
-	html += `<h4>Карточки для повторения (${cards.length})</h4>`;
+	html += `<h4>Карточек для повторения сегодня: ${cards.length}</h4>`;
 	html += `<small>Обновлено: ${now.toLocaleString()}</small><br><br>`;
 
 	html += `<table class="fsrs-now-table">`;
@@ -142,7 +142,7 @@ export async function generateFsrsNowHTML(
  */
 export function generateEmptyStateHTML(): string {
 	return `<div class="fsrs-now-container">
-		<h4>Карточки для повторения</h4>
+		<h4>Карточек для повторения сегодня</h4>
 		<div class="fsrs-now-empty">
 			<p>Нет карточки для повторения.</p>
 			<small>Используйте команду "Добавить FSRS поля" для создания новых карточек.</small>
