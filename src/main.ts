@@ -242,23 +242,35 @@ export default class FsrsPlugin extends Plugin {
 	 * Проверяет, следует ли игнорировать файл на основе паттернов
 	 */
 	private shouldIgnoreFile(filePath: string): boolean {
-		for (const pattern of this.defaultIgnorePatterns) {
+		// Объединяем дефолтные паттерны и пользовательские паттерны
+		const allPatterns = [
+			...this.defaultIgnorePatterns,
+			...this.settings.ignore_patterns,
+		];
+
+		for (const pattern of allPatterns) {
+			const trimmedPattern = pattern.trim();
+			if (trimmedPattern === "") continue;
+
 			// Паттерн для папки (заканчивается на /)
-			if (pattern.endsWith("/")) {
+			if (trimmedPattern.endsWith("/")) {
 				// Проверяем, содержит ли путь эту папку (включая вложенные пути)
-				if (filePath.includes(pattern)) {
+				if (filePath.includes(trimmedPattern)) {
 					return true;
 				}
 			}
 			// Паттерн для расширения файла (начинается с *.)
-			else if (pattern.startsWith("*.")) {
-				const extension = pattern.substring(1); // удаляем *
+			else if (trimmedPattern.startsWith("*.")) {
+				const extension = trimmedPattern.substring(1); // удаляем *
 				if (filePath.endsWith(extension)) {
 					return true;
 				}
 			}
 			// Точное совпадение имени файла
-			else if (filePath === pattern || filePath.endsWith("/" + pattern)) {
+			else if (
+				filePath === trimmedPattern ||
+				filePath.endsWith("/" + trimmedPattern)
+			) {
 				return true;
 			}
 		}

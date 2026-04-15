@@ -40,6 +40,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	filter_by_folders: [],
 	filter_by_tags: [],
 	exclude_states: [],
+	ignore_patterns: [],
 
 	// Настройки уведомлений
 	show_notifications: true,
@@ -350,6 +351,32 @@ export class SampleSettingTab extends PluginSettingTab {
 								num;
 							await this.plugin.saveSettings();
 						}
+					}),
+			);
+
+		// Разделитель
+		containerEl.createEl("hr");
+
+		// Настройки фильтрации файлов
+		containerEl.createEl("h3", { text: "File Filtering" });
+
+		new Setting(containerEl)
+			.setName("Ignore Patterns")
+			.setDesc(
+				"File and folder patterns to ignore (one per line). Patterns ending with / are folders. *.extension for file types. Example: .obsidian/, templates/, *.excalidraw.md",
+			)
+			.addTextArea((text) =>
+				text
+					.setPlaceholder(
+						".obsidian/\ntemplates/\n*.excalidraw.md\nUntitled.md",
+					)
+					.setValue(this.plugin.settings.ignore_patterns.join("\n"))
+					.onChange(async (value) => {
+						const patterns = value
+							.split("\n")
+							.filter((p) => p.trim() !== "");
+						this.plugin.settings.ignore_patterns = patterns;
+						await this.plugin.saveSettings();
 					}),
 			);
 
