@@ -30,6 +30,19 @@ export default class FsrsPlugin extends Plugin {
 	private fsrsNowRenderers = new Set<FsrsNowRenderer>();
 	private fsrsFutureRenderers = new Set<FsrsFutureRenderer>();
 
+	// Паттерны игнорирования файлов и папок по умолчанию
+	private defaultIgnorePatterns = [
+		".obsidian/",
+		"templates/",
+		"attachments/",
+		"media/",
+		"images/",
+		"_trash/",
+		".trash/",
+		"*.canvas",
+		"*.excalidraw.md",
+	];
+
 	/**
 	 * Загрузка плагина
 	 */
@@ -151,6 +164,12 @@ export default class FsrsPlugin extends Plugin {
 			console.log(`Всего markdown файлов: ${files.length}`);
 
 			for (const file of files) {
+				// Пропускаем файлы, соответствующие паттернам игнорирования
+				if (this.shouldIgnoreFile(file.path)) {
+					console.log(`  ⏭️  Игнорируем файл: ${file.path}`);
+					continue;
+				}
+
 				console.log(`=== Обработка файла: ${file.path} ===`);
 				try {
 					const content = await this.app.vault.read(file);
@@ -217,6 +236,33 @@ export default class FsrsPlugin extends Plugin {
 			);
 			throw error;
 		}
+	}
+
+	/**
+	 * Проверяет, следует ли игнорировать файл на основе паттернов
+	 */
+	private shouldIgnoreFile(filePath: string): boolean {
+		for (const pattern of this.defaultIgnorePatterns) {
+			// Паттерн для папки (заканчивается на /)
+			if (pattern.endsWith("/")) {
+				// Проверяем, содержит ли путь эту папку (включая вложенные пути)
+				if (filePath.includes(pattern)) {
+					return true;
+				}
+			}
+			// Паттерн для расширения файла (начинается с *.)
+			else if (pattern.startsWith("*.")) {
+				const extension = pattern.substring(1); // удаляем *
+				if (filePath.endsWith(extension)) {
+					return true;
+				}
+			}
+			// Точное совпадение имени файла
+			else if (filePath === pattern || filePath.endsWith("/" + pattern)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
