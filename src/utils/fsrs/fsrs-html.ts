@@ -6,7 +6,6 @@ import type {
 	FSRSSettings,
 } from "../../interfaces/fsrs";
 import { computeCardState } from "./fsrs-wasm";
-import { getOverdueHours, formatOverdueTime } from "./fsrs-time";
 
 /**
  * Извлекает имя файла из пути
@@ -86,31 +85,44 @@ export async function generateFsrsNowHTML(
 
 	html += `<table class="fsrs-now-table">`;
 	html += `<thead><tr>`;
-	html += `<th>Файл</th>`;
-	html += `<th>Повторений</th>`;
-	html += `<th>Просрочка</th>`;
+	html += `<th class="fsrs-col-file">Файл</th>`;
+	html += `<th class="fsrs-col-reps">Повторений</th>`;
+	html += `<th class="fsrs-col-overdue">Просрочка</th>`;
 	html += `</tr></thead><tbody>`;
 
 	for (const { card, state } of cardsWithState) {
 		const displayName = extractDisplayName(card.filePath);
-		// Вычисляем разницу в днях между due и now
 		const dueDate = new Date(state.due);
-		const diffDays = Math.ceil(
-			(dueDate.getTime() - now.getTime()) / (1000 * 3600 * 24),
-		);
+		const diffMs = dueDate.getTime() - now.getTime();
+		const diffHours = diffMs / (1000 * 3600);
+		const absDiffHours = Math.abs(diffHours);
 		let overdueText: string;
-		if (diffDays < 0) {
-			overdueText = `${diffDays}`; // например, -3
-		} else if (diffDays === 0) {
-			overdueText = "0";
+		if (absDiffHours < 24) {
+			// Показываем в часах, округляем до целых
+			const hours = Math.round(diffHours);
+			if (hours < 0) {
+				overdueText = `${hours} ч`;
+			} else if (hours === 0) {
+				overdueText = `0 ч`;
+			} else {
+				overdueText = `+${hours} ч`;
+			}
 		} else {
-			overdueText = `+${diffDays}`; // например, +5
+			// Показываем в днях
+			const days = Math.round(diffHours / 24);
+			if (days < 0) {
+				overdueText = `${days} дн`;
+			} else if (days === 0) {
+				overdueText = `0 дн`;
+			} else {
+				overdueText = `+${days} дн`;
+			}
 		}
 
 		html += `<tr class="fsrs-now-row" data-file-path="${card.filePath}">`;
-		html += `<td><a href="${card.filePath}" data-file-path="${card.filePath}" class="internal-link">${displayName}</a></td>`;
-		html += `<td>${card.reviews.length}</td>`;
-		html += `<td>${overdueText}</td>`;
+		html += `<td class="fsrs-col-file"><a href="${card.filePath}" data-file-path="${card.filePath}" class="internal-link">${displayName}</a></td>`;
+		html += `<td class="fsrs-col-reps">${card.reviews.length}</td>`;
+		html += `<td class="fsrs-col-overdue">${overdueText}</td>`;
 		html += `</tr>`;
 	}
 
@@ -133,7 +145,7 @@ export function generateEmptyStateHTML(): string {
 	return `<div class="fsrs-now-container">
 		<h4>Карточки для повторения</h4>
 		<div class="fsrs-now-empty">
-			<p>Нет карточек для повторения.</p>
+			<p>Нет карточки для повторения.</p>
 			<small>Используйте команду "Добавить FSRS поля" для создания новых карточек.</small>
 		</div>
 	</div>`;

@@ -273,10 +273,16 @@ If your plugin does not need CSS, delete this file.
 	cursor: pointer;
 }
 
-/* Выравнивание чисел по правому краю */
-.fsrs-now-table td:nth-child(2),
-.fsrs-now-table td:nth-child(3) {
+/* Уменьшаем ширину колонок "Повторений" и "Просрочка" */
+.fsrs-now-table .fsrs-col-reps,
+.fsrs-now-table .fsrs-col-overdue {
+	white-space: nowrap;
+	width: 1%;
 	text-align: right;
+}
+/* Имя файла занимает всё оставшееся пространство */
+.fsrs-now-table .fsrs-col-file {
+	width: auto;
 }
 
 .fsrs-delete-button:disabled {
