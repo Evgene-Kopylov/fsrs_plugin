@@ -9,6 +9,7 @@ import {
 	updateReviewsInYaml,
 	getMinutesSinceLastReview,
 	getRussianNoun,
+	extractFrontmatterWithMatch,
 } from "../../utils/fsrs-helper";
 import type { ModernFSRSCard, FSRSRating } from "../../interfaces/fsrs";
 import type MyPlugin from "../../main";
@@ -34,15 +35,14 @@ export async function reviewCurrentCard(
 		const content = await app.vault.read(activeFile);
 
 		// Ищем frontmatter
-		const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
-		const match = frontmatterRegex.exec(content);
+		const frontmatterMatch = extractFrontmatterWithMatch(content);
 
-		if (!match || !match[1]) {
+		if (!frontmatterMatch) {
 			new Notice("Файл не содержит frontmatter");
 			return;
 		}
 
-		const frontmatter = match[1];
+		const frontmatter = frontmatterMatch.content;
 
 		// Парсим карточку в новом формате
 		const parseResult = parseModernFsrsFromFrontmatter(
@@ -119,9 +119,12 @@ export async function reviewCurrentCard(
 		);
 
 		// Заменяем старый frontmatter на новый, сохраняя все остальные поля и пустые строки
-		const beforeFrontmatter = content.substring(0, match.index!);
+		const beforeFrontmatter = content.substring(
+			0,
+			frontmatterMatch.match.index!,
+		);
 		const afterFrontmatter = content.substring(
-			match.index! + match[0].length,
+			frontmatterMatch.match.index! + frontmatterMatch.match[0].length,
 		);
 		const newContent =
 			beforeFrontmatter +
@@ -183,15 +186,14 @@ export async function reviewCurrentCardSimple(app: App): Promise<void> {
 		const content = await app.vault.read(activeFile);
 
 		// Ищем frontmatter
-		const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
-		const match = frontmatterRegex.exec(content);
+		const frontmatterMatch = extractFrontmatterWithMatch(content);
 
-		if (!match || !match[1]) {
+		if (!frontmatterMatch) {
 			new Notice("Файл не содержит frontmatter");
 			return;
 		}
 
-		const frontmatter = match[1];
+		const frontmatter = frontmatterMatch.content;
 
 		// Пробуем распарсить в старом формате
 		const legacyMatch = /^fsrs_due:/m.test(frontmatter);
@@ -242,9 +244,12 @@ export async function reviewCurrentCardSimple(app: App): Promise<void> {
 		);
 
 		// Заменяем старый frontmatter на новый, сохраняя все остальные поля и пустые строки
-		const beforeFrontmatter = content.substring(0, match.index!);
+		const beforeFrontmatter = content.substring(
+			0,
+			frontmatterMatch.match.index!,
+		);
 		const afterFrontmatter = content.substring(
-			match.index! + match[0].length,
+			frontmatterMatch.match.index! + frontmatterMatch.match[0].length,
 		);
 		const newContent =
 			beforeFrontmatter +
@@ -281,15 +286,14 @@ export async function reviewCardByPath(
 		const content = await app.vault.read(file);
 
 		// Ищем frontmatter
-		const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
-		const match = frontmatterRegex.exec(content);
+		const frontmatterMatch = extractFrontmatterWithMatch(content);
 
-		if (!match || !match[1]) {
+		if (!frontmatterMatch) {
 			new Notice("Файл не содержит frontmatter");
 			return null;
 		}
 
-		const frontmatter = match[1];
+		const frontmatter = frontmatterMatch.content;
 
 		// Парсим карточку в новом формате
 		const parseResult = parseModernFsrsFromFrontmatter(
@@ -366,9 +370,12 @@ export async function reviewCardByPath(
 		);
 
 		// Заменяем старый frontmatter на новый, сохраняя все остальные поля и пустые строки
-		const beforeFrontmatter = content.substring(0, match.index!);
+		const beforeFrontmatter = content.substring(
+			0,
+			frontmatterMatch.match.index!,
+		);
 		const afterFrontmatter = content.substring(
-			match.index! + match[0].length,
+			frontmatterMatch.match.index! + frontmatterMatch.match[0].length,
 		);
 		const newContent =
 			beforeFrontmatter +

@@ -1,6 +1,7 @@
 import { MarkdownRenderChild, Notice } from "obsidian";
 import {
 	parseModernFsrsFromFrontmatter,
+	extractFrontmatterWithMatch,
 	isCardDue,
 	computeCardState,
 	formatLocalDate,
@@ -97,10 +98,9 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			}
 
 			const content = await this.plugin.app.vault.read(file);
-			const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
-			const match = frontmatterRegex.exec(content);
+			const frontmatterMatch = extractFrontmatterWithMatch(content);
 
-			if (!match || !match[1]) {
+			if (!frontmatterMatch) {
 				this.mainButton.textContent = "Нет frontmatter";
 				this.mainButton.disabled = true;
 				this.updateButtonClass("error");
@@ -108,7 +108,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 				return;
 			}
 
-			const frontmatter = match[1];
+			const frontmatter = frontmatterMatch.content;
 			const parseResult = parseModernFsrsFromFrontmatter(
 				frontmatter,
 				this.sourcePath,
@@ -237,16 +237,15 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			}
 
 			const content = await this.plugin.app.vault.read(file);
-			const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
-			const match = frontmatterRegex.exec(content);
+			const frontmatterMatch = extractFrontmatterWithMatch(content);
 
-			if (!match || !match[1]) {
+			if (!frontmatterMatch) {
 				new Notice("Файл не содержит frontmatter");
 				await this.updateButtonState();
 				return;
 			}
 
-			const frontmatter = match[1];
+			const frontmatter = frontmatterMatch.content;
 			const parseResult = parseModernFsrsFromFrontmatter(
 				frontmatter,
 				this.sourcePath,
@@ -332,16 +331,15 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			}
 
 			const content = await this.plugin.app.vault.read(file);
-			const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
-			const match = frontmatterRegex.exec(content);
+			const frontmatterMatch = extractFrontmatterWithMatch(content);
 
-			if (!match || !match[1]) {
+			if (!frontmatterMatch) {
 				new Notice("Файл не содержит frontmatter");
 				await this.updateButtonState();
 				return;
 			}
 
-			const frontmatter = match[1];
+			const frontmatter = frontmatterMatch.content;
 			const parseResult = parseModernFsrsFromFrontmatter(
 				frontmatter,
 				this.sourcePath,
@@ -373,9 +371,13 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			);
 
 			// Собираем обновленное содержимое файла
-			const beforeFrontmatter = content.substring(0, match.index!);
+			const beforeFrontmatter = content.substring(
+				0,
+				frontmatterMatch.match.index!,
+			);
 			const afterFrontmatter = content.substring(
-				match.index! + match[0].length,
+				frontmatterMatch.match.index! +
+					frontmatterMatch.match[0].length,
 			);
 			const newContent =
 				beforeFrontmatter +

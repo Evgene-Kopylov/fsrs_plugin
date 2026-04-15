@@ -1,6 +1,10 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import MyPlugin from "./main";
 import type { FSRSSettings, FSRSParameters } from "./interfaces/fsrs";
+import {
+	formatIgnorePatterns,
+	parseIgnorePatterns,
+} from "./utils/fsrs/fsrs-filter";
 
 // Расширяем базовые настройки плагина параметрами FSRS
 export interface MyPluginSettings extends FSRSSettings {
@@ -367,14 +371,14 @@ export class SampleSettingTab extends PluginSettingTab {
 			)
 			.addTextArea((text) =>
 				text
-					.setPlaceholder(
-						".obsidian/\ntemplates/\n*.excalidraw.md\nUntitled.md",
+					.setPlaceholder(".obsidian/\ntemplates/\n*.excalidraw.md")
+					.setValue(
+						formatIgnorePatterns(
+							this.plugin.settings.ignore_patterns,
+						),
 					)
-					.setValue(this.plugin.settings.ignore_patterns.join("\n"))
 					.onChange(async (value) => {
-						const patterns = value
-							.split("\n")
-							.filter((p) => p.trim() !== "");
+						const patterns = parseIgnorePatterns(value);
 						this.plugin.settings.ignore_patterns = patterns;
 						await this.plugin.saveSettings();
 					}),

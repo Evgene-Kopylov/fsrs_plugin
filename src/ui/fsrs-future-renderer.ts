@@ -40,6 +40,7 @@ export class FsrsFutureRenderer extends MarkdownRenderChild {
 	 * Основной метод рендеринга контента
 	 */
 	private async renderContent() {
+		const start = performance.now();
 		try {
 			// Показываем индикатор загрузки
 			this.container.innerHTML = `
@@ -77,6 +78,12 @@ export class FsrsFutureRenderer extends MarkdownRenderChild {
 			this.addEventListeners();
 		} catch (error) {
 			this.renderErrorState(error);
+		} finally {
+			const elapsedMs = performance.now() - start;
+			const elapsedSec = elapsedMs / 1000;
+			console.log(
+				`⏱️ Загрузка таблицы FSRS будущего: ${elapsedSec.toFixed(2)} с`,
+			);
 		}
 	}
 
