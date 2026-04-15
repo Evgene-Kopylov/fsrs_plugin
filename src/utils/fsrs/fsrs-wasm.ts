@@ -404,7 +404,22 @@ export async function groupCardsByState(
 			settingsJson,
 			nowStr,
 		);
-		return JSON.parse(groupedJson);
+		const parsed = JSON.parse(groupedJson);
+		// Convert snake_case keys to camelCase
+		const result: any = {};
+		for (const key in parsed) {
+			if (parsed.hasOwnProperty(key)) {
+				const newKey = key.replace(/_([a-z])/g, (_, letter) =>
+					letter.toUpperCase(),
+				);
+				result[newKey] = parsed[key];
+			}
+		}
+		return result as {
+			overdue: ModernFSRSCard[];
+			due: ModernFSRSCard[];
+			notDue: ModernFSRSCard[];
+		};
 	} catch (error) {
 		console.error("Ошибка при группировке карточек:", error);
 		return { overdue: [], due: [], notDue: cards }; // Возвращаем дефолтную группировку

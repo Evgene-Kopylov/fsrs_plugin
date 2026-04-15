@@ -28,7 +28,17 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 	 * Вызывается при загрузке компонента
 	 */
 	async onload() {
+		super.onload();
+		this.plugin.registerFsrsNowRenderer(this);
 		await this.renderContent();
+	}
+
+	/**
+	 * Вызывается при выгрузке компонента
+	 */
+	onunload() {
+		this.plugin.unregisterFsrsNowRenderer(this);
+		super.onunload();
 	}
 
 	/**

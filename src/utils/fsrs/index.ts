@@ -37,12 +37,17 @@ export {
 } from "./fsrs-time";
 
 // Экспорт функций генерации HTML
-export { generateFsrsNowHTML, generateEmptyStateHTML } from "./fsrs-html";
+export {
+	generateFsrsNowHTML,
+	generateFsrsFutureHTML,
+	generateEmptyStateHTML,
+} from "./fsrs-html";
 
 // Экспорт функций сортировки и фильтрации
 export {
 	sortCardsByPriority,
 	filterCardsForReview,
+	filterCardsForFuture,
 	limitCards,
 	calculateCardPriorityScore,
 	groupCardsByState,

@@ -388,6 +388,8 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			await this.plugin.app.vault.modify(file, newContent);
 
 			new Notice("Последнее повторение удалено");
+			this.plugin.notifyFsrsNowRenderers();
+			this.plugin.notifyFsrsFutureRenderers();
 			await this.updateButtonState();
 		} catch (error) {
 			console.error("Ошибка при удалении повторения:", error);

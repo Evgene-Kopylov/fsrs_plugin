@@ -4,6 +4,7 @@ import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from
 import { findFsrsCards } from "./commands/find-fsrs-cards";
 import { reviewCurrentCard, reviewCardByPath } from "./commands/review";
 import { FsrsNowRenderer } from "./ui/fsrs-now-renderer";
+import { FsrsFutureRenderer } from "./ui/fsrs-future-renderer";
 import { ReviewButtonRenderer } from "./ui/review-button-renderer";
 import { MyPluginSettings, DEFAULT_SETTINGS } from "./settings";
 import { SampleSettingTab } from "./settings";
@@ -26,6 +27,8 @@ import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
 export default class FsrsPlugin extends Plugin {
 	settings: MyPluginSettings;
 	private isWasmInitialized = false;
+	private fsrsNowRenderers = new Set<FsrsNowRenderer>();
+	private fsrsFutureRenderers = new Set<FsrsFutureRenderer>();
 
 	/**
 	 * Загрузка плагина
@@ -53,6 +56,25 @@ export default class FsrsPlugin extends Plugin {
 
 				// Создаем и добавляем рендерер
 				const renderer = new FsrsNowRenderer(
+					this,
+					renderContainer,
+					ctx.sourcePath,
+				);
+				ctx.addChild(renderer);
+			},
+		);
+
+		// Регистрация MarkdownCodeBlockProcessor для блоков fsrs-future
+		this.registerMarkdownCodeBlockProcessor(
+			"fsrs-future",
+			async (source, el, ctx) => {
+				// Создаем контейнер для рендеринга
+				const renderContainer = document.createElement("div");
+				renderContainer.className = "fsrs-future-render-container";
+				el.appendChild(renderContainer);
+
+				// Создаем и добавляем рендерер
+				const renderer = new FsrsFutureRenderer(
 					this,
 					renderContainer,
 					ctx.sourcePath,
@@ -260,5 +282,62 @@ export default class FsrsPlugin extends Plugin {
 	onunload() {
 		console.log("Выгрузка FSRS плагина");
 		this.isWasmInitialized = false;
+		this.fsrsNowRenderers.clear();
+	}
+
+	/**
+	 * Регистрирует активный рендерер fsrs-now для уведомлений об обновлениях
+	 */
+	registerFsrsNowRenderer(renderer: FsrsNowRenderer): void {
+		this.fsrsNowRenderers.add(renderer);
+	}
+
+	/**
+	 * Удаляет рендерер fsrs-now из списка активных
+	 */
+	unregisterFsrsNowRenderer(renderer: FsrsNowRenderer): void {
+		this.fsrsNowRenderers.delete(renderer);
+	}
+
+	/**
+	 * Уведомляет все активные рендереры fsrs-now об обновлении данных
+	 */
+	notifyFsrsNowRenderers(): void {
+		for (const renderer of this.fsrsNowRenderers) {
+			renderer.refresh().catch((error) => {
+				console.error(
+					"Ошибка при обновлении рендерера fsrs-now:",
+					error,
+				);
+			});
+		}
+	}
+
+	/**
+	 * Регистрирует активный рендерер fsrs-future для уведомлений об обновлениях
+	 */
+	registerFsrsFutureRenderer(renderer: FsrsFutureRenderer): void {
+		this.fsrsFutureRenderers.add(renderer);
+	}
+
+	/**
+	 * Удаляет рендерер fsrs-future из списка активных
+	 */
+	unregisterFsrsFutureRenderer(renderer: FsrsFutureRenderer): void {
+		this.fsrsFutureRenderers.delete(renderer);
+	}
+
+	/**
+	 * Уведомляет все активные рендереры fsrs-future об обновлении данных
+	 */
+	notifyFsrsFutureRenderers(): void {
+		for (const renderer of this.fsrsFutureRenderers) {
+			renderer.refresh().catch((error) => {
+				console.error(
+					"Ошибка при обновлении рендерера fsrs-future:",
+					error,
+				);
+			});
+		}
 	}
 }

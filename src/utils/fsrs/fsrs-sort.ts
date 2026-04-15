@@ -6,6 +6,7 @@ import {
 	filterCardsForReview as wasmFilterCardsForReview,
 	sortCardsByPriority as wasmSortCardsByPriority,
 	groupCardsByState as wasmGroupCardsByState,
+	computeCardState,
 } from "./fsrs-wasm";
 
 /**
@@ -17,7 +18,21 @@ export async function sortCardsByPriority(
 	settings: FSRSSettings,
 	now: Date = new Date(),
 ): Promise<ModernFSRSCard[]> {
-	return wasmSortCardsByPriority(cards, settings, now);
+	if (!Array.isArray(cards)) {
+		console.error("sortCardsByPriority: cards is not an array", cards);
+		return [];
+	}
+
+	if (cards.length === 0) {
+		return [];
+	}
+
+	try {
+		return await wasmSortCardsByPriority(cards, settings, now);
+	} catch (error) {
+		console.error("Ошибка при сортировке карточек:", error);
+		return cards; // Возвращаем оригинальный массив в случае ошибки
+	}
 }
 
 /**
@@ -29,7 +44,109 @@ export async function filterCardsForReview(
 	settings: FSRSSettings,
 	now: Date = new Date(),
 ): Promise<ModernFSRSCard[]> {
-	return wasmFilterCardsForReview(cards, settings, now);
+	if (!Array.isArray(cards)) {
+		console.error("filterCardsForReview: cards is not an array", cards);
+		return [];
+	}
+
+	if (cards.length === 0) {
+		return [];
+	}
+
+	try {
+		return await wasmFilterCardsForReview(cards, settings, now);
+	} catch (error) {
+		console.error("Ошибка при фильтрации карточек для повторения:", error);
+		return []; // Возвращаем пустой массив в случае ошибки
+	}
+}
+
+/**
+ * Фильтрует карточки, запланированные на будущее (не готовые к повторению сейчас)
+ * Возвращает карточки, отсортированные по дате следующего повторения (от ближайших к дальним)
+ */
+export async function filterCardsForFuture(
+	cards: ModernFSRSCard[],
+	settings: FSRSSettings,
+	now: Date = new Date(),
+): Promise<ModernFSRSCard[]> {
+	if (!Array.isArray(cards)) {
+		console.error("filterCardsForFuture: cards is not an array", cards);
+		return [];
+	}
+
+	if (cards.length === 0) {
+		return [];
+	}
+
+	// Собираем карточки с состояниями
+	const cardsWithState: {
+		card: ModernFSRSCard;
+		state: any;
+		dueTime: number;
+	}[] = [];
+
+	for (const card of cards) {
+		if (!card || typeof card !== "object") {
+			console.warn("Пропускаем некорректную карточку", card);
+			continue;
+		}
+
+		try {
+			const state = await computeCardState(card, settings, now);
+
+			// Проверяем валидность состояния
+			if (!state || typeof state !== "object") {
+				console.warn(
+					`Некорректное состояние для карточки ${card.filePath}`,
+					state,
+				);
+				continue;
+			}
+
+			// Проверяем поле due
+			if (!state.due || typeof state.due !== "string") {
+				console.warn(
+					`Некорректное поле due для карточки ${card.filePath}`,
+					state.due,
+				);
+				continue;
+			}
+
+			const dueDate = new Date(state.due);
+			if (isNaN(dueDate.getTime())) {
+				console.warn(
+					`Некорректная дата due для карточки ${card.filePath}: ${state.due}`,
+				);
+				continue;
+			}
+
+			const dueTime = dueDate.getTime();
+			const nowTime = now.getTime();
+
+			// Фильтруем карточки, у которых следующее повторение в будущем
+			if (dueTime > nowTime) {
+				cardsWithState.push({
+					card,
+					state,
+					dueTime,
+				});
+			}
+		} catch (error) {
+			console.warn(
+				`Ошибка при вычислении состояния карточки ${card.filePath}, пропускаем:`,
+				error,
+			);
+			// Пропускаем карточку с ошибкой
+			continue;
+		}
+	}
+
+	// Сортируем по времени следующего повторения (от ближайших к дальним)
+	cardsWithState.sort((a, b) => a.dueTime - b.dueTime);
+
+	// Возвращаем только карточки
+	return cardsWithState.map((item) => item.card);
 }
 
 /**
@@ -39,7 +156,16 @@ export function limitCards(
 	cards: ModernFSRSCard[],
 	max: number = 30,
 ): ModernFSRSCard[] {
-	return cards.slice(0, max);
+	if (!Array.isArray(cards)) {
+		console.error("limitCards: cards is not an array", cards);
+		return [];
+	}
+
+	if (cards.length === 0) {
+		return [];
+	}
+
+	return cards.slice(0, Math.max(0, max));
 }
 
 /**
@@ -73,5 +199,20 @@ export async function groupCardsByState(
 	due: ModernFSRSCard[];
 	notDue: ModernFSRSCard[];
 }> {
-	return wasmGroupCardsByState(cards, settings, now);
+	if (!Array.isArray(cards)) {
+		console.error("groupCardsByState: cards is not an array", cards);
+		return { overdue: [], due: [], notDue: [] };
+	}
+
+	if (cards.length === 0) {
+		return { overdue: [], due: [], notDue: [] };
+	}
+
+	try {
+		return await wasmGroupCardsByState(cards, settings, now);
+	} catch (error) {
+		console.error("Ошибка при группировке карточек:", error);
+		// Возвращаем дефолтную группировку: все карточки в notDue
+		return { overdue: [], due: [], notDue: [...cards] };
+	}
 }
