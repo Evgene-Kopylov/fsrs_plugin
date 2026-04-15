@@ -3,7 +3,7 @@
 ## 📁 Структура проекта
 
 ```
-obsidian-sample-plugin/
+obsidian-fsrs-plugin/
 ├── src/                    # Исходный код TypeScript (ЧИТАЙТЕ ЗДЕСЬ)
 │   ├── main.ts            # Основной файл плагина (точка входа)
 │   ├── settings.ts        # Настройки плагина

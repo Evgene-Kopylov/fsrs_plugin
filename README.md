@@ -1,90 +1,193 @@
-# Obsidian Sample Plugin
+# FSRS Plugin for Obsidian
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+[![Node.js build](https://github.com/obsidianmd/obsidian-fsrs-plugin/actions/workflows/lint.yml/badge.svg)](https://github.com/obsidianmd/obsidian-fsrs-plugin/actions/workflows/lint.yml)
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+Free Spaced Repetition Scheduler (FSRS) plugin for Obsidian. Implements the FSRS algorithm for spaced repetition flashcards directly in your notes.
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+## Features
 
-## First time developing plugins?
+- **Add FSRS fields**: Insert YAML frontmatter with FSRS card data into the current note
+- **Find cards for review**: Scan all files to find cards with due dates for review
+- **Review cards**: Update card parameters based on user assessment (Again, Hard, Good, Easy)
+- **WASM-powered**: Uses Rust-compiled WebAssembly for high-performance FSRS calculations
+- **YAML-based storage**: Stores FSRS parameters directly in note frontmatter
+- **Machine learning optimization**: FSRS algorithm adapts to your memory patterns
 
-Quick starting guide for new plugin devs:
+## What is FSRS?
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+FSRS (Free Spaced Repetition Scheduler) is a modern spaced repetition algorithm based on machine learning. Unlike traditional algorithms like SM-2 (used in Anki), FSRS:
 
-## Releasing new releases
+- Uses machine learning to optimize review schedules
+- Adapts to individual memory patterns
+- Provides more accurate prediction of retention
+- Is open source and actively developed
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+## Installation
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+### From Obsidian Community Plugins
+1. Open Obsidian Settings
+2. Go to **Community plugins** and disable Safe Mode
+3. Click **Browse** and search for "FSRS"
+4. Install and enable the plugin
 
-## Adding your plugin to the community plugin list
+### Manual Installation
+1. Download the latest release from GitHub
+2. Extract the files into your vault's plugin folder: `VaultFolder/.obsidian/plugins/fsrs-plugin/`
+3. Restart Obsidian
+4. Enable the plugin in **Settings → Community plugins**
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+## Usage
 
-## How to use
+### Adding FSRS to a Note
+1. Open the note you want to use as a flashcard
+2. Run the command **"Add FSRS fields"** from the command palette (Ctrl/Cmd+P)
+3. The plugin will add FSRS YAML frontmatter to your note
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+### Finding Cards for Review
+1. Run the command **"Find cards for review"** from the command palette
+2. The plugin will scan all notes and display cards that are due for review
+3. Click on a card to open it for review
 
-## Manually installing the plugin
+### Reviewing Cards
+When reviewing a card, you can rate your recall using four options:
+- **Again**: Complete forgetting, reset the card
+- **Hard**: Recalled with significant difficulty
+- **Good**: Recalled with some difficulty
+- **Easy**: Perfect recall
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+The FSRS algorithm will calculate the optimal next review date based on your rating.
 
-## Improve code quality with eslint
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
+## FSRS YAML Fields
 
-## Funding URL
+The plugin adds the following fields to your note's frontmatter:
 
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+```yaml
+---
+fsrs_due: "2024-01-01T00:00:00Z"
+fsrs_stability: 0.0
+fsrs_difficulty: 0.0
+fsrs_elapsed_days: 0
+fsrs_scheduled_days: 0
+fsrs_reps: 0
+fsrs_lapses: 0
+fsrs_state: "New"
+fsrs_last_review: "2024-01-01T00:00:00Z"
+---
 ```
 
-If you have multiple URLs, you can also do:
+### Field Descriptions
+- `fsrs_due`: Next review date (UTC ISO format)
+- `fsrs_stability`: Memory stability factor
+- `fsrs_difficulty`: Card difficulty factor
+- `fsrs_elapsed_days`: Days since last review
+- `fsrs_scheduled_days`: Scheduled interval for next review
+- `fsrs_reps`: Total number of reviews
+- `fsrs_lapses`: Number of times card was forgotten
+- `fsrs_state`: Current state (New, Learning, Review, Relearning)
+- `fsrs_last_review`: Last review timestamp
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
+## Commands
+
+| Command | Description | Default Hotkey |
+|---------|-------------|----------------|
+| `Add FSRS fields` | Add FSRS YAML frontmatter to current note | None |
+| `Find cards for review` | Find all cards due for review | None |
+| `Review card` | Update card parameters after review | None |
+
+## Settings
+
+The plugin provides several configuration options:
+
+- **Algorithm Parameters**: Customize FSRS weights, retention targets, and maximum intervals
+- **Display Options**: Show/hide stability, difficulty, and retrievability values
+- **Review Interface**: Customize review buttons and notifications
+- **Filtering**: Filter cards by folders, tags, or states
+
+## For Developers
+
+### Prerequisites
+- Node.js 16+
+- Rust toolchain (for WASM compilation)
+- Obsidian plugin API types
+
+### Building from Source
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/obsidianmd/obsidian-fsrs-plugin.git
+   cd obsidian-fsrs-plugin
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Build the plugin:
+   ```bash
+   npm run build
+   ```
+
+4. For development with auto-rebuild:
+   ```bash
+   npm run dev
+   ```
+
+### Project Structure
+```
+obsidian-fsrs-plugin/
+├── src/                    # TypeScript source code
+│   ├── main.ts            # Plugin entry point
+│   ├── settings.ts        # Plugin settings
+│   └── ...
+├── wasm-lib/              # Rust code for WASM module
+│   ├── src/lib.rs         # Core FSRS logic in Rust
+│   └── Cargo.toml         # Rust dependencies
+├── scripts/               # Build scripts
+│   └── encode-wasm.js     # Encodes WASM to base64
+└── ...
 ```
 
-## API Documentation
+### Architecture
+The plugin uses a hybrid architecture:
+- **TypeScript/JavaScript**: Plugin lifecycle, UI, Obsidian API integration
+- **Rust/WebAssembly**: Core FSRS algorithm for performance
+- **YAML frontmatter**: Card state storage in notes
 
-See https://docs.obsidian.md
+The Rust code is compiled to WebAssembly and embedded in the plugin as base64-encoded string.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests: `npm run build` and `npm run lint`
+5. Submit a pull request
+
+## License
+
+This plugin is released under the 0-BSD license. See the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- FSRS algorithm by [J.A. Ceprián](https://github.com/open-spaced-repetition)
+- Rust FSRS library: [rs-fsrs](https://github.com/open-spaced-repetition/rs-fsrs)
+- Obsidian team for the amazing plugin API
+- All contributors and users of the plugin
+
+## Support
+
+- **Issues**: Report bugs or feature requests on [GitHub Issues](https://github.com/obsidianmd/obsidian-fsrs-plugin/issues)
+- **Documentation**: Check the [Obsidian Plugin Documentation](https://docs.obsidian.md)
+- **Community**: Join the [Obsidian Discord](https://discord.gg/obsidianmd)
+
+## Version History
+
+- **1.0.0**: Initial release with basic FSRS integration
+- See [CHANGELOG.md](CHANGELOG.md) for detailed version history
+
+---
+
+Made with ❤️ for the Obsidian community
