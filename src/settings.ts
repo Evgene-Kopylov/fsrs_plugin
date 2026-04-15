@@ -72,7 +72,7 @@ export class SampleSettingTab extends PluginSettingTab {
 			)
 			.addSlider((slider) =>
 				slider
-					.setLimits(0.5, 1.0, 0.05)
+					.setLimits(0.5, 1.0, 0.001)
 					.setValue(this.plugin.settings.parameters.request_retention)
 					.setDynamicTooltip()
 					.onChange(async (value) => {
