@@ -6,7 +6,7 @@ use chrono::{DateTime, Utc};
 use crate::types::{ModernFsrsCard, ReviewSession};
 use crate::conversion::{rating_from_str, rating_to_string, create_fsrs_parameters};
 use crate::fsrs_logic::create_card_from_last_session;
-use crate::json_parsing::{parse_card_from_json, parse_parameters_from_json, parse_datetime_from_iso};
+use crate::json_parsing::{parse_card_from_json, parse_parameters_from_json, parse_datetime_flexible};
 
 /// Обновляет карточку FSRS на основе оценки
 pub fn review_card(
@@ -20,7 +20,7 @@ pub fn review_card(
     // Парсим входные данные
     let mut card = parse_card_from_json(&card_json);
     let parameters = parse_parameters_from_json(&parameters_json);
-    let now = parse_datetime_from_iso(&now_str);
+    let now = parse_datetime_flexible(&now_str).unwrap_or_else(|| Utc::now());
     let rating = rating_from_str(&rating_str);
 
     // Создаем Card для алгоритма FSRS из истории reviews
@@ -33,7 +33,7 @@ pub fn review_card(
 
     // Обновляем elapsed_days на основе последней сессии
     if let Some(last_session) = card.reviews.last()
-        && let Ok(last_date) = last_session.date.parse::<DateTime<Utc>>() {
+        && let Some(last_date) = parse_datetime_flexible(&last_session.date) {
             let elapsed_days = (now - last_date).num_days().max(0) as i64;
             fsrs_card.elapsed_days = elapsed_days;
         }
