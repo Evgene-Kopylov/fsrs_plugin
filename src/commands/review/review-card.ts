@@ -83,7 +83,7 @@ export async function reviewCurrentCard(
 				if (remainingMinutes > 0) {
 					message += `Досрочное повторение возможно через ${remainingMinutes} ${getRussianNoun(remainingMinutes, "минуту", "минуты", "минут")}. `;
 				}
-				message += `Следующее повторение по графику: ${formatLocalDate(nextDate)}`;
+				message += `Следующее повторение по графику: ${formatLocalDate(nextDate, plugin.app)}`;
 
 				new Notice(message);
 				return;
@@ -330,7 +330,7 @@ export async function reviewCardByPath(
 				if (remainingMinutes > 0) {
 					message += `Досрочное повторение возможно через ${remainingMinutes} ${getRussianNoun(remainingMinutes, "минуту", "минуты", "минут")}. `;
 				}
-				message += `Следующее повторение по графику: ${formatLocalDate(nextDate)}`;
+				message += `Следующее повторение по графику: ${formatLocalDate(nextDate, plugin.app)}`;
 
 				new Notice(message);
 				return null;

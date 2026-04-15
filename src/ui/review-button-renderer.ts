@@ -289,7 +289,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 					if (remainingMinutes > 0) {
 						message += `Досрочное повторение возможно через ${remainingMinutes} ${getRussianNoun(remainingMinutes, "минуту", "минуты", "минут")}. `;
 					}
-					message += `Следующее повторение по графику: ${formatLocalDate(nextDate)}`;
+					message += `Следующее повторение по графику: ${formatLocalDate(nextDate, this.plugin.app)}`;
 
 					new Notice(message);
 					await this.updateButtonState();

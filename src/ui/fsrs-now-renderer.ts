@@ -215,7 +215,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 				);
 				const nextDate = new Date(state.due);
 				new Notice(
-					`Карточка уже повторена. Следующее повторение: ${formatLocalDate(nextDate)}`,
+					`Карточка уже повторена. Следующее повторение: ${formatLocalDate(nextDate, this.plugin.app)}`,
 				);
 				return;
 			}

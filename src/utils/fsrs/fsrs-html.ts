@@ -8,7 +8,6 @@ import type {
 } from "../../interfaces/fsrs";
 import { computeCardState } from "./fsrs-wasm";
 import { formatDateTime } from "../date-format";
-import { formatLocalDate } from "../fsrs-helper";
 
 /**
  * Извлекает имя файла из пути
@@ -222,7 +221,7 @@ export async function generateFsrsFutureHTML(
 		const diffMs = dueDate.getTime() - now.getTime();
 		const diffDays = Math.round(diffMs / (1000 * 3600 * 24));
 
-		let nextDateText = formatLocalDate(dueDate);
+		let nextDateText = formatDateTime(app, dueDate);
 		let inDaysText = `${diffDays} дн`;
 
 		if (diffDays === 0) {
