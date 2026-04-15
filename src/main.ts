@@ -152,7 +152,7 @@ export default class FsrsPlugin extends Plugin {
 			const files = this.app.vault.getMarkdownFiles();
 			const cards: ModernFSRSCard[] = [];
 
-			console.log(`Всего markdown файлов: ${files.length}`);
+			console.log(`📁 Всего markdown файлов: ${files.length}`);
 
 			for (const file of files) {
 				// Пропускаем файлы, соответствующие паттернам игнорирования
@@ -182,14 +182,7 @@ export default class FsrsPlugin extends Plugin {
 					);
 
 					if (parseResult.success && parseResult.card) {
-						console.log(
-							`  ✅ Найдена карточка FSRS: ${file.path}, reviews: ${parseResult.card.reviews.length}`,
-						);
 						cards.push(parseResult.card);
-					} else {
-						console.log(
-							`  ❌ Не FSRS карточка или ошибка парсинга: ${file.path}, ошибка: ${parseResult.error || "не указана"}`,
-						);
 					}
 				} catch (error) {
 					console.warn(
@@ -199,16 +192,7 @@ export default class FsrsPlugin extends Plugin {
 				}
 			}
 
-			console.log(
-				`=== Итог сканирования: найдено карточек FSRS (новый формат): ${cards.length} ===`,
-			);
-			console.log(
-				"Найденные карточки:",
-				cards.map((c) => ({
-					path: c.filePath,
-					reviews: c.reviews.length,
-				})),
-			);
+			console.log(`✅ Найдено карточек FSRS: ${cards.length}`);
 			return cards;
 		} catch (error) {
 			console.error(

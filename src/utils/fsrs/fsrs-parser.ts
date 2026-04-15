@@ -15,16 +15,8 @@ export function parseModernFsrsFromFrontmatter(
 	filePath: string,
 ): ParseResult {
 	try {
-		console.log(
-			`DEBUG parseModernFsrsFromFrontmatter: filePath=${filePath}, frontmatter length=${frontmatter.length}`,
-		);
-		console.log(
-			`DEBUG frontmatter preview: ${frontmatter.substring(0, 200)}...`,
-		);
-
 		// Проверяем, содержит ли frontmatter поле reviews (базовая проверка перед вызовом WASM)
 		if (!/reviews\s*:/m.test(frontmatter)) {
-			console.log(`DEBUG: frontmatter does NOT contain reviews field`);
 			return {
 				success: false,
 				card: null,
@@ -40,21 +32,12 @@ export function parseModernFsrsFromFrontmatter(
 		try {
 			// WASM ожидает полный frontmatter с ---, поэтому оборачиваем
 			const wrappedFrontmatter = `---\n${frontmatter}\n---`;
-			console.log(
-				`DEBUG: Calling WASM extract_fsrs_from_frontmatter_wrapped with wrapped frontmatter`,
-			);
-			console.log(
-				`DEBUG: wrappedFrontmatter: ${wrappedFrontmatter.substring(0, 200)}...`,
-			);
 
 			const cardJson =
 				extract_fsrs_from_frontmatter_wrapped(wrappedFrontmatter);
-			console.log(
-				`DEBUG: WASM returned cardJson (length=${cardJson.length}): ${cardJson.substring(0, 200)}...`,
-			);
 
 			// Парсим JSON результат из WASM
-			console.log(`DEBUG: Parsing JSON from WASM result`);
+
 			parsedCard = JSON.parse(cardJson);
 		} catch (wasmError_) {
 			wasmFailed = true;
@@ -68,7 +51,6 @@ export function parseModernFsrsFromFrontmatter(
 
 			// Fallback: пытаемся распарсить YAML самостоятельно
 			try {
-				console.log(`DEBUG: Using fallback YAML parser`);
 				parsedCard = parseYaml(frontmatter);
 			} catch (yamlError) {
 				console.error(
@@ -83,35 +65,25 @@ export function parseModernFsrsFromFrontmatter(
 			}
 		}
 
-		console.log(`DEBUG: Parsed card structure:`, parsedCard);
-
 		if (
 			!parsedCard ||
 			!parsedCard.reviews ||
 			!Array.isArray(parsedCard.reviews)
 		) {
-			console.log(
-				`DEBUG: parsedCard.reviews is missing or not an array:`,
-				parsedCard?.reviews,
-			);
 			return {
 				success: false,
 				card: null,
 				error: "reviews array is missing or invalid",
 			};
 		}
-		console.log(
-			`DEBUG: parsedCard.reviews array length: ${parsedCard.reviews.length}`,
-		);
 
 		// Валидируем каждую сессию
-		console.log(`DEBUG: Validating review sessions`);
+
 		const reviews: ReviewSession[] = [];
 		const validRatings = ["Again", "Hard", "Good", "Easy"];
 
 		for (let i = 0; i < parsedCard.reviews.length; i++) {
 			const session = parsedCard.reviews[i];
-			console.log(`DEBUG: Session ${i}:`, session);
 
 			// Пропускаем пустые объекты или null
 			if (!session || typeof session !== "object") {
@@ -184,22 +156,16 @@ export function parseModernFsrsFromFrontmatter(
 				stability: session.stability,
 				difficulty: session.difficulty,
 			});
-			console.log(`DEBUG: Session ${i} added to reviews`);
 		}
 
 		// Если после валидации нет ни одной сессии, но WASM не падал (т.е. файл содержит reviews поле),
 		// считаем это успехом с пустым массивом сессий (карточка без повторений)
-		console.log(
-			`DEBUG: Creating ModernFSRSCard with ${reviews.length} reviews, filePath=${filePath}`,
-		);
+
 		const card: ModernFSRSCard = {
 			reviews,
 			filePath,
 		};
 
-		console.log(
-			`DEBUG: parseModernFsrsFromFrontmatter SUCCESS for ${filePath} (WASM failed: ${wasmFailed})`,
-		);
 		return {
 			success: true,
 			card,
