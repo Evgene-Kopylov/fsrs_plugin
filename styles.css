@@ -74,15 +74,6 @@ If your plugin does not need CSS, delete this file.
 	border-top: 1px dashed var(--background-modifier-border);
 }
 
-.fsrs-now-footer {
-	margin-top: 1em;
-	padding-top: 0.5em;
-	text-align: center;
-	color: var(--text-muted);
-	font-size: 0.85em;
-	border-top: 1px solid var(--background-modifier-border);
-}
-
 /* Состояния карточек по цветам */
 .fsrs-now-card[data-state="New"] {
 	border-left: 3px solid var(--text-muted);

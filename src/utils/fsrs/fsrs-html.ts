@@ -133,7 +133,6 @@ export async function generateFsrsNowHTML(
 		html += `<div class="fsrs-now-info"><small>Показано: ${maxCardsToShow} из ${cards.length} карточек (${hiddenCount} скрыто)</small></div>`;
 	}
 
-	html += `<div class="fsrs-now-footer"><small>Для обновления списка выполните команду "Найти карточки для повторения"</small></div>`;
 	html += `</div>`;
 	return html;
 }
