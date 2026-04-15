@@ -51,7 +51,7 @@ export async function generateFsrsNowHTML(
 	const maxCardsToShow = settings.max_cards_to_show || 30;
 	const cardsToShow = cards.slice(0, maxCardsToShow);
 
-	// Для каждой карточки заранее получаем computedState (асинхронно)
+	// Получаем состояние для каждой карточки
 	const cardsWithState: { card: ModernFSRSCard; state: ComputedCardState }[] =
 		[];
 	for (const card of cardsToShow) {
@@ -63,7 +63,6 @@ export async function generateFsrsNowHTML(
 				`Ошибка вычисления состояния для ${card.filePath}:`,
 				error,
 			);
-			// Добавляем fallback-состояние
 			cardsWithState.push({
 				card,
 				state: {
@@ -85,73 +84,45 @@ export async function generateFsrsNowHTML(
 	html += `<h4>Карточки для повторения (${cards.length})</h4>`;
 	html += `<small>Обновлено: ${now.toLocaleString()}</small><br><br>`;
 
-	// Начинаем таблицу
 	html += `<table class="fsrs-now-table">`;
-	html += `<thead>`;
-	html += `<tr>`;
-	html += `<th>#</th>`;
+	html += `<thead><tr>`;
 	html += `<th>Файл</th>`;
 	html += `<th>Повторений</th>`;
 	html += `<th>Просрочка</th>`;
+	html += `</tr></thead><tbody>`;
 
-	// Колонки со статистикой показываются в зависимости от настроек
-	if (settings.show_stability) {
-		html += `<th>Стабильность</th>`;
-	}
-	if (settings.show_difficulty) {
-		html += `<th>Сложность</th>`;
-	}
-	// Извлекаемость пока не добавляем в таблицу для компактности
-	// if (settings.show_retrievability) { ... }
-
-	html += `<th>Дата повторения</th>`;
-	html += `</tr>`;
-	html += `</thead>`;
-	html += `<tbody>`;
-
-	// Заполняем строки таблицы
-	for (let i = 0; i < cardsWithState.length; i++) {
-		const cardState = cardsWithState[i];
-		if (!cardState) continue;
-		const { card, state } = cardState;
+	for (const { card, state } of cardsWithState) {
 		const displayName = extractDisplayName(card.filePath);
-		const overdueHours = getOverdueHours(new Date(state.due), now);
-		const overdueText = formatOverdueTime(overdueHours);
+		// Вычисляем разницу в днях между due и now
 		const dueDate = new Date(state.due);
-		const dueDateStr = dueDate.toLocaleString();
+		const diffDays = Math.ceil(
+			(dueDate.getTime() - now.getTime()) / (1000 * 3600 * 24),
+		);
+		let overdueText: string;
+		if (diffDays < 0) {
+			overdueText = `${diffDays}`; // например, -3
+		} else if (diffDays === 0) {
+			overdueText = "0";
+		} else {
+			overdueText = `+${diffDays}`; // например, +5
+		}
 
 		html += `<tr class="fsrs-now-row" data-file-path="${card.filePath}">`;
-		html += `<td>${i + 1}</td>`;
-		// Ссылка на файл
 		html += `<td><a href="${card.filePath}" data-file-path="${card.filePath}" class="internal-link">${displayName}</a></td>`;
 		html += `<td>${card.reviews.length}</td>`;
 		html += `<td>${overdueText}</td>`;
-
-		// Колонки статистики
-		if (settings.show_stability) {
-			html += `<td>${state.stability.toFixed(2)}</td>`;
-		}
-		if (settings.show_difficulty) {
-			html += `<td>${state.difficulty.toFixed(2)}</td>`;
-		}
-
-		html += `<td>${dueDateStr}</td>`;
 		html += `</tr>`;
 	}
 
-	html += `</tbody>`;
-	html += `</table>`;
+	html += `</tbody></table>`;
 
-	// Если карточек больше, чем можно показать
 	if (cards.length > maxCardsToShow) {
 		const hiddenCount = cards.length - maxCardsToShow;
 		html += `<div class="fsrs-now-info"><small>Показано: ${maxCardsToShow} из ${cards.length} карточек (${hiddenCount} скрыто)</small></div>`;
 	}
 
-	// Футер с инструкцией
 	html += `<div class="fsrs-now-footer"><small>Для обновления списка выполните команду "Найти карточки для повторения"</small></div>`;
 	html += `</div>`;
-
 	return html;
 }
 

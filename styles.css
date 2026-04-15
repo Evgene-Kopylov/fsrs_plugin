@@ -273,6 +273,12 @@ If your plugin does not need CSS, delete this file.
 	cursor: pointer;
 }
 
+/* Выравнивание чисел по правому краю */
+.fsrs-now-table td:nth-child(2),
+.fsrs-now-table td:nth-child(3) {
+	text-align: right;
+}
+
 .fsrs-delete-button:disabled {
 	background: var(--background-modifier-border);
 	color: var(--text-muted);
