@@ -1,11 +1,13 @@
 // Генерация HTML для табличного отображения карточек FSRS в блоке fsrs-now
 
+import type { App } from "obsidian";
 import type {
 	ModernFSRSCard,
 	ComputedCardState,
 	FSRSSettings,
 } from "../../interfaces/fsrs";
 import { computeCardState } from "./fsrs-wasm";
+import { formatDateTime } from "../date-format";
 
 /**
  * Извлекает имя файла из пути
@@ -45,6 +47,7 @@ export function generateCardHTML(
 export async function generateFsrsNowHTML(
 	cards: ModernFSRSCard[],
 	settings: FSRSSettings,
+	app: App,
 	now: Date = new Date(),
 ): Promise<string> {
 	const maxCardsToShow = settings.max_cards_to_show || 30;
@@ -80,7 +83,8 @@ export async function generateFsrsNowHTML(
 	}
 
 	let html = `<div class="fsrs-now-container">`;
-	html += `<h4 class="fsrs-now-header"><span class="fsrs-header-text">Карточек для повторения сегодня: ${cards.length}</span><span class="fsrs-info-icon" title="Отобраны и отсортированы по алгоритму FSRS:&#10;сначала карточки с наименьшей извлекаемостью (retrievability).&#10;&#10;Данные обновлены: ${now.toLocaleString()}">(?)</span></h4>`;
+	const formattedNow = formatDateTime(app, now);
+	html += `<h4 class="fsrs-now-header"><span class="fsrs-header-text">Карточек для повторения сегодня: ${cards.length}</span><span class="fsrs-info-icon" title="Отобраны и отсортированы по алгоритму FSRS:&#10;сначала карточки с наименьшей извлекаемостью (retrievability).&#10;&#10;Данные обновлены: ${formattedNow}">(?)</span></h4>`;
 
 	html += `<table class="fsrs-now-table">`;
 	html += `<thead><tr>`;

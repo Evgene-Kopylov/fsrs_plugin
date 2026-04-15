@@ -68,6 +68,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 			const html = await generateFsrsNowHTML(
 				dueCards,
 				this.plugin.settings,
+				this.plugin.app,
 				now,
 			);
 			this.container.innerHTML = html;
