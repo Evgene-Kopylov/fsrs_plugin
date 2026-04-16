@@ -34,11 +34,12 @@ pub fn state_to_string(state: State) -> String {
 
 /// Создает Parameters для FSRS из пользовательских параметров
 pub fn create_fsrs_parameters(params: &FsrsParameters) -> Parameters {
-    let mut default_params = Parameters::default();
-    default_params.request_retention = params.request_retention;
-    default_params.maximum_interval = params.maximum_interval as i32;
-    default_params.enable_fuzz = params.enable_fuzz;
-    default_params
+    Parameters {
+        request_retention: params.request_retention,
+        maximum_interval: params.maximum_interval as i32,
+        enable_fuzz: params.enable_fuzz,
+        ..Default::default()
+    }
 }
 
 #[cfg(test)]

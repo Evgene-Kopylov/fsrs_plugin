@@ -1,6 +1,8 @@
 // Вспомогательные функции для работы со временем
 
 import type { ModernFSRSCard, ComputedCardState } from "../../interfaces/fsrs";
+import type { App } from "obsidian";
+import { formatDate } from "../date-format";
 
 /**
  * Рассчитывает время просрочки карточки в часах
@@ -57,8 +59,13 @@ export function getRussianNoun(
 
 /**
  * Форматирует дату в локальное строковое представление
+ * @param date - дата для форматирования
+ * @param app - необязательный экземпляр приложения Obsidian для форматирования с учетом настроек
  */
-export function formatLocalDate(date: Date): string {
+export function formatLocalDate(date: Date, app?: App): string {
+	if (app) {
+		return formatDate(app, date);
+	}
 	return date.toLocaleString();
 }
 

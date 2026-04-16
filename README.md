@@ -1,90 +1,315 @@
-# Obsidian Sample Plugin
+# FSRS Plugin для Obsidian
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+**Free Spaced Repetition Scheduler** — современный алгоритм интервального повторения, интегрированный в Obsidian. Плагин позволяет превращать ваши заметки в эффективные карточки для запоминания с использованием передового алгоритма FSRS.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+[![Obsidian](https://img.shields.io/badge/Obsidian-%23483699.svg?style=for-the-badge&logo=obsidian&logoColor=white)](https://obsidian.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?style=for-the-badge&logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/)
+[![Rust](https://img.shields.io/badge/Rust-000000.svg?style=for-the-badge&logo=Rust&logoColor=white)](https://www.rust-lang.org/)
+[![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?style=for-the-badge)](LICENSE)
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+## 📋 Содержание
 
-## First time developing plugins?
+[toc]
 
-Quick starting guide for new plugin devs:
+## 🚀 Особенности
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
+- **📊 Современный алгоритм FSRS** — более эффективный, чем устаревший SM-2
+- **🎯 Контроль запоминания** — настраиваемый уровень запоминания (70%-97%)
+- **⚡ Высокая производительность** — Rust/WASM для быстрых вычислений
+- **🔄 Динамический интерфейс** — автоматическое обновление списков карточек
+- **📱 Полная поддержка мобильных устройств** — работает на iOS и Android
+- **🎨 Гибкая настройка** — фильтрация, сортировка, кастомизация отображения
+- **📈 Подробная статистика** — отслеживание прогресса обучения
 
-## Releasing new releases
+## 📦 Установка
 
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
+### Через Obsidian Community Plugins (рекомендуется)
 
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
+1. Откройте **Настройки** → **Community plugins** → **Browse**
+2. Найдите "FSRS Plugin"
+3. Нажмите **Install**, затем **Enable**
 
-## Adding your plugin to the community plugin list
+### Ручная установка
 
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
+1. Скачайте последнюю версию из [релизов]() # TODO
+2. Распакуйте в папку плагина вашего хранилища:
+   ```
+   <ваше-хранилище>/.obsidian/plugins/fsrs-plugin/
+   ```
+3. Включите плагин в **Настройки** → **Community plugins**
 
-## How to use
+### Требования
 
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
+- Obsidian v0.15.0 или выше
+- Поддержка WebAssembly (включена по умолчанию в современных браузерах)
 
-## Manually installing the plugin
+## 🏃 Быстрый старт
 
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
+1. **Включите плагин** в настройках Obsidian
+2. **Создайте карточку**:
+   - Откройте заметку, которую хотите превратить в карточку
+   - Выполните команду `Добавить поля FSRS в шапку файла` (Ctrl/Cmd+P)
+3. **Добавьте блок повторений** в нужный файл:
+   ````markdown
+   ```fsrs-now
+   ```
+   ````
+4. **Начните повторять** — откройте файл с блоком и кликайте на карточки
 
-## Improve code quality with eslint
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
+## 📖 Использование
 
-## Funding URL
+### Блок `fsrs-now`
 
-You can include funding URLs where people who use your plugin can financially support it.
+Динамически отображает карточки, готовые к повторению (просроченные).
 
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+```markdown
+```fsrs-now
+```
 ```
 
-If you have multiple URLs, you can also do:
+**Что делает:**
+- Автоматически сканирует всё хранилище на наличие карточек FSRS
+- Показывает только просроченные карточки (дата повторения наступила)
+- Сортирует по приоритету (самые старые первыми)
+- Отображает максимум 30 карточек по умолчанию
+- Обновляется автоматически при открытии файла
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
+**Интерфейс включает:**
+- Кликабельные ссылки на файлы с карточками
+- Информацию о состоянии карточки (New, Learning, Review, Relearning)
+- Количество повторений и ошибок
+- Стабильность и сложность карточки
+- Время просрочки
+- Кнопки действий (для будущих версий)
+
+### Блок `fsrs-future`
+
+Показывает будущие повторения (непросроченные карточки).
+
+```markdown
+```fsrs-future
+```
 ```
 
-## API Documentation
+**Используйте для:**
+- Планирования будущих занятий
+- Обзора общего количества карточек
+- Мониторинга прогресса обучения
 
-See https://docs.obsidian.md
+### Кнопка повторения
+
+Автоматически добавляется в файлы с карточками FSRS (если включено в настройках).
+
+```markdown
+```fsrs-review-button
+```
+```
+
+**Функциональность:**
+- Быстрое повторение карточки без перехода к блоку `fsrs-now`
+- Отображение текущего состояния карточки
+- Кнопки оценки (Again, Hard, Good, Easy)
+- Автоматическое обновление даты следующего повторения
+
+### Формат карточек FSRS
+
+Карточки FSRS хранятся в frontmatter заметки в новом формате с полем `reviews`:
+
+```yaml
+---
+reviews:
+  - date: "2024-01-15T10:30:00Z"
+    rating: "Good"
+    stability: 5.21
+    difficulty: 0.45
+  - date: "2024-01-20T14:15:00Z"
+    rating: "Easy"
+    stability: 12.5
+    difficulty: 0.35
+---
+```
+
+**Поля каждой сессии повторения:**
+- **`date`** — дата и время повторения в формате ISO 8601
+- **`rating`** — оценка: `"Again"`, `"Hard"`, `"Good"` или `"Easy"`
+- **`stability`** — стабильность памяти (в днях)
+- **`difficulty`** — сложность карточки (0.0–1.0)
+
+**Особенности формата:**
+- Поле `reviews` может быть пустым массивом `[]` для новых карточек
+- Каждое повторение добавляет новую сессию в массив
+- Алгоритм FSRS вычисляет следующую дату повторения на основе истории
+- Плагин автоматически создаёт этот формат при добавлении полей FSRS
+
+## 🎮 Команды плагина
+
+Доступны через палитру команд (Ctrl/Cmd+P):
+
+| Команда | Описание | Горячие клавиши |
+|---------|----------|-----------------|
+| **Добавить поля FSRS в шапку файла** | Добавляет необходимые поля FSRS в текущий файл | — |
+| **Найти карточки для повторения** | Сканирует хранилище и показывает результат | — |
+| **Повторить текущую карточку** | Открывает интерфейс повторения для текущего файла | — |
+| **Обновить все блоки FSRS** | Принудительно обновляет все активные блоки | — |
+
+**Совет:** Назначьте горячие клавиши для часто используемых команд в **Настройки** → **Hotkeys**.
+
+## ⚙️ Настройки
+
+Плагин предоставляет расширенные настройки для тонкой настройки алгоритма и интерфейса.
+
+### Параметры алгоритма FSRS
+
+| Настройка | Описание | По умолчанию |
+|-----------|----------|--------------|
+| **Request Retention** | Целевой уровень запоминания (0.5-1.0) | 0.9 (90%) |
+| **Maximum Interval** | Максимальный интервал между повторениями (дни) | 36500 (~100 лет) |
+| **Enable Interval Fuzz** | Добавляет случайное изменение интервалов (±5%) | Включено |
+
+### Настройки отображения
+
+| Настройка | Описание | По умолчанию |
+|-----------|----------|--------------|
+| **Show Stability** | Показывать значения стабильности | Включено |
+| **Show Difficulty** | Показывать значения сложности | Включено |
+| **Show Retrievability** | Показывать извлекаемость (силу памяти) | Включено |
+| **Max Cards to Show** | Максимальное количество карточек в списке | 30 |
+| **Auto Add Review Button** | Автоматически добавлять кнопку повторения | Включено |
+
+### Настройки фильтрации
+
+| Настройка | Описание | Пример |
+|-----------|----------|--------|
+| **Ignore Patterns** | Паттерны для игнорирования файлов/папок | `.obsidian/`, `templates/`, `*.excalidraw.md` |
+
+### Настройки уведомлений
+
+| Настройка | Описание | По умолчанию |
+|-----------|----------|--------------|
+| **Show Notifications** | Показывать уведомления о просроченных карточках | Включено |
+| **Notification Threshold** | Минимальное количество карточек для уведомления | 5 |
+
+## 🧠 Алгоритм FSRS
+
+**FSRS (Free Spaced Repetition Scheduler)** — современный алгоритм интервального повторения, разработанный Jarrett Ye (MaiMemo Inc.). В отличие от устаревшего алгоритма SM-2, FSRS:
+
+- **Изучает ваши паттерны памяти** с помощью машинного обучения
+- **Адаптируется под вашу скорость запоминания**
+- **Требует на 20-30% меньше повторений** для достижения того же уровня запоминания
+- **Лучше обрабатывает перерывы** в обучении (недели/месяцы)
+
+### Ключевые концепции
+
+- **Retrievability (R)** — вероятность успешного вспоминания информации
+- **Stability (S)** — время, за которое R падает с 100% до 90%
+- **Difficulty (D)** — сложность информации (влияет на рост стабильности)
+
+Алгоритм использует 21 параметр, оптимизированный на основе сотен миллионов повторений от тысяч пользователей.
+
+**Подробнее:** [ABC of FSRS](docs/ABC%20of%20FSRS.md)
+
+## 🛠️ Разработка
+
+### Технический стек
+
+- **Frontend:** TypeScript, Obsidian API
+- **Алгоритм:** Rust (компилируется в WebAssembly)
+- **Сборка:** esbuild, wasm-pack
+- **Тестирование:** Встроенные тесты Obsidian
+
+### Структура проекта
+
+```
+FSRS-plugin/
+├── src/                    # Исходный код TypeScript
+│   ├── main.ts            # Точка входа плагина
+│   ├── settings.ts        # Настройки плагина
+│   ├── commands/          # Команды плагина
+│   ├── interfaces/        # TypeScript интерфейсы
+│   ├── ui/               # Компоненты пользовательского интерфейса
+│   └── utils/            # Вспомогательные функции
+├── wasm-lib/              # Rust/WASM библиотека
+│   ├── src/lib.rs        # Код алгоритма FSRS
+│   └── pkg/              Скомпилированный WASM
+├── docs/                  # Документация
+├── scripts/               # Скрипты сборки
+└── tests/                 # Тесты
+```
+
+### Сборка из исходников
+
+```bash
+# Клонирование репозитория
+git clone <репозиторий>
+cd FSRS-plugin
+
+# Установка зависимостей
+npm install
+
+# Сборка WASM модуля
+npm run build-wasm
+
+# Разработка (watch mode)
+npm run dev
+
+# Продакшн сборка
+npm run build
+```
+
+### WASM интеграция
+
+Плагин использует Rust/WASM для вычислений алгоритма FSRS:
+- **Бинарник WASM** встраивается в плагин через base64
+- **Нет сетевых запросов** — всё работает локально
+- **Высокая производительность** — нативные вычисления
+
+**Подробнее:** [WASM Integration](docs/WASM-INTEGRATION.md)
+
+## 📄 Лицензия
+
+Плагин распространяется под лицензией **LGPLv3** (GNU Lesser General Public License version 3).
+
+**LGPL (Lesser GPL)** — это лицензия свободного программного обеспечения, которая:
+- Разрешает использование библиотеки в проприетарном программном обеспечении
+- Требует предоставления исходного кода самой библиотеки при её модификации
+- Гарантирует свободы, определённые Free Software Foundation
+
+### Основные права:
+- ✅ **Использовать** — бесплатно для любых целей, включая коммерческие
+- ✅ **Изучать** — доступ к исходному коду для изучения и модификации
+- ✅ **Распространять** — копировать и распространять оригинал или модификации
+- ✅ **Совершенствовать** — вносить изменения и публиковать улучшенные версии
+
+### Важные условия:
+- **Модификации библиотеки** — если вы изменяете код плагина, вы должны предоставить исходный код изменённой версии под той же лицензией LGPLv3
+- **Динамическое связывание** — вы можете использовать плагин в проприетарном ПО через динамическое связывание без необходимости открывать исходный код всего приложения
+- **Сохранение уведомлений** — должны сохраняться все уведомления об авторских правах и лицензии
+- **Предоставление исходного кода** — при распространении модифицированной версии необходимо предоставить получателям полный исходный код под LGPLv3
+
+### Для пользователей Obsidian:
+- Вы можете свободно использовать плагин в личных и коммерческих целях
+- При создании производных плагинов на основе этого кода, они должны распространяться под LGPLv3 или совместимой лицензией
+- Модификации WASM-компонентов на Rust также подпадают под условия LGPLv3
+
+Полный текст лицензии: [LICENSE](LICENSE)
+
+## 🙏 Благодарности
+
+- **Jarrett Ye** — создатель алгоритма FSRS
+- **Сообщество Obsidian** — за вдохновение и поддержку
+- **Сообщество Rust** — за отличные инструменты WASM
+- **Все контрибьюторы** — за улучшения и баг-репорты
+
+## 📚 Дополнительные ресурсы
+
+- [Официальная документация FSRS](https://github.com/open-spaced-repetition/fsrs)
+- [Обсуждение на форуме Obsidian](https://forum.obsidian.md/)
+- [Issues и feature requests]() # TODO
+- [Руководство по использованию](docs/FSRS_USAGE.md)
+
+---
+
+**Примечание:** Плагин находится в активной разработке. Функциональность может меняться. Рекомендуется делать резервные копии вашего хранилища перед обновлениями.
+
+*Последнее обновление: 2024*
+*Версия плагина: 1.0.0*

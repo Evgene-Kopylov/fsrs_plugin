@@ -15,16 +15,8 @@ export function parseModernFsrsFromFrontmatter(
 	filePath: string,
 ): ParseResult {
 	try {
-		console.log(
-			`DEBUG parseModernFsrsFromFrontmatter: filePath=${filePath}, frontmatter length=${frontmatter.length}`,
-		);
-		console.log(
-			`DEBUG frontmatter preview: ${frontmatter.substring(0, 200)}...`,
-		);
-
 		// Проверяем, содержит ли frontmatter поле reviews (базовая проверка перед вызовом WASM)
 		if (!/reviews\s*:/m.test(frontmatter)) {
-			console.log(`DEBUG: frontmatter does NOT contain reviews field`);
 			return {
 				success: false,
 				card: null,
@@ -32,57 +24,128 @@ export function parseModernFsrsFromFrontmatter(
 			};
 		}
 
-		// Используем WASM для извлечения FSRS карточки из frontmatter
-		// WASM ожидает полный frontmatter с ---, поэтому оборачиваем
-		const wrappedFrontmatter = `---\n${frontmatter}\n---`;
-		console.log(
-			`DEBUG: Calling WASM extract_fsrs_from_frontmatter_wrapped with wrapped frontmatter`,
-		);
-		console.log(
-			`DEBUG: wrappedFrontmatter: ${wrappedFrontmatter.substring(0, 200)}...`,
-		);
-		const cardJson =
-			extract_fsrs_from_frontmatter_wrapped(wrappedFrontmatter);
-		console.log(
-			`DEBUG: WASM returned cardJson (length=${cardJson.length}): ${cardJson.substring(0, 200)}...`,
-		);
+		let parsedCard: any;
+		let wasmFailed = false;
+		let wasmError: string | undefined;
 
-		// Парсим JSON результат из WASM
-		console.log(`DEBUG: Parsing JSON from WASM result`);
-		const parsedCard = JSON.parse(cardJson);
-		console.log(`DEBUG: Parsed card structure:`, parsedCard);
+		// Пытаемся использовать WASM для извлечения FSRS карточки из frontmatter
+		try {
+			// WASM ожидает полный frontmatter с ---, поэтому оборачиваем
+			const wrappedFrontmatter = `---\n${frontmatter}\n---`;
 
-		if (!parsedCard.reviews || !Array.isArray(parsedCard.reviews)) {
-			console.log(
-				`DEBUG: parsedCard.reviews is missing or not an array:`,
-				parsedCard.reviews,
+			const cardJson =
+				extract_fsrs_from_frontmatter_wrapped(wrappedFrontmatter);
+
+			// Парсим JSON результат из WASM
+
+			parsedCard = JSON.parse(cardJson);
+		} catch (wasmError_) {
+			wasmFailed = true;
+			wasmError =
+				wasmError_ instanceof Error
+					? wasmError_.message
+					: String(wasmError_);
+			console.warn(
+				`WASM parsing failed for ${filePath}, using fallback parser. Error: ${wasmError}`,
 			);
+
+			// Fallback: пытаемся распарсить YAML самостоятельно
+			try {
+				parsedCard = parseYaml(frontmatter);
+			} catch (yamlError) {
+				console.error(
+					`Fallback YAML parsing also failed for ${filePath}:`,
+					yamlError,
+				);
+				return {
+					success: false,
+					card: null,
+					error: `WASM and fallback parsing failed: ${wasmError}`,
+				};
+			}
+		}
+
+		if (
+			!parsedCard ||
+			!parsedCard.reviews ||
+			!Array.isArray(parsedCard.reviews)
+		) {
 			return {
 				success: false,
 				card: null,
 				error: "reviews array is missing or invalid",
 			};
 		}
-		console.log(
-			`DEBUG: parsedCard.reviews array length: ${parsedCard.reviews.length}`,
-		);
 
 		// Валидируем каждую сессию
-		console.log(`DEBUG: Validating review sessions`);
+
 		const reviews: ReviewSession[] = [];
+		const validRatings = ["Again", "Hard", "Good", "Easy"];
+
 		for (let i = 0; i < parsedCard.reviews.length; i++) {
 			const session = parsedCard.reviews[i];
-			console.log(`DEBUG: Session ${i}:`, session);
+
+			// Пропускаем пустые объекты или null
+			if (!session || typeof session !== "object") {
+				console.warn(
+					`Session ${i} in ${filePath} is not a valid object, skipping`,
+				);
+				continue;
+			}
+
+			// Проверяем обязательные поля
+			if (!session.date || typeof session.date !== "string") {
+				console.warn(
+					`Session ${i} in ${filePath} has invalid or missing date, skipping`,
+				);
+				continue;
+			}
+
+			// Проверяем валидность рейтинга
+			if (
+				!session.rating ||
+				typeof session.rating !== "string" ||
+				!validRatings.includes(session.rating)
+			) {
+				console.warn(
+					`Session ${i} in ${filePath} has invalid rating "${session.rating}", skipping`,
+				);
+				continue;
+			}
+
+			// Проверяем числовые поля
+			if (
+				typeof session.stability !== "number" ||
+				isNaN(session.stability)
+			) {
+				console.warn(
+					`Session ${i} in ${filePath} has invalid stability "${session.stability}", skipping`,
+				);
+				continue;
+			}
 
 			if (
-				!session.date ||
-				!session.rating ||
-				typeof session.stability !== "number" ||
-				typeof session.difficulty !== "number"
+				typeof session.difficulty !== "number" ||
+				isNaN(session.difficulty)
 			) {
-				console.warn(`Invalid review session in ${filePath}:`, session);
-				console.log(
-					`DEBUG: Session validation failed - missing required fields`,
+				console.warn(
+					`Session ${i} in ${filePath} has invalid difficulty "${session.difficulty}", skipping`,
+				);
+				continue;
+			}
+
+			// Проверяем валидность даты (примерная проверка ISO формата)
+			try {
+				const date = new Date(session.date);
+				if (isNaN(date.getTime())) {
+					console.warn(
+						`Session ${i} in ${filePath} has invalid date format "${session.date}", skipping`,
+					);
+					continue;
+				}
+			} catch {
+				console.warn(
+					`Session ${i} in ${filePath} has invalid date format "${session.date}", skipping`,
 				);
 				continue;
 			}
@@ -93,21 +156,23 @@ export function parseModernFsrsFromFrontmatter(
 				stability: session.stability,
 				difficulty: session.difficulty,
 			});
-			console.log(`DEBUG: Session ${i} added to reviews`);
 		}
 
-		console.log(
-			`DEBUG: Creating ModernFSRSCard with ${reviews.length} reviews, filePath=${filePath}`,
-		);
+		// Если после валидации нет ни одной сессии, но WASM не падал (т.е. файл содержит reviews поле),
+		// считаем это успехом с пустым массивом сессий (карточка без повторений)
+
 		const card: ModernFSRSCard = {
 			reviews,
 			filePath,
 		};
 
-		console.log(
-			`DEBUG: parseModernFsrsFromFrontmatter SUCCESS for ${filePath}`,
-		);
-		return { success: true, card, error: undefined };
+		return {
+			success: true,
+			card,
+			error: wasmFailed
+				? `WASM parsing failed, used fallback: ${wasmError}`
+				: undefined,
+		};
 	} catch (error) {
 		console.error(
 			`Ошибка при парсинге FSRS полей из файла ${filePath}:`,
@@ -122,7 +187,7 @@ export function parseModernFsrsFromFrontmatter(
 }
 
 /**
- * Основной парсер YAML
+ * Основной парсер YAML (fallback)
  */
 export function parseYaml(yaml: string): any {
 	try {

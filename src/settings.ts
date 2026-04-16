@@ -1,6 +1,10 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import MyPlugin from "./main";
 import type { FSRSSettings, FSRSParameters } from "./interfaces/fsrs";
+import {
+	formatIgnorePatterns,
+	parseIgnorePatterns,
+} from "./utils/fsrs/fsrs-filter";
 
 // Расширяем базовые настройки плагина параметрами FSRS
 export interface MyPluginSettings extends FSRSSettings {
@@ -40,6 +44,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	filter_by_folders: [],
 	filter_by_tags: [],
 	exclude_states: [],
+	ignore_patterns: [],
 
 	// Настройки уведомлений
 	show_notifications: true,
@@ -72,7 +77,7 @@ export class SampleSettingTab extends PluginSettingTab {
 			)
 			.addSlider((slider) =>
 				slider
-					.setLimits(0.5, 1.0, 0.05)
+					.setLimits(0.5, 1.0, 0.001)
 					.setValue(this.plugin.settings.parameters.request_retention)
 					.setDynamicTooltip()
 					.onChange(async (value) => {
@@ -350,6 +355,32 @@ export class SampleSettingTab extends PluginSettingTab {
 								num;
 							await this.plugin.saveSettings();
 						}
+					}),
+			);
+
+		// Разделитель
+		containerEl.createEl("hr");
+
+		// Настройки фильтрации файлов
+		containerEl.createEl("h3", { text: "File Filtering" });
+
+		new Setting(containerEl)
+			.setName("Ignore Patterns")
+			.setDesc(
+				"File and folder patterns to ignore (one per line). Patterns ending with / are folders. *.extension for file types. Example: .obsidian/, templates/, *.excalidraw.md",
+			)
+			.addTextArea((text) =>
+				text
+					.setPlaceholder(".obsidian/\ntemplates/\n*.excalidraw.md")
+					.setValue(
+						formatIgnorePatterns(
+							this.plugin.settings.ignore_patterns,
+						),
+					)
+					.onChange(async (value) => {
+						const patterns = parseIgnorePatterns(value);
+						this.plugin.settings.ignore_patterns = patterns;
+						await this.plugin.saveSettings();
 					}),
 			);
 

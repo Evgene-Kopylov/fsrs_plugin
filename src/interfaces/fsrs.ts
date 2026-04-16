@@ -77,6 +77,7 @@ export interface FSRSSettings {
 	filter_by_folders: string[];
 	filter_by_tags: string[];
 	exclude_states: FSRSState[];
+	ignore_patterns: string[];
 
 	// Настройки уведомлений
 	show_notifications: boolean;

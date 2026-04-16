@@ -1,5 +1,8 @@
 import { Notice, App } from "obsidian";
-import { createNewReviewsYaml } from "../utils/fsrs-helper";
+import {
+	createNewReviewsYaml,
+	extractFrontmatterWithMatch,
+} from "../utils/fsrs-helper";
 import type { MyPluginSettings } from "../settings";
 
 /**
@@ -28,13 +31,12 @@ export async function addFsrsFieldsToCurrentFile(
 		let newContent = fileContent;
 
 		// Проверяем, есть ли уже frontmatter в файле
-		const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
-		const match = frontmatterRegex.exec(fileContent);
+		const frontmatterMatch = extractFrontmatterWithMatch(fileContent);
 
-		if (match) {
+		if (frontmatterMatch) {
 			// Есть frontmatter - проверяем, есть ли уже поля FSRS
-			const existingFrontmatter = match[0];
-			const existingContent = match[1];
+			const existingFrontmatter = frontmatterMatch.match[0];
+			const existingContent = frontmatterMatch.content;
 			if (!existingContent) {
 				new Notice("Ошибка: frontmatter пуст");
 				return;
@@ -64,7 +66,8 @@ export async function addFsrsFieldsToCurrentFile(
 
 			// Блок кнопки добавляется после frontmatter
 			const afterFrontmatter = fileContent.slice(
-				match.index! + match[0].length,
+				frontmatterMatch.match.index! +
+					frontmatterMatch.match[0].length,
 			);
 			let buttonBlock = "";
 			if (settings?.auto_add_review_button) {

@@ -37,12 +37,17 @@ export {
 } from "./fsrs-time";
 
 // Экспорт функций генерации HTML
-export { generateFsrsNowHTML, generateEmptyStateHTML } from "./fsrs-html";
+export {
+	generateFsrsNowHTML,
+	generateFsrsFutureHTML,
+	generateEmptyStateHTML,
+} from "./fsrs-html";
 
 // Экспорт функций сортировки и фильтрации
 export {
 	sortCardsByPriority,
 	filterCardsForReview,
+	filterCardsForFuture,
 	limitCards,
 	calculateCardPriorityScore,
 	groupCardsByState,
@@ -55,6 +60,30 @@ export {
 	hasReviewsField,
 	createNewReviewsYaml,
 } from "./fsrs-yaml-helper";
+
+// Экспорт функций фильтрации файлов
+export {
+	DEFAULT_IGNORE_PATTERNS,
+	shouldIgnoreFile,
+	shouldIgnoreFileWithSettings,
+	formatIgnorePatterns,
+	parseIgnorePatterns,
+	getAllIgnorePatterns,
+} from "./fsrs-filter";
+// Экспорт функций работы с frontmatter
+export {
+	extractFrontmatter,
+	extractFrontmatterWithMatch,
+	hasFsrsFields,
+	hasFsrsFieldsInFrontmatter,
+	shouldProcessFile,
+	createFrontmatter,
+	updateFrontmatterInContent,
+	removeFrontmatterFromContent,
+	extractSimpleFields,
+	getFieldFromFrontmatter,
+	hasAnyFieldInFrontmatter,
+} from "./fsrs-frontmatter";
 
 // Реэкспорт типов для удобства
 export type {

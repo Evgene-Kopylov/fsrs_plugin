@@ -9,6 +9,7 @@ import {
 	computeCardState,
 	formatLocalDate,
 	parseModernFsrsFromFrontmatter,
+	extractFrontmatterWithMatch,
 } from "../utils/fsrs-helper";
 
 /**
@@ -28,13 +29,24 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 	 * Вызывается при загрузке компонента
 	 */
 	async onload() {
+		super.onload();
+		this.plugin.registerFsrsNowRenderer(this);
 		await this.renderContent();
+	}
+
+	/**
+	 * Вызывается при выгрузке компонента
+	 */
+	onunload() {
+		this.plugin.unregisterFsrsNowRenderer(this);
+		super.onunload();
 	}
 
 	/**
 	 * Основной метод рендеринга контента
 	 */
 	private async renderContent() {
+		const start = performance.now();
 		try {
 			// Показываем индикатор загрузки
 			this.container.innerHTML = `
@@ -68,6 +80,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 			const html = await generateFsrsNowHTML(
 				dueCards,
 				this.plugin.settings,
+				this.plugin.app,
 				now,
 			);
 			this.container.innerHTML = html;
@@ -76,6 +89,10 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 			this.addEventListeners();
 		} catch (error) {
 			this.renderErrorState(error);
+		} finally {
+			const elapsedMs = performance.now() - start;
+			const elapsedSec = elapsedMs / 1000;
+			console.log(`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`);
 		}
 	}
 
@@ -174,15 +191,14 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 			}
 
 			const content = await this.plugin.app.vault.read(file);
-			const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
-			const match = frontmatterRegex.exec(content);
+			const frontmatterMatch = extractFrontmatterWithMatch(content);
 
-			if (!match || !match[1]) {
+			if (!frontmatterMatch) {
 				new Notice("Файл не содержит frontmatter");
 				return;
 			}
 
-			const frontmatter = match[1];
+			const frontmatter = frontmatterMatch.content;
 			const parseResult = parseModernFsrsFromFrontmatter(
 				frontmatter,
 				filePath,
@@ -204,7 +220,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 				);
 				const nextDate = new Date(state.due);
 				new Notice(
-					`Карточка уже повторена. Следующее повторение: ${formatLocalDate(nextDate)}`,
+					`Карточка уже повторена. Следующее повторение: ${formatLocalDate(nextDate, this.plugin.app)}`,
 				);
 				return;
 			}

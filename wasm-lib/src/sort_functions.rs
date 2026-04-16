@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 
 
 use crate::types::{ModernFsrsCard, FsrsParameters};
-use crate::json_parsing::{parse_parameters_from_json, parse_datetime_from_iso};
+use crate::json_parsing::{parse_parameters_from_json, parse_datetime_flexible};
 use crate::state_functions::compute_current_state;
 
 
@@ -93,7 +93,6 @@ fn calculate_priority_score(due_date: DateTime<Utc>, retrievability: f64, now: D
 }
 
 /// Фильтрует карточки для повторения
-
 pub fn filter_cards_for_review(
     cards_json: String,
     settings_json: String,
@@ -126,7 +125,7 @@ fn filter_cards_for_review_internal(
         }
     };
 
-    let now = parse_datetime_from_iso(&now_iso);
+    let now = parse_datetime_flexible(&now_iso).unwrap_or_else(Utc::now);
 
     // Извлекаем параметры из настроек
     let parameters = parse_parameters_from_json(
@@ -202,7 +201,7 @@ fn sort_cards_by_priority_internal(
         }
     };
 
-    let now = parse_datetime_from_iso(&now_iso);
+    let now = parse_datetime_flexible(&now_iso).unwrap_or_else(Utc::now);
 
     // Извлекаем параметры из настроек
     let parameters = parse_parameters_from_json(
@@ -288,7 +287,7 @@ fn group_cards_by_state_internal(
         }
     };
 
-    let now = parse_datetime_from_iso(&now_iso);
+    let now = parse_datetime_flexible(&now_iso).unwrap_or_else(Utc::now);
 
     // Извлекаем параметры из настроек
     let parameters = parse_parameters_from_json(
@@ -338,14 +337,12 @@ fn group_cards_by_state_internal(
 }
 
 /// Функции для работы со временем
-
 /// Рассчитывает время просрочки карточки в часах
-
 pub fn get_overdue_hours(due_iso: String, now_iso: String) -> String {
-    let result = match (due_iso.parse::<DateTime<Utc>>(), now_iso.parse::<DateTime<Utc>>()) {
-        (Ok(due_date), Ok(now)) => {
+    let result = match (parse_datetime_flexible(&due_iso), parse_datetime_flexible(&now_iso)) {
+        (Some(due_date), Some(now)) => {
             let diff_ms = now.timestamp_millis() - due_date.timestamp_millis();
-            
+
             (diff_ms as f64 / (1000.0 * 60.0 * 60.0)).floor().max(0.0)
         }
         _ => 0.0,
@@ -356,10 +353,9 @@ pub fn get_overdue_hours(due_iso: String, now_iso: String) -> String {
 
 /// Рассчитывает оставшееся время до повторения карточки в часах
 /// Возвращает отрицательное значение если карточка просрочена
-
 pub fn get_hours_until_due(due_iso: String, now_iso: String) -> String {
-    let result = match (due_iso.parse::<DateTime<Utc>>(), now_iso.parse::<DateTime<Utc>>()) {
-        (Ok(due_date), Ok(now)) => {
+    let result = match (parse_datetime_flexible(&due_iso), parse_datetime_flexible(&now_iso)) {
+        (Some(due_date), Some(now)) => {
             let diff_ms = due_date.timestamp_millis() - now.timestamp_millis();
             diff_ms as f64 / (1000.0 * 60.0 * 60.0)
         }
@@ -370,10 +366,9 @@ pub fn get_hours_until_due(due_iso: String, now_iso: String) -> String {
 }
 
 /// Проверяет, просрочена ли карточка
-
 pub fn is_card_overdue(due_iso: String, now_iso: String) -> String {
-    let result = match (due_iso.parse::<DateTime<Utc>>(), now_iso.parse::<DateTime<Utc>>()) {
-        (Ok(due_date), Ok(now)) => due_date <= now,
+    let result = match (parse_datetime_flexible(&due_iso), parse_datetime_flexible(&now_iso)) {
+        (Some(due_date), Some(now)) => due_date <= now,
         _ => false,
     };
 
@@ -381,19 +376,18 @@ pub fn is_card_overdue(due_iso: String, now_iso: String) -> String {
 }
 
 /// Рассчитывает возраст карточки в днях (от первого повторения или создания)
-
 pub fn get_card_age_days(card_json: String, now_iso: String) -> String {
-    let result = match (serde_json::from_str::<ModernFsrsCard>(&card_json), now_iso.parse::<DateTime<Utc>>()) {
-        (Ok(card), Ok(now)) => {
+    let result = match (serde_json::from_str::<ModernFsrsCard>(&card_json), parse_datetime_flexible(&now_iso)) {
+        (Ok(card), Some(now)) => {
             if card.reviews.is_empty() {
                 0.0 // Новая карточка
             } else {
-                match card.reviews[0].date.parse::<DateTime<Utc>>() {
-                    Ok(first_review_date) => {
+                match parse_datetime_flexible(&card.reviews[0].date) {
+                    Some(first_review_date) => {
                         let diff_ms = now.timestamp_millis() - first_review_date.timestamp_millis();
                         (diff_ms as f64 / (1000.0 * 60.0 * 60.0 * 24.0)).floor().max(0.0)
                     }
-                    Err(_) => 0.0,
+                    None => 0.0,
                 }
             }
         }
