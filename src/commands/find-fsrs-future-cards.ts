@@ -14,7 +14,7 @@ export async function findFsrsFutureCards(plugin: FsrsPlugin): Promise<void> {
 		const now = new Date();
 
 		// Фильтруем карточки на будущее
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+		 
 		const futureCards = await filterCardsForFuture(
 			allCards,
 			plugin.settings,
