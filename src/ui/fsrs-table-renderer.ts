@@ -13,6 +13,7 @@ import {
  */
 export class FsrsTableRenderer extends MarkdownRenderChild {
 	private params: TableParams;
+	private isFirstLoad = true;
 
 	constructor(
 		private plugin: FsrsPlugin,
@@ -31,7 +32,10 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 		super.onload();
 		// Регистрируем рендерер в плагине для уведомлений об обновлениях
 		this.plugin.registerFsrsTableRenderer(this);
-		void this.renderContent();
+		void (async () => {
+			await this.renderContent();
+			this.isFirstLoad = false;
+		})();
 	}
 
 	/**
@@ -44,19 +48,19 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	}
 
 	/**
-	 * Основной метод рендеринга контента
+	 * Основной метод рендеринга контента с поддержкой плавной анимации
 	 */
 	private async renderContent() {
 		const start = performance.now();
 		try {
-			// Показываем индикатор загрузки
-			this.container.empty();
-			const loadingDiv = this.container.createDiv({
-				cls: "fsrs-table-loading",
-			});
-			loadingDiv.createEl("small", {
-				text: "Loading fsrs cards...",
-			});
+			// При первом показе используем индикатор загрузки
+			if (this.isFirstLoad) {
+				this.showLoadingIndicator();
+			} else {
+				// При последующих обновлениях применяем плавную анимацию opacity
+				this.container.style.opacity = "0.7";
+				this.container.style.transition = "opacity 0.3s ease";
+			}
 
 			// Получаем все карточки через плагин
 			const allCards = await this.plugin.getCardsForReview();
@@ -76,12 +80,18 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 				now,
 			);
 
+			// Очищаем контейнер и вставляем новый HTML
 			this.container.empty();
 			// eslint-disable-next-line @microsoft/sdl/no-inner-html
 			this.container.insertAdjacentHTML("afterbegin", html);
 
 			// Добавляем обработчики событий для кликабельных ссылок
 			this.addEventListeners();
+
+			// Восстанавливаем полную прозрачность после обновления
+			if (!this.isFirstLoad) {
+				this.container.style.opacity = "1";
+			}
 		} catch (error) {
 			this.renderErrorState(error);
 		} finally {
@@ -94,13 +104,36 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	}
 
 	/**
+	 * Показывает индикатор загрузки (только при первом отображении)
+	 */
+	private showLoadingIndicator() {
+		this.container.empty();
+		const loadingDiv = this.container.createDiv({
+			cls: "fsrs-table-loading",
+		});
+		loadingDiv.createEl("small", {
+			text: "Loading fsrs cards...",
+		});
+	}
+
+	/**
 	 * Отображает состояние "нет карточек"
 	 */
 	private renderEmptyState() {
+		// При пустом состоянии также применяем анимацию, если это не первый показ
+		if (!this.isFirstLoad) {
+			this.container.style.opacity = "0.7";
+			this.container.style.transition = "opacity 0.3s ease";
+		}
 		this.container.empty();
+
 		const emptyHTML = generateEmptyTableHTML(this.params.mode);
 		// eslint-disable-next-line @microsoft/sdl/no-inner-html
 		this.container.insertAdjacentHTML("afterbegin", emptyHTML);
+
+		if (!this.isFirstLoad) {
+			this.container.style.opacity = "1";
+		}
 	}
 
 	/**
@@ -114,11 +147,21 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 		const errorMessage =
 			error instanceof Error ? error.message : String(error);
 
+		// При ошибке также применяем анимацию, если это не первый показ
+		if (!this.isFirstLoad) {
+			this.container.style.opacity = "0.7";
+			this.container.style.transition = "opacity 0.3s ease";
+		}
 		this.container.empty();
+
 		const errorDiv = this.container.createDiv({ cls: "fsrs-table-error" });
 		errorDiv.createEl("small", {
 			text: `Error loading FSRS table: ${errorMessage}`,
 		});
+
+		if (!this.isFirstLoad) {
+			this.container.style.opacity = "1";
+		}
 	}
 
 	/**
@@ -171,7 +214,8 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	}
 
 	/**
-	 * Обновляет содержимое блока (может быть вызвано извне)
+	 * Обновляет содержимое блока с поддержкой анимации
+	 * Может быть вызвано извне для принудительного обновления
 	 */
 	async refresh() {
 		await this.renderContent();
