@@ -299,7 +299,7 @@ export function validateFSRSCardJSON(json: string): boolean {
 		return (
 			Array.isArray(card.reviews) &&
 			card.reviews.every(
-				(session: unknown) =>
+				(session: any) =>
 					typeof session.date === "string" &&
 					typeof session.rating === "string" &&
 					typeof session.stability === "number" &&
@@ -395,7 +395,7 @@ export async function groupCardsByState(
 		);
 		const parsed = JSON.parse(groupedJson);
 		// Convert snake_case keys to camelCase
-		const result: unknown = {};
+		const result: any = {};
 		for (const key in parsed) {
 			if (parsed.hasOwnProperty(key)) {
 				const newKey = key.replace(/_([a-z])/g, (_, letter) =>

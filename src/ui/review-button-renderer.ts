@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Notice } from "obsidian";
+import { MarkdownRenderChild, Notice, TAbstractFile } from "obsidian";
 import {
 	parseModernFsrsFromFrontmatter,
 	extractFrontmatterWithMatch,
@@ -27,7 +27,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 		| "due"
 		| "error"
 		| "loading" = "loading";
-	private fileChangeHandler?: (file: unknown) => void;
+	private fileChangeHandler?: (file: TAbstractFile) => void;
 
 	/**
 	 * Создает новый рендерер кнопки
@@ -188,34 +188,48 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			await this.handleMainButtonClick();
 		};
 		this.mainButton.addEventListener("click", mainClickHandler);
-		(this.mainButton as unknown)._clickHandler = mainClickHandler;
+		(
+			this.mainButton as HTMLElement & {
+				_clickHandler?: typeof mainClickHandler;
+			}
+		)._clickHandler = mainClickHandler;
 
 		// Кнопка удаления
 		const deleteClickHandler = async () => {
 			await this.handleDeleteButtonClick();
 		};
 		this.deleteButton.addEventListener("click", deleteClickHandler);
-		(this.deleteButton as unknown)._clickHandler = deleteClickHandler;
+		(
+			this.deleteButton as HTMLElement & {
+				_clickHandler?: typeof deleteClickHandler;
+			}
+		)._clickHandler = deleteClickHandler;
 	}
 
 	/**
 	 * Очищает обработчики событий
 	 */
 	private cleanup(): void {
-		if (this.mainButton && (this.mainButton as unknown)._clickHandler) {
+		const mainButtonWithHandler = this.mainButton as HTMLElement & {
+			_clickHandler?: () => Promise<void>;
+		};
+		if (this.mainButton && mainButtonWithHandler._clickHandler) {
 			this.mainButton.removeEventListener(
 				"click",
-				(this.mainButton as unknown)._clickHandler,
+				mainButtonWithHandler._clickHandler,
 			);
-			delete (this.mainButton as unknown)._clickHandler;
+			delete mainButtonWithHandler._clickHandler;
 		}
 
-		if (this.deleteButton && (this.deleteButton as unknown)._clickHandler) {
+		const deleteButtonWithHandler = this.deleteButton as HTMLElement & {
+			_clickHandler?: () => Promise<void>;
+		};
+		if (this.deleteButton && deleteButtonWithHandler._clickHandler) {
 			this.deleteButton.removeEventListener(
 				"click",
-				(this.deleteButton as unknown)._clickHandler,
+				deleteButtonWithHandler._clickHandler,
 			);
-			delete (this.deleteButton as unknown)._clickHandler;
+			delete deleteButtonWithHandler._clickHandler;
 		}
 	}
 
@@ -376,8 +390,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 				frontmatterMatch.match.index,
 			);
 			const afterFrontmatter = content.substring(
-				frontmatterMatch.match.index +
-					frontmatterMatch.match[0].length,
+				frontmatterMatch.match.index + frontmatterMatch.match[0].length,
 			);
 			const newContent =
 				beforeFrontmatter +
@@ -405,7 +418,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	 * Настраивает отслеживание изменений файла
 	 */
 	private setupFileWatcher(): void {
-		this.fileChangeHandler = (file: unknown) => {
+		this.fileChangeHandler = (file: TAbstractFile) => {
 			if (file.path === this.sourcePath) {
 				this.refresh();
 			}

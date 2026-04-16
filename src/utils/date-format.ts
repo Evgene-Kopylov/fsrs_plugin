@@ -13,10 +13,10 @@ import type { App } from "obsidian";
 export function formatDateTime(app: App, date: Date): string {
 	try {
 		const dateFormat =
-			((app.vault as unknown).getConfig("dateFormat") as string) ||
+			((app.vault as any).getConfig("dateFormat") as string) ||
 			"YYYY-MM-DD";
 		const timeFormat =
-			((app.vault as unknown).getConfig("timeFormat") as string) || "HH:mm";
+			((app.vault as any).getConfig("timeFormat") as string) || "HH:mm";
 		return window.moment(date).format(`${dateFormat} ${timeFormat}`);
 	} catch (error) {
 		console.error("Ошибка форматирования даты и времени:", error);
@@ -34,7 +34,7 @@ export function formatDateTime(app: App, date: Date): string {
 export function formatDate(app: App, date: Date): string {
 	try {
 		const dateFormat =
-			((app.vault as unknown).getConfig("dateFormat") as string) ||
+			((app.vault as any).getConfig("dateFormat") as string) ||
 			"YYYY-MM-DD";
 		return window.moment(date).format(dateFormat);
 	} catch (error) {
@@ -52,7 +52,7 @@ export function formatDate(app: App, date: Date): string {
 export function formatTime(app: App, date: Date): string {
 	try {
 		const timeFormat =
-			((app.vault as unknown).getConfig("timeFormat") as string) || "HH:mm";
+			((app.vault as any).getConfig("timeFormat") as string) || "HH:mm";
 		return window.moment(date).format(timeFormat);
 	} catch (error) {
 		console.error("Ошибка форматирования времени:", error);
@@ -78,10 +78,10 @@ export function getCurrentDateTimeFormatted(app: App): string {
 export function parseFormattedDate(app: App, dateString: string): Date | null {
 	try {
 		const dateFormat =
-			((app.vault as unknown).getConfig("dateFormat") as string) ||
+			((app.vault as any).getConfig("dateFormat") as string) ||
 			"YYYY-MM-DD";
 		const timeFormat =
-			((app.vault as unknown).getConfig("timeFormat") as string) || "HH:mm";
+			((app.vault as any).getConfig("timeFormat") as string) || "HH:mm";
 
 		// Пробуем парсить с форматом даты + времени
 		let momentDate = window.moment(

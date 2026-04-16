@@ -14,6 +14,7 @@ import {
 import type { FSRSRating } from "../../interfaces/fsrs";
 import type MyPlugin from "../../main";
 import { ReviewModal } from "./review-modal";
+import { DEFAULT_SETTINGS } from "../../settings";
 
 /**
  * Основная функция повторения текущей карточки FSRS
@@ -222,16 +223,8 @@ export async function reviewCurrentCardSimple(app: App): Promise<void> {
 		// Используем фиксированную оценку Good
 		const rating: FSRSRating = "Good";
 
-		// Для простой версии создаем минимальные настройки
-		const defaultSettings = {
-			parameters: {
-				request_retention: 0.9,
-				maximum_interval: 36500,
-				enable_fuzz: true,
-			},
-			default_initial_stability: 0.0,
-			default_initial_difficulty: 0.0,
-		} as unknown;
+		// Используем настройки по умолчанию
+		const defaultSettings = DEFAULT_SETTINGS;
 
 		const updatedCard = await addReviewSession(
 			card,
