@@ -82,7 +82,7 @@ export async function filterCardsForFuture(
 	// Собираем карточки с состояниями
 	const cardsWithState: {
 		card: ModernFSRSCard;
-		state: any;
+		state: unknown;
 		dueTime: number;
 	}[] = [];
 

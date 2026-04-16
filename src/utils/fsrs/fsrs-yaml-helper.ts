@@ -220,7 +220,7 @@ export function extractReviewsFromYaml(yaml: string): {
 							currentReview.date = fieldValue.replace(/^['"]|['"]$/g, "");
 							break;
 						case "rating":
-							currentReview.rating = fieldValue.replace(/^['"]|['"]$/g, "") as any;
+							currentReview.rating = fieldValue.replace(/^['"]|['"]$/g, "") as unknown;
 							break;
 						case "stability":
 							currentReview.stability = parseFloat(fieldValue);

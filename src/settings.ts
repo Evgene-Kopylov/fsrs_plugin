@@ -67,7 +67,7 @@ export class SampleSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		// Заголовок раздела FSRS
-		containerEl.createEl("h2", { text: "FSRS Algorithm Settings" });
+		new Setting(containerEl).setName("FSRS Algorithm Settings").setHeading();
 
 		// Параметр request_retention
 		new Setting(containerEl)
@@ -126,7 +126,7 @@ export class SampleSettingTab extends PluginSettingTab {
 		containerEl.createEl("hr");
 
 		// Настройки по умолчанию для новых карточек
-		containerEl.createEl("h3", { text: "New Card Defaults" });
+		new Setting(containerEl).setName("New Card Defaults").setHeading();
 
 		// default_initial_stability
 		new Setting(containerEl)
@@ -172,7 +172,7 @@ export class SampleSettingTab extends PluginSettingTab {
 		containerEl.createEl("hr");
 
 		// Настройки отображения
-		containerEl.createEl("h3", { text: "Display Settings" });
+		new Setting(containerEl).setName("Display Settings").setHeading();
 
 		// show_stability
 		new Setting(containerEl)
@@ -266,7 +266,7 @@ export class SampleSettingTab extends PluginSettingTab {
 		containerEl.createEl("hr");
 
 		// Настройки уведомлений
-		containerEl.createEl("h3", { text: "Notification Settings" });
+		new Setting(containerEl).setName("Notification Settings").setHeading();
 
 		// show_notifications
 		new Setting(containerEl)
@@ -304,7 +304,7 @@ export class SampleSettingTab extends PluginSettingTab {
 		containerEl.createEl("hr");
 
 		// Настройки обновления
-		containerEl.createEl("h3", { text: "Refresh Settings" });
+		new Setting(containerEl).setName("Refresh Settings").setHeading();
 
 		// auto_refresh
 		new Setting(containerEl)
@@ -362,7 +362,7 @@ export class SampleSettingTab extends PluginSettingTab {
 		containerEl.createEl("hr");
 
 		// Настройки фильтрации файлов
-		containerEl.createEl("h3", { text: "File Filtering" });
+		new Setting(containerEl).setName("File Filtering").setHeading();
 
 		new Setting(containerEl)
 			.setName("Ignore Patterns")
@@ -388,7 +388,7 @@ export class SampleSettingTab extends PluginSettingTab {
 		containerEl.createEl("hr");
 
 		// Старое поле для обратной совместимости
-		containerEl.createEl("h3", { text: "Advanced Settings" });
+		new Setting(containerEl).setName("Advanced Settings").setHeading();
 
 		new Setting(containerEl)
 			.setName("Legacy Setting")

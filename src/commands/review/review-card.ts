@@ -121,10 +121,10 @@ export async function reviewCurrentCard(
 		// Заменяем старый frontmatter на новый, сохраняя все остальные поля и пустые строки
 		const beforeFrontmatter = content.substring(
 			0,
-			frontmatterMatch.match.index!,
+			frontmatterMatch.match.index,
 		);
 		const afterFrontmatter = content.substring(
-			frontmatterMatch.match.index! + frontmatterMatch.match[0].length,
+			frontmatterMatch.match.index + frontmatterMatch.match[0].length,
 		);
 		const newContent =
 			beforeFrontmatter +
@@ -145,7 +145,7 @@ export async function reviewCurrentCard(
 		// Показываем уведомление с информацией
 		let message = `Карточка повторена: ${rating}`;
 		if (nextDates[rating]) {
-			const nextDate = new Date(nextDates[rating]!);
+			const nextDate = new Date(nextDates[rating]);
 			message += `\nСледующее повторение: ${nextDate.toLocaleDateString()}`;
 		}
 
@@ -159,7 +159,7 @@ export async function reviewCurrentCard(
 		Object.entries(nextDates).forEach(([rating, date]) => {
 			if (date) {
 				console.debug(
-					`  ${rating}: ${new Date(date as string).toLocaleString()}`,
+					`  ${rating}: ${new Date(date).toLocaleString()}`,
 				);
 			}
 		});
@@ -231,7 +231,7 @@ export async function reviewCurrentCardSimple(app: App): Promise<void> {
 			},
 			default_initial_stability: 0.0,
 			default_initial_difficulty: 0.0,
-		} as any;
+		} as unknown;
 
 		const updatedCard = await addReviewSession(
 			card,
@@ -246,10 +246,10 @@ export async function reviewCurrentCardSimple(app: App): Promise<void> {
 		// Заменяем старый frontmatter на новый, сохраняя все остальные поля и пустые строки
 		const beforeFrontmatter = content.substring(
 			0,
-			frontmatterMatch.match.index!,
+			frontmatterMatch.match.index,
 		);
 		const afterFrontmatter = content.substring(
-			frontmatterMatch.match.index! + frontmatterMatch.match[0].length,
+			frontmatterMatch.match.index + frontmatterMatch.match[0].length,
 		);
 		const newContent =
 			beforeFrontmatter +
@@ -372,10 +372,10 @@ export async function reviewCardByPath(
 		// Заменяем старый frontmatter на новый, сохраняя все остальные поля и пустые строки
 		const beforeFrontmatter = content.substring(
 			0,
-			frontmatterMatch.match.index!,
+			frontmatterMatch.match.index,
 		);
 		const afterFrontmatter = content.substring(
-			frontmatterMatch.match.index! + frontmatterMatch.match[0].length,
+			frontmatterMatch.match.index + frontmatterMatch.match[0].length,
 		);
 		const newContent =
 			beforeFrontmatter +
@@ -396,7 +396,7 @@ export async function reviewCardByPath(
 		// Показываем уведомление с информацией
 		let message = `Карточка повторена: ${rating}`;
 		if (nextDates[rating]) {
-			const nextDate = new Date(nextDates[rating]!);
+			const nextDate = new Date(nextDates[rating]);
 			message += `\nСледующее повторение: ${nextDate.toLocaleDateString()}`;
 		}
 
@@ -410,7 +410,7 @@ export async function reviewCardByPath(
 		Object.entries(nextDates).forEach(([rating, date]) => {
 			if (date) {
 				console.debug(
-					`  ${rating}: ${new Date(date as string).toLocaleString()}`,
+					`  ${rating}: ${new Date(date).toLocaleString()}`,
 				);
 			}
 		});

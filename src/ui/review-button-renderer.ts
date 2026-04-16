@@ -27,7 +27,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 		| "due"
 		| "error"
 		| "loading" = "loading";
-	private fileChangeHandler?: (file: any) => void;
+	private fileChangeHandler?: (file: unknown) => void;
 
 	/**
 	 * Создает новый рендерер кнопки
@@ -188,34 +188,34 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			await this.handleMainButtonClick();
 		};
 		this.mainButton.addEventListener("click", mainClickHandler);
-		(this.mainButton as any)._clickHandler = mainClickHandler;
+		(this.mainButton as unknown)._clickHandler = mainClickHandler;
 
 		// Кнопка удаления
 		const deleteClickHandler = async () => {
 			await this.handleDeleteButtonClick();
 		};
 		this.deleteButton.addEventListener("click", deleteClickHandler);
-		(this.deleteButton as any)._clickHandler = deleteClickHandler;
+		(this.deleteButton as unknown)._clickHandler = deleteClickHandler;
 	}
 
 	/**
 	 * Очищает обработчики событий
 	 */
 	private cleanup(): void {
-		if (this.mainButton && (this.mainButton as any)._clickHandler) {
+		if (this.mainButton && (this.mainButton as unknown)._clickHandler) {
 			this.mainButton.removeEventListener(
 				"click",
-				(this.mainButton as any)._clickHandler,
+				(this.mainButton as unknown)._clickHandler,
 			);
-			delete (this.mainButton as any)._clickHandler;
+			delete (this.mainButton as unknown)._clickHandler;
 		}
 
-		if (this.deleteButton && (this.deleteButton as any)._clickHandler) {
+		if (this.deleteButton && (this.deleteButton as unknown)._clickHandler) {
 			this.deleteButton.removeEventListener(
 				"click",
-				(this.deleteButton as any)._clickHandler,
+				(this.deleteButton as unknown)._clickHandler,
 			);
-			delete (this.deleteButton as any)._clickHandler;
+			delete (this.deleteButton as unknown)._clickHandler;
 		}
 	}
 
@@ -373,10 +373,10 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			// Собираем обновленное содержимое файла
 			const beforeFrontmatter = content.substring(
 				0,
-				frontmatterMatch.match.index!,
+				frontmatterMatch.match.index,
 			);
 			const afterFrontmatter = content.substring(
-				frontmatterMatch.match.index! +
+				frontmatterMatch.match.index +
 					frontmatterMatch.match[0].length,
 			);
 			const newContent =
@@ -405,7 +405,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	 * Настраивает отслеживание изменений файла
 	 */
 	private setupFileWatcher(): void {
-		this.fileChangeHandler = (file: any) => {
+		this.fileChangeHandler = (file: unknown) => {
 			if (file.path === this.sourcePath) {
 				this.refresh();
 			}
