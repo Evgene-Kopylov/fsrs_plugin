@@ -32,7 +32,6 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	show_stability: true,
 	show_difficulty: true,
 	show_retrievability: true,
-	show_advanced_stats: false,
 	max_cards_to_show: 30,
 	auto_add_review_button: true,
 
@@ -211,21 +210,6 @@ export class FsrsSettingTab extends PluginSettingTab {
 					.setValue(this.plugin.settings.show_retrievability)
 					.onChange(async (value) => {
 						this.plugin.settings.show_retrievability = value;
-						await this.plugin.saveSettings();
-					}),
-			);
-
-		// show_advanced_stats
-		new Setting(containerEl)
-			.setName("Show advanced statistics")
-			.setDesc(
-				"Display advanced statistics like elapsed days, reps, lapses.",
-			)
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.show_advanced_stats)
-					.onChange(async (value) => {
-						this.plugin.settings.show_advanced_stats = value;
 						await this.plugin.saveSettings();
 					}),
 			);

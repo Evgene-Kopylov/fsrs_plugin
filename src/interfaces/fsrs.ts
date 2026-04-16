@@ -62,7 +62,6 @@ export interface FSRSSettings {
 	show_stability: boolean;
 	show_difficulty: boolean;
 	show_retrievability: boolean;
-	show_advanced_stats: boolean;
 	max_cards_to_show: number;
 
 	// Настройка для автоматического добавления кнопки повторения
