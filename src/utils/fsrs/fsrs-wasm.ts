@@ -1,10 +1,9 @@
 // Взаимодействие с WASM модулем FSRS
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
 
 import type {
 	ModernFSRSCard,
-	ReviewSession,
 	FSRSRating,
-	FSRSState,
 	ComputedCardState,
 	FSRSSettings,
 	FSRSParameters,
