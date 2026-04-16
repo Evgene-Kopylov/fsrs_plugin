@@ -9,11 +9,6 @@ If your plugin does not need CSS, delete this file.
 
 /* Стили для блока fsrs-now */
 .fsrs-now-render-container {
-	margin: 1em 0;
-	padding: 1em;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 8px;
-	background-color: var(--background-primary);
 }
 
 .fsrs-now-container {
@@ -32,11 +27,6 @@ If your plugin does not need CSS, delete this file.
 
 /* Стили для блока fsrs-future */
 .fsrs-future-render-container {
-	margin: 1em 0;
-	padding: 1em;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 8px;
-	background-color: var(--background-primary);
 }
 
 .fsrs-future-container {
@@ -454,11 +444,6 @@ If your plugin does not need CSS, delete this file.
 
 /* Стили для блока fsrs-table */
 .fsrs-table-render-container {
-	margin: 1em 0;
-	padding: 1em;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 8px;
-	background-color: var(--background-primary);
 }
 
 .fsrs-table-container {
@@ -491,35 +476,34 @@ If your plugin does not need CSS, delete this file.
 .fsrs-table {
 	width: 100%;
 	border-collapse: collapse;
-	margin: 0.5em 0 1em;
-	font-size: 14px;
+	font-size: 0.9em;
 }
 
-.fsrs-table th {
-	text-align: left;
-	padding: 8px 12px;
-	border-bottom: 2px solid var(--background-modifier-border);
-	color: var(--text-muted);
-	font-weight: 600;
-	white-space: nowrap;
-}
-
+.fsrs-table th,
 .fsrs-table td {
-	padding: 8px 12px;
-	border-bottom: 1px solid var(--background-modifier-border);
+	border: 1px solid var(--background-modifier-border);
+	padding: 6px 8px;
+	text-align: left;
 	vertical-align: top;
 }
 
-.fsrs-table-row:hover {
-	background-color: var(--background-modifier-hover);
+.fsrs-table th {
+	background-color: var(--background-secondary);
+	font-weight: 600;
 }
 
-.fsrs-table-row a.internal-link {
+.fsrs-table tr:hover {
+	background-color: var(--background-modifier-hover);
+	cursor: pointer;
+}
+
+.fsrs-table a.internal-link {
+	cursor: pointer;
 	text-decoration: none;
 	color: var(--text-accent);
 }
 
-.fsrs-table-row a.internal-link:hover {
+.fsrs-table a.internal-link:hover {
 	text-decoration: underline;
 }
 
@@ -531,29 +515,27 @@ If your plugin does not need CSS, delete this file.
 }
 
 /* Стили для конкретных колонок */
-.fsrs-col-file {
-	min-width: 150px;
-}
-
-.fsrs-col-reps,
-.fsrs-col-overdue,
-.fsrs-col-stability,
-.fsrs-col-difficulty,
-.fsrs-col-retrievability,
-.fsrs-col-elapsed,
-.fsrs-col-scheduled {
+.fsrs-table .fsrs-col-reps,
+.fsrs-table .fsrs-col-overdue,
+.fsrs-table .fsrs-col-stability,
+.fsrs-table .fsrs-col-difficulty,
+.fsrs-table .fsrs-col-retrievability,
+.fsrs-table .fsrs-col-elapsed,
+.fsrs-table .fsrs-col-scheduled {
+	white-space: nowrap;
+	width: 1%;
 	text-align: right;
-	min-width: 80px;
 }
 
-.fsrs-col-due,
-.fsrs-col-next,
-.fsrs-col-in,
-.fsrs-col-interval {
+.fsrs-table .fsrs-col-due,
+.fsrs-table .fsrs-col-state,
+.fsrs-table .fsrs-col-next,
+.fsrs-table .fsrs-col-in,
+.fsrs-table .fsrs-col-interval {
+	white-space: nowrap;
 	text-align: center;
-	min-width: 120px;
 }
 
-.fsrs-col-state {
-	min-width: 100px;
+.fsrs-table .fsrs-col-file {
+	width: auto;
 }
