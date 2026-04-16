@@ -3,7 +3,6 @@ import type FsrsPlugin from "../main";
 import {
 	generateFsrsFutureHTML,
 	filterCardsForFuture,
-	parseModernFsrsFromFrontmatter,
 } from "../utils/fsrs-helper";
 
 /**
@@ -22,10 +21,10 @@ export class FsrsFutureRenderer extends MarkdownRenderChild {
 	/**
 	 * Вызывается при загрузке компонента
 	 */
-	async onload() {
+	onload(): void {
 		super.onload();
 		this.plugin.registerFsrsFutureRenderer(this);
-		await this.renderContent();
+		void this.renderContent();
 	}
 
 	/**
@@ -43,11 +42,13 @@ export class FsrsFutureRenderer extends MarkdownRenderChild {
 		const start = performance.now();
 		try {
 			// Показываем индикатор загрузки
-			this.container.innerHTML = `
-                <div class="fsrs-future-loading">
-                    <small>Загрузка карточек FSRS на будущее...</small>
-                </div>
-            `;
+			this.container.empty();
+			const loadingDiv = this.container.createDiv({
+				cls: "fsrs-future-loading",
+			});
+			loadingDiv.createEl("small", {
+				text: "Загрузка карточек FSRS на будущее...",
+			});
 
 			// Получаем все карточки через плагин
 			const allCards = await this.plugin.getCardsForReview();
@@ -72,16 +73,17 @@ export class FsrsFutureRenderer extends MarkdownRenderChild {
 				this.plugin.app,
 				now,
 			);
-			this.container.innerHTML = html;
+			this.container.empty();
+			this.container.insertAdjacentHTML("afterbegin", html);
 
 			// Добавляем обработчики событий для кликабельных ссылок
 			this.addEventListeners();
 		} catch (error) {
-			this.renderErrorState(error);
+			void this.renderErrorState(error);
 		} finally {
 			const elapsedMs = performance.now() - start;
 			const elapsedSec = elapsedMs / 1000;
-			console.log(
+			console.debug(
 				`⏱️ Загрузка таблицы FSRS будущего: ${elapsedSec.toFixed(2)} с`,
 			);
 		}
@@ -91,11 +93,9 @@ export class FsrsFutureRenderer extends MarkdownRenderChild {
 	 * Отображает состояние "нет карточек на будущее"
 	 */
 	private renderEmptyState() {
-		this.container.innerHTML = `
-            <div class="fsrs-future-empty">
-                <small>Нет карточек на будущее</small>
-            </div>
-        `;
+		this.container.empty();
+		const emptyDiv = this.container.createDiv({ cls: "fsrs-future-empty" });
+		emptyDiv.createEl("small", { text: "Нет карточек на будущее" });
 	}
 
 	/**
@@ -106,11 +106,11 @@ export class FsrsFutureRenderer extends MarkdownRenderChild {
 		const errorMessage =
 			error instanceof Error ? error.message : String(error);
 
-		this.container.innerHTML = `
-            <div class="fsrs-future-error">
-                <small>Ошибка при загрузке карточек FSRS на будущее: ${errorMessage}</small>
-            </div>
-        `;
+		this.container.empty();
+		const errorDiv = this.container.createDiv({ cls: "fsrs-future-error" });
+		errorDiv.createEl("small", {
+			text: `Ошибка при загрузке карточек FSRS на будущее: ${errorMessage}`,
+		});
 	}
 
 	/**
@@ -123,7 +123,7 @@ export class FsrsFutureRenderer extends MarkdownRenderChild {
 				e.preventDefault();
 				const filePath = (link as HTMLElement).dataset.filePath;
 				if (filePath) {
-					this.openFile(filePath);
+					void this.openFile(filePath);
 				}
 			});
 		});
@@ -135,7 +135,7 @@ export class FsrsFutureRenderer extends MarkdownRenderChild {
 				if ((e.target as HTMLElement).tagName === "A") return;
 				const filePath = (row as HTMLElement).dataset.filePath;
 				if (filePath) {
-					this.openFile(filePath);
+					void this.openFile(filePath);
 				}
 			});
 		});
@@ -158,7 +158,7 @@ export class FsrsFutureRenderer extends MarkdownRenderChild {
 			}
 		} catch (error) {
 			console.error("Ошибка при открытии файла:", error);
-			new Notice(`Не удалось открыть файл: ${filePath}`);
+			void new Notice(`Не удалось открыть файл: ${filePath}`);
 		}
 	}
 

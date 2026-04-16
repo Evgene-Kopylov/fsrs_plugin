@@ -24,7 +24,7 @@ export function parseModernFsrsFromFrontmatter(
 			};
 		}
 
-		let parsedCard: unknown;
+		let parsedCard: any;
 		let wasmFailed = false;
 		let wasmError: string | undefined;
 
@@ -189,16 +189,16 @@ export function parseModernFsrsFromFrontmatter(
 /**
  * Основной парсер YAML (fallback)
  */
-export function parseYaml(yaml: string): unknown {
+export function parseYaml(yaml: string): any {
 	try {
 		const lines = yaml.split("\n");
 		const stack: Array<{
-			obj: unknown;
+			obj: any;
 			key: string | null;
 			indent: number;
 		}> = [];
-		const root: unknown = {};
-		let current: { obj: unknown; key: string | null; indent: number } = {
+		const root: any = {};
+		let current: { obj: any; key: string | null; indent: number } = {
 			obj: root,
 			key: null,
 			indent: -1,
@@ -244,7 +244,7 @@ export function parseYaml(yaml: string): unknown {
 					current.obj[current.key!] = [];
 				}
 
-				const array = current.obj[current.key!] as unknown[];
+				const array = current.obj[current.key!] as any[];
 
 				if (content.includes(":")) {
 					// Объект внутри массива - делим только по первому двоеточию
@@ -252,7 +252,7 @@ export function parseYaml(yaml: string): unknown {
 					const key = content.substring(0, colonIndex).trim();
 					const value = content.substring(colonIndex + 1).trim();
 
-					const item: unknown = {};
+					const item: any = {};
 					item[key] = parseYamlValue(value);
 					array.push(item);
 
@@ -323,7 +323,7 @@ export function parseYaml(yaml: string): unknown {
 /**
  * Парсер значений YAML
  */
-export function parseYamlValue(valueStr: string): unknown {
+export function parseYamlValue(valueStr: string): any {
 	if (valueStr === "true") return true;
 	if (valueStr === "false") return false;
 	if (valueStr === "null") return null;

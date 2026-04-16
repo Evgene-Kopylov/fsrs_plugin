@@ -1,6 +1,5 @@
-import { MarkdownRenderChild, Notice, Component } from "obsidian";
+import { MarkdownRenderChild, Notice } from "obsidian";
 import type FsrsPlugin from "../main";
-import type { FSRSCard } from "../interfaces/fsrs";
 import {
 	generateFsrsNowHTML,
 	sortCardsByPriority,
@@ -28,10 +27,10 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 	/**
 	 * Вызывается при загрузке компонента
 	 */
-	async onload() {
+	onload(): void {
 		super.onload();
 		this.plugin.registerFsrsNowRenderer(this);
-		await this.renderContent();
+		void this.renderContent();
 	}
 
 	/**
@@ -49,11 +48,13 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 		const start = performance.now();
 		try {
 			// Показываем индикатор загрузки
-			this.container.innerHTML = `
-                <div class="fsrs-now-loading">
-                    <small>Загрузка карточек FSRS...</small>
-                </div>
-            `;
+			this.container.empty();
+			const loadingDiv = this.container.createDiv({
+				cls: "fsrs-now-loading",
+			});
+			loadingDiv.createEl("small", {
+				text: "Загрузка карточек FSRS...",
+			});
 
 			// Получаем карточки для повторения через плагин
 			const cardsForReview = await this.plugin.getCardsForReview();
@@ -65,11 +66,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 				this.plugin.settings,
 				now,
 			);
-			const sortedCards = await sortCardsByPriority(
-				dueCards,
-				this.plugin.settings,
-				now,
-			);
+			await sortCardsByPriority(dueCards, this.plugin.settings, now);
 
 			if (dueCards.length === 0) {
 				this.renderEmptyState();
@@ -83,7 +80,8 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 				this.plugin.app,
 				now,
 			);
-			this.container.innerHTML = html;
+			this.container.empty();
+			this.container.insertAdjacentHTML("afterbegin", html);
 
 			// Добавляем обработчики событий для кликабельных ссылок
 			this.addEventListeners();
@@ -92,7 +90,9 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 		} finally {
 			const elapsedMs = performance.now() - start;
 			const elapsedSec = elapsedMs / 1000;
-			console.log(`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`);
+			console.debug(
+				`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`,
+			);
 		}
 	}
 
@@ -100,11 +100,11 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 	 * Отображает состояние "нет карточек для повторения"
 	 */
 	private renderEmptyState() {
-		this.container.innerHTML = `
-            <div class="fsrs-now-empty">
-                <small>Нет карточек для повторения 🎉</small>
-            </div>
-        `;
+		this.container.empty();
+		const emptyDiv = this.container.createDiv({ cls: "fsrs-now-empty" });
+		emptyDiv.createEl("small", {
+			text: "Нет карточек для повторения 🎉",
+		});
 	}
 
 	/**
@@ -115,11 +115,11 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 		const errorMessage =
 			error instanceof Error ? error.message : String(error);
 
-		this.container.innerHTML = `
-            <div class="fsrs-now-error">
-                <small>Ошибка при загрузке карточек FSRS: ${errorMessage}</small>
-            </div>
-        `;
+		this.container.empty();
+		const errorDiv = this.container.createDiv({ cls: "fsrs-now-error" });
+		errorDiv.createEl("small", {
+			text: `Ошибка при загрузке карточек FSRS: ${errorMessage}`,
+		});
 	}
 
 	/**
@@ -132,7 +132,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 				e.preventDefault();
 				const filePath = (link as HTMLElement).dataset.filePath;
 				if (filePath) {
-					this.openFile(filePath);
+					void this.openFile(filePath);
 				}
 			});
 		});
@@ -144,7 +144,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 				if ((e.target as HTMLElement).tagName === "A") return;
 				const filePath = (row as HTMLElement).dataset.filePath;
 				if (filePath) {
-					this.openFile(filePath);
+					void this.openFile(filePath);
 				}
 			});
 		});
@@ -163,11 +163,11 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 					true,
 				);
 			} else {
-				new Notice(`Файл не найден: ${filePath}`);
+				void new Notice(`File not found: ${filePath}`);
 			}
 		} catch (error) {
 			console.error("Ошибка при открытии файла:", error);
-			new Notice(`Не удалось открыть файл: ${filePath}`);
+			void new Notice(`Could not open file: ${filePath}`);
 		}
 	}
 
@@ -186,7 +186,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 			// Сначала читаем файл и проверяем статус карточки
 			const file = this.plugin.app.vault.getFileByPath(filePath);
 			if (!file) {
-				new Notice("Файл не найден");
+				void new Notice("File not found");
 				return;
 			}
 
@@ -194,7 +194,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 			const frontmatterMatch = extractFrontmatterWithMatch(content);
 
 			if (!frontmatterMatch) {
-				new Notice("Файл не содержит frontmatter");
+				void new Notice("File does not contain frontmatter");
 				return;
 			}
 
@@ -205,7 +205,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 			);
 
 			if (!parseResult.success || !parseResult.card) {
-				new Notice("Не FSRS карточка");
+				void new Notice("Not an FSRS card");
 				return;
 			}
 
@@ -219,8 +219,8 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 					this.plugin.settings,
 				);
 				const nextDate = new Date(state.due);
-				new Notice(
-					`Карточка уже повторена. Следующее повторение: ${formatLocalDate(nextDate, this.plugin.app)}`,
+				void new Notice(
+					`Card already reviewed. Next review: ${formatLocalDate(nextDate, this.plugin.app)}`,
 				);
 				return;
 			}
@@ -231,13 +231,13 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 			if (rating) {
 				// После успешного повторения обновляем отображение
 				await this.refresh();
-				new Notice(`Карточка повторена с оценкой: ${rating}`);
+				void new Notice(`Card reviewed with rating: ${rating}`);
 			}
 		} catch (error) {
 			console.error("Ошибка при повторении карточки:", error);
 			const errorMessage =
 				error instanceof Error ? error.message : String(error);
-			new Notice(`Ошибка при повторении карточки: ${errorMessage}`);
+			void new Notice(`Error reviewing card: ${errorMessage}`);
 		}
 	}
 }

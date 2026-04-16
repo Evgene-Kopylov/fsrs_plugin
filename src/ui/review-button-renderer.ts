@@ -10,7 +10,6 @@ import {
 	getRussianNoun,
 } from "../utils/fsrs-helper";
 import type FsrsPlugin from "../main";
-import type { ModernFSRSCard, ReviewSession } from "../interfaces/fsrs";
 
 /**
  * Рендерер кнопки повторения карточки FSRS для блока `fsrs-review-button`
@@ -54,8 +53,8 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 		// Создаем кнопку удаления
 		this.deleteButton = document.createElement("button");
 		this.deleteButton.className = "fsrs-delete-button";
-		this.deleteButton.innerHTML = "✕";
-		this.deleteButton.title = "Удалить последнее повторение";
+		this.deleteButton.textContent = "✕";
+		this.deleteButton.title = "Delete last review";
 
 		// Добавляем кнопки в контейнер
 		this.buttonsContainer.appendChild(this.mainButton);
