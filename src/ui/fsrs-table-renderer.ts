@@ -17,7 +17,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	private activeLeafHandler?: EventRef;
 	private activeLeafCallback?: () => void;
 	private lastVisibilityUpdate = 0;
-	private windowVisibilityHandler?: () => void;
 
 	constructor(
 		private plugin: FsrsPlugin,
@@ -51,22 +50,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			this.activeLeafCallback,
 		);
 
-		// Обработчик видимости окна браузера
-		this.windowVisibilityHandler = () => {
-			if (!document.hidden) {
-				this.updateIfVisible().catch((error) => {
-					console.error(
-						"Ошибка при обновлении таблицы при возвращении видимости окна:",
-						error,
-					);
-				});
-			}
-		};
-		document.addEventListener(
-			"visibilitychange",
-			this.windowVisibilityHandler,
-		);
-
 		void (async () => {
 			await this.renderContent();
 			this.isFirstLoad = false;
@@ -85,15 +68,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			);
 			this.activeLeafCallback = undefined;
 			this.activeLeafHandler = undefined;
-		}
-
-		// Удаляем обработчик видимости окна
-		if (this.windowVisibilityHandler) {
-			document.removeEventListener(
-				"visibilitychange",
-				this.windowVisibilityHandler,
-			);
-			this.windowVisibilityHandler = undefined;
 		}
 
 		// Удаляем рендерер из списка активных
