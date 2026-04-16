@@ -1,89 +1,59 @@
-/* FSRS Plugin Styles
-    Cleaned version: fsrs-now and fsrs-future removed.
-    Optimized for compact table display with specific alignment.
-*/
+/* FSRS Plugin Styles - Deep Clean & Ultra Compact */
 
-/* --- Базовые контейнеры --- */
-.fsrs-table-render-container,
+/* Убираем стандартные отступы Obsidian для блоков кода */
+.markdown-rendered .block-language-fsrs-table,
+.cm-preview-code-block.block-language-fsrs-table,
+.cm-embed-block.block-language-fsrs-table {
+	border: none !important;
+	background: transparent !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	box-shadow: none !important;
+}
+
+/* Контейнер таблицы */
 .fsrs-table-container {
-	border: none;
-	background: transparent;
 	width: 100%;
 	font-family: var(--font-text);
-	color: var(--text-normal);
 }
 
-/* --- Заголовок блока --- */
-.fsrs-table-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin: 0 0 4px 0;
-}
-
-.fsrs-header-text {
-	flex: 1;
-	font-size: 0.9em;
-	font-weight: 600;
-}
-
-.fsrs-info-icon {
-	color: var(--text-muted);
-	opacity: 0.7;
-	font-size: 0.8em;
-	cursor: help;
-	margin-left: 0.5em;
-}
-
-/* --- ТАБЛИЦА (Максимальная компактность) --- */
+/* Сама таблица */
 .fsrs-table {
-	width: 100%;
-	border-collapse: collapse;
-	font-size: 0.85em;
+	width: 100% !important;
+	border-collapse: collapse !important;
+	table-layout: auto !important;
+	font-size: 0.85em !important;
 	line-height: 1.1 !important;
 }
 
+/* Общий стиль ячеек */
 .fsrs-table th,
 .fsrs-table td {
-	border: 1px solid var(--background-modifier-border);
+	border: 1px solid var(--background-modifier-border) !important;
 	padding: 2px 6px !important;
-	vertical-align: middle;
+	vertical-align: middle !important;
 }
 
-/* Ссылки внутри ячеек */
-.fsrs-table td a.internal-link {
-	display: inline-block;
+/* --- ВЫРАВНИВАНИЕ --- */
+
+/* Название файла: Текст прижат влево, всё лишнее обрезано */
+.fsrs-table td.fsrs-col-file {
+	text-align: left !important;
+	width: auto !important;
+	/* Устраняем влияние лишних пробелов в HTML */
+	display: table-cell !important;
+	white-space: nowrap !important;
+}
+
+/* Ссылка внутри файла: убираем любые внешние отступы */
+.fsrs-table td.fsrs-col-file a.internal-link {
+	display: inline !important;
 	margin: 0 !important;
 	padding: 0 !important;
-	text-decoration: none;
 	color: var(--text-accent);
-	white-space: nowrap;
 }
 
-.fsrs-table th {
-	background-color: var(--background-secondary);
-	font-weight: 600;
-	white-space: nowrap;
-	text-align: center; /* Заголовки по умолчанию по центру */
-}
-
-.fsrs-table tr:hover {
-	background-color: var(--background-modifier-hover);
-	cursor: pointer;
-}
-
-/* --- ВЫРАВНИВАНИЕ И РАСПРЕДЕЛЕНИЕ КОЛОНОК --- */
-
-/* Колонка файла: по левому краю, занимает всё место */
-.fsrs-table .fsrs-col-file {
-	width: auto;
-	text-align: left;
-}
-.fsrs-table th.fsrs-col-file {
-	text-align: left; /* Заголовок "Файл" тоже слева */
-}
-
-/* Все остальные колонки: строго по центру и минимальная ширина */
+/* Технические колонки: схлопываем до минимума и центрируем */
 .fsrs-table .fsrs-col-reps,
 .fsrs-table .fsrs-col-overdue,
 .fsrs-table .fsrs-col-stability,
@@ -96,30 +66,23 @@
 .fsrs-table .fsrs-col-next,
 .fsrs-table .fsrs-col-in,
 .fsrs-table .fsrs-col-interval {
-	white-space: nowrap;
-	width: 1%;
-	text-align: center;
+	width: 1% !important; /* Принудительно минимальная ширина */
+	white-space: nowrap !important;
+	text-align: center !important;
+	padding: 2px 10px !important; /* Увеличим боковой паддинг для читаемости центра */
 }
 
-/* --- Информационные состояния --- */
-.fsrs-table-loading,
-.fsrs-table-empty,
-.fsrs-table-error {
-	padding: 0.5em;
-	text-align: center;
-	color: var(--text-muted);
-	font-style: italic;
-	font-size: 0.9em;
+/* Заголовки технических колонок тоже по центру */
+.fsrs-table th:not(.fsrs-col-file) {
+	text-align: center !important;
 }
 
-.fsrs-table-info {
-	padding: 4px 0;
-	text-align: center;
-	color: var(--text-muted);
-	font-size: 11px;
+/* Эффект наведения */
+.fsrs-table tr:hover {
+	background-color: var(--background-modifier-hover);
 }
 
-/* --- Кнопки управления (Frontmatter) --- */
+/* Кнопки управления (Frontmatter) */
 .fsrs-buttons-container {
 	display: flex;
 	align-items: center;
@@ -136,20 +99,7 @@
 	border-radius: 4px;
 	cursor: pointer;
 	font-size: 13px;
-	font-weight: 500;
 	min-width: 140px;
-	text-align: center;
-	transition: all 0.15s ease;
-}
-
-.fsrs-review-button:hover {
-	background: var(--interactive-accent-hover);
-	transform: translateY(-1px);
-}
-
-.fsrs-review-button:disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
 }
 
 .fsrs-delete-button {
@@ -160,24 +110,18 @@
 	height: 26px;
 	background: var(--background-modifier-border);
 	color: var(--text-muted);
-	border: none;
 	border-radius: 4px;
+	border: none;
 	cursor: pointer;
-	font-size: 18px;
 }
 
-.fsrs-delete-button:hover {
-	background: var(--background-modifier-border-hover);
-	color: var(--text-normal);
+/* Инфо-строка */
+.fsrs-table-header {
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 4px;
 }
-
-/* --- Сброс стилей блоков кода Obsidian --- */
-.cm-preview-code-block.block-language-fsrs-table,
-.cm-embed-block.block-language-fsrs-table,
-.markdown-rendered .block-language-fsrs-table {
-	border: none !important;
-	background: transparent !important;
-	box-shadow: none !important;
-	padding: 0 !important;
-	margin: 0 !important;
+.fsrs-header-text {
+	font-size: 0.9em;
+	font-weight: 600;
 }
