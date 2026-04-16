@@ -5,6 +5,7 @@ import type { MyPluginSettings } from "../../settings";
 
 // Паттерны игнорирования файлов и папок по умолчанию
 export const DEFAULT_IGNORE_PATTERNS = [
+	// eslint-disable-next-line obsidianmd/hardcoded-config-path
 	".obsidian/",
 	"templates/",
 	"attachments/",

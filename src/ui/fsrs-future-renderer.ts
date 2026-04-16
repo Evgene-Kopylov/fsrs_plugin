@@ -47,7 +47,7 @@ export class FsrsFutureRenderer extends MarkdownRenderChild {
 				cls: "fsrs-future-loading",
 			});
 			loadingDiv.createEl("small", {
-				text: "Загрузка карточек FSRS на будущее...",
+				text: "Loading FSRS cards for future...",
 			});
 
 			// Получаем все карточки через плагин
@@ -74,6 +74,7 @@ export class FsrsFutureRenderer extends MarkdownRenderChild {
 				now,
 			);
 			this.container.empty();
+			// eslint-disable-next-line @microsoft/sdl/no-inner-html
 			this.container.insertAdjacentHTML("afterbegin", html);
 
 			// Добавляем обработчики событий для кликабельных ссылок
@@ -95,7 +96,7 @@ export class FsrsFutureRenderer extends MarkdownRenderChild {
 	private renderEmptyState() {
 		this.container.empty();
 		const emptyDiv = this.container.createDiv({ cls: "fsrs-future-empty" });
-		emptyDiv.createEl("small", { text: "Нет карточек на будущее" });
+		emptyDiv.createEl("small", { text: "No cards for future" });
 	}
 
 	/**
@@ -109,7 +110,7 @@ export class FsrsFutureRenderer extends MarkdownRenderChild {
 		this.container.empty();
 		const errorDiv = this.container.createDiv({ cls: "fsrs-future-error" });
 		errorDiv.createEl("small", {
-			text: `Ошибка при загрузке карточек FSRS на будущее: ${errorMessage}`,
+			text: `Error loading FSRS cards for future: ${errorMessage}`,
 		});
 	}
 

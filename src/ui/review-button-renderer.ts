@@ -67,8 +67,8 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	/**
 	 * Вызывается Obsidian при загрузке компонента
 	 */
-	async onload(): Promise<void> {
-		await this.updateButtonState();
+	onload(): void {
+		void this.updateButtonState();
 		this.setupClickHandlers();
 		this.setupFileWatcher();
 	}
@@ -183,8 +183,8 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	 */
 	private setupClickHandlers(): void {
 		// Основная кнопка
-		const mainClickHandler = async () => {
-			await this.handleMainButtonClick();
+		const mainClickHandler = () => {
+			void this.handleMainButtonClick();
 		};
 		this.mainButton.addEventListener("click", mainClickHandler);
 		(
@@ -194,8 +194,8 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 		)._clickHandler = mainClickHandler;
 
 		// Кнопка удаления
-		const deleteClickHandler = async () => {
-			await this.handleDeleteButtonClick();
+		const deleteClickHandler = () => {
+			void this.handleDeleteButtonClick();
 		};
 		this.deleteButton.addEventListener("click", deleteClickHandler);
 		(
@@ -436,7 +436,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	 * Обновляет рендерер (например, при изменении файла)
 	 * Может быть вызван извне для принудительного обновления
 	 */
-	async refresh(): Promise<void> {
-		await this.updateButtonState();
+	private async refresh(): Promise<void> {
+		void this.updateButtonState();
 	}
 }

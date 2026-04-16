@@ -53,7 +53,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 				cls: "fsrs-now-loading",
 			});
 			loadingDiv.createEl("small", {
-				text: "Загрузка карточек FSRS...",
+				text: "Loading FSRS cards...",
 			});
 
 			// Получаем карточки для повторения через плагин
@@ -81,6 +81,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 				now,
 			);
 			this.container.empty();
+			// eslint-disable-next-line @microsoft/sdl/no-inner-html
 			this.container.insertAdjacentHTML("afterbegin", html);
 
 			// Добавляем обработчики событий для кликабельных ссылок
@@ -103,7 +104,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 		this.container.empty();
 		const emptyDiv = this.container.createDiv({ cls: "fsrs-now-empty" });
 		emptyDiv.createEl("small", {
-			text: "Нет карточек для повторения 🎉",
+			text: "No cards for review 🎉",
 		});
 	}
 
@@ -118,7 +119,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 		this.container.empty();
 		const errorDiv = this.container.createDiv({ cls: "fsrs-now-error" });
 		errorDiv.createEl("small", {
-			text: `Ошибка при загрузке карточек FSRS: ${errorMessage}`,
+			text: `Error loading FSRS cards: ${errorMessage}`,
 		});
 	}
 
@@ -163,11 +164,11 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 					true,
 				);
 			} else {
-				void new Notice(`File not found: ${filePath}`);
+				void new Notice(`File not found`);
 			}
 		} catch (error) {
 			console.error("Ошибка при открытии файла:", error);
-			void new Notice(`Could not open file: ${filePath}`);
+			void new Notice(`Could not open file`);
 		}
 	}
 
