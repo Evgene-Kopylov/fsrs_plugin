@@ -1,4 +1,4 @@
-!# .agetnignore # агент не должен редактировать этот файл.
+!# .agetnignore агент не должен редактировать этот файл.
 
 # Dev notes
 
@@ -12,14 +12,3 @@ npm run lint
 ```bash
 npx eslint src/ --fix 
 ```
-
-
-## 
-
-Рефактор больших файлов
-- [ ] src/settings.ts
-
-
-Настройки
-- [x] настройка show advanced statistics ничего не делает. Убрать.
-- [x] legacy setting ничего не делает. Убрать.

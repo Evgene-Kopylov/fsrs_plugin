@@ -57,9 +57,6 @@ export function parseModernFsrsFromFrontmatter(
 				wasmError_ instanceof Error
 					? wasmError_.message
 					: String(wasmError_);
-			console.warn(
-				`WASM parsing failed for ${filePath}, using fallback parser. Error: ${wasmError}`,
-			);
 
 			// Fallback: пытаемся распарсить YAML самостоятельно
 			try {
@@ -190,24 +187,23 @@ export function parseModernFsrsFromFrontmatter(
 			});
 		}
 
-		// Проверяем, является ли карточка битой (есть сессии в исходных данных, но все невалидны)
-		if (parsedCard.reviews.length > 0 && reviews.length === 0) {
-			// Все сессии невалидны - карточка битая
+		// Проверяем, является ли карточка битой (любые ошибки валидации)
+		if (validationErrors.length > 0) {
+			// Есть невалидные сессии - карточка битая
 			console.warn(
-				`FSRS card in ${filePath} is broken: all ${validationErrors.length} review sessions are invalid. Ignoring card.`,
+				`FSRS card in ${filePath} is broken: ${validationErrors.length} invalid review sessions out of ${parsedCard.reviews.length} total. Ignoring card.`,
 			);
 			return {
 				success: false,
 				card: null,
-				error: "all review sessions are invalid",
+				error: "review sessions validation failed",
 			};
 		}
 
-		// Если есть ошибки валидации, выводим одно предупреждение (но карточка все еще валидна, есть хотя бы одна сессия)
-		if (validationErrors.length > 0 && reviews.length > 0) {
+		// Если WASM парсинг не удался, но карточка валидна, выводим предупреждение
+		if (wasmFailed && reviews.length > 0) {
 			console.warn(
-				`FSRS card in ${filePath} has ${validationErrors.length} invalid review sessions (${reviews.length} valid sessions remain):`,
-				validationErrors,
+				`WASM parsing failed for ${filePath}, but fallback parser found ${reviews.length} valid sessions. Error: ${wasmError}`,
 			);
 		}
 
