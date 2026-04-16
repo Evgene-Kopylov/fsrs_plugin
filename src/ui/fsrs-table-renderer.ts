@@ -261,9 +261,9 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			return;
 		}
 
-		// Троттлинг: обновляем не чаще чем раз в 5 секунд
+		// Дебаунс: обновляем не чаще чем..
 		const now = Date.now();
-		if (now - this.lastVisibilityUpdate > 5000) {
+		if (now - this.lastVisibilityUpdate > 2000) {
 			this.lastVisibilityUpdate = now;
 			await this.refresh();
 		}
