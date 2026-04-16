@@ -1,4 +1,4 @@
-!# .agetnignore агент не должен редактировать этот файл.
+!# .agetnignore # агент не должен редактировать этот файл.
 
 # Dev notes
 
@@ -21,5 +21,5 @@ npx eslint src/ --fix
 
 
 Настройки
-- [ ] настройка show advanced statistics ничего не делает. Убрать.
+- [x] настройка show advanced statistics ничего не делает. Убрать.
 - [ ] legacy setting ничего не делает. Убрать.
