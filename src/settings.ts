@@ -204,7 +204,7 @@ export class FsrsSettingTab extends PluginSettingTab {
 
 		// show_retrievability
 		new Setting(containerEl)
-			.setName("Show Retrievability")
+			.setName("Show retrievability")
 			.setDesc("Display retrievability (memory strength) values.")
 			.addToggle((toggle) =>
 				toggle
@@ -217,7 +217,7 @@ export class FsrsSettingTab extends PluginSettingTab {
 
 		// show_advanced_stats
 		new Setting(containerEl)
-			.setName("Show Advanced Statistics")
+			.setName("Show advanced statistics")
 			.setDesc(
 				"Display advanced statistics like elapsed days, reps, lapses.",
 			)
@@ -232,7 +232,7 @@ export class FsrsSettingTab extends PluginSettingTab {
 
 		// max_cards_to_show
 		new Setting(containerEl)
-			.setName("Max Cards to Show")
+			.setName("Max cards to show")
 			.setDesc(
 				"Maximum number of cards to display in lists (0 = unlimited).",
 			)
@@ -253,7 +253,7 @@ export class FsrsSettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName("Auto add review button")
 			.setDesc(
-				"Automatically insert review button block after frontmatter when adding FSRS fields.",
+				"Automatically insert review button block after frontmatter when adding FSRS fields.", // eslint-disable-line obsidianmd/ui/sentence-case
 			)
 			.addToggle((toggle) =>
 				toggle
@@ -285,7 +285,7 @@ export class FsrsSettingTab extends PluginSettingTab {
 
 		// notification_threshold
 		new Setting(containerEl)
-			.setName("Notification Threshold")
+			.setName("Notification threshold")
 			.setDesc("Minimum number of due cards to trigger notification.")
 			.addText((text) =>
 				text
@@ -340,7 +340,7 @@ export class FsrsSettingTab extends PluginSettingTab {
 
 		// minimum_review_interval_minutes
 		new Setting(containerEl)
-			.setName("Minimum Early Review Interval (minutes)")
+			.setName("Minimum early review interval")
 			.setDesc(
 				"Minimum minutes before a card can be reviewed early. Set to 0 to allow immediate review.",
 			)
