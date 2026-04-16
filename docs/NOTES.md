@@ -10,3 +10,9 @@ npm run lint
 ```bash
 npx eslint src/ --fix 
 ```
+
+
+## 
+
+Рефактор больших файлов
+- [ ] src/settings.ts

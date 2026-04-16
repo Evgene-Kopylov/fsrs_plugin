@@ -7,6 +7,7 @@ import {
 } from "./utils/fsrs/fsrs-filter";
 
 // Расширяем базовые настройки плагина параметрами FSRS
+// eslint-disable-next-line obsidianmd/sample-names
 export interface MyPluginSettings extends FSRSSettings {
 	// Базовое поле для обратной совместимости
 	mySetting: string;
@@ -65,13 +66,14 @@ export class FsrsSettingTab extends PluginSettingTab {
 	display(): void {
 		const { containerEl } = this;
 		containerEl.empty();
+		const configDir = this.plugin.app.vault.configDir;
 
 		// Заголовок раздела FSRS
-		new Setting(containerEl).setName("FSRS Algorithm").setHeading();
+		new Setting(containerEl).setName("FSRS Algorithm").setHeading(); // eslint-disable-line obsidianmd/ui/sentence-case
 
 		// Параметр request_retention
 		new Setting(containerEl)
-			.setName("Request Retention")
+			.setName("Request retention")
 			.setDesc(
 				"Target retention rate (0.0-1.0). Higher = more reviews, lower retention.",
 			)
@@ -89,7 +91,7 @@ export class FsrsSettingTab extends PluginSettingTab {
 
 		// Параметр maximum_interval
 		new Setting(containerEl)
-			.setName("Maximum Interval (days)")
+			.setName("Maximum interval")
 			.setDesc("Maximum days between reviews. 36500 = ~100 years.")
 			.addText((text) =>
 				text
@@ -109,7 +111,7 @@ export class FsrsSettingTab extends PluginSettingTab {
 
 		// Параметр enable_fuzz
 		new Setting(containerEl)
-			.setName("Enable Interval Fuzz")
+			.setName("Enable interval fuzz")
 			.setDesc(
 				"Add random variation to intervals (±5%) to prevent card grouping.",
 			)
@@ -126,11 +128,11 @@ export class FsrsSettingTab extends PluginSettingTab {
 		containerEl.createEl("hr");
 
 		// Настройки по умолчанию для новых карточек
-		new Setting(containerEl).setName("New Card Defaults").setHeading();
+		new Setting(containerEl).setName("New card defaults").setHeading();
 
 		// default_initial_stability
 		new Setting(containerEl)
-			.setName("Initial Stability")
+			.setName("Initial stability")
 			.setDesc("Default stability value for new cards.")
 			.addText((text) =>
 				text
@@ -150,19 +152,19 @@ export class FsrsSettingTab extends PluginSettingTab {
 
 		// default_initial_difficulty
 		new Setting(containerEl)
-			.setName("Initial Difficulty")
+			.setName("Initial difficulty")
 			.setDesc("Default difficulty value for new cards.")
 			.addText((text) =>
 				text
 					.setPlaceholder("0.0")
 					.setValue(
-						this.plugin.settings.default_initial_difficulty.toString(),
+						String(this.plugin.settings.default_initial_difficulty),
 					)
 					.onChange(async (value) => {
-						const num = parseFloat(value);
-						if (!isNaN(num)) {
+						const numValue = parseFloat(value);
+						if (!isNaN(numValue)) {
 							this.plugin.settings.default_initial_difficulty =
-								num;
+								numValue;
 							await this.plugin.saveSettings();
 						}
 					}),
@@ -176,7 +178,7 @@ export class FsrsSettingTab extends PluginSettingTab {
 
 		// show_stability
 		new Setting(containerEl)
-			.setName("Show Stability")
+			.setName("Show stability")
 			.setDesc("Display stability values in card lists.")
 			.addToggle((toggle) =>
 				toggle
@@ -189,7 +191,7 @@ export class FsrsSettingTab extends PluginSettingTab {
 
 		// show_difficulty
 		new Setting(containerEl)
-			.setName("Show Difficulty")
+			.setName("Show difficulty")
 			.setDesc("Display difficulty values in card lists.")
 			.addToggle((toggle) =>
 				toggle
@@ -249,7 +251,7 @@ export class FsrsSettingTab extends PluginSettingTab {
 
 		// auto_add_review_button
 		new Setting(containerEl)
-			.setName("Auto Add Review Button")
+			.setName("Auto add review button")
 			.setDesc(
 				"Automatically insert review button block after frontmatter when adding FSRS fields.",
 			)
@@ -270,7 +272,7 @@ export class FsrsSettingTab extends PluginSettingTab {
 
 		// show_notifications
 		new Setting(containerEl)
-			.setName("Show Notifications")
+			.setName("Show notifications")
 			.setDesc("Display desktop notifications for due cards.")
 			.addToggle((toggle) =>
 				toggle
@@ -308,7 +310,7 @@ export class FsrsSettingTab extends PluginSettingTab {
 
 		// auto_refresh
 		new Setting(containerEl)
-			.setName("Auto Refresh")
+			.setName("Auto refresh")
 			.setDesc("Automatically refresh card lists.")
 			.addToggle((toggle) =>
 				toggle
@@ -321,7 +323,7 @@ export class FsrsSettingTab extends PluginSettingTab {
 
 		// refresh_interval
 		new Setting(containerEl)
-			.setName("Refresh Interval (minutes)")
+			.setName("Refresh interval")
 			.setDesc("How often to auto-refresh card lists.")
 			.addText((text) =>
 				text
@@ -362,16 +364,18 @@ export class FsrsSettingTab extends PluginSettingTab {
 		containerEl.createEl("hr");
 
 		// Настройки фильтрации файлов
-		new Setting(containerEl).setName("File Filtering").setHeading();
+		new Setting(containerEl).setName("File filtering").setHeading();
 
 		new Setting(containerEl)
-			.setName("Ignore Patterns")
+			.setName("Ignore patterns")
 			.setDesc(
-				"File and folder patterns to ignore (one per line). Patterns ending with / are folders. *.extension for file types. Example: .obsidian/, templates/, *.excalidraw.md",
+				"File and folder patterns to ignore (one per line). Patterns ending with / are folders. *.extension for file types. Example: config/, templates/, *.excalidraw.md",
 			)
 			.addTextArea((text) =>
 				text
-					.setPlaceholder(".obsidian/\ntemplates/\n*.excalidraw.md")
+					.setPlaceholder(
+						`${configDir}/\ntemplates/\n*.excalidraw.md`,
+					)
 					.setValue(
 						formatIgnorePatterns(
 							this.plugin.settings.ignore_patterns,
@@ -391,7 +395,7 @@ export class FsrsSettingTab extends PluginSettingTab {
 		new Setting(containerEl).setName("Advanced").setHeading();
 
 		new Setting(containerEl)
-			.setName("Legacy Setting")
+			.setName("Legacy setting")
 			.setDesc(
 				"Compatibility setting. Do not modify unless you know what you're doing.",
 			)

@@ -14,6 +14,7 @@ export async function findFsrsFutureCards(plugin: FsrsPlugin): Promise<void> {
 		const now = new Date();
 
 		// Фильтруем карточки на будущее
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-argument
 		const futureCards = await filterCardsForFuture(
 			allCards,
 			plugin.settings,
@@ -24,9 +25,7 @@ export async function findFsrsFutureCards(plugin: FsrsPlugin): Promise<void> {
 		if (futureCards.length === 0) {
 			new Notice("Нет карточек на будущее");
 		} else {
-			new Notice(
-				`Найдено ${futureCards.length} карточек на будущее`,
-			);
+			new Notice(`Найдено ${futureCards.length} карточек на будущее`);
 		}
 
 		// Получаем активный файл
@@ -70,8 +69,6 @@ export async function findFsrsFutureCards(plugin: FsrsPlugin): Promise<void> {
 		console.error("Ошибка при поиске карточек на будущее:", error);
 		const errorMessage =
 			error instanceof Error ? error.message : String(error);
-		new Notice(
-			"Ошибка при поиске карточек на будущее: " + errorMessage,
-		);
+		new Notice("Ошибка при поиске карточек на будущее: " + errorMessage);
 	}
 }
