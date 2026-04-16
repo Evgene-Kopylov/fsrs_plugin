@@ -9,7 +9,7 @@ import {
 
 /**
  * Класс для динамического рендеринга универсального блока fsrs-table
- * Заменяет блоки fsrs-now и fsrs-future, добавляет режим all
+ * Поддерживает режимы отображения: due (просроченные), future (будущие), all (все карточки)
  */
 export class FsrsTableRenderer extends MarkdownRenderChild {
 	private params: TableParams;
