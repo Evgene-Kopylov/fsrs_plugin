@@ -6,7 +6,7 @@ import { reviewCurrentCard, reviewCardByPath } from "./commands/review";
 import { FsrsNowRenderer } from "./ui/fsrs-now-renderer";
 import { FsrsFutureRenderer } from "./ui/fsrs-future-renderer";
 import { ReviewButtonRenderer } from "./ui/review-button-renderer";
-import { MyPluginSettings, DEFAULT_SETTINGS } from "./settings";
+import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings";
 import { FsrsSettingTab } from "./settings";
 import { base64ToBytes } from "./utils/fsrs-helper";
 import {
@@ -26,7 +26,7 @@ import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
  * Интегрирует алгоритм интервального повторения FSRS в Obsidian
  */
 export default class FsrsPlugin extends Plugin {
-	settings: MyPluginSettings;
+	settings: FsrsPluginSettings;
 	private isWasmInitialized = false;
 	private fsrsNowRenderers = new Set<FsrsNowRenderer>();
 	private fsrsFutureRenderers = new Set<FsrsFutureRenderer>();

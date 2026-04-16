@@ -6,12 +6,8 @@ import {
 	parseIgnorePatterns,
 } from "./utils/fsrs/fsrs-filter";
 
-// Расширяем базовые настройки плагина параметрами FSRS
-// eslint-disable-next-line obsidianmd/sample-names
-export interface MyPluginSettings extends FSRSSettings {
-	// Базовое поле для обратной совместимости
-	mySetting: string;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface FsrsPluginSettings extends FSRSSettings {}
 
 // Параметры алгоритма FSRS по умолчанию (совместимые с rs-fsrs)
 const DEFAULT_PARAMETERS: FSRSParameters = {
@@ -20,7 +16,7 @@ const DEFAULT_PARAMETERS: FSRSParameters = {
 	enable_fuzz: true, // включить случайное изменение интервалов
 };
 
-export const DEFAULT_SETTINGS: MyPluginSettings = {
+export const DEFAULT_SETTINGS: FsrsPluginSettings = {
 	// Параметры алгоритма FSRS
 	parameters: DEFAULT_PARAMETERS,
 
@@ -49,9 +45,6 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	// Настройки уведомлений
 	show_notifications: true,
 	notification_threshold: 5,
-
-	// Базовое поле для обратной совместимости
-	mySetting: "default",
 };
 
 export class FsrsSettingTab extends PluginSettingTab {
@@ -368,27 +361,6 @@ export class FsrsSettingTab extends PluginSettingTab {
 					.onChange(async (value) => {
 						const patterns = parseIgnorePatterns(value);
 						this.plugin.settings.ignore_patterns = patterns;
-						await this.plugin.saveSettings();
-					}),
-			);
-
-		// Разделитель
-		containerEl.createEl("hr");
-
-		// Старое поле для обратной совместимости
-		new Setting(containerEl).setName("Advanced").setHeading();
-
-		new Setting(containerEl)
-			.setName("Legacy setting")
-			.setDesc(
-				"Compatibility setting. Do not modify unless you know what you're doing.",
-			)
-			.addText((text) =>
-				text
-					.setPlaceholder("Enter your secret")
-					.setValue(this.plugin.settings.mySetting)
-					.onChange(async (value) => {
-						this.plugin.settings.mySetting = value;
 						await this.plugin.saveSettings();
 					}),
 			);

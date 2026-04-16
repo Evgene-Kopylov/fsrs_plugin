@@ -3,7 +3,7 @@ import {
 	createNewReviewsYaml,
 	extractFrontmatterWithMatch,
 } from "../utils/fsrs-helper";
-import type { MyPluginSettings } from "../settings";
+import type { FsrsPluginSettings } from "../settings";
 
 /**
  * Добавляет поля FSRS в новый формате (с reviews) в текущий активный файл
@@ -12,7 +12,7 @@ import type { MyPluginSettings } from "../settings";
  */
 export async function addFsrsFieldsToCurrentFile(
 	app: App,
-	settings?: MyPluginSettings,
+	settings?: FsrsPluginSettings,
 ): Promise<void> {
 	try {
 		// Получаем активный файл
