@@ -115,7 +115,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 
 			if (!parseResult.success || !parseResult.card) {
 				// Карточка не является FSRS карточкой - кнопка активна, но затемнена
-				this.mainButton.textContent = "Не FSRS карточка";
+				this.mainButton.textContent = "Not an fsrs card";
 				this.mainButton.disabled = false;
 				this.updateButtonClass("not-fsrs");
 				this.deleteButton.disabled = true; // Нет повторений для удаления
@@ -213,10 +213,10 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			_clickHandler?: () => Promise<void>;
 		};
 		if (this.mainButton && mainButtonWithHandler._clickHandler) {
-			this.mainButton.removeEventListener(
-				"click",
-				mainButtonWithHandler._clickHandler,
-			);
+			const handler = mainButtonWithHandler._clickHandler as (
+				ev: Event,
+			) => void;
+			this.mainButton.removeEventListener("click", handler);
 			delete mainButtonWithHandler._clickHandler;
 		}
 
@@ -224,10 +224,10 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			_clickHandler?: () => Promise<void>;
 		};
 		if (this.deleteButton && deleteButtonWithHandler._clickHandler) {
-			this.deleteButton.removeEventListener(
-				"click",
-				deleteButtonWithHandler._clickHandler,
-			);
+			const handler = deleteButtonWithHandler._clickHandler as (
+				ev: Event,
+			) => void;
+			this.deleteButton.removeEventListener("click", handler);
 			delete deleteButtonWithHandler._clickHandler;
 		}
 	}
@@ -266,7 +266,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 
 			if (!parseResult.success || !parseResult.card) {
 				// Карточка не является FSRS карточкой - показываем уведомление
-				new Notice("Не FSRS карточка");
+				new Notice("Not an fsrs card");
 				// Обновляем состояние кнопки (на случай, если статус изменился)
 				await this.updateButtonState();
 				return;
@@ -359,7 +359,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			);
 
 			if (!parseResult.success || !parseResult.card) {
-				new Notice("Не FSRS карточка. Удалять нечего.");
+				new Notice("Not an fsrs card. Nothing to delete.");
 				await this.updateButtonState();
 				return;
 			}
@@ -419,7 +419,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	private setupFileWatcher(): void {
 		this.fileChangeHandler = (file: TAbstractFile) => {
 			if (file.path === this.sourcePath) {
-				this.refresh();
+				void this.refresh();
 			}
 		};
 		this.plugin.app.vault.on("modify", this.fileChangeHandler);
@@ -437,6 +437,6 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	 * Может быть вызван извне для принудительного обновления
 	 */
 	private async refresh(): Promise<void> {
-		void this.updateButtonState();
+		await this.updateButtonState();
 	}
 }

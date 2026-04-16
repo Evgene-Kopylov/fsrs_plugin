@@ -47,7 +47,7 @@ export class FsrsFutureRenderer extends MarkdownRenderChild {
 				cls: "fsrs-future-loading",
 			});
 			loadingDiv.createEl("small", {
-				text: "Loading FSRS cards for future...",
+				text: "Loading fsrs cards for future...",
 			});
 
 			// Получаем все карточки через плагин

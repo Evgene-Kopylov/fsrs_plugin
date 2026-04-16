@@ -1,5 +1,5 @@
 // Взаимодействие с WASM модулем FSRS
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call */
 
 import type {
 	ModernFSRSCard,
@@ -296,6 +296,7 @@ export function validateFSRSCardJSON(json: string): boolean {
 	try {
 		const card = JSON.parse(json);
 		return (
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 			Array.isArray(card.reviews) &&
 			card.reviews.every(
 				(session: any) =>
@@ -392,11 +393,13 @@ export async function groupCardsByState(
 			settingsJson,
 			nowStr,
 		);
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-call
 		const parsed = JSON.parse(groupedJson);
 		// Convert snake_case keys to camelCase
 		const result: any = {};
 		for (const key in parsed) {
-			if (parsed.hasOwnProperty(key)) {
+			// eslint-disable-next-line @typescript-eslint/no-unsafe-call
+			if (Object.prototype.hasOwnProperty.call(parsed, key)) {
 				const newKey = key.replace(/_([a-z])/g, (_, letter) =>
 					letter.toUpperCase(),
 				);

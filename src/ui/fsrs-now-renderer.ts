@@ -53,7 +53,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 				cls: "fsrs-now-loading",
 			});
 			loadingDiv.createEl("small", {
-				text: "Loading FSRS cards...",
+				text: "Loading fsrs cards...",
 			});
 
 			// Получаем карточки для повторения через плагин
@@ -206,7 +206,7 @@ export class FsrsNowRenderer extends MarkdownRenderChild {
 			);
 
 			if (!parseResult.success || !parseResult.card) {
-				void new Notice("Not an FSRS card");
+				void new Notice("Not an fsrs card");
 				return;
 			}
 
