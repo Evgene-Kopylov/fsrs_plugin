@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Notice } from "obsidian";
+import { MarkdownRenderChild, Notice, EventRef } from "obsidian";
 import type FsrsPlugin from "../main";
 import type { TableParams, TableMode } from "../utils/fsrs-table-helpers";
 import {
@@ -14,6 +14,10 @@ import {
 export class FsrsTableRenderer extends MarkdownRenderChild {
 	private params: TableParams;
 	private isFirstLoad = true;
+	private activeLeafHandler?: EventRef;
+	private activeLeafCallback?: () => void;
+	private lastVisibilityUpdate = 0;
+	private windowVisibilityHandler?: () => void;
 
 	constructor(
 		private plugin: FsrsPlugin,
@@ -32,6 +36,37 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 		super.onload();
 		// Регистрируем рендерер в плагине для уведомлений об обновлениях
 		this.plugin.registerFsrsTableRenderer(this);
+
+		// Регистрируем обработчик для обновления таблицы при возвращении видимости
+		this.activeLeafCallback = () => {
+			this.updateIfVisible().catch((error) => {
+				console.error(
+					"Ошибка при обновлении таблицы при возвращении видимости:",
+					error,
+				);
+			});
+		};
+		this.activeLeafHandler = this.plugin.app.workspace.on(
+			"active-leaf-change",
+			this.activeLeafCallback,
+		);
+
+		// Обработчик видимости окна браузера
+		this.windowVisibilityHandler = () => {
+			if (!document.hidden) {
+				this.updateIfVisible().catch((error) => {
+					console.error(
+						"Ошибка при обновлении таблицы при возвращении видимости окна:",
+						error,
+					);
+				});
+			}
+		};
+		document.addEventListener(
+			"visibilitychange",
+			this.windowVisibilityHandler,
+		);
+
 		void (async () => {
 			await this.renderContent();
 			this.isFirstLoad = false;
@@ -42,6 +77,25 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	 * Вызывается при выгрузке компонента
 	 */
 	onunload() {
+		// Удаляем обработчик активного листа
+		if (this.activeLeafCallback) {
+			this.plugin.app.workspace.off(
+				"active-leaf-change",
+				this.activeLeafCallback,
+			);
+			this.activeLeafCallback = undefined;
+			this.activeLeafHandler = undefined;
+		}
+
+		// Удаляем обработчик видимости окна
+		if (this.windowVisibilityHandler) {
+			document.removeEventListener(
+				"visibilitychange",
+				this.windowVisibilityHandler,
+			);
+			this.windowVisibilityHandler = undefined;
+		}
+
 		// Удаляем рендерер из списка активных
 		this.plugin.unregisterFsrsTableRenderer(this);
 		super.onunload();
@@ -58,8 +112,8 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 				this.showLoadingIndicator();
 			} else {
 				// При последующих обновлениях применяем плавную анимацию opacity
-				this.container.style.opacity = "0.7";
-				this.container.style.transition = "opacity 0.3s ease";
+				this.container.style.opacity = "0.7"; // eslint-disable-line obsidianmd/no-static-styles-assignment
+				this.container.style.transition = "opacity 0.3s ease"; // eslint-disable-line obsidianmd/no-static-styles-assignment
 			}
 
 			// Получаем все карточки через плагин
@@ -90,8 +144,11 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 
 			// Восстанавливаем полную прозрачность после обновления
 			if (!this.isFirstLoad) {
-				this.container.style.opacity = "1";
+				this.container.style.opacity = "1"; // eslint-disable-line obsidianmd/no-static-styles-assignment
 			}
+
+			// Обновляем время последнего обновления
+			this.lastVisibilityUpdate = Date.now();
 		} catch (error) {
 			this.renderErrorState(error);
 		} finally {
@@ -122,8 +179,8 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	private renderEmptyState() {
 		// При пустом состоянии также применяем анимацию, если это не первый показ
 		if (!this.isFirstLoad) {
-			this.container.style.opacity = "0.7";
-			this.container.style.transition = "opacity 0.3s ease";
+			this.container.style.opacity = "0.7"; // eslint-disable-line obsidianmd/no-static-styles-assignment
+			this.container.style.transition = "opacity 0.3s ease"; // eslint-disable-line obsidianmd/no-static-styles-assignment
 		}
 		this.container.empty();
 
@@ -132,7 +189,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 		this.container.insertAdjacentHTML("afterbegin", emptyHTML);
 
 		if (!this.isFirstLoad) {
-			this.container.style.opacity = "1";
+			this.container.style.opacity = "1"; // eslint-disable-line obsidianmd/no-static-styles-assignment
 		}
 	}
 
@@ -149,8 +206,8 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 
 		// При ошибке также применяем анимацию, если это не первый показ
 		if (!this.isFirstLoad) {
-			this.container.style.opacity = "0.7";
-			this.container.style.transition = "opacity 0.3s ease";
+			this.container.style.opacity = "0.7"; // eslint-disable-line obsidianmd/no-static-styles-assignment
+			this.container.style.transition = "opacity 0.3s ease"; // eslint-disable-line obsidianmd/no-static-styles-assignment
 		}
 		this.container.empty();
 
@@ -160,7 +217,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 		});
 
 		if (!this.isFirstLoad) {
-			this.container.style.opacity = "1";
+			this.container.style.opacity = "1"; // eslint-disable-line obsidianmd/no-static-styles-assignment
 		}
 	}
 
@@ -219,6 +276,23 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	 */
 	async refresh() {
 		await this.renderContent();
+	}
+
+	/**
+	 * Обновляет таблицу, если файл активен и прошло достаточно времени
+	 */
+	private async updateIfVisible(): Promise<void> {
+		const activeFile = this.plugin.app.workspace.getActiveFile();
+		if (!activeFile || activeFile.path !== this.sourcePath) {
+			return;
+		}
+
+		// Троттлинг: обновляем не чаще чем раз в 5 секунд
+		const now = Date.now();
+		if (now - this.lastVisibilityUpdate > 5000) {
+			this.lastVisibilityUpdate = now;
+			await this.refresh();
+		}
 	}
 
 	/**
