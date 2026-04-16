@@ -442,15 +442,20 @@ If your plugin does not need CSS, delete this file.
 	margin-right: 0.5em;
 }
 
-/* Стили для блока fsrs-table */
-.fsrs-table-render-container {
-}
+/* Оптимизированный CSS файл для плагина FSRS.
+    Удалены неиспользуемые блоки fsrs-now и fsrs-future.
+*/
 
+.fsrs-table-render-container,
 .fsrs-table-container {
+	border: none;
+	background: transparent;
+	width: 100%;
 	font-family: var(--font-text);
 	color: var(--text-normal);
 }
 
+/* Состояния загрузки и ошибок */
 .fsrs-table-loading,
 .fsrs-table-empty,
 .fsrs-table-error {
@@ -460,6 +465,7 @@ If your plugin does not need CSS, delete this file.
 	font-style: italic;
 }
 
+/* Заголовок блока */
 .fsrs-table-header {
 	display: flex;
 	justify-content: space-between;
@@ -468,28 +474,39 @@ If your plugin does not need CSS, delete this file.
 	margin-bottom: 0.5em;
 }
 
+.fsrs-header-text {
+	flex: 1;
+}
+
 .fsrs-table-header .fsrs-info-icon {
 	margin-left: auto;
 	margin-right: 0.5em;
+	color: var(--text-muted);
+	opacity: 0.7;
+	font-size: 0.9em;
+	cursor: help;
 }
 
+/* ТАБЛИЦА: Основные стили */
 .fsrs-table {
 	width: 100%;
 	border-collapse: collapse;
 	font-size: 0.9em;
+	line-height: 1.2; /* Уменьшаем высоту строки для компактности */
 }
 
 .fsrs-table th,
 .fsrs-table td {
 	border: 1px solid var(--background-modifier-border);
-	padding: 6px 8px;
+	padding: 4px 8px; /* Уменьшенный вертикальный отступ (было 6px) */
 	text-align: left;
-	vertical-align: top;
+	vertical-align: middle; /* Центрируем по вертикали */
 }
 
 .fsrs-table th {
 	background-color: var(--background-secondary);
 	font-weight: 600;
+	white-space: nowrap;
 }
 
 .fsrs-table tr:hover {
@@ -497,16 +514,44 @@ If your plugin does not need CSS, delete this file.
 	cursor: pointer;
 }
 
+/* Ссылки внутри таблицы */
 .fsrs-table a.internal-link {
 	cursor: pointer;
 	text-decoration: none;
 	color: var(--text-accent);
+	display: inline-block; /* Убирает лишние фантомные отступы */
 }
 
 .fsrs-table a.internal-link:hover {
 	text-decoration: underline;
 }
 
+/* Настройка колонок (аналогично fsrs-now) */
+/* Числовые и технические колонки прижимаем и сужаем */
+.fsrs-table .fsrs-col-reps,
+.fsrs-table .fsrs-col-overdue,
+.fsrs-table .fsrs-col-stability,
+.fsrs-table .fsrs-col-difficulty,
+.fsrs-table .fsrs-col-retrievability,
+.fsrs-table .fsrs-col-elapsed,
+.fsrs-table .fsrs-col-scheduled,
+.fsrs-table .fsrs-col-due,
+.fsrs-table .fsrs-col-state,
+.fsrs-table .fsrs-col-next,
+.fsrs-table .fsrs-col-in,
+.fsrs-table .fsrs-col-interval {
+	white-space: nowrap;
+	width: 1%; /* Схлопывает колонку до минимально возможной ширины контента */
+	text-align: right;
+}
+
+/* Колонка файла забирает всё свободное место */
+.fsrs-table .fsrs-col-file {
+	width: auto;
+	text-align: left;
+}
+
+/* Нижняя инфо-строка */
 .fsrs-table-info {
 	padding: 0.5em 0;
 	text-align: center;
@@ -514,28 +559,54 @@ If your plugin does not need CSS, delete this file.
 	font-size: 12px;
 }
 
-/* Стили для конкретных колонок */
-.fsrs-table .fsrs-col-reps,
-.fsrs-table .fsrs-col-overdue,
-.fsrs-table .fsrs-col-stability,
-.fsrs-table .fsrs-col-difficulty,
-.fsrs-table .fsrs-col-retrievability,
-.fsrs-table .fsrs-col-elapsed,
-.fsrs-table .fsrs-col-scheduled {
-	white-space: nowrap;
-	width: 1%;
-	text-align: right;
+/* Кнопки управления в Obsidian */
+.fsrs-buttons-container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	margin: 1em auto;
 }
 
-.fsrs-table .fsrs-col-due,
-.fsrs-table .fsrs-col-state,
-.fsrs-table .fsrs-col-next,
-.fsrs-table .fsrs-col-in,
-.fsrs-table .fsrs-col-interval {
-	white-space: nowrap;
+.fsrs-review-button {
+	padding: 8px 16px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 500;
+	min-width: 160px;
 	text-align: center;
+	transition: all 0.2s ease;
 }
 
-.fsrs-table .fsrs-col-file {
-	width: auto;
+.fsrs-review-button:hover {
+	background: var(--interactive-accent-hover);
+	transform: translateY(-1px);
+}
+
+.fsrs-delete-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	background: var(--background-modifier-border);
+	color: var(--text-muted);
+	border-radius: 6px;
+	border: none;
+	cursor: pointer;
+}
+
+/* Убираем оформление блоков кода Obsidian для чистого рендеринга */
+.cm-preview-code-block.block-language-fsrs-table,
+.cm-embed-block.block-language-fsrs-table,
+.markdown-reading-view .block-language-fsrs-table {
+	border: none !important;
+	background: transparent !important;
+	box-shadow: none !important;
+	padding: 0 !important;
+	margin: 0 !important;
 }
