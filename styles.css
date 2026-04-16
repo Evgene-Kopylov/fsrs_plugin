@@ -41,7 +41,7 @@
 	padding: 0 !important;
 	color: var(--text-accent);
 	vertical-align: top;
-	text-decoration: none !important; /* Убирает подчеркивание */
+	text-decoration: none !important;
 }
 
 .fsrs-table .fsrs-col-reps,
@@ -134,4 +134,13 @@
 	font-size: 0.9em;
 	font-weight: 600;
 	color: var(--text-muted);
+}
+
+.fsrs-info-icon {
+	color: var(--text-faint) !important; /* Очень бледный цвет темы */
+	opacity: 0.4; /* Дополнительная прозрачность */
+	font-size: 0.85em;
+	cursor: help;
+	margin-left: 4px;
+	font-weight: normal;
 }
