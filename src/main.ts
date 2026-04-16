@@ -6,6 +6,7 @@ import { reviewCurrentCard, reviewCardByPath } from "./commands/review";
 import { FsrsNowRenderer } from "./ui/fsrs-now-renderer";
 import { FsrsFutureRenderer } from "./ui/fsrs-future-renderer";
 import { ReviewButtonRenderer } from "./ui/review-button-renderer";
+import { FsrsTableRenderer } from "./ui/fsrs-table-renderer";
 import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings";
 import { FsrsSettingTab } from "./settings";
 import { base64ToBytes } from "./utils/fsrs-helper";
@@ -30,6 +31,7 @@ export default class FsrsPlugin extends Plugin {
 	private isWasmInitialized = false;
 	private fsrsNowRenderers = new Set<FsrsNowRenderer>();
 	private fsrsFutureRenderers = new Set<FsrsFutureRenderer>();
+	private fsrsTableRenderers = new Set<FsrsTableRenderer>();
 
 	/**
 	 * Загрузка плагина
@@ -46,44 +48,6 @@ export default class FsrsPlugin extends Plugin {
 		// Регистрация команд плагина
 		registerCommands(this);
 
-		// Регистрация MarkdownCodeBlockProcessor для блоков fsrs-now
-		this.registerMarkdownCodeBlockProcessor(
-			"fsrs-now",
-			async (source, el, ctx) => {
-				// Создаем контейнер для рендеринга
-				const renderContainer = document.createElement("div");
-				renderContainer.className = "fsrs-now-render-container";
-				el.appendChild(renderContainer);
-
-				// Создаем и добавляем рендерер
-				const renderer = new FsrsNowRenderer(
-					this,
-					renderContainer,
-					ctx.sourcePath,
-				);
-				ctx.addChild(renderer);
-			},
-		);
-
-		// Регистрация MarkdownCodeBlockProcessor для блоков fsrs-future
-		this.registerMarkdownCodeBlockProcessor(
-			"fsrs-future",
-			async (source, el, ctx) => {
-				// Создаем контейнер для рендеринга
-				const renderContainer = document.createElement("div");
-				renderContainer.className = "fsrs-future-render-container";
-				el.appendChild(renderContainer);
-
-				// Создаем и добавляем рендерер
-				const renderer = new FsrsFutureRenderer(
-					this,
-					renderContainer,
-					ctx.sourcePath,
-				);
-				ctx.addChild(renderer);
-			},
-		);
-
 		// Регистрация процессора для кнопки повторения карточки
 		this.registerMarkdownCodeBlockProcessor(
 			"fsrs-review-button",
@@ -98,6 +62,26 @@ export default class FsrsPlugin extends Plugin {
 					this,
 					buttonContainer,
 					ctx.sourcePath,
+				);
+				ctx.addChild(renderer);
+			},
+		);
+
+		// Регистрация MarkdownCodeBlockProcessor для блоков fsrs-table
+		this.registerMarkdownCodeBlockProcessor(
+			"fsrs-table",
+			async (source, el, ctx) => {
+				// Создаем контейнер для рендеринга
+				const renderContainer = document.createElement("div");
+				renderContainer.className = "fsrs-table-render-container";
+				el.appendChild(renderContainer);
+
+				// Создаем и добавляем рендерер
+				const renderer = new FsrsTableRenderer(
+					this,
+					renderContainer,
+					ctx.sourcePath,
+					source,
 				);
 				ctx.addChild(renderer);
 			},
@@ -275,6 +259,8 @@ export default class FsrsPlugin extends Plugin {
 		console.debug("Выгрузка FSRS плагина");
 		this.isWasmInitialized = false;
 		this.fsrsNowRenderers.clear();
+		this.fsrsFutureRenderers.clear();
+		this.fsrsTableRenderers.clear();
 	}
 
 	/**
@@ -327,6 +313,34 @@ export default class FsrsPlugin extends Plugin {
 			renderer.refresh().catch((error) => {
 				console.error(
 					"Ошибка при обновлении рендерера fsrs-future:",
+					error,
+				);
+			});
+		}
+	}
+
+	/**
+	 * Регистрирует активный рендерер fsrs-table для уведомлений об обновлениях
+	 */
+	registerFsrsTableRenderer(renderer: FsrsTableRenderer): void {
+		this.fsrsTableRenderers.add(renderer);
+	}
+
+	/**
+	 * Удаляет рендерер fsrs-table из списка активных
+	 */
+	unregisterFsrsTableRenderer(renderer: FsrsTableRenderer): void {
+		this.fsrsTableRenderers.delete(renderer);
+	}
+
+	/**
+	 * Уведомляет все активные рендереры fsrs-table об обновлении данных
+	 */
+	notifyFsrsTableRenderers(): void {
+		for (const renderer of this.fsrsTableRenderers) {
+			renderer.refresh().catch((error) => {
+				console.error(
+					"Ошибка при обновлении рендерера fsrs-table:",
 					error,
 				);
 			});

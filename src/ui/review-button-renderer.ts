@@ -404,6 +404,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			new Notice("Последнее повторение удалено");
 			this.plugin.notifyFsrsNowRenderers();
 			this.plugin.notifyFsrsFutureRenderers();
+			this.plugin.notifyFsrsTableRenderers();
 			await this.updateButtonState();
 		} catch (error) {
 			console.error("Ошибка при удалении повторения:", error);

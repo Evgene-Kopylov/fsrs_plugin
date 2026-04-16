@@ -451,3 +451,109 @@ If your plugin does not need CSS, delete this file.
 	margin-left: auto;
 	margin-right: 0.5em;
 }
+
+/* Стили для блока fsrs-table */
+.fsrs-table-render-container {
+	margin: 1em 0;
+	padding: 1em;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 8px;
+	background-color: var(--background-primary);
+}
+
+.fsrs-table-container {
+	font-family: var(--font-text);
+	color: var(--text-normal);
+}
+
+.fsrs-table-loading,
+.fsrs-table-empty,
+.fsrs-table-error {
+	padding: 1em;
+	text-align: center;
+	color: var(--text-muted);
+	font-style: italic;
+}
+
+.fsrs-table-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: 0;
+	margin-bottom: 0.5em;
+}
+
+.fsrs-table-header .fsrs-info-icon {
+	margin-left: auto;
+	margin-right: 0.5em;
+}
+
+.fsrs-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin: 0.5em 0 1em;
+	font-size: 14px;
+}
+
+.fsrs-table th {
+	text-align: left;
+	padding: 8px 12px;
+	border-bottom: 2px solid var(--background-modifier-border);
+	color: var(--text-muted);
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.fsrs-table td {
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--background-modifier-border);
+	vertical-align: top;
+}
+
+.fsrs-table-row:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.fsrs-table-row a.internal-link {
+	text-decoration: none;
+	color: var(--text-accent);
+}
+
+.fsrs-table-row a.internal-link:hover {
+	text-decoration: underline;
+}
+
+.fsrs-table-info {
+	padding: 0.5em 0;
+	text-align: center;
+	color: var(--text-muted);
+	font-size: 12px;
+}
+
+/* Стили для конкретных колонок */
+.fsrs-col-file {
+	min-width: 150px;
+}
+
+.fsrs-col-reps,
+.fsrs-col-overdue,
+.fsrs-col-stability,
+.fsrs-col-difficulty,
+.fsrs-col-retrievability,
+.fsrs-col-elapsed,
+.fsrs-col-scheduled {
+	text-align: right;
+	min-width: 80px;
+}
+
+.fsrs-col-due,
+.fsrs-col-next,
+.fsrs-col-in,
+.fsrs-col-interval {
+	text-align: center;
+	min-width: 120px;
+}
+
+.fsrs-col-state {
+	min-width: 100px;
+}
