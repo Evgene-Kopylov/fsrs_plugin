@@ -1,451 +1,9 @@
-/*
-
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
-
+/* FSRS Plugin Styles
+    Cleaned version: fsrs-now and fsrs-future removed.
+    Optimized for compact table display.
 */
 
-/* Стили для блока fsrs-now */
-.fsrs-now-render-container {
-}
-
-.fsrs-now-container {
-	font-family: var(--font-text);
-	color: var(--text-normal);
-}
-
-.fsrs-now-loading,
-.fsrs-now-empty,
-.fsrs-now-error {
-	padding: 1em;
-	text-align: center;
-	color: var(--text-muted);
-	font-style: italic;
-}
-
-/* Стили для блока fsrs-future */
-.fsrs-future-render-container {
-}
-
-.fsrs-future-container {
-	font-family: var(--font-text);
-	color: var(--text-normal);
-}
-
-.fsrs-future-loading,
-.fsrs-future-empty,
-.fsrs-future-error {
-	padding: 1em;
-	text-align: center;
-	color: var(--text-muted);
-	font-style: italic;
-}
-
-.fsrs-future-table {
-	width: 100%;
-	border-collapse: collapse;
-	font-size: 0.9em;
-}
-
-.fsrs-future-table th,
-.fsrs-future-table td {
-	border: 1px solid var(--background-modifier-border);
-	padding: 6px 8px;
-	text-align: left;
-	vertical-align: top;
-}
-
-.fsrs-future-table th {
-	background-color: var(--background-secondary);
-	font-weight: 600;
-}
-
-.fsrs-future-row:hover {
-	background-color: var(--background-modifier-hover);
-	cursor: pointer;
-}
-.fsrs-future-table a.internal-link {
-	cursor: pointer;
-}
-
-.fsrs-col-reps,
-.fsrs-col-interval,
-.fsrs-col-in {
-	white-space: nowrap;
-	width: 1%;
-	text-align: right;
-	padding: 4px 6px;
-}
-
-.fsrs-col-next {
-	white-space: nowrap;
-	width: 25%;
-	text-align: left;
-}
-
-.fsrs-col-file {
-	width: auto;
-}
-
-.fsrs-info-icon {
-	cursor: help;
-	color: var(--text-muted);
-	font-size: 0.9em;
-	margin-left: 0.5em;
-}
-
-.fsrs-now-card {
-	margin-bottom: 1em;
-	padding: 0.75em;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 6px;
-	background-color: var(--background-secondary);
-	transition: border-color 0.2s ease;
-}
-
-.fsrs-now-card:hover {
-	border-color: var(--interactive-accent);
-}
-
-.fsrs-now-card-header {
-	margin-bottom: 0.5em;
-	padding-bottom: 0.5em;
-	border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.fsrs-now-card-content {
-	margin-bottom: 0.5em;
-	line-height: 1.4;
-}
-
-.fsrs-now-field {
-	display: inline-block;
-	margin-right: 1em;
-	margin-bottom: 0.25em;
-	color: var(--text-muted);
-}
-
-.fsrs-now-field strong {
-	color: var(--text-normal);
-}
-
-.fsrs-now-info {
-	margin-top: 1em;
-	padding: 0.5em;
-	text-align: center;
-	color: var(--text-muted);
-	font-size: 0.9em;
-	border-top: 1px dashed var(--background-modifier-border);
-}
-
-/* Состояния карточек по цветам */
-.fsrs-now-card[data-state="New"] {
-	border-left: 3px solid var(--text-muted);
-}
-
-.fsrs-now-card[data-state="Learning"] {
-	border-left: 3px solid var(--color-blue);
-}
-
-.fsrs-now-card[data-state="Review"] {
-	border-left: 3px solid var(--color-green);
-}
-
-.fsrs-now-card[data-state="Relearning"] {
-	border-left: 3px solid var(--color-orange);
-}
-
-/* Адаптивность */
-@media (max-width: 768px) {
-	.fsrs-now-field {
-		display: block;
-		margin-right: 0;
-	}
-}
-
-/* Контейнер для кнопки повторения в frontmatter */
-.fsrs-review-button-container {
-	margin: 1em 0;
-}
-
-/* Контейнер для кнопок */
-.fsrs-buttons-container {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-	margin: 0 auto;
-}
-
-/* Основная кнопка с фиксированной шириной */
-.fsrs-review-button {
-	padding: 8px 16px;
-	background: var(--interactive-accent);
-	color: var(--text-on-accent);
-	border: none;
-	border-radius: 6px;
-	cursor: pointer;
-	font-size: 14px;
-	font-family: var(--font-text);
-	font-weight: 500;
-	transition:
-		background-color 0.2s ease,
-		opacity 0.2s ease,
-		transform 0.1s ease;
-	min-width: 160px; /* Фиксированная минимальная ширина */
-	text-align: center;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-}
-
-.fsrs-review-button:hover {
-	background: var(--interactive-accent-hover);
-	opacity: 0.9;
-	transform: translateY(-1px);
-}
-
-.fsrs-review-button:active {
-	background: var(--interactive-accent-hover);
-	opacity: 0.8;
-	transform: translateY(0);
-}
-
-.fsrs-review-button:disabled {
-	background: var(--background-modifier-border);
-	color: var(--text-muted);
-	cursor: not-allowed;
-	opacity: 0.7;
-}
-
-/* Состояния кнопки повторения */
-.fsrs-review-button--not-fsrs {
-	background: var(--background-modifier-border);
-	color: var(--text-muted);
-	opacity: 0.7;
-}
-
-.fsrs-review-button--not-fsrs:hover {
-	background: var(--background-modifier-border);
-	color: var(--text-muted);
-	opacity: 0.8;
-}
-
-.fsrs-review-button--reviewed {
-	background: var(--color-green);
-	color: var(--text-on-accent);
-}
-
-.fsrs-review-button--reviewed:hover {
-	background: var(--color-green);
-	opacity: 0.9;
-}
-
-.fsrs-review-button--due {
-	background: var(--interactive-accent);
-	color: var(--text-on-accent);
-}
-
-.fsrs-review-button--due:hover {
-	background: var(--interactive-accent-hover);
-	opacity: 0.9;
-}
-
-.fsrs-review-button--error {
-	background: var(--color-red);
-	color: var(--text-on-accent);
-}
-
-.fsrs-review-button--error:hover {
-	background: var(--color-red);
-	opacity: 0.9;
-}
-
-.fsrs-review-button--loading {
-	background: var(--background-modifier-border);
-	color: var(--text-muted);
-	cursor: wait;
-	opacity: 0.7;
-}
-
-/* Кнопка удаления */
-.fsrs-delete-button {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 28px;
-	height: 28px;
-	background: var(--background-modifier-border);
-	color: var(--text-muted);
-	border: none;
-	border-radius: 6px;
-	cursor: pointer;
-	font-size: 20px;
-	font-weight: bold;
-	line-height: 1;
-	padding: 0;
-	transition:
-		background-color 0.2s ease,
-		opacity 0.2s ease,
-		transform 0.1s ease;
-}
-
-.fsrs-delete-button:hover {
-	background: var(--background-modifier-border-hover);
-	color: var(--text-normal);
-	opacity: 0.9;
-	transform: translateY(-1px);
-}
-
-.fsrs-delete-button:active {
-	background: var(--background-modifier-border-hover);
-	opacity: 0.8;
-	transform: translateY(0);
-}
-
-/* Таблица для блока fsrs-now */
-.fsrs-now-table {
-	width: 100%;
-	border-collapse: collapse;
-	font-size: 0.9em;
-}
-.fsrs-now-table th,
-.fsrs-now-table td {
-	border: 1px solid var(--background-modifier-border);
-	padding: 6px 8px;
-	text-align: left;
-	vertical-align: top;
-}
-.fsrs-now-table th {
-	background-color: var(--background-secondary);
-	font-weight: 600;
-}
-.fsrs-now-table tr:hover {
-	background-color: var(--background-modifier-hover);
-	cursor: pointer;
-}
-.fsrs-now-table a.internal-link {
-	cursor: pointer;
-}
-
-/* Уменьшаем ширину колонок "Повторений" и "Просрочка" */
-.fsrs-now-table .fsrs-col-reps,
-.fsrs-now-table .fsrs-col-overdue {
-	white-space: nowrap;
-	width: 1%;
-	text-align: right;
-}
-/* Имя файла занимает всё оставшееся пространство */
-.fsrs-now-table .fsrs-col-file {
-	width: auto;
-}
-
-.fsrs-delete-button:disabled {
-	background: var(--background-modifier-border);
-	color: var(--text-muted);
-	cursor: not-allowed;
-	opacity: 0.5;
-}
-
-/* Убираем рамку и фон у блока fsrs-now в режиме редактирования */
-.cm-preview-code-block.block-language-fsrs-now,
-.cm-embed-block.block-language-fsrs-now {
-	border: none !important;
-	background: transparent !important;
-	box-shadow: none !important;
-	outline: none !important;
-	padding: 0 !important;
-	margin: 0 !important;
-}
-
-/* Убираем рамку и фон у блока fsrs-future в режиме редактирования */
-.cm-preview-code-block.block-language-fsrs-future,
-.cm-embed-block.block-language-fsrs-future {
-	border: none !important;
-	background: transparent !important;
-	box-shadow: none !important;
-	outline: none !important;
-	padding: 0 !important;
-	margin: 0 !important;
-}
-
-/* Убираем рамку в режиме чтения */
-.markdown-reading-view .block-language-fsrs-now {
-	border: none !important;
-	background: transparent !important;
-	padding: 0 !important;
-}
-
-.markdown-reading-view .block-language-fsrs-future {
-	border: none !important;
-	background: transparent !important;
-	padding: 0 !important;
-}
-
-/* Внутренние контейнеры без рамок */
-.fsrs-now-render-container,
-.fsrs-now-container {
-	border: none;
-	background: transparent;
-	width: 100%;
-}
-
-.fsrs-future-render-container,
-.fsrs-future-container {
-	border: none;
-	background: transparent;
-	width: 100%;
-}
-
-/* Иконка информации в заголовке */
-.fsrs-info-icon {
-	color: var(--text-muted);
-	opacity: 0.7;
-	font-size: 0.9em;
-	font-weight: normal;
-	font-style: italic;
-	cursor: help;
-	margin-left: 0.5em;
-	vertical-align: baseline;
-}
-.fsrs-info-icon:hover {
-	opacity: 0.9;
-}
-
-/* Flex заголовок для блока fsrs-now */
-.fsrs-now-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-top: 0;
-	margin-bottom: 0.5em;
-}
-.fsrs-future-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-top: 0;
-	margin-bottom: 0.5em;
-}
-.fsrs-header-text {
-	flex: 1;
-}
-/* Иконка внутри flex заголовка */
-.fsrs-now-header .fsrs-info-icon {
-	margin-left: auto;
-	margin-right: 0.5em;
-}
-.fsrs-future-header .fsrs-info-icon {
-	margin-left: auto;
-	margin-right: 0.5em;
-}
-
-/* Оптимизированный CSS файл для плагина FSRS.
-    Удалены неиспользуемые блоки fsrs-now и fsrs-future.
-*/
-
+/* --- Базовые контейнеры --- */
 .fsrs-table-render-container,
 .fsrs-table-container {
 	border: none;
@@ -455,52 +13,52 @@ If your plugin does not need CSS, delete this file.
 	color: var(--text-normal);
 }
 
-/* Состояния загрузки и ошибок */
-.fsrs-table-loading,
-.fsrs-table-empty,
-.fsrs-table-error {
-	padding: 1em;
-	text-align: center;
-	color: var(--text-muted);
-	font-style: italic;
-}
-
-/* Заголовок блока */
+/* --- Заголовок блока --- */
 .fsrs-table-header {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-top: 0;
-	margin-bottom: 0.5em;
+	margin: 0 0 4px 0;
 }
 
 .fsrs-header-text {
 	flex: 1;
+	font-size: 0.9em;
+	font-weight: 600;
 }
 
-.fsrs-table-header .fsrs-info-icon {
-	margin-left: auto;
-	margin-right: 0.5em;
+.fsrs-info-icon {
 	color: var(--text-muted);
 	opacity: 0.7;
-	font-size: 0.9em;
+	font-size: 0.8em;
 	cursor: help;
+	margin-left: 0.5em;
 }
 
-/* ТАБЛИЦА: Основные стили */
+/* --- ТАБЛИЦА (Максимальная компактность) --- */
 .fsrs-table {
 	width: 100%;
 	border-collapse: collapse;
-	font-size: 0.9em;
-	line-height: 1.2; /* Уменьшаем высоту строки для компактности */
+	font-size: 0.85em; /* Компактный шрифт */
+	line-height: 1.1 !important; /* Плотная строка */
 }
 
 .fsrs-table th,
 .fsrs-table td {
 	border: 1px solid var(--background-modifier-border);
-	padding: 4px 8px; /* Уменьшенный вертикальный отступ (было 6px) */
+	padding: 2px 6px !important; /* Минимум отступов */
+	vertical-align: middle;
 	text-align: left;
-	vertical-align: middle; /* Центрируем по вертикали */
+}
+
+/* Убираем лишние отступы у ссылок и текста внутри ячеек */
+.fsrs-table td a.internal-link {
+	display: inline-block;
+	margin: 0 !important;
+	padding: 0 !important;
+	text-decoration: none;
+	color: var(--text-accent);
+	white-space: nowrap; /* Предотвращает раздувание высоты из-за переносов */
 }
 
 .fsrs-table th {
@@ -514,20 +72,14 @@ If your plugin does not need CSS, delete this file.
 	cursor: pointer;
 }
 
-/* Ссылки внутри таблицы */
-.fsrs-table a.internal-link {
-	cursor: pointer;
-	text-decoration: none;
-	color: var(--text-accent);
-	display: inline-block; /* Убирает лишние фантомные отступы */
+/* --- Распределение колонок --- */
+
+/* Колонка файла забирает всё свободное место */
+.fsrs-table .fsrs-col-file {
+	width: auto;
 }
 
-.fsrs-table a.internal-link:hover {
-	text-decoration: underline;
-}
-
-/* Настройка колонок (аналогично fsrs-now) */
-/* Числовые и технические колонки прижимаем и сужаем */
+/* Технические колонки: минимальная ширина по контенту */
 .fsrs-table .fsrs-col-reps,
 .fsrs-table .fsrs-col-overdue,
 .fsrs-table .fsrs-col-stability,
@@ -541,45 +93,49 @@ If your plugin does not need CSS, delete this file.
 .fsrs-table .fsrs-col-in,
 .fsrs-table .fsrs-col-interval {
 	white-space: nowrap;
-	width: 1%; /* Схлопывает колонку до минимально возможной ширины контента */
+	width: 1%;
 	text-align: right;
 }
 
-/* Колонка файла забирает всё свободное место */
-.fsrs-table .fsrs-col-file {
-	width: auto;
-	text-align: left;
-}
-
-/* Нижняя инфо-строка */
-.fsrs-table-info {
-	padding: 0.5em 0;
+/* --- Информационные состояния --- */
+.fsrs-table-loading,
+.fsrs-table-empty,
+.fsrs-table-error {
+	padding: 0.5em;
 	text-align: center;
 	color: var(--text-muted);
-	font-size: 12px;
+	font-style: italic;
+	font-size: 0.9em;
 }
 
-/* Кнопки управления в Obsidian */
+.fsrs-table-info {
+	padding: 4px 0;
+	text-align: center;
+	color: var(--text-muted);
+	font-size: 11px;
+}
+
+/* --- Кнопки управления (Frontmatter) --- */
 .fsrs-buttons-container {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
-	margin: 1em auto;
+	margin: 1em 0;
 }
 
 .fsrs-review-button {
-	padding: 8px 16px;
+	padding: 6px 16px;
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
 	border: none;
-	border-radius: 6px;
+	border-radius: 4px;
 	cursor: pointer;
-	font-size: 14px;
+	font-size: 13px;
 	font-weight: 500;
-	min-width: 160px;
+	min-width: 140px;
 	text-align: center;
-	transition: all 0.2s ease;
+	transition: all 0.15s ease;
 }
 
 .fsrs-review-button:hover {
@@ -587,23 +143,34 @@ If your plugin does not need CSS, delete this file.
 	transform: translateY(-1px);
 }
 
+.fsrs-review-button:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
 .fsrs-delete-button {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 28px;
-	height: 28px;
+	width: 26px;
+	height: 26px;
 	background: var(--background-modifier-border);
 	color: var(--text-muted);
-	border-radius: 6px;
 	border: none;
+	border-radius: 4px;
 	cursor: pointer;
+	font-size: 18px;
 }
 
-/* Убираем оформление блоков кода Obsidian для чистого рендеринга */
+.fsrs-delete-button:hover {
+	background: var(--background-modifier-border-hover);
+	color: var(--text-normal);
+}
+
+/* --- Сброс стилей блоков кода Obsidian --- */
 .cm-preview-code-block.block-language-fsrs-table,
 .cm-embed-block.block-language-fsrs-table,
-.markdown-reading-view .block-language-fsrs-table {
+.markdown-rendered .block-language-fsrs-table {
 	border: none !important;
 	background: transparent !important;
 	box-shadow: none !important;
