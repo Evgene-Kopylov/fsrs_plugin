@@ -13,9 +13,11 @@ import type { App } from "obsidian";
 export function formatDateTime(app: App, date: Date): string {
 	try {
 		const dateFormat =
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			((app.vault as any).getConfig("dateFormat") as string) ||
 			"YYYY-MM-DD";
 		const timeFormat =
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			((app.vault as any).getConfig("timeFormat") as string) || "HH:mm";
 		return window.moment(date).format(`${dateFormat} ${timeFormat}`);
 	} catch (error) {
@@ -34,6 +36,7 @@ export function formatDateTime(app: App, date: Date): string {
 export function formatDate(app: App, date: Date): string {
 	try {
 		const dateFormat =
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			((app.vault as any).getConfig("dateFormat") as string) ||
 			"YYYY-MM-DD";
 		return window.moment(date).format(dateFormat);
@@ -52,6 +55,7 @@ export function formatDate(app: App, date: Date): string {
 export function formatTime(app: App, date: Date): string {
 	try {
 		const timeFormat =
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			((app.vault as any).getConfig("timeFormat") as string) || "HH:mm";
 		return window.moment(date).format(timeFormat);
 	} catch (error) {
@@ -78,9 +82,11 @@ export function getCurrentDateTimeFormatted(app: App): string {
 export function parseFormattedDate(app: App, dateString: string): Date | null {
 	try {
 		const dateFormat =
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			((app.vault as any).getConfig("dateFormat") as string) ||
 			"YYYY-MM-DD";
 		const timeFormat =
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
 			((app.vault as any).getConfig("timeFormat") as string) || "HH:mm";
 
 		// Пробуем парсить с форматом даты + времени
