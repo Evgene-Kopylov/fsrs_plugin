@@ -54,7 +54,7 @@ export const DEFAULT_SETTINGS: MyPluginSettings = {
 	mySetting: "default",
 };
 
-export class SampleSettingTab extends PluginSettingTab {
+export class FsrsSettingTab extends PluginSettingTab {
 	plugin: MyPlugin;
 
 	constructor(app: App, plugin: MyPlugin) {
@@ -67,7 +67,7 @@ export class SampleSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		// Заголовок раздела FSRS
-		new Setting(containerEl).setName("FSRS Algorithm Settings").setHeading();
+		new Setting(containerEl).setName("FSRS Algorithm").setHeading();
 
 		// Параметр request_retention
 		new Setting(containerEl)
@@ -172,7 +172,7 @@ export class SampleSettingTab extends PluginSettingTab {
 		containerEl.createEl("hr");
 
 		// Настройки отображения
-		new Setting(containerEl).setName("Display Settings").setHeading();
+		new Setting(containerEl).setName("Display").setHeading();
 
 		// show_stability
 		new Setting(containerEl)
@@ -266,7 +266,7 @@ export class SampleSettingTab extends PluginSettingTab {
 		containerEl.createEl("hr");
 
 		// Настройки уведомлений
-		new Setting(containerEl).setName("Notification Settings").setHeading();
+		new Setting(containerEl).setName("Notifications").setHeading();
 
 		// show_notifications
 		new Setting(containerEl)
@@ -304,7 +304,7 @@ export class SampleSettingTab extends PluginSettingTab {
 		containerEl.createEl("hr");
 
 		// Настройки обновления
-		new Setting(containerEl).setName("Refresh Settings").setHeading();
+		new Setting(containerEl).setName("Refresh").setHeading();
 
 		// auto_refresh
 		new Setting(containerEl)
@@ -388,7 +388,7 @@ export class SampleSettingTab extends PluginSettingTab {
 		containerEl.createEl("hr");
 
 		// Старое поле для обратной совместимости
-		new Setting(containerEl).setName("Advanced Settings").setHeading();
+		new Setting(containerEl).setName("Advanced").setHeading();
 
 		new Setting(containerEl)
 			.setName("Legacy Setting")

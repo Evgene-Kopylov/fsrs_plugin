@@ -7,17 +7,15 @@ import { FsrsNowRenderer } from "./ui/fsrs-now-renderer";
 import { FsrsFutureRenderer } from "./ui/fsrs-future-renderer";
 import { ReviewButtonRenderer } from "./ui/review-button-renderer";
 import { MyPluginSettings, DEFAULT_SETTINGS } from "./settings";
-import { SampleSettingTab } from "./settings";
+import { FsrsSettingTab } from "./settings";
 import { base64ToBytes } from "./utils/fsrs-helper";
 import {
 	parseModernFsrsFromFrontmatter,
-	filterCardsForReview,
-	sortCardsByPriority,
 	shouldProcessFile,
 	extractFrontmatter,
 } from "./utils/fsrs-helper";
 import { shouldIgnoreFileWithSettings } from "./utils/fsrs/fsrs-filter";
-import type { ModernFSRSCard, FSRSCard, FSRSRating } from "./interfaces/fsrs";
+import type { FSRSRating } from "./interfaces/fsrs";
 
 // Импорт WASM функций
 import init, { my_wasm_function } from "../wasm-lib/pkg/wasm_lib";
@@ -38,9 +36,9 @@ export default class FsrsPlugin extends Plugin {
 	 */
 	async onload() {
 		await this.loadSettings();
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new FsrsSettingTab(this.app, this));
 
-		console.log("=== Загрузка FSRS плагина с WASM ===");
+		console.debug("=== Загрузка FSRS плагина с WASM ===");
 
 		// Инициализация WASM модуля
 		await this.initializeWasm();
@@ -105,7 +103,7 @@ export default class FsrsPlugin extends Plugin {
 			},
 		);
 
-		console.log("FSRS плагин успешно загружен");
+		console.debug("FSRS плагин успешно загружен");
 	}
 
 	/**
@@ -113,22 +111,22 @@ export default class FsrsPlugin extends Plugin {
 	 */
 	private async initializeWasm(): Promise<void> {
 		try {
-			console.log("1. Конвертируем base64 в байты...");
+			console.debug("1. Конвертируем base64 в байты...");
 			const wasmBytes = base64ToBytes(WASM_BASE64);
-			console.log("2. Длина WASM байтов:", wasmBytes.length);
+			console.debug("2. Длина WASM байтов:", wasmBytes.length);
 
-			console.log("3. Вызываем init...");
+			console.debug("3. Вызываем init...");
 			await init({ module_or_path: wasmBytes });
-			console.log("4. WASM инициализирован");
+			console.debug("4. WASM инициализирован");
 
 			// Тестовая функция для проверки работы WASM
-			console.log("5. Вызываем тестовую функцию...");
+			console.debug("5. Вызываем тестовую функцию...");
 			const result = my_wasm_function("тестовые данные из FSRS плагина");
-			console.log("6. Результат из Rust:", result);
+			console.debug("6. Результат из Rust:", result);
 
-			console.log("7. Показываем Notice...");
+			console.debug("7. Показываем Notice...");
 			new Notice(result);
-			console.log("8. Notice показано");
+			console.debug("8. Notice показано");
 
 			this.isWasmInitialized = true;
 		} catch (error) {
@@ -144,7 +142,7 @@ export default class FsrsPlugin extends Plugin {
 	async getCardsForReview(): Promise<ModernFSRSCard[]> {
 		const start = performance.now();
 		try {
-			console.log(
+			console.debug(
 				"Сканирование хранилища на наличие карточек FSRS (новый формат)...",
 			);
 
@@ -152,7 +150,7 @@ export default class FsrsPlugin extends Plugin {
 			const files = this.app.vault.getMarkdownFiles();
 			const cards: ModernFSRSCard[] = [];
 
-			console.log(`📁 Всего markdown файлов: ${files.length}`);
+			console.debug(`📁 Всего markdown файлов: ${files.length}`);
 
 			for (const file of files) {
 				// Пропускаем файлы, соответствующие паттернам игнорирования
@@ -192,7 +190,7 @@ export default class FsrsPlugin extends Plugin {
 				}
 			}
 
-			console.log(`✅ Найдено карточек FSRS: ${cards.length}`);
+			console.debug(`✅ Найдено карточек FSRS: ${cards.length}`);
 			return cards;
 		} catch (error) {
 			console.error(
@@ -203,7 +201,7 @@ export default class FsrsPlugin extends Plugin {
 		} finally {
 			const elapsedMs = performance.now() - start;
 			const elapsedSec = elapsedMs / 1000;
-			console.log(
+			console.debug(
 				`⏱️ Полное время сканирования карточек: ${elapsedSec.toFixed(2)} с`,
 			);
 		}
@@ -273,7 +271,7 @@ export default class FsrsPlugin extends Plugin {
 	 * Выгрузка плагина
 	 */
 	onunload() {
-		console.log("Выгрузка FSRS плагина");
+		console.debug("Выгрузка FSRS плагина");
 		this.isWasmInitialized = false;
 		this.fsrsNowRenderers.clear();
 	}
