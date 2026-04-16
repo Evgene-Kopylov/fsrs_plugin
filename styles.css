@@ -1,6 +1,6 @@
 /* FSRS Plugin Styles
     Cleaned version: fsrs-now and fsrs-future removed.
-    Optimized for compact table display.
+    Optimized for compact table display with specific alignment.
 */
 
 /* --- Базовые контейнеры --- */
@@ -39,32 +39,32 @@
 .fsrs-table {
 	width: 100%;
 	border-collapse: collapse;
-	font-size: 0.85em; /* Компактный шрифт */
-	line-height: 1.1 !important; /* Плотная строка */
+	font-size: 0.85em;
+	line-height: 1.1 !important;
 }
 
 .fsrs-table th,
 .fsrs-table td {
 	border: 1px solid var(--background-modifier-border);
-	padding: 2px 6px !important; /* Минимум отступов */
+	padding: 2px 6px !important;
 	vertical-align: middle;
-	text-align: left;
 }
 
-/* Убираем лишние отступы у ссылок и текста внутри ячеек */
+/* Ссылки внутри ячеек */
 .fsrs-table td a.internal-link {
 	display: inline-block;
 	margin: 0 !important;
 	padding: 0 !important;
 	text-decoration: none;
 	color: var(--text-accent);
-	white-space: nowrap; /* Предотвращает раздувание высоты из-за переносов */
+	white-space: nowrap;
 }
 
 .fsrs-table th {
 	background-color: var(--background-secondary);
 	font-weight: 600;
 	white-space: nowrap;
+	text-align: center; /* Заголовки по умолчанию по центру */
 }
 
 .fsrs-table tr:hover {
@@ -72,14 +72,18 @@
 	cursor: pointer;
 }
 
-/* --- Распределение колонок --- */
+/* --- ВЫРАВНИВАНИЕ И РАСПРЕДЕЛЕНИЕ КОЛОНОК --- */
 
-/* Колонка файла забирает всё свободное место */
+/* Колонка файла: по левому краю, занимает всё место */
 .fsrs-table .fsrs-col-file {
 	width: auto;
+	text-align: left;
+}
+.fsrs-table th.fsrs-col-file {
+	text-align: left; /* Заголовок "Файл" тоже слева */
 }
 
-/* Технические колонки: минимальная ширина по контенту */
+/* Все остальные колонки: строго по центру и минимальная ширина */
 .fsrs-table .fsrs-col-reps,
 .fsrs-table .fsrs-col-overdue,
 .fsrs-table .fsrs-col-stability,
@@ -94,7 +98,7 @@
 .fsrs-table .fsrs-col-interval {
 	white-space: nowrap;
 	width: 1%;
-	text-align: right;
+	text-align: center;
 }
 
 /* --- Информационные состояния --- */
