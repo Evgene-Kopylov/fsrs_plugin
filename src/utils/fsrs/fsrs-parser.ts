@@ -1,5 +1,5 @@
 // Парсеры для работы с YAML и FSRS данными
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 
 import type {
 	ModernFSRSCard,
@@ -25,7 +25,7 @@ export function parseModernFsrsFromFrontmatter(
 			};
 		}
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		 
 		let parsedCard: any;
 		let wasmFailed = false;
 		let wasmError: string | undefined;
@@ -40,7 +40,7 @@ export function parseModernFsrsFromFrontmatter(
 
 			// Парсим JSON результат из WASM
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+			 
 			parsedCard = JSON.parse(cardJson);
 		} catch (wasmError_) {
 			wasmFailed = true;
@@ -54,7 +54,7 @@ export function parseModernFsrsFromFrontmatter(
 
 			// Fallback: пытаемся распарсить YAML самостоятельно
 			try {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+				 
 				parsedCard = parseYaml(frontmatter);
 			} catch (yamlError) {
 				console.error(
@@ -71,9 +71,9 @@ export function parseModernFsrsFromFrontmatter(
 
 		if (
 			!parsedCard ||
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			 
 			!parsedCard.reviews ||
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			 
 			!Array.isArray(parsedCard.reviews)
 		) {
 			return {
@@ -89,8 +89,8 @@ export function parseModernFsrsFromFrontmatter(
 		const validRatings = ["Again", "Hard", "Good", "Easy"];
 
 		for (let i = 0; i < parsedCard.reviews.length; i++) {
-			// eslint-disable-line @typescript-eslint/no-unsafe-member-access
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+			 
+			 
 			const session = parsedCard.reviews[i];
 
 			// Пропускаем пустые объекты или null
@@ -102,7 +102,7 @@ export function parseModernFsrsFromFrontmatter(
 			}
 
 			// Проверяем обязательные поля
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			 
 			if (!session.date || typeof session.date !== "string") {
 				console.warn(
 					`Session ${i} in ${filePath} has invalid or missing date, skipping`,
@@ -111,11 +111,11 @@ export function parseModernFsrsFromFrontmatter(
 			}
 
 			// Проверяем валидность рейтинга
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			 
 			if (
 				!session.rating ||
 				typeof session.rating !== "string" ||
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument
+				 
 				!validRatings.includes(session.rating)
 			) {
 				console.warn(
@@ -125,10 +125,10 @@ export function parseModernFsrsFromFrontmatter(
 			}
 
 			// Проверяем числовые поля
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			 
 			if (
 				typeof session.stability !== "number" ||
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				 
 				isNaN(session.stability)
 			) {
 				console.warn(
@@ -137,10 +137,10 @@ export function parseModernFsrsFromFrontmatter(
 				continue;
 			}
 
-			// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+			 
 			if (
 				typeof session.difficulty !== "number" ||
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+				 
 				isNaN(session.difficulty)
 			) {
 				console.warn(
@@ -151,7 +151,7 @@ export function parseModernFsrsFromFrontmatter(
 
 			// Проверяем валидность даты (примерная проверка ISO формата)
 			try {
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+				 
 				const date = new Date(session.date);
 				if (isNaN(date.getTime())) {
 					console.warn(
@@ -167,13 +167,13 @@ export function parseModernFsrsFromFrontmatter(
 			}
 
 			reviews.push({
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+				 
 				date: session.date,
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+				 
 				rating: session.rating,
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+				 
 				stability: session.stability,
-				// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+				 
 				difficulty: session.difficulty,
 			});
 		}

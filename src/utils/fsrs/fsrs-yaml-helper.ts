@@ -160,7 +160,6 @@ export function extractReviewsFromYaml(yaml: string): {
 		let indentLevel = 0;
 		const reviews: ReviewSession[] = [];
 		let currentReview: Partial<ReviewSession> = {};
-		let currentField = "";
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i]!;
@@ -207,7 +206,6 @@ export function extractReviewsFromYaml(yaml: string): {
 						}
 					}
 					currentReview = {};
-					currentField = "";
 				} else if (trimmed.includes(":")) {
 					// Поле элемента массива
 					const colonIndex = trimmed.indexOf(":");
