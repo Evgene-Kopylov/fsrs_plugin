@@ -17,7 +17,7 @@
 - docs/PROJECT_STRUCTURE.md - структуры проекта
 - docs/DATA_MODEL.md - структура данных
 - docs/FSRS_DEV_PLAN.md - план разработки
-- docs/FSRS_USAGE.md - как пользоваться, возможные улучшения. 
+- docs/FSRS_USAGE.md - рукаводство по использованию. 
 
 ## Project overview
 
