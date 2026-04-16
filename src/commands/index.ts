@@ -1,5 +1,4 @@
 import type FsrsPlugin from "../main";
-import { findFsrsFutureCards } from "./find-fsrs-future-cards";
 
 /**
  * Регистрирует все команды плагина FSRS
@@ -20,15 +19,6 @@ export function registerCommands(plugin: FsrsPlugin): void {
 		name: "Найти карточки для повторения",
 		callback: async () => {
 			await plugin.findCardsForReview();
-		},
-	});
-
-	// Команда для поиска карточек на будущее
-	plugin.addCommand({
-		id: "find-fsrs-future-cards",
-		name: "Найти карточки на будущее",
-		callback: async () => {
-			await findFsrsFutureCards(plugin);
 		},
 	});
 

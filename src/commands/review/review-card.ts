@@ -151,8 +151,6 @@ export async function reviewCurrentCard(
 		}
 
 		new Notice(message);
-		plugin.notifyFsrsNowRenderers();
-		plugin.notifyFsrsFutureRenderers();
 		plugin.notifyFsrsTableRenderers();
 		console.debug("Карточка успешно обновлена");
 
@@ -395,8 +393,6 @@ export async function reviewCardByPath(
 		}
 
 		new Notice(message);
-		plugin.notifyFsrsNowRenderers();
-		plugin.notifyFsrsFutureRenderers();
 		plugin.notifyFsrsTableRenderers();
 		console.debug("Карточка успешно обновлена");
 

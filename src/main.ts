@@ -3,8 +3,7 @@ import { registerCommands } from "./commands/index";
 import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from "./commands/add-fsrs-fields";
 import { findFsrsCards } from "./commands/find-fsrs-cards";
 import { reviewCurrentCard, reviewCardByPath } from "./commands/review";
-import { FsrsNowRenderer } from "./ui/fsrs-now-renderer";
-import { FsrsFutureRenderer } from "./ui/fsrs-future-renderer";
+
 import { ReviewButtonRenderer } from "./ui/review-button-renderer";
 import { FsrsTableRenderer } from "./ui/fsrs-table-renderer";
 import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings";
@@ -29,8 +28,7 @@ import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
 export default class FsrsPlugin extends Plugin {
 	settings: FsrsPluginSettings;
 	private isWasmInitialized = false;
-	private fsrsNowRenderers = new Set<FsrsNowRenderer>();
-	private fsrsFutureRenderers = new Set<FsrsFutureRenderer>();
+
 	private fsrsTableRenderers = new Set<FsrsTableRenderer>();
 
 	/**
@@ -203,7 +201,7 @@ export default class FsrsPlugin extends Plugin {
 	}
 
 	/**
-	 * Находит карточки для повторения и вставляет блок fsrs-now
+	 * Находит карточки для повторения
 	 * Реализация для команды плагина
 	 */
 	async findCardsForReview(): Promise<void> {
@@ -258,65 +256,7 @@ export default class FsrsPlugin extends Plugin {
 	onunload() {
 		console.debug("Выгрузка FSRS плагина");
 		this.isWasmInitialized = false;
-		this.fsrsNowRenderers.clear();
-		this.fsrsFutureRenderers.clear();
 		this.fsrsTableRenderers.clear();
-	}
-
-	/**
-	 * Регистрирует активный рендерер fsrs-now для уведомлений об обновлениях
-	 */
-	registerFsrsNowRenderer(renderer: FsrsNowRenderer): void {
-		this.fsrsNowRenderers.add(renderer);
-	}
-
-	/**
-	 * Удаляет рендерер fsrs-now из списка активных
-	 */
-	unregisterFsrsNowRenderer(renderer: FsrsNowRenderer): void {
-		this.fsrsNowRenderers.delete(renderer);
-	}
-
-	/**
-	 * Уведомляет все активные рендереры fsrs-now об обновлении данных
-	 */
-	notifyFsrsNowRenderers(): void {
-		for (const renderer of this.fsrsNowRenderers) {
-			renderer.refresh().catch((error) => {
-				console.error(
-					"Ошибка при обновлении рендерера fsrs-now:",
-					error,
-				);
-			});
-		}
-	}
-
-	/**
-	 * Регистрирует активный рендерер fsrs-future для уведомлений об обновлениях
-	 */
-	registerFsrsFutureRenderer(renderer: FsrsFutureRenderer): void {
-		this.fsrsFutureRenderers.add(renderer);
-	}
-
-	/**
-	 * Удаляет рендерер fsrs-future из списка активных
-	 */
-	unregisterFsrsFutureRenderer(renderer: FsrsFutureRenderer): void {
-		this.fsrsFutureRenderers.delete(renderer);
-	}
-
-	/**
-	 * Уведомляет все активные рендереры fsrs-future об обновлении данных
-	 */
-	notifyFsrsFutureRenderers(): void {
-		for (const renderer of this.fsrsFutureRenderers) {
-			renderer.refresh().catch((error) => {
-				console.error(
-					"Ошибка при обновлении рендерера fsrs-future:",
-					error,
-				);
-			});
-		}
 	}
 
 	/**
