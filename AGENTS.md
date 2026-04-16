@@ -20,6 +20,10 @@
 - docs/FSRS_DEV_PLAN.md - план разработки
 - docs/FSRS_USAGE.md - рукаводство по использованию. 
 
+## Миграция данных
+
+- без миграций
+
 ## Project overview
 
 - Target: Obsidian Community Plugin (TypeScript → bundled JavaScript).
