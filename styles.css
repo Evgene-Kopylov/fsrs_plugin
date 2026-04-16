@@ -1,6 +1,3 @@
-/* FSRS Plugin Styles - Clean & Balanced Compact */
-
-/* Убираем стандартные отступы Obsidian для блоков кода */
 .markdown-rendered .block-language-fsrs-table,
 .cm-preview-code-block.block-language-fsrs-table,
 .cm-embed-block.block-language-fsrs-table {
@@ -11,33 +8,27 @@
 	box-shadow: none !important;
 }
 
-/* Контейнер таблицы */
 .fsrs-table-container {
 	width: 100%;
 	font-family: var(--font-text);
 }
 
-/* Сама таблица */
 .fsrs-table {
 	width: 100% !important;
 	border-collapse: collapse !important;
 	table-layout: auto !important;
 	font-size: 0.85em !important;
-	line-height: 1.4 !important; /* Увеличено для лучшей читаемости */
+	line-height: 1.4 !important;
 }
 
-/* Общий стиль ячеек */
 .fsrs-table th,
 .fsrs-table td {
 	border: 1px solid var(--background-modifier-border) !important;
-	padding: 4px 8px !important; /* Увеличено с 2px 6px для баланса */
+	padding: 6px 10px !important;
 	vertical-align: middle !important;
 	box-sizing: border-box;
 }
 
-/* --- ВЫРАВНИВАНИЕ --- */
-
-/* Название файла */
 .fsrs-table td.fsrs-col-file {
 	text-align: left !important;
 	width: auto !important;
@@ -50,9 +41,9 @@
 	padding: 0 !important;
 	color: var(--text-accent);
 	vertical-align: top;
+	text-decoration: none !important; /* Убирает подчеркивание */
 }
 
-/* Технические колонки: минимальная ширина и центрирование */
 .fsrs-table .fsrs-col-reps,
 .fsrs-table .fsrs-col-overdue,
 .fsrs-table .fsrs-col-stability,
@@ -68,10 +59,9 @@
 	width: 1% !important;
 	white-space: nowrap !important;
 	text-align: center !important;
-	padding: 4px 12px !important; /* Чуть больше воздуха по бокам */
+	padding: 4px 12px !important;
 }
 
-/* Заголовки */
 .fsrs-table th {
 	background-color: var(--background-secondary);
 	font-weight: 600;
@@ -85,12 +75,10 @@
 	text-align: left !important;
 }
 
-/* Эффект наведения */
 .fsrs-table tr:hover {
 	background-color: var(--background-modifier-hover);
 }
 
-/* --- Кнопки управления (Frontmatter) --- */
 .fsrs-buttons-container {
 	display: flex;
 	align-items: center;
@@ -135,7 +123,6 @@
 	color: var(--text-normal);
 }
 
-/* Инфо-строка */
 .fsrs-table-header {
 	display: flex;
 	justify-content: space-between;
