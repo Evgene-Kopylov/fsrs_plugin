@@ -56,7 +56,7 @@ export async function findFsrsCards(plugin: FsrsPlugin): Promise<void> {
 			);
 		}
 
-		console.log("Найдено карточек для повторения:", cardsForReview.length);
+		console.debug("Найдено карточек для повторения:", cardsForReview.length);
 	} catch (error) {
 		console.error("Ошибка при поиске карточек для повторения:", error);
 		const errorMessage =

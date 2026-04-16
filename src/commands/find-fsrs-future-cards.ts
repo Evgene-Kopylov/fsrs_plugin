@@ -65,7 +65,7 @@ export async function findFsrsFutureCards(plugin: FsrsPlugin): Promise<void> {
 			);
 		}
 
-		console.log("Найдено карточек на будущее:", futureCards.length);
+		console.debug("Найдено карточек на будущее:", futureCards.length);
 	} catch (error) {
 		console.error("Ошибка при поиске карточек на будущее:", error);
 		const errorMessage =

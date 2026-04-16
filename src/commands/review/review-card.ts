@@ -11,7 +11,7 @@ import {
 	getRussianNoun,
 	extractFrontmatterWithMatch,
 } from "../../utils/fsrs-helper";
-import type { ModernFSRSCard, FSRSRating } from "../../interfaces/fsrs";
+import type { FSRSRating } from "../../interfaces/fsrs";
 import type MyPlugin from "../../main";
 import { ReviewModal } from "./review-modal";
 

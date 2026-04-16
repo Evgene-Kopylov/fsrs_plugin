@@ -8,7 +8,7 @@ export function registerCommands(plugin: FsrsPlugin): void {
 	// Команда для добавления полей FSRS в текущий файл
 	plugin.addCommand({
 		id: "add-fsrs-fields",
-		name: "Добавить поля FSRS в шапку файла",
+		name: "Добавить поля FSRS в шапку файла", // eslint-disable-line obsidianmd/ui/sentence-case
 		callback: async () => {
 			await plugin.addFsrsFieldsToCurrentFile();
 		},
