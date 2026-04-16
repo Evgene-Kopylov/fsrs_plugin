@@ -51,7 +51,7 @@
    - Выполните команду `Добавить поля FSRS в шапку файла` (Ctrl/Cmd+P)
 3. **Добавьте блок повторений** в нужный файл:
    ````markdown
-   ```fsrs-now
+   ```fsrs-table
    ```
    ````
 4. **Начните повторять** — откройте файл с блоком и кликайте на карточки
@@ -331,7 +331,9 @@ npm run build
 - [Официальная документация FSRS](https://github.com/open-spaced-repetition/fsrs)
 - [Обсуждение на форуме Obsidian](https://forum.obsidian.md/)
 - [Issues и feature requests]() # TODO
-- [Руководство по использованию](docs/FSRS_USAGE.md)
+- [Руководство по использованию fsrs-table](docs/FSRS_USAGE.md)
+
+
 
 ---
 
