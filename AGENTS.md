@@ -1,5 +1,22 @@
 # Obsidian community plugin
 
+## 🚫 Запрещённые файлы (никогда не читать)
+- `node_modules/` — зависимости npm, огромный объём
+- `wasm-lib/target/` — скомпилированные артефакты Rust
+- `main.js` — сгенерированный бандл (очень большой, длинные строки)
+- Любые другие сгенерированные или бинарные файлы
+
+## Язык
+
+- Пиши и рассуждай по-русски.
+- коммит сообщеня пиши по-русски.
+- логи ошибок пиши по-русски.
+
+## Документация проекта
+
+- docs/PROJECT_STRUCTURE.md - структуры проекта
+- docs/DATA_MODEL.md - структура данных
+
 ## Project overview
 
 - Target: Obsidian Community Plugin (TypeScript → bundled JavaScript).
