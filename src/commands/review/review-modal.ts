@@ -40,6 +40,7 @@ export class ReviewModal extends Modal {
 
 		// Информация о карточке
 		const info = contentEl.createEl("div");
+		// eslint-disable-next-line @microsoft/sdl/no-inner-html
 		info.innerHTML = `
 			<small>
 				<strong>Файл:</strong> ${this.card.filePath}<br>
@@ -85,10 +86,10 @@ export class ReviewModal extends Modal {
 		];
 
 		const buttonContainer = contentEl.createEl("div");
-		buttonContainer.style.display = "flex";
-		buttonContainer.style.gap = "10px";
-		buttonContainer.style.flexWrap = "wrap";
-		buttonContainer.style.justifyContent = "center";
+		buttonContainer.style.display = "flex"; // eslint-disable-line obsidianmd/no-static-styles-assignment
+		buttonContainer.style.gap = "10px"; // eslint-disable-line obsidianmd/no-static-styles-assignment
+		buttonContainer.style.flexWrap = "wrap"; // eslint-disable-line obsidianmd/no-static-styles-assignment
+		buttonContainer.style.justifyContent = "center"; // eslint-disable-line obsidianmd/no-static-styles-assignment
 
 		ratings.forEach(({ rating, label, color }) => {
 			const button = document.createElement("button");
@@ -106,8 +107,8 @@ export class ReviewModal extends Modal {
 				transition: opacity 0.2s;
 			`;
 
-			button.onmouseenter = () => (button.style.opacity = "0.8");
-			button.onmouseleave = () => (button.style.opacity = "1");
+			button.onmouseenter = () => (button.style.opacity = "0.8"); // eslint-disable-line obsidianmd/no-static-styles-assignment
+			button.onmouseleave = () => (button.style.opacity = "1"); // eslint-disable-line obsidianmd/no-static-styles-assignment
 
 			button.onclick = () => {
 				this.ratingSelected = true;
