@@ -4,12 +4,8 @@
  */
 
 import type { App } from "obsidian";
-import type {
-	ModernFSRSCard,
-	ComputedCardState,
-	FSRSSettings,
-} from "../interfaces/fsrs";
-import type { TableParams, TableMode, TableColumn } from "./fsrs-table-params";
+import type { ModernFSRSCard, FSRSSettings } from "../interfaces/fsrs";
+import type { TableParams, TableMode } from "./fsrs-table-params";
 import type { CardWithState } from "./fsrs-table-filter";
 import { formatDateTime } from "./date-format";
 import { formatFieldValue } from "./fsrs-table-format";

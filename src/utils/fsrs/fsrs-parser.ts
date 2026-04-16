@@ -25,7 +25,6 @@ export function parseModernFsrsFromFrontmatter(
 			};
 		}
 
-		 
 		let parsedCard: any;
 		let wasmFailed = false;
 		let wasmError: string | undefined;
@@ -39,9 +38,19 @@ export function parseModernFsrsFromFrontmatter(
 				extract_fsrs_from_frontmatter_wrapped(wrappedFrontmatter);
 
 			// Парсим JSON результат из WASM
-
-			 
 			parsedCard = JSON.parse(cardJson);
+
+			// Если WASM вернул null, значит карточка битая
+			if (parsedCard === null) {
+				console.warn(
+					`FSRS card in ${filePath} is broken: WASM parsing returned null. Ignoring card.`,
+				);
+				return {
+					success: false,
+					card: null,
+					error: "WASM parsing failed - broken card",
+				};
+			}
 		} catch (wasmError_) {
 			wasmFailed = true;
 			wasmError =
@@ -54,8 +63,19 @@ export function parseModernFsrsFromFrontmatter(
 
 			// Fallback: пытаемся распарсить YAML самостоятельно
 			try {
-				 
 				parsedCard = parseYaml(frontmatter);
+
+				// Если fallback парсинг вернул null, значит карточка битая
+				if (parsedCard === null) {
+					console.warn(
+						`FSRS card in ${filePath} is broken: fallback YAML parsing returned null. Ignoring card.`,
+					);
+					return {
+						success: false,
+						card: null,
+						error: "fallback YAML parsing failed - broken card",
+					};
+				}
 			} catch (yamlError) {
 				console.error(
 					`Fallback YAML parsing also failed for ${filePath}:`,
@@ -71,11 +91,14 @@ export function parseModernFsrsFromFrontmatter(
 
 		if (
 			!parsedCard ||
-			 
 			!parsedCard.reviews ||
-			 
 			!Array.isArray(parsedCard.reviews)
 		) {
+			// Эта проверка уже должна была сработать выше для null,
+			// но оставляем для других случаев
+			console.warn(
+				`FSRS card in ${filePath} has invalid reviews field. Ignoring card.`,
+			);
 			return {
 				success: false,
 				card: null,
@@ -87,95 +110,105 @@ export function parseModernFsrsFromFrontmatter(
 
 		const reviews: ReviewSession[] = [];
 		const validRatings = ["Again", "Hard", "Good", "Easy"];
+		const validationErrors: string[] = [];
 
 		for (let i = 0; i < parsedCard.reviews.length; i++) {
-			 
-			 
 			const session = parsedCard.reviews[i];
 
 			// Пропускаем пустые объекты или null
 			if (!session || typeof session !== "object") {
-				console.warn(
-					`Session ${i} in ${filePath} is not a valid object, skipping`,
-				);
+				validationErrors.push(`Session ${i}: is not a valid object`);
 				continue;
 			}
 
 			// Проверяем обязательные поля
-			 
+
 			if (!session.date || typeof session.date !== "string") {
-				console.warn(
-					`Session ${i} in ${filePath} has invalid or missing date, skipping`,
-				);
+				validationErrors.push(`Session ${i}: invalid or missing date`);
 				continue;
 			}
 
 			// Проверяем валидность рейтинга
-			 
+
 			if (
 				!session.rating ||
 				typeof session.rating !== "string" ||
-				 
 				!validRatings.includes(session.rating)
 			) {
-				console.warn(
-					`Session ${i} in ${filePath} has invalid rating "${session.rating}", skipping`,
+				validationErrors.push(
+					`Session ${i}: invalid rating "${session.rating}"`,
 				);
 				continue;
 			}
 
 			// Проверяем числовые поля
-			 
+
 			if (
 				typeof session.stability !== "number" ||
-				 
 				isNaN(session.stability)
 			) {
-				console.warn(
-					`Session ${i} in ${filePath} has invalid stability "${session.stability}", skipping`,
+				validationErrors.push(
+					`Session ${i}: invalid stability "${session.stability}"`,
 				);
 				continue;
 			}
 
-			 
 			if (
 				typeof session.difficulty !== "number" ||
-				 
 				isNaN(session.difficulty)
 			) {
-				console.warn(
-					`Session ${i} in ${filePath} has invalid difficulty "${session.difficulty}", skipping`,
+				validationErrors.push(
+					`Session ${i}: invalid difficulty "${session.difficulty}"`,
 				);
 				continue;
 			}
 
 			// Проверяем валидность даты (примерная проверка ISO формата)
 			try {
-				 
 				const date = new Date(session.date);
 				if (isNaN(date.getTime())) {
-					console.warn(
-						`Session ${i} in ${filePath} has invalid date format "${session.date}", skipping`,
+					validationErrors.push(
+						`Session ${i}: invalid date format "${session.date}"`,
 					);
 					continue;
 				}
 			} catch {
-				console.warn(
-					`Session ${i} in ${filePath} has invalid date format "${session.date}", skipping`,
+				validationErrors.push(
+					`Session ${i}: invalid date format "${session.date}"`,
 				);
 				continue;
 			}
 
 			reviews.push({
-				 
 				date: session.date,
-				 
+
 				rating: session.rating,
-				 
+
 				stability: session.stability,
-				 
+
 				difficulty: session.difficulty,
 			});
+		}
+
+		// Проверяем, является ли карточка битой (есть сессии в исходных данных, но все невалидны)
+		if (parsedCard.reviews.length > 0 && reviews.length === 0) {
+			// Все сессии невалидны - карточка битая
+			console.warn(
+				`FSRS card in ${filePath} is broken: all ${validationErrors.length} review sessions are invalid. Ignoring card.`,
+			);
+			return {
+				success: false,
+				card: null,
+				error: "all review sessions are invalid",
+			};
+		}
+
+		// Если есть ошибки валидации, выводим одно предупреждение (но карточка все еще валидна, есть хотя бы одна сессия)
+		if (validationErrors.length > 0 && reviews.length > 0) {
+			console.warn(
+				`FSRS card in ${filePath} has ${validationErrors.length} invalid review sessions (${reviews.length} valid sessions remain):`,
+				validationErrors,
+			);
 		}
 
 		// Если после валидации нет ни одной сессии, но WASM не падал (т.е. файл содержит reviews поле),

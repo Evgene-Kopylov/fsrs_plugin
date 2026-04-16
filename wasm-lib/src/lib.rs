@@ -159,7 +159,7 @@ pub fn card_to_fsrs_yaml(card_json: String) -> String {
 pub fn extract_fsrs_from_frontmatter_wrapped(frontmatter: String) -> String {
     use crate::yaml_parsing::extract_fsrs_from_frontmatter;
     use crate::json_parsing::card_to_json;
-    use crate::json_parsing::create_default_card;
+
     use web_sys::console;
 
     console::debug_1(&format!("extract_fsrs_from_frontmatter_wrapped called with frontmatter length: {}", frontmatter.len()).into());
@@ -170,8 +170,8 @@ pub fn extract_fsrs_from_frontmatter_wrapped(frontmatter: String) -> String {
             card_to_json(&card)
         },
         None => {
-            console::debug_1(&"extract_fsrs_from_frontmatter returned None, using default card".into());
-            card_to_json(&create_default_card())
+            console::debug_1(&"extract_fsrs_from_frontmatter returned None, returning null".into());
+            "null".to_string()
         },
     };
 

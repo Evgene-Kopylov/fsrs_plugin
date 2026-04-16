@@ -114,7 +114,7 @@ export function parseTableParams(source: string): TableParams {
 				}
 			} catch (error) {
 				console.warn(
-					`Ошибка парсинга колонок: ${error}. Используются колонки по умолчанию.`,
+					`Ошибка парсинга колонок: ${String(error)}. Используются колонки по умолчанию.`,
 				);
 			}
 			continue;

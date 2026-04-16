@@ -86,7 +86,7 @@ async function computeCardsStates(
 	for (const card of cards) {
 		// Валидация карточки перед вычислением состояния
 		if (!card || typeof card !== "object") {
-			console.warn(`Пропускаем некорректную карточку: ${card}`);
+			console.warn(`Пропускаем некорректную карточку: ${String(card)}`);
 			continue;
 		}
 
