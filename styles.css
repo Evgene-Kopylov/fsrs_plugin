@@ -1,4 +1,4 @@
-/* FSRS Plugin Styles - Deep Clean & Ultra Compact */
+/* FSRS Plugin Styles - Clean & Balanced Compact */
 
 /* Убираем стандартные отступы Obsidian для блоков кода */
 .markdown-rendered .block-language-fsrs-table,
@@ -23,37 +23,36 @@
 	border-collapse: collapse !important;
 	table-layout: auto !important;
 	font-size: 0.85em !important;
-	line-height: 1.1 !important;
+	line-height: 1.4 !important; /* Увеличено для лучшей читаемости */
 }
 
 /* Общий стиль ячеек */
 .fsrs-table th,
 .fsrs-table td {
 	border: 1px solid var(--background-modifier-border) !important;
-	padding: 2px 6px !important;
+	padding: 4px 8px !important; /* Увеличено с 2px 6px для баланса */
 	vertical-align: middle !important;
+	box-sizing: border-box;
 }
 
 /* --- ВЫРАВНИВАНИЕ --- */
 
-/* Название файла: Текст прижат влево, всё лишнее обрезано */
+/* Название файла */
 .fsrs-table td.fsrs-col-file {
 	text-align: left !important;
 	width: auto !important;
-	/* Устраняем влияние лишних пробелов в HTML */
-	display: table-cell !important;
 	white-space: nowrap !important;
 }
 
-/* Ссылка внутри файла: убираем любые внешние отступы */
 .fsrs-table td.fsrs-col-file a.internal-link {
-	display: inline !important;
+	display: inline-block !important;
 	margin: 0 !important;
 	padding: 0 !important;
 	color: var(--text-accent);
+	vertical-align: top;
 }
 
-/* Технические колонки: схлопываем до минимума и центрируем */
+/* Технические колонки: минимальная ширина и центрирование */
 .fsrs-table .fsrs-col-reps,
 .fsrs-table .fsrs-col-overdue,
 .fsrs-table .fsrs-col-stability,
@@ -66,15 +65,24 @@
 .fsrs-table .fsrs-col-next,
 .fsrs-table .fsrs-col-in,
 .fsrs-table .fsrs-col-interval {
-	width: 1% !important; /* Принудительно минимальная ширина */
+	width: 1% !important;
 	white-space: nowrap !important;
 	text-align: center !important;
-	padding: 2px 10px !important; /* Увеличим боковой паддинг для читаемости центра */
+	padding: 4px 12px !important; /* Чуть больше воздуха по бокам */
 }
 
-/* Заголовки технических колонок тоже по центру */
+/* Заголовки */
+.fsrs-table th {
+	background-color: var(--background-secondary);
+	font-weight: 600;
+}
+
 .fsrs-table th:not(.fsrs-col-file) {
 	text-align: center !important;
+}
+
+.fsrs-table th.fsrs-col-file {
+	text-align: left !important;
 }
 
 /* Эффект наведения */
@@ -82,7 +90,7 @@
 	background-color: var(--background-modifier-hover);
 }
 
-/* Кнопки управления (Frontmatter) */
+/* --- Кнопки управления (Frontmatter) --- */
 .fsrs-buttons-container {
 	display: flex;
 	align-items: center;
@@ -99,29 +107,44 @@
 	border-radius: 4px;
 	cursor: pointer;
 	font-size: 13px;
+	font-weight: 500;
 	min-width: 140px;
+	transition: background 0.2s ease;
+}
+
+.fsrs-review-button:hover {
+	background: var(--interactive-accent-hover);
 }
 
 .fsrs-delete-button {
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	width: 26px;
-	height: 26px;
+	width: 28px;
+	height: 28px;
 	background: var(--background-modifier-border);
 	color: var(--text-muted);
 	border-radius: 4px;
 	border: none;
 	cursor: pointer;
+	transition: all 0.2s ease;
+}
+
+.fsrs-delete-button:hover {
+	background: var(--background-modifier-border-hover);
+	color: var(--text-normal);
 }
 
 /* Инфо-строка */
 .fsrs-table-header {
 	display: flex;
 	justify-content: space-between;
-	margin-bottom: 4px;
+	align-items: center;
+	margin-bottom: 6px;
 }
+
 .fsrs-header-text {
 	font-size: 0.9em;
 	font-weight: 600;
+	color: var(--text-muted);
 }
