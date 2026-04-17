@@ -5,35 +5,17 @@ import {
 	formatIgnorePatterns,
 	parseIgnorePatterns,
 } from "./utils/fsrs/fsrs-filter";
+import {
+	DEFAULT_PARAMETERS,
+	DEFAULT_SETTINGS as DEFAULT_SETTINGS_FROM_CONSTANTS,
+} from "./constants";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface FsrsPluginSettings extends FSRSSettings {}
 
-// Параметры алгоритма FSRS по умолчанию (совместимые с rs-fsrs)
-const DEFAULT_PARAMETERS: FSRSParameters = {
-	request_retention: 0.9, // целевой уровень запоминания 90%
-	maximum_interval: 36500, // максимальный интервал 100 лет
-	enable_fuzz: true, // включить случайное изменение интервалов
-};
-
-export const DEFAULT_SETTINGS: FsrsPluginSettings = {
-	// Параметры алгоритма FSRS
-	parameters: DEFAULT_PARAMETERS,
-
-	// Настройки по умолчанию для новых карточек
-	default_initial_stability: 0.0,
-	default_initial_difficulty: 0.0,
-
-	// Настройки отображения
-
-	auto_add_review_button: true,
-
-	// Минимальный интервал для досрочного повторения
-	minimum_review_interval_minutes: 40,
-
-	// Паттерны игнорирования файлов и папок
-	ignore_patterns: [],
-};
+// Реэкспорт констант из модуля constants с правильным типом
+export const DEFAULT_SETTINGS: FsrsPluginSettings =
+	DEFAULT_SETTINGS_FROM_CONSTANTS as FsrsPluginSettings;
 
 export class FsrsSettingTab extends PluginSettingTab {
 	plugin: MyPlugin;
