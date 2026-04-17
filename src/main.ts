@@ -80,12 +80,19 @@ export default class FsrsPlugin extends Plugin {
 				renderContainer.className = "fsrs-table-render-container";
 				el.appendChild(renderContainer);
 
+				// Получаем позиции блока для обновления исходного кода
+				const sectionInfo = ctx.getSectionInfo(el);
+				const sourceStart = sectionInfo?.lineStart ?? 0;
+				const sourceEnd = sectionInfo?.lineEnd ?? 0;
+
 				// Создаем и добавляем рендерер
 				const renderer = new FsrsTableRenderer(
 					this,
 					renderContainer,
 					ctx.sourcePath,
 					source,
+					sourceStart,
+					sourceEnd,
 				);
 				ctx.addChild(renderer);
 			},

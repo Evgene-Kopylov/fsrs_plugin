@@ -5,7 +5,7 @@
 
 import type { App } from "obsidian";
 import type { ModernFSRSCard, FSRSSettings } from "../interfaces/fsrs";
-import type { TableParams, TableMode } from "./fsrs-table-params";
+import type { TableParams, TableMode, SortParam } from "./fsrs-table-params";
 import type { CardWithState } from "./fsrs-table-filter";
 
 import { formatFieldValue } from "./fsrs-table-format";
@@ -55,12 +55,29 @@ export function generateTableHTML(
 	// Таблица
 	html += `<table class="fsrs-table">`;
 
-	// Заголовки колонок
+	// Заголовки колонок с поддержкой сортировки
 	html += `<thead><tr>`;
 	for (const column of params.columns) {
 		console.debug(`[FSRS] Генерация заголовка для поля: ${column.field}`);
 		const style = column.width ? ` style="width: ${column.width}"` : "";
-		html += `<th class="fsrs-col-${column.field}"${style}>${column.title}</th>`;
+
+		// Определяем текущую сортировку для этой колонки
+		const isSorted = params.sort?.field === column.field;
+		const currentDirection = isSorted ? params.sort!.direction : null;
+
+		// Создаем заголовок с кнопкой для сортировки
+		html += `<th class="fsrs-col-${column.field} fsrs-sortable-header"${style}>`;
+		html += `<button type="button" class="fsrs-sort-button" data-field="${column.field}" data-current-direction="${currentDirection || ""}">`;
+		html += `<span class="fsrs-header-text">${column.title}</span>`;
+
+		// Добавляем индикатор сортировки
+		if (isSorted) {
+			const arrow = currentDirection === "ASC" ? "↑" : "↓";
+			html += `<span class="fsrs-sort-indicator"> ${arrow}</span>`;
+		}
+
+		html += `</button>`;
+		html += `</th>`;
 	}
 	html += `</tr></thead>`;
 

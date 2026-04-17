@@ -30,6 +30,45 @@
 	box-sizing: border-box;
 }
 
+.fsrs-sortable-header {
+	padding: 0 !important;
+}
+
+.fsrs-sort-button {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	width: 100%;
+	height: 100%;
+	padding: 6px 10px;
+	background: transparent;
+	border: none;
+	font: inherit;
+	font-weight: 600;
+	color: inherit;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+	text-align: inherit;
+}
+
+.fsrs-sort-button:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+/* Выравнивание кнопок сортировки для разных колонок */
+.fsrs-table th.fsrs-col-file .fsrs-sort-button {
+	justify-content: flex-start;
+}
+
+.fsrs-table th:not(.fsrs-col-file) .fsrs-sort-button {
+	justify-content: center;
+}
+
+.fsrs-sort-indicator {
+	font-size: 0.9em;
+	opacity: 0.8;
+}
+
 .fsrs-table td.fsrs-col-file {
 	text-align: left !important;
 	width: auto !important;
