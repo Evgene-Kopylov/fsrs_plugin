@@ -1,5 +1,4 @@
 // Взаимодействие с WASM модулем FSRS
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call */
 
 import type {
 	ModernFSRSCard,
@@ -8,64 +7,60 @@ import type {
 	FSRSSettings,
 	FSRSParameters,
 } from "../../interfaces/fsrs";
-import {
-	compute_current_state,
-	is_card_due,
-	get_retrievability,
-	review_card,
-	get_fsrs_yaml,
-	get_fsrs_yaml_after_review,
-	get_next_review_dates,
-	get_current_time,
-	filter_cards_for_review,
-	sort_cards_by_priority,
-	group_cards_by_state,
-	get_overdue_hours,
-	get_hours_until_due,
-	is_card_overdue,
-	get_card_age_days,
-} from "../../../wasm-lib/pkg/wasm_lib";
+import * as wasm from "../../../wasm-lib/pkg/wasm_lib";
 
-/**
- * Конвертирует параметры FSRS в JSON строку для WASM
- */
-export function parametersToJson(parameters: FSRSParameters): string {
-	return JSON.stringify({
-		request_retention: parameters.request_retention,
-		maximum_interval: parameters.maximum_interval,
-		enable_fuzz: parameters.enable_fuzz,
+// ---------- Утилиты для работы с WASM ----------
+
+/** Преобразует карточку в JSON-строку для WASM */
+const serializeCard = (card: ModernFSRSCard): string =>
+	JSON.stringify({ reviews: card.reviews });
+
+/** Преобразует параметры FSRS в JSON-строку для WASM */
+export const parametersToJson = (p: FSRSParameters): string =>
+	JSON.stringify({
+		request_retention: p.request_retention,
+		maximum_interval: p.maximum_interval,
+		enable_fuzz: p.enable_fuzz,
 	});
-}
 
-/**
- * Вычисляет текущее состояние карточки через WASM
- */
+/** Подготовка общих аргументов для большинства функций */
+const prepareCommonArgs = (
+	card: ModernFSRSCard,
+	settings: FSRSSettings,
+	now: Date,
+) => ({
+	cardJson: serializeCard(card),
+	nowStr: now.toISOString(),
+	parametersJson: parametersToJson(settings.parameters),
+	defaultStability: settings.default_initial_stability,
+	defaultDifficulty: settings.default_initial_difficulty,
+});
+
+// ---------- Публичные API ----------
+
 export async function computeCardState(
 	card: ModernFSRSCard,
 	settings: FSRSSettings,
 	now: Date = new Date(),
 ): Promise<ComputedCardState> {
 	try {
-		const cardJson = JSON.stringify({
-			reviews: card.reviews,
-		});
-
-		const parametersJson = parametersToJson(settings.parameters);
-		const nowStr = now.toISOString();
-
-		const stateJson = compute_current_state(
+		const {
 			cardJson,
 			nowStr,
 			parametersJson,
-			settings.default_initial_stability,
-			settings.default_initial_difficulty,
+			defaultStability,
+			defaultDifficulty,
+		} = prepareCommonArgs(card, settings, now);
+		const stateJson = wasm.compute_current_state(
+			cardJson,
+			nowStr,
+			parametersJson,
+			defaultStability,
+			defaultDifficulty,
 		);
-
-		const state: ComputedCardState = JSON.parse(stateJson);
-		return state;
+		return JSON.parse(stateJson) as ComputedCardState;
 	} catch (error) {
-		console.error("Ошибка при вычислении состояния карточки:", error);
-		// Возвращаем дефолтное состояние в случае ошибки
+		console.error("computeCardState failed, returning default", error);
 		return {
 			due: now.toISOString(),
 			stability: settings.default_initial_stability,
@@ -80,71 +75,58 @@ export async function computeCardState(
 	}
 }
 
-/**
- * Проверяет, готова ли карточка к повторению через WASM
- */
 export async function isCardDue(
 	card: ModernFSRSCard,
 	settings: FSRSSettings,
 	now: Date = new Date(),
 ): Promise<boolean> {
 	try {
-		const cardJson = JSON.stringify({
-			reviews: card.reviews,
-		});
-
-		const parametersJson = parametersToJson(settings.parameters);
-		const nowStr = now.toISOString();
-
-		const dueJson = is_card_due(
+		const {
 			cardJson,
 			nowStr,
 			parametersJson,
-			settings.default_initial_stability,
-			settings.default_initial_difficulty,
+			defaultStability,
+			defaultDifficulty,
+		} = prepareCommonArgs(card, settings, now);
+		const dueJson = wasm.is_card_due(
+			cardJson,
+			nowStr,
+			parametersJson,
+			defaultStability,
+			defaultDifficulty,
 		);
-
-		return JSON.parse(dueJson);
-	} catch (error) {
-		console.error("Ошибка при проверке готовности карточки:", error);
+		return JSON.parse(dueJson) as boolean;
+	} catch {
 		return false;
 	}
 }
 
-/**
- * Получает извлекаемость карточки через WASM
- */
 export async function getCardRetrievability(
 	card: ModernFSRSCard,
 	settings: FSRSSettings,
 	now: Date = new Date(),
 ): Promise<number> {
 	try {
-		const cardJson = JSON.stringify({
-			reviews: card.reviews,
-		});
-
-		const parametersJson = parametersToJson(settings.parameters);
-		const nowStr = now.toISOString();
-
-		const retrievabilityJson = get_retrievability(
+		const {
 			cardJson,
 			nowStr,
 			parametersJson,
-			settings.default_initial_stability,
-			settings.default_initial_difficulty,
+			defaultStability,
+			defaultDifficulty,
+		} = prepareCommonArgs(card, settings, now);
+		const retJson = wasm.get_retrievability(
+			cardJson,
+			nowStr,
+			parametersJson,
+			defaultStability,
+			defaultDifficulty,
 		);
-
-		return JSON.parse(retrievabilityJson);
-	} catch (error) {
-		console.error("Ошибка при получении извлекаемости:", error);
+		return JSON.parse(retJson) as number;
+	} catch {
 		return 1.0;
 	}
 }
 
-/**
- * Добавляет сессию повторения через WASM
- */
 export async function addReviewSession(
 	card: ModernFSRSCard,
 	rating: FSRSRating,
@@ -152,49 +134,37 @@ export async function addReviewSession(
 	now: Date = new Date(),
 ): Promise<ModernFSRSCard> {
 	try {
-		const cardJson = JSON.stringify({
-			reviews: card.reviews,
-		});
-
-		const parametersJson = parametersToJson(settings.parameters);
-		const nowStr = now.toISOString();
-
-		const updatedCardJson = review_card(
+		const {
+			cardJson,
+			nowStr,
+			parametersJson,
+			defaultStability,
+			defaultDifficulty,
+		} = prepareCommonArgs(card, settings, now);
+		const updatedJson = wasm.review_card(
 			cardJson,
 			rating,
 			nowStr,
 			parametersJson,
-			settings.default_initial_stability,
-			settings.default_initial_difficulty,
+			defaultStability,
+			defaultDifficulty,
 		);
-
-		const updatedCard = JSON.parse(updatedCardJson);
-		return {
-			...updatedCard,
-			filePath: card.filePath,
-		};
+		const parsed = JSON.parse(updatedJson) as ModernFSRSCard;
+		return { ...parsed, filePath: card.filePath };
 	} catch (error) {
-		console.error("Ошибка при добавлении сессии повторения:", error);
-		// В случае ошибки возвращаем оригинальную карточку
+		console.error("addReviewSession failed", error);
 		return card;
 	}
 }
 
-/**
- * Получает YAML новой карточки через WASM
- */
 export async function getNewCardYaml(): Promise<string> {
 	try {
-		return get_fsrs_yaml();
-	} catch (error) {
-		console.error("Ошибка при получении YAML новой карточки:", error);
+		return wasm.get_fsrs_yaml();
+	} catch {
 		return "reviews: []";
 	}
 }
 
-/**
- * Получает YAML карточки после повторения через WASM
- */
 export async function getCardYamlAfterReview(
 	card: ModernFSRSCard,
 	rating: FSRSRating,
@@ -202,104 +172,96 @@ export async function getCardYamlAfterReview(
 	now: Date = new Date(),
 ): Promise<string> {
 	try {
-		const cardJson = JSON.stringify({
-			reviews: card.reviews,
-		});
-
-		const parametersJson = parametersToJson(settings.parameters);
-		const nowStr = now.toISOString();
-
-		return get_fsrs_yaml_after_review(
+		const {
+			cardJson,
+			nowStr,
+			parametersJson,
+			defaultStability,
+			defaultDifficulty,
+		} = prepareCommonArgs(card, settings, now);
+		return wasm.get_fsrs_yaml_after_review(
 			cardJson,
 			rating,
 			nowStr,
 			parametersJson,
-			settings.default_initial_stability,
-			settings.default_initial_difficulty,
+			defaultStability,
+			defaultDifficulty,
 		);
-	} catch (error) {
-		console.error("Ошибка при получении YAML после повторения:", error);
+	} catch {
 		return "reviews: []";
 	}
 }
 
-/**
- * Получает даты следующего повторения для каждого рейтинга через WASM
- */
 export async function getNextReviewDates(
 	card: ModernFSRSCard,
 	settings: FSRSSettings,
 	now: Date = new Date(),
 ): Promise<Record<FSRSRating, string | null>> {
 	try {
-		const cardJson = JSON.stringify({
-			reviews: card.reviews,
-		});
-
-		const parametersJson = parametersToJson(settings.parameters);
-		const nowStr = now.toISOString();
-
-		const datesJson = get_next_review_dates(
+		const {
 			cardJson,
 			nowStr,
 			parametersJson,
-			settings.default_initial_stability,
-			settings.default_initial_difficulty,
+			defaultStability,
+			defaultDifficulty,
+		} = prepareCommonArgs(card, settings, now);
+		const datesJson = wasm.get_next_review_dates(
+			cardJson,
+			nowStr,
+			parametersJson,
+			defaultStability,
+			defaultDifficulty,
 		);
-
-		const dates = JSON.parse(datesJson);
+		const dates = JSON.parse(datesJson) as {
+			again?: string;
+			hard?: string;
+			good?: string;
+			easy?: string;
+		};
 		return {
 			Again: dates.again || null,
 			Hard: dates.hard || null,
 			Good: dates.good || null,
 			Easy: dates.easy || null,
 		};
-	} catch (error) {
-		console.error("Ошибка при получении дат следующего повторения:", error);
-		return {
-			Again: null,
-			Hard: null,
-			Good: null,
-			Easy: null,
-		};
+	} catch {
+		return { Again: null, Hard: null, Good: null, Easy: null };
 	}
 }
 
-/**
- * Получает текущее время в ISO формате через WASM
- */
 export function getCurrentISOTime(): string {
 	try {
-		return get_current_time();
-	} catch (error) {
-		console.error("Ошибка при получении текущего времени:", error);
+		return wasm.get_current_time();
+	} catch {
 		return new Date().toISOString();
 	}
 }
 
-/**
- * Конвертирует base64 строку в Uint8Array для загрузки WASM модуля
- */
 export function base64ToBytes(base64: string): Uint8Array {
 	const binary = atob(base64);
 	const bytes = new Uint8Array(binary.length);
-	for (let i = 0; i < binary.length; i++) {
-		bytes[i] = binary.charCodeAt(i);
-	}
+	for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
 	return bytes;
 }
 
-/**
- * Валидирует JSON карточки FSRS
- */
+interface ValidatedCard {
+	reviews?: unknown[];
+}
+
+interface ValidatedReviewSession {
+	date?: unknown;
+	rating?: unknown;
+	stability?: unknown;
+	difficulty?: unknown;
+}
+
 export function validateFSRSCardJSON(json: string): boolean {
 	try {
-		const card = JSON.parse(json);
+		const card = JSON.parse(json) as ValidatedCard;
 		return (
-			 
 			Array.isArray(card.reviews) &&
 			card.reviews.every(
-				(session: any) =>
+				(session: ValidatedReviewSession) =>
 					typeof session.date === "string" &&
 					typeof session.rating === "string" &&
 					typeof session.stability === "number" &&
@@ -311,19 +273,11 @@ export function validateFSRSCardJSON(json: string): boolean {
 	}
 }
 
-/**
- * Создает карточку FSRS по умолчанию
- */
 export function createDefaultFSRSCard(filePath: string): ModernFSRSCard {
-	return {
-		reviews: [],
-		filePath,
-	};
+	return { reviews: [], filePath };
 }
 
-/**
- * Фильтрует карточки для повторения через WASM
- */
+// Функции фильтрации/сортировки/группировки, работающие с массивами
 export async function filterCardsForReview(
 	cards: ModernFSRSCard[],
 	settings: FSRSSettings,
@@ -333,22 +287,17 @@ export async function filterCardsForReview(
 		const cardsJson = JSON.stringify(cards);
 		const settingsJson = JSON.stringify(settings);
 		const nowStr = now.toISOString();
-
-		const filteredJson = filter_cards_for_review(
+		const filteredJson = wasm.filter_cards_for_review(
 			cardsJson,
 			settingsJson,
 			nowStr,
 		);
-		return JSON.parse(filteredJson);
-	} catch (error) {
-		console.error("Ошибка при фильтрации карточек:", error);
-		return cards; // Возвращаем оригинальный массив в случае ошибки
+		return JSON.parse(filteredJson) as ModernFSRSCard[];
+	} catch {
+		return cards;
 	}
 }
 
-/**
- * Сортирует карточки по приоритету через WASM
- */
 export async function sortCardsByPriority(
 	cards: ModernFSRSCard[],
 	settings: FSRSSettings,
@@ -358,22 +307,17 @@ export async function sortCardsByPriority(
 		const cardsJson = JSON.stringify(cards);
 		const settingsJson = JSON.stringify(settings);
 		const nowStr = now.toISOString();
-
-		const sortedJson = sort_cards_by_priority(
+		const sortedJson = wasm.sort_cards_by_priority(
 			cardsJson,
 			settingsJson,
 			nowStr,
 		);
-		return JSON.parse(sortedJson);
-	} catch (error) {
-		console.error("Ошибка при сортировке карточек:", error);
-		return cards; // Возвращаем оригинальный массив в случае ошибки
+		return JSON.parse(sortedJson) as ModernFSRSCard[];
+	} catch {
+		return cards;
 	}
 }
 
-/**
- * Группирует карточки по состоянию через WASM
- */
 export async function groupCardsByState(
 	cards: ModernFSRSCard[],
 	settings: FSRSSettings,
@@ -387,103 +331,78 @@ export async function groupCardsByState(
 		const cardsJson = JSON.stringify(cards);
 		const settingsJson = JSON.stringify(settings);
 		const nowStr = now.toISOString();
-
-		const groupedJson = group_cards_by_state(
+		const groupedJson = wasm.group_cards_by_state(
 			cardsJson,
 			settingsJson,
 			nowStr,
 		);
-		 
-		const parsed = JSON.parse(groupedJson);
-		// Convert snake_case keys to camelCase
-		const result: any = {};
-		for (const key in parsed) {
-			 
-			if (Object.prototype.hasOwnProperty.call(parsed, key)) {
-				const newKey = key.replace(/_([a-z])/g, (_, letter) =>
-					letter.toUpperCase(),
-				);
-				result[newKey] = parsed[key];
-			}
-		}
-		return result as {
+		const parsed = JSON.parse(groupedJson) as Record<
+			string,
+			ModernFSRSCard[]
+		>;
+		// конвертируем snake_case → camelCase
+		const result: {
 			overdue: ModernFSRSCard[];
 			due: ModernFSRSCard[];
 			notDue: ModernFSRSCard[];
-		};
-	} catch (error) {
-		console.error("Ошибка при группировке карточек:", error);
-		return { overdue: [], due: [], notDue: cards }; // Возвращаем дефолтную группировку
+		} = { overdue: [], due: [], notDue: [] };
+		for (const key in parsed) {
+			if (Object.prototype.hasOwnProperty.call(parsed, key)) {
+				const newKey = key.replace(/_([a-z])/g, (_, l: string) =>
+					l.toUpperCase(),
+				) as "overdue" | "due" | "notDue";
+				result[newKey] = parsed[key]!;
+			}
+		}
+		return result;
+	} catch {
+		return { overdue: [], due: [], notDue: cards };
 	}
 }
 
-/**
- * Рассчитывает время просрочки карточки в часах через WASM
- */
+// Функции для работы с датами
 export function getOverdueHours(dueDate: Date, now: Date = new Date()): number {
 	try {
-		const dueIso = dueDate.toISOString();
-		const nowIso = now.toISOString();
-
-		const hoursJson = get_overdue_hours(dueIso, nowIso);
-		return JSON.parse(hoursJson);
-	} catch (error) {
-		console.error("Ошибка при расчете просрочки:", error);
+		return JSON.parse(
+			wasm.get_overdue_hours(dueDate.toISOString(), now.toISOString()),
+		) as number;
+	} catch {
 		return 0;
 	}
 }
 
-/**
- * Рассчитывает оставшееся время до повторения карточки в часах через WASM
- * Возвращает отрицательное значение если карточка просрочена
- */
 export function getHoursUntilDue(
 	dueDate: Date,
 	now: Date = new Date(),
 ): number {
 	try {
-		const dueIso = dueDate.toISOString();
-		const nowIso = now.toISOString();
-
-		const hoursJson = get_hours_until_due(dueIso, nowIso);
-		return JSON.parse(hoursJson);
-	} catch (error) {
-		console.error("Ошибка при расчете оставшегося времени:", error);
+		return JSON.parse(
+			wasm.get_hours_until_due(dueDate.toISOString(), now.toISOString()),
+		) as number;
+	} catch {
 		return 0;
 	}
 }
 
-/**
- * Проверяет, просрочена ли карточка через WASM
- */
 export function isCardOverdue(dueDate: Date, now: Date = new Date()): boolean {
 	try {
-		const dueIso = dueDate.toISOString();
-		const nowIso = now.toISOString();
-
-		const overdueJson = is_card_overdue(dueIso, nowIso);
-		return JSON.parse(overdueJson);
-	} catch (error) {
-		console.error("Ошибка при проверке просрочки:", error);
+		return JSON.parse(
+			wasm.is_card_overdue(dueDate.toISOString(), now.toISOString()),
+		) as boolean;
+	} catch {
 		return false;
 	}
 }
 
-/**
- * Рассчитывает возраст карточки в днях через WASM (от первого повторения или создания)
- */
 export function getCardAgeInDaysRust(
 	card: ModernFSRSCard,
 	now: Date = new Date(),
 ): number {
 	try {
 		const cardJson = JSON.stringify(card);
-		const nowIso = now.toISOString();
-
-		const ageJson = get_card_age_days(cardJson, nowIso);
-		return JSON.parse(ageJson);
-	} catch (error) {
-		console.error("Ошибка при расчете возраста карточки:", error);
+		const ageJson = wasm.get_card_age_days(cardJson, now.toISOString());
+		return JSON.parse(ageJson) as number;
+	} catch {
 		return 0;
 	}
 }
