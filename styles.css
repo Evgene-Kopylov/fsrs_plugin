@@ -157,3 +157,76 @@
 	opacity: 0.7;
 	color: var(--text-muted) !important;
 }
+
+/* Стили для модального окна справки */
+.fsrs-help-title {
+	font-size: 1.5em;
+	font-weight: 600;
+	margin-bottom: 0.5em;
+	color: var(--text-normal);
+}
+
+.fsrs-help-info {
+	font-size: 0.9em;
+	color: var(--text-muted);
+	margin-bottom: 1.5em;
+}
+
+.fsrs-help-content-container {
+	font-size: 1.3em;
+	line-height: 1.7;
+	overflow-y: auto;
+	max-height: 60vh;
+	padding-right: 10px;
+	word-wrap: break-word;
+}
+
+.fsrs-help-content-container p {
+	margin-bottom: 1em;
+}
+
+.fsrs-help-content-container code {
+	font-size: 1.1em;
+	background-color: var(--background-secondary);
+	padding: 6px 10px;
+	border-radius: 4px;
+}
+
+.fsrs-help-content-container pre {
+	background-color: var(--background-secondary);
+	padding: 20px;
+	border-radius: 6px;
+	overflow-x: auto;
+	font-size: 1.1em;
+	line-height: 1.7;
+}
+
+.fsrs-help-content-container h1,
+.fsrs-help-content-container h2,
+.fsrs-help-content-container h3 {
+	margin-top: 1.5em;
+	margin-bottom: 0.5em;
+	font-weight: 600;
+}
+
+.fsrs-help-content-container h1 {
+	font-size: 1.6em;
+}
+
+.fsrs-help-content-container h2 {
+	font-size: 1.4em;
+}
+
+.fsrs-help-content-container h3 {
+	font-size: 1.3em;
+}
+
+.fsrs-help-content-container ul,
+.fsrs-help-content-container ol {
+	margin-left: 1.5em;
+	margin-bottom: 1em;
+}
+
+.fsrs-help-content-container li {
+	margin-bottom: 0.5em;
+}
