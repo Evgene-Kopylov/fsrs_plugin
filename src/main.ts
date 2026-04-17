@@ -30,6 +30,11 @@ export default class FsrsPlugin extends Plugin {
 	private isWasmInitialized = false;
 
 	private fsrsTableRenderers = new Set<FsrsTableRenderer>();
+	// Кэш с TTL
+	private cachedCards: ModernFSRSCard[] | null = null;
+	private lastScanTime = 0;
+	private readonly cacheTTL = 5000; // вынести в константы
+	private isScanning = false;
 
 	/**
 	 * Загрузка плагина
@@ -119,73 +124,74 @@ export default class FsrsPlugin extends Plugin {
 	}
 
 	/**
-	 * Получает все карточки FSRS из хранилища (новый формат с reviews)
+	 * Получает карточки с кэшированием по TTL.
+	 * Никакой ручной инвалидации — кэш устаревает сам через 5 секунд.
 	 */
 	async getCardsForReview(): Promise<ModernFSRSCard[]> {
-		const start = performance.now();
+		const now = Date.now();
+		const cacheValid =
+			this.cachedCards !== null &&
+			now - this.lastScanTime < this.cacheTTL;
+
+		if (cacheValid) {
+			// Возвращаем ссылку на кэш (без копирования)
+			return this.cachedCards!;
+		}
+
+		if (this.isScanning) {
+			await this.waitForScanCompletion();
+			return this.cachedCards ?? [];
+		}
+
+		this.isScanning = true;
 		try {
-			console.debug(
-				"Сканирование хранилища на наличие карточек FSRS (новый формат)...",
-			);
-
-			// Получаем все markdown файлы
-			const files = this.app.vault.getMarkdownFiles();
-			const cards: ModernFSRSCard[] = [];
-
-			console.debug(`📁 Всего markdown файлов: ${files.length}`);
-
-			for (const file of files) {
-				// Пропускаем файлы, соответствующие паттернам игнорирования
-				if (shouldIgnoreFileWithSettings(file.path, this.settings)) {
-					continue;
-				}
-
-				try {
-					const content = await this.app.vault.read(file);
-
-					// Быстрая проверка: пропускаем файлы без признаков FSRS
-					// 📊 Оптимизация дает ускорение >1000x (с ~950-1000 мс до ~0.7-0.8 мс)
-					if (!shouldProcessFile(content)) {
-						continue;
-					}
-
-					// Извлекаем frontmatter
-					const frontmatter = extractFrontmatter(content);
-					if (!frontmatter) {
-						continue;
-					}
-
-					// Парсим карточку в новом формате
-					const parseResult = parseModernFsrsFromFrontmatter(
-						frontmatter,
-						file.path,
-					);
-
-					if (parseResult.success && parseResult.card) {
-						cards.push(parseResult.card);
-					}
-				} catch (error) {
-					console.warn(
-						`Ошибка при чтении файла ${file.path}:`,
-						error,
-					);
-				}
-			}
-
-			console.debug(`✅ Найдено карточек FSRS: ${cards.length}`);
+			const cards = await this.performFullScan();
+			this.cachedCards = cards;
+			this.lastScanTime = Date.now();
 			return cards;
-		} catch (error) {
-			console.error(
-				"Ошибка при получении карточек для повторения:",
-				error,
-			);
-			throw error;
 		} finally {
-			const elapsedMs = performance.now() - start;
-			const elapsedSec = elapsedMs / 1000;
-			console.debug(
-				`⏱️ Полное время сканирования карточек: ${elapsedSec.toFixed(2)} с`,
-			);
+			this.isScanning = false;
+		}
+	}
+
+	private async performFullScan(): Promise<ModernFSRSCard[]> {
+		const start = performance.now();
+		const files = this.app.vault.getMarkdownFiles();
+		const cards: ModernFSRSCard[] = [];
+
+		for (const file of files) {
+			if (shouldIgnoreFileWithSettings(file.path, this.settings))
+				continue;
+			try {
+				const content = await this.app.vault.read(file);
+				if (!shouldProcessFile(content)) continue;
+				const frontmatter = extractFrontmatter(content);
+				if (!frontmatter) continue;
+				const parseResult = parseModernFsrsFromFrontmatter(
+					frontmatter,
+					file.path,
+				);
+				if (parseResult.success && parseResult.card)
+					cards.push(parseResult.card);
+			} catch (error) {
+				console.warn(`Ошибка при чтении файла ${file.path}:`, error);
+			}
+		}
+
+		console.log(`✅ Найдено карточек FSRS: ${cards.length}`);
+		const elapsed = (performance.now() - start) / 1000;
+		console.log(`⏱️ Сканирование хранилища: ${elapsed.toFixed(2)} с`);
+		return cards;
+	}
+
+	private async waitForScanCompletion(): Promise<void> {
+		const start = Date.now();
+		while (this.isScanning && Date.now() - start < 30000) {
+			await new Promise((r) => setTimeout(r, 50));
+		}
+		if (this.isScanning) {
+			console.warn("⚠️ Таймаут ожидания сканирования");
+			this.isScanning = false;
 		}
 	}
 
