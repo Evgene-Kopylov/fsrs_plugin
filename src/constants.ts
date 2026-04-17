@@ -1,8 +1,4 @@
-import type {
-	FSRSParameters,
-	FSRSSettings,
-	FSRSState,
-} from "./interfaces/fsrs";
+import type { FSRSParameters, FSRSSettings } from "./interfaces/fsrs";
 import type { TableColumn } from "./utils/fsrs-table-params";
 
 // Параметры алгоритма FSRS по умолчанию (совместимые с rs-fsrs)
@@ -54,51 +50,3 @@ export const DEFAULT_COLUMNS: TableColumn[] = [
 	{ field: "reps", title: "Повторений" },
 	{ field: "overdue", title: "Просрочка" },
 ];
-
-// Переводы состояний карточек на русский язык
-export const STATE_TRANSLATIONS: Record<FSRSState, string> = {
-	New: "Новая",
-	Learning: "Изучение",
-	Review: "Повторение",
-	Relearning: "Переизучение",
-};
-
-// Заголовки по умолчанию для полей таблицы
-export const FIELD_TITLES: Record<string, string> = {
-	file: "Файл",
-	reps: "Повторений",
-	overdue: "Просрочка",
-	stability: "Стабильность",
-	difficulty: "Сложность",
-	retrievability: "Извлекаемость",
-	due: "Следующее повторение",
-	state: "Состояние",
-	elapsed: "Прошло дней",
-	scheduled: "Запланировано дней",
-};
-
-// Конфигурация блоков таблицы по умолчанию для разных режимов
-export const DEFAULT_TABLE_CONFIGS = {
-	due: {
-		columns:
-			'file as "Файл", reps as "Повторений", overdue as "Просрочка", retrievability as "Извлекаемость"',
-		limit: 20,
-	},
-	all: {
-		columns:
-			'file as "Файл", reps as "Повторений", overdue as "Просрочка", state as "Состояние", due as "Следующее повторение"',
-		limit: 20,
-	},
-} as const;
-
-// Настройки уведомлений (оставлены для совместимости, но не используются)
-export const DEFAULT_NOTIFICATION_SETTINGS = {
-	show_notifications: true,
-	notification_threshold: 5,
-} as const;
-
-// Настройки обновления (оставлены для совместимости, но не используются)
-export const DEFAULT_REFRESH_SETTINGS = {
-	auto_refresh: true,
-	refresh_interval: 5, // 5 минут
-} as const;
