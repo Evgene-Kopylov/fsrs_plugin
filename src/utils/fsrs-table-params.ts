@@ -135,6 +135,9 @@ export function parseTableParams(source: string): TableParams {
  * @returns Массив объектов TableColumn
  */
 export function parseColumnsDefinition(columnsText: string): TableColumn[] {
+	console.debug(
+		`[FSRS] parseColumnsDefinition: входной текст = "${columnsText}"`,
+	);
 	const columns: TableColumn[] = [];
 
 	// Удаляем лишние пробелы и разбиваем по запятым
@@ -142,6 +145,10 @@ export function parseColumnsDefinition(columnsText: string): TableColumn[] {
 		.split(",")
 		.map((part) => part.trim())
 		.filter((part) => part.length > 0);
+	console.debug(
+		`[FSRS] parseColumnsDefinition: частей после разбиения = ${parts.length}`,
+		parts,
+	);
 
 	for (const part of parts) {
 		// Пытаемся извлечь поле и заголовок
@@ -160,8 +167,14 @@ export function parseColumnsDefinition(columnsText: string): TableColumn[] {
 			} else {
 				// Просто поле без заголовка
 				const field = part.toLowerCase();
+				console.debug(
+					`[FSRS] parseColumnsDefinition: поле без заголовка = "${field}"`,
+				);
 				if (AVAILABLE_FIELDS.has(field)) {
 					columns.push({ field, title: getDefaultTitle(field) });
+					console.debug(
+						`[FSRS] parseColumnsDefinition: добавлена колонка field="${field}", title="${getDefaultTitle(field)}"`,
+					);
 				} else {
 					console.warn(
 						`Неизвестное поле в колонках: ${field}. Пропущено.`,
@@ -171,6 +184,10 @@ export function parseColumnsDefinition(columnsText: string): TableColumn[] {
 		}
 	}
 
+	console.debug(
+		`[FSRS] parseColumnsDefinition: итого колонок = ${columns.length}`,
+		columns,
+	);
 	return columns;
 }
 

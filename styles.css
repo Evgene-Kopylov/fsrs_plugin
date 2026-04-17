@@ -11,6 +11,7 @@
 .fsrs-table-container {
 	width: 100%;
 	font-family: var(--font-text);
+	overflow-x: auto;
 }
 
 .fsrs-table {
@@ -33,6 +34,9 @@
 	text-align: left !important;
 	width: auto !important;
 	white-space: nowrap !important;
+	max-width: 300px;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .fsrs-table td.fsrs-col-file a.internal-link {

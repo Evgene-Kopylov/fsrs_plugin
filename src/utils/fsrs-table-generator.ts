@@ -30,6 +30,16 @@ export function generateTableHTML(
 	const cardsToShow = cardsWithState.slice(0, limit);
 	const totalCards = cardsWithState.length;
 
+	// Отладочный вывод для проверки колонок
+	console.debug(
+		`[FSRS] Генерация таблицы в режиме ${params.mode}, колонок: ${params.columns.length}`,
+	);
+	params.columns.forEach((col, idx) => {
+		console.debug(
+			`[FSRS] Колонка ${idx}: field="${col.field}", title="${col.title}"`,
+		);
+	});
+
 	let html = `<div class="fsrs-table-container" data-mode="${params.mode}">`;
 
 	// Заголовок таблицы
@@ -48,6 +58,7 @@ export function generateTableHTML(
 	// Заголовки колонок
 	html += `<thead><tr>`;
 	for (const column of params.columns) {
+		console.debug(`[FSRS] Генерация заголовка для поля: ${column.field}`);
 		const style = column.width ? ` style="width: ${column.width}"` : "";
 		html += `<th class="fsrs-col-${column.field}"${style}>${column.title}</th>`;
 	}
@@ -59,6 +70,9 @@ export function generateTableHTML(
 		html += `<tr class="fsrs-table-row" data-file-path="${card.filePath}">`;
 
 		for (const column of params.columns) {
+			console.debug(
+				`[FSRS] Генерация ячейки для поля: ${column.field}, карточка: ${card.filePath}`,
+			);
 			const value = formatFieldValue(
 				column.field,
 				card,
