@@ -6,6 +6,9 @@
 // Типы режимов отображения
 export type TableMode = "due" | "all";
 
+// Направление сортировки
+export type SortDirection = "ASC" | "DESC";
+
 // Определение колонки таблицы
 export interface TableColumn {
 	field: string; // идентификатор поля
@@ -13,11 +16,18 @@ export interface TableColumn {
 	width?: string; // ширина колонки (опционально)
 }
 
+// Параметры сортировки
+export interface SortParam {
+	field: string; // поле для сортировки
+	direction: SortDirection; // направление сортировки
+}
+
 // Параметры таблицы
 export interface TableParams {
 	mode: TableMode;
 	columns: TableColumn[];
 	limit: number; // 0 означает "использовать значение из настроек"
+	sort?: SortParam; // параметры сортировки (опционально)
 }
 
 // Доступные поля для отображения в таблице
@@ -86,6 +96,22 @@ export function parseTableParams(source: string): TableParams {
 			} else {
 				console.warn(
 					`Некорректный лимит: ${limitMatch[1]}. Лимит не применён.`,
+				);
+			}
+			continue;
+		}
+
+		// Парсинг sort
+		const sortMatch = line.match(/^\s*sort\s*:\s*(\w+)\s+(ASC|DESC)\s*$/i);
+		if (sortMatch && sortMatch[1] && sortMatch[2]) {
+			const field = sortMatch[1].toLowerCase();
+			const direction = sortMatch[2].toUpperCase() as SortDirection;
+
+			if (AVAILABLE_FIELDS.has(field)) {
+				params.sort = { field, direction };
+			} else {
+				console.warn(
+					`Неизвестное поле для сортировки: ${field}. Параметр сортировки проигнорирован.`,
 				);
 			}
 			continue;

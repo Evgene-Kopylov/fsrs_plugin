@@ -130,7 +130,7 @@ export async function generateTableHTMLFromCards(
 	const cardsWithState = await filterAndSortCards(
 		cards,
 		settings,
-		params.mode,
+		params,
 		now,
 	);
 
