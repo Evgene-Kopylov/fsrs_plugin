@@ -6,6 +6,7 @@ import {
 	generateTableHTMLFromCards,
 	generateEmptyTableHTML,
 } from "../utils/fsrs-table-helpers";
+import { FsrsHelpModal } from "./fsrs-help-modal";
 
 /**
  * Класс для динамического рендеринга универсального блока fsrs-table
@@ -221,6 +222,17 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 				}
 			});
 		});
+
+		// Обработчик для кнопки помощи
+		this.container
+			.querySelectorAll(".fsrs-help-toggle")
+			.forEach((button) => {
+				button.addEventListener("click", (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					this.showHelpModal();
+				});
+			});
 	}
 
 	/**
@@ -274,5 +286,13 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	 */
 	getMode(): TableMode {
 		return this.params.mode;
+	}
+
+	/**
+	 * Показывает модальное окно со справкой по синтаксису
+	 */
+	private showHelpModal() {
+		const modal = new FsrsHelpModal(this.plugin.app);
+		modal.show();
 	}
 }

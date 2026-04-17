@@ -136,11 +136,20 @@
 	color: var(--text-muted);
 }
 
-.fsrs-info-icon {
-	color: var(--text-faint) !important; /* Очень бледный цвет темы */
-	opacity: 0.4; /* Дополнительная прозрачность */
-	font-size: 0.85em;
-	cursor: help;
-	margin-left: 4px;
-	font-weight: normal;
+.fsrs-help-toggle {
+	/* Отодвигаем от края на 2.5 ширины буквы 'M' текущего шрифта */
+	margin-right: 2.5em;
+
+	/* Делаем максимально бледным */
+	color: var(--text-faint) !important;
+	opacity: 0.5;
+
+	/* Уменьшаем размер относительно родительского текста */
+	font-size: 0.75em;
+	transition: opacity 0.3s ease;
+}
+
+.fsrs-help-toggle:hover {
+	opacity: 0.7;
+	color: var(--text-muted) !important;
 }

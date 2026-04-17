@@ -38,7 +38,9 @@ export function generateTableHTML(
 
 	html += `<h4 class="fsrs-table-header">
 		<span class="fsrs-header-text">${modeTitle}: ${totalCards}</span>
-		<span class="fsrs-info-icon" title="Режим: ${params.mode}. Данные обновлены: ${formattedNow}">(?)</span>
+		<button type="button" class="fsrs-help-toggle" title="Показать справку по синтаксису">
+			?
+		</button>
 	</h4>`;
 
 	// Таблица
@@ -132,7 +134,7 @@ function getModeTitle(mode: TableMode): string {
 		case "due":
 			return "Карточек для повторения";
 		case "future":
-			return "Карточек на будущее";
+			return "Карточки на будущее";
 		case "all":
 			return "Всех карточек";
 		default:
