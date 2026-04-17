@@ -178,8 +178,16 @@ function applyCustomSort(
 	now: Date,
 ): CardWithState[] {
 	return cards.slice().sort((a, b) => {
-		const aValue = getFieldValue(a, sort.field, now);
-		const bValue = getFieldValue(b, sort.field, now);
+		const aValue: string | number | Date = getFieldValue(
+			a,
+			sort.field,
+			now,
+		);
+		const bValue: string | number | Date = getFieldValue(
+			b,
+			sort.field,
+			now,
+		);
 
 		// Определяем порядок сортировки
 		let comparison = 0;
@@ -210,13 +218,17 @@ function applyCustomSort(
  * @param now Текущее время для вычисления overdue
  * @returns Значение поля
  */
-function getFieldValue(item: CardWithState, field: string, now: Date): any {
+function getFieldValue(
+	item: CardWithState,
+	field: string,
+	now: Date,
+): string | number | Date {
 	switch (field) {
 		case "file":
 			return item.card.filePath || "";
 		case "reps":
 			return item.state.reps || 0;
-		case "overdue":
+		case "overdue": {
 			// Вычисляем дни просрочки
 			const dueDate = new Date(item.state.due || 0);
 			const overdueMs = now.getTime() - dueDate.getTime();
@@ -225,6 +237,7 @@ function getFieldValue(item: CardWithState, field: string, now: Date): any {
 				Math.floor(overdueMs / (1000 * 60 * 60 * 24)),
 			);
 			return overdueDays;
+		}
 		case "stability":
 			return item.state.stability || 0;
 		case "difficulty":

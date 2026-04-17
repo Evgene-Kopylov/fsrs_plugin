@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Notice, EventRef } from "obsidian";
+import { MarkdownRenderChild, Notice, EventRef, Editor } from "obsidian";
 import type FsrsPlugin from "../main";
 import type { TableParams, TableMode } from "../utils/fsrs-table-helpers";
 import {
@@ -228,7 +228,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 					e.stopPropagation();
 					const field = (button as HTMLElement).dataset.field;
 					if (field) {
-						this.handleSortClick(field);
+						void this.handleSortClick(field);
 					}
 				});
 			});
@@ -415,7 +415,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	/**
 	 * Получает содержимое блока из редактора по сохраненным позициям
 	 */
-	private getBlockContentFromEditor(editor: any): string | null {
+	private getBlockContentFromEditor(editor: Editor): string | null {
 		try {
 			const lines: string[] = [];
 			for (let i = this.sourceStart; i <= this.sourceEnd; i++) {

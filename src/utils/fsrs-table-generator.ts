@@ -5,7 +5,7 @@
 
 import type { App } from "obsidian";
 import type { ModernFSRSCard, FSRSSettings } from "../interfaces/fsrs";
-import type { TableParams, TableMode, SortParam } from "./fsrs-table-params";
+import type { TableParams, TableMode } from "./fsrs-table-params";
 import type { CardWithState } from "./fsrs-table-filter";
 
 import { formatFieldValue } from "./fsrs-table-format";
