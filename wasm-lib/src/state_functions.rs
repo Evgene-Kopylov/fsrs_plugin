@@ -1,13 +1,15 @@
 // Модуль для функций работы с состоянием карточек FSRS
 
-use rs_fsrs::{FSRS, Rating};
 use chrono::{DateTime, Utc};
+use rs_fsrs::{FSRS, Rating};
 use serde::Serialize;
 
-use crate::types::ComputedState;
 use crate::conversion::{create_fsrs_parameters, state_to_string};
 use crate::fsrs_logic::create_card_from_last_session;
-use crate::json_parsing::{parse_card_from_json, parse_parameters_from_json, parse_datetime_flexible};
+use crate::json_parsing::{
+    parse_card_from_json, parse_datetime_flexible, parse_parameters_from_json,
+};
+use crate::types::ComputedState;
 
 /// Вычисляет текущее состояние карточки
 pub fn compute_current_state(
@@ -35,30 +37,30 @@ pub fn compute_current_state(
 
     // Если есть последняя сессия, обновляем elapsed_days
     if let Some(last_session) = last_session
-        && let Some(last_date) = parse_datetime_flexible(&last_session.date) {
-            let elapsed_days = (now - last_date).num_days().max(0) as i64;
-            fsrs_card.elapsed_days = elapsed_days;
-            fsrs_card.last_review = last_date;
+        && let Some(last_date) = parse_datetime_flexible(&last_session.date)
+    {
+        let elapsed_days = (now - last_date).num_days().max(0) as i64;
+        fsrs_card.elapsed_days = elapsed_days;
+        fsrs_card.last_review = last_date;
 
-            // Рассчитываем извлекаемость
-            let retrievability = fsrs_card.get_retrievability(now);
+        // Рассчитываем извлекаемость
+        let retrievability = fsrs_card.get_retrievability(now);
 
-            // Создаем вычисляемое состояние
-            let computed_state = ComputedState {
-                due: fsrs_card.due.to_rfc3339(),
-                stability: fsrs_card.stability,
-                difficulty: fsrs_card.difficulty,
-                state: state_to_string(fsrs_card.state),
-                elapsed_days: fsrs_card.elapsed_days as u64,
-                scheduled_days: fsrs_card.scheduled_days as u64,
-                reps: fsrs_card.reps as u64,
-                lapses: fsrs_card.lapses as u64,
-                retrievability,
-            };
+        // Создаем вычисляемое состояние
+        let computed_state = ComputedState {
+            due: fsrs_card.due.to_rfc3339(),
+            stability: fsrs_card.stability,
+            difficulty: fsrs_card.difficulty,
+            state: state_to_string(fsrs_card.state),
+            elapsed_days: fsrs_card.elapsed_days as u64,
+            scheduled_days: fsrs_card.scheduled_days as u64,
+            reps: fsrs_card.reps as u64,
+            lapses: fsrs_card.lapses as u64,
+            retrievability,
+        };
 
-            return serde_json::to_string(&computed_state)
-                .unwrap_or_else(|_| "{}".to_string());
-        }
+        return serde_json::to_string(&computed_state).unwrap_or_else(|_| "{}".to_string());
+    }
 
     // Если нет сессий, возвращаем дефолтное состояние
     let computed_state = ComputedState {
@@ -73,8 +75,7 @@ pub fn compute_current_state(
         retrievability: 1.0,
     };
 
-    serde_json::to_string(&computed_state)
-        .unwrap_or_else(|_| "{}".to_string())
+    serde_json::to_string(&computed_state).unwrap_or_else(|_| "{}".to_string())
 }
 
 /// Проверяет, готова ли карточка к повторению
@@ -95,32 +96,27 @@ pub fn is_card_due(
     );
 
     // Парсим состояние
-    let state: ComputedState = serde_json::from_str(&state_json)
-        .unwrap_or_else(|_| {
-            ComputedState {
-                due: Utc::now().to_rfc3339(),
-                stability: 0.0,
-                difficulty: 0.0,
-                state: "New".to_string(),
-                elapsed_days: 0,
-                scheduled_days: 0,
-                reps: 0,
-                lapses: 0,
-                retrievability: 1.0,
-            }
+    let state: ComputedState =
+        serde_json::from_str(&state_json).unwrap_or_else(|_| ComputedState {
+            due: Utc::now().to_rfc3339(),
+            stability: 0.0,
+            difficulty: 0.0,
+            state: "New".to_string(),
+            elapsed_days: 0,
+            scheduled_days: 0,
+            reps: 0,
+            lapses: 0,
+            retrievability: 1.0,
         });
 
     // Проверяем, просрочена ли карточка
-    let due_date: DateTime<Utc> = parse_datetime_flexible(&state.due)
-        .unwrap_or_else(Utc::now);
-    let now: DateTime<Utc> = parse_datetime_flexible(&now_str)
-        .unwrap_or_else(Utc::now);
+    let due_date: DateTime<Utc> = parse_datetime_flexible(&state.due).unwrap_or_else(Utc::now);
+    let now: DateTime<Utc> = parse_datetime_flexible(&now_str).unwrap_or_else(Utc::now);
 
     let is_due = due_date <= now;
 
     // Возвращаем результат в формате JSON
-    serde_json::to_string(&is_due)
-        .unwrap_or_else(|_| "false".to_string())
+    serde_json::to_string(&is_due).unwrap_or_else(|_| "false".to_string())
 }
 
 /// Получает извлекаемость (retrievability) карточки
@@ -141,24 +137,21 @@ pub fn get_retrievability(
     );
 
     // Парсим состояние
-    let state: ComputedState = serde_json::from_str(&state_json)
-        .unwrap_or_else(|_| {
-            ComputedState {
-                due: Utc::now().to_rfc3339(),
-                stability: 0.0,
-                difficulty: 0.0,
-                state: "New".to_string(),
-                elapsed_days: 0,
-                scheduled_days: 0,
-                reps: 0,
-                lapses: 0,
-                retrievability: 1.0,
-            }
+    let state: ComputedState =
+        serde_json::from_str(&state_json).unwrap_or_else(|_| ComputedState {
+            due: Utc::now().to_rfc3339(),
+            stability: 0.0,
+            difficulty: 0.0,
+            state: "New".to_string(),
+            elapsed_days: 0,
+            scheduled_days: 0,
+            reps: 0,
+            lapses: 0,
+            retrievability: 1.0,
         });
 
     // Возвращаем извлекаемость в формате JSON
-    serde_json::to_string(&state.retrievability)
-        .unwrap_or_else(|_| "1.0".to_string())
+    serde_json::to_string(&state.retrievability).unwrap_or_else(|_| "1.0".to_string())
 }
 
 /// Структура для следующих дат повторения
@@ -223,8 +216,7 @@ pub fn get_next_review_dates(
     }
 
     // Возвращаем результат в формате JSON
-    serde_json::to_string(&result)
-        .unwrap_or_else(|_| "{}".to_string())
+    serde_json::to_string(&result).unwrap_or_else(|_| "{}".to_string())
 }
 
 #[cfg(test)]
@@ -253,7 +245,8 @@ mod tests {
                     "difficulty": 3.0
                 }
             ]
-        }"#.to_string()
+        }"#
+        .to_string()
     }
 
     #[test]
@@ -346,7 +339,8 @@ mod tests {
                     "difficulty": 3.0
                 }
             ]
-        }"#.to_string();
+        }"#
+        .to_string();
 
         let now = "2025-01-02T10:00:00Z".to_string(); // Через 1 день после последнего повторения
         let params_json = create_test_parameters_json();
@@ -374,7 +368,11 @@ mod tests {
         assert!(parsed_result.is_ok());
         let is_due = parsed_result.unwrap();
         // Карточка не должна быть готова к повторению (ещё 1 день до due)
-        assert!(!is_due, "Карточка не должна быть готова к повторению, но is_due = {}", is_due);
+        assert!(
+            !is_due,
+            "Карточка не должна быть готова к повторению, но is_due = {}",
+            is_due
+        );
     }
 
     #[test]

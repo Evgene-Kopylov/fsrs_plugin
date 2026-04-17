@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 /// Сессия повторения карточки
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReviewSession {
-    pub date: String,        // ISO 8601 строка
-    pub rating: String,      // "Again", "Hard", "Good", "Easy"
+    pub date: String,   // ISO 8601 строка
+    pub rating: String, // "Again", "Hard", "Good", "Easy"
     pub stability: f64,
     pub difficulty: f64,
 }
@@ -20,8 +20,6 @@ pub struct ModernFsrsCard {
     pub file_path: Option<String>, // путь к файлу в хранилище Obsidian
 }
 
-
-
 /// Параметры алгоритма FSRS из настроек плагина
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FsrsParameters {
@@ -33,10 +31,10 @@ pub struct FsrsParameters {
 /// Результат вычисления текущего состояния
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComputedState {
-    pub due: String,           // следующая дата повторения (ISO 8601)
+    pub due: String, // следующая дата повторения (ISO 8601)
     pub stability: f64,
     pub difficulty: f64,
-    pub state: String,         // "New", "Learning", "Review", "Relearning"
+    pub state: String, // "New", "Learning", "Review", "Relearning"
     pub elapsed_days: u64,
     pub scheduled_days: u64,
     pub reps: u64,

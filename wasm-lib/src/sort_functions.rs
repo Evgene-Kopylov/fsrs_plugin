@@ -1,22 +1,18 @@
-
-use serde::{Deserialize, Serialize};
 use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
-
-use crate::types::{ModernFsrsCard, FsrsParameters};
-use crate::json_parsing::{parse_parameters_from_json, parse_datetime_flexible};
+use crate::json_parsing::{parse_datetime_flexible, parse_parameters_from_json};
 use crate::state_functions::compute_current_state;
-
-
+use crate::types::{FsrsParameters, ModernFsrsCard};
 
 /// Вспомогательная структура для результатов вычислений
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct ComputedCardResult {
     card: ModernFsrsCard,
-    due: String,           // ISO 8601 строка
+    due: String, // ISO 8601 строка
     stability: f64,
     difficulty: f64,
-    state: String,         // "New", "Learning", "Review", "Relearning"
+    state: String, // "New", "Learning", "Review", "Relearning"
     elapsed_days: u64,
     scheduled_days: u64,
     reps: u64,
@@ -33,11 +29,14 @@ fn compute_cards_states(
     default_stability: f64,
     default_difficulty: f64,
 ) -> Vec<ComputedCardResult> {
-    let parameters_json = serde_json::to_string(parameters)
-        .unwrap_or_else(|_| r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": true}"#.to_string());
+    let parameters_json = serde_json::to_string(parameters).unwrap_or_else(|_| {
+        r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": true}"#
+            .to_string()
+    });
     let now_str = now.to_rfc3339();
 
-    cards.into_iter()
+    cards
+        .into_iter()
         .filter_map(|card| {
             let card_json = serde_json::to_string(&card).ok()?;
 
@@ -85,7 +84,11 @@ fn compute_cards_states(
 }
 
 /// Рассчитывает оценку приоритета карточки
-fn calculate_priority_score(due_date: DateTime<Utc>, retrievability: f64, now: DateTime<Utc>) -> f64 {
+fn calculate_priority_score(
+    due_date: DateTime<Utc>,
+    retrievability: f64,
+    now: DateTime<Utc>,
+) -> f64 {
     // Приоритет: сначала просроченные, затем по извлекаемости (меньше = выше приоритет)
     let is_overdue = due_date <= now;
     let priority_base = if is_overdue { 0.0 } else { 1.0 };
@@ -129,17 +132,23 @@ fn filter_cards_for_review_internal(
 
     // Извлекаем параметры из настроек
     let parameters = parse_parameters_from_json(
-        settings.get("parameters")
+        settings
+            .get("parameters")
             .and_then(|p| serde_json::to_string(p).ok())
-            .unwrap_or_else(|| r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": true}"#.to_string())
-            .as_str()
+            .unwrap_or_else(|| {
+                r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": true}"#
+                    .to_string()
+            })
+            .as_str(),
     );
 
-    let default_stability = settings.get("default_initial_stability")
+    let default_stability = settings
+        .get("default_initial_stability")
         .and_then(|v| v.as_f64())
         .unwrap_or(0.0);
 
-    let default_difficulty = settings.get("default_initial_difficulty")
+    let default_difficulty = settings
+        .get("default_initial_difficulty")
         .and_then(|v| v.as_f64())
         .unwrap_or(0.0);
 
@@ -205,17 +214,23 @@ fn sort_cards_by_priority_internal(
 
     // Извлекаем параметры из настроек
     let parameters = parse_parameters_from_json(
-        settings.get("parameters")
+        settings
+            .get("parameters")
             .and_then(|p| serde_json::to_string(p).ok())
-            .unwrap_or_else(|| r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": true}"#.to_string())
-            .as_str()
+            .unwrap_or_else(|| {
+                r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": true}"#
+                    .to_string()
+            })
+            .as_str(),
     );
 
-    let default_stability = settings.get("default_initial_stability")
+    let default_stability = settings
+        .get("default_initial_stability")
         .and_then(|v| v.as_f64())
         .unwrap_or(0.0);
 
-    let default_difficulty = settings.get("default_initial_difficulty")
+    let default_difficulty = settings
+        .get("default_initial_difficulty")
         .and_then(|v| v.as_f64())
         .unwrap_or(0.0);
 
@@ -230,7 +245,8 @@ fn sort_cards_by_priority_internal(
 
     // Сортируем по оценке приоритета (меньше = выше приоритет)
     computed_cards.sort_by(|a, b| {
-        a.priority_score.partial_cmp(&b.priority_score)
+        a.priority_score
+            .partial_cmp(&b.priority_score)
             .unwrap_or(std::cmp::Ordering::Equal)
     });
 
@@ -241,11 +257,7 @@ fn sort_cards_by_priority_internal(
 }
 
 /// Группирует карточки по состоянию
-pub fn group_cards_by_state(
-    cards_json: String,
-    settings_json: String,
-    now_iso: String,
-) -> String {
+pub fn group_cards_by_state(cards_json: String, settings_json: String, now_iso: String) -> String {
     let result = group_cards_by_state_internal(cards_json, settings_json, now_iso);
     serde_json::to_string(&result).unwrap_or_else(|_| "{}".to_string())
 }
@@ -291,17 +303,23 @@ fn group_cards_by_state_internal(
 
     // Извлекаем параметры из настроек
     let parameters = parse_parameters_from_json(
-        settings.get("parameters")
+        settings
+            .get("parameters")
             .and_then(|p| serde_json::to_string(p).ok())
-            .unwrap_or_else(|| r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": true}"#.to_string())
-            .as_str()
+            .unwrap_or_else(|| {
+                r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": true}"#
+                    .to_string()
+            })
+            .as_str(),
     );
 
-    let default_stability = settings.get("default_initial_stability")
+    let default_stability = settings
+        .get("default_initial_stability")
         .and_then(|v| v.as_f64())
         .unwrap_or(0.0);
 
-    let default_difficulty = settings.get("default_initial_difficulty")
+    let default_difficulty = settings
+        .get("default_initial_difficulty")
         .and_then(|v| v.as_f64())
         .unwrap_or(0.0);
 
@@ -339,7 +357,10 @@ fn group_cards_by_state_internal(
 /// Функции для работы со временем
 /// Рассчитывает время просрочки карточки в часах
 pub fn get_overdue_hours(due_iso: String, now_iso: String) -> String {
-    let result = match (parse_datetime_flexible(&due_iso), parse_datetime_flexible(&now_iso)) {
+    let result = match (
+        parse_datetime_flexible(&due_iso),
+        parse_datetime_flexible(&now_iso),
+    ) {
         (Some(due_date), Some(now)) => {
             let diff_ms = now.timestamp_millis() - due_date.timestamp_millis();
 
@@ -354,7 +375,10 @@ pub fn get_overdue_hours(due_iso: String, now_iso: String) -> String {
 /// Рассчитывает оставшееся время до повторения карточки в часах
 /// Возвращает отрицательное значение если карточка просрочена
 pub fn get_hours_until_due(due_iso: String, now_iso: String) -> String {
-    let result = match (parse_datetime_flexible(&due_iso), parse_datetime_flexible(&now_iso)) {
+    let result = match (
+        parse_datetime_flexible(&due_iso),
+        parse_datetime_flexible(&now_iso),
+    ) {
         (Some(due_date), Some(now)) => {
             let diff_ms = due_date.timestamp_millis() - now.timestamp_millis();
             diff_ms as f64 / (1000.0 * 60.0 * 60.0)
@@ -367,7 +391,10 @@ pub fn get_hours_until_due(due_iso: String, now_iso: String) -> String {
 
 /// Проверяет, просрочена ли карточка
 pub fn is_card_overdue(due_iso: String, now_iso: String) -> String {
-    let result = match (parse_datetime_flexible(&due_iso), parse_datetime_flexible(&now_iso)) {
+    let result = match (
+        parse_datetime_flexible(&due_iso),
+        parse_datetime_flexible(&now_iso),
+    ) {
         (Some(due_date), Some(now)) => due_date <= now,
         _ => false,
     };
@@ -377,7 +404,10 @@ pub fn is_card_overdue(due_iso: String, now_iso: String) -> String {
 
 /// Рассчитывает возраст карточки в днях (от первого повторения или создания)
 pub fn get_card_age_days(card_json: String, now_iso: String) -> String {
-    let result = match (serde_json::from_str::<ModernFsrsCard>(&card_json), parse_datetime_flexible(&now_iso)) {
+    let result = match (
+        serde_json::from_str::<ModernFsrsCard>(&card_json),
+        parse_datetime_flexible(&now_iso),
+    ) {
         (Ok(card), Some(now)) => {
             if card.reviews.is_empty() {
                 0.0 // Новая карточка
@@ -385,7 +415,9 @@ pub fn get_card_age_days(card_json: String, now_iso: String) -> String {
                 match parse_datetime_flexible(&card.reviews[0].date) {
                     Some(first_review_date) => {
                         let diff_ms = now.timestamp_millis() - first_review_date.timestamp_millis();
-                        (diff_ms as f64 / (1000.0 * 60.0 * 60.0 * 24.0)).floor().max(0.0)
+                        (diff_ms as f64 / (1000.0 * 60.0 * 60.0 * 24.0))
+                            .floor()
+                            .max(0.0)
                     }
                     None => 0.0,
                 }

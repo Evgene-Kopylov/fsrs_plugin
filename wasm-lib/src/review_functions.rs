@@ -1,12 +1,14 @@
 // Модуль для функций обработки повторения карточек FSRS
 
-use rs_fsrs::FSRS;
 use chrono::Utc;
+use rs_fsrs::FSRS;
 
-use crate::types::{ModernFsrsCard, ReviewSession};
-use crate::conversion::{rating_from_str, rating_to_string, create_fsrs_parameters};
+use crate::conversion::{create_fsrs_parameters, rating_from_str, rating_to_string};
 use crate::fsrs_logic::create_card_from_last_session;
-use crate::json_parsing::{parse_card_from_json, parse_parameters_from_json, parse_datetime_flexible};
+use crate::json_parsing::{
+    parse_card_from_json, parse_datetime_flexible, parse_parameters_from_json,
+};
+use crate::types::{ModernFsrsCard, ReviewSession};
 
 /// Обновляет карточку FSRS на основе оценки
 pub fn review_card(
@@ -33,10 +35,11 @@ pub fn review_card(
 
     // Обновляем elapsed_days на основе последней сессии
     if let Some(last_session) = card.reviews.last()
-        && let Some(last_date) = parse_datetime_flexible(&last_session.date) {
-            let elapsed_days = (now - last_date).num_days().max(0) as i64;
-            fsrs_card.elapsed_days = elapsed_days;
-        }
+        && let Some(last_date) = parse_datetime_flexible(&last_session.date)
+    {
+        let elapsed_days = (now - last_date).num_days().max(0) as i64;
+        fsrs_card.elapsed_days = elapsed_days;
+    }
 
     // Применяем алгоритм FSRS
     let fsrs_params = create_fsrs_parameters(&parameters);
@@ -55,8 +58,7 @@ pub fn review_card(
     card.reviews.push(new_session);
 
     // Возвращаем обновленную карточку в формате JSON
-    serde_json::to_string(&card)
-        .unwrap_or_else(|_| r#"{"reviews": []}"#.to_string())
+    serde_json::to_string(&card).unwrap_or_else(|_| r#"{"reviews": []}"#.to_string())
 }
 
 /// Получает YAML строку после повторения карточки
@@ -79,24 +81,21 @@ pub fn get_fsrs_yaml_after_review(
     );
 
     // Парсим обновленную карточку
-    let card: ModernFsrsCard = serde_json::from_str(&updated_card_json)
-        .unwrap_or_else(|_| {
-            ModernFsrsCard {
-                reviews: Vec::new(),
-                file_path: None,
-            }
+    let card: ModernFsrsCard =
+        serde_json::from_str(&updated_card_json).unwrap_or_else(|_| ModernFsrsCard {
+            reviews: Vec::new(),
+            file_path: None,
         });
 
     // Сериализуем в YAML
-    serde_yaml::to_string(&card)
-        .unwrap_or_else(|_| "reviews: []".to_string())
+    serde_yaml::to_string(&card).unwrap_or_else(|_| "reviews: []".to_string())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json;
     use chrono::{DateTime, Utc};
+    use serde_json;
 
     fn create_test_parameters_json() -> String {
         r#"{"request_retention": 0.9, "maximum_interval": 365.0, "enable_fuzz": false}"#.to_string()
@@ -116,7 +115,8 @@ mod tests {
                     "difficulty": 3.0
                 }
             ]
-        }"#.to_string()
+        }"#
+        .to_string()
     }
 
     #[test]
@@ -215,7 +215,11 @@ mod tests {
             );
 
             let parsed_result: Result<ModernFsrsCard, _> = serde_json::from_str(&result);
-            assert!(parsed_result.is_ok(), "Failed to parse result for rating: {}", rating_str);
+            assert!(
+                parsed_result.is_ok(),
+                "Failed to parse result for rating: {}",
+                rating_str
+            );
 
             let card = parsed_result.unwrap();
             assert_eq!(card.reviews.len(), 1);
@@ -305,7 +309,11 @@ mod tests {
 
         // Пробуем парсить YAML обратно
         let parsed_yaml: Result<ModernFsrsCard, _> = serde_yaml::from_str(&yaml_result);
-        assert!(parsed_yaml.is_ok(), "Invalid YAML generated: {}", yaml_result);
+        assert!(
+            parsed_yaml.is_ok(),
+            "Invalid YAML generated: {}",
+            yaml_result
+        );
 
         let card = parsed_yaml.unwrap();
         assert_eq!(card.reviews.len(), 1);
@@ -335,7 +343,8 @@ mod tests {
 
         // Должно быть два элемента в массиве reviews
         let yaml_lines: Vec<&str> = yaml_result.lines().collect();
-        let review_lines: Vec<&str> = yaml_lines.iter()
+        let review_lines: Vec<&str> = yaml_lines
+            .iter()
             .filter(|line| line.trim().starts_with("- date:"))
             .copied()
             .collect();
@@ -363,7 +372,8 @@ mod tests {
                     "difficulty": 3.0
                 }
             ]
-        }"#.to_string();
+        }"#
+        .to_string();
 
         let rating = "Good".to_string();
         let now = "2025-01-03T14:00:00Z".to_string(); // 2 дня спустя
@@ -395,9 +405,18 @@ mod tests {
     #[test]
     fn test_review_card_parameter_variations() {
         let test_cases = vec![
-            (r#"{"request_retention": 0.85, "maximum_interval": 100.0, "enable_fuzz": false}"#, "Different retention"),
-            (r#"{"request_retention": 0.9, "maximum_interval": 1000.0, "enable_fuzz": true}"#, "With fuzz enabled"),
-            (r#"{"request_retention": 0.95, "maximum_interval": 36500.0, "enable_fuzz": false}"#, "High retention"),
+            (
+                r#"{"request_retention": 0.85, "maximum_interval": 100.0, "enable_fuzz": false}"#,
+                "Different retention",
+            ),
+            (
+                r#"{"request_retention": 0.9, "maximum_interval": 1000.0, "enable_fuzz": true}"#,
+                "With fuzz enabled",
+            ),
+            (
+                r#"{"request_retention": 0.95, "maximum_interval": 36500.0, "enable_fuzz": false}"#,
+                "High retention",
+            ),
         ];
 
         for (params_json, description) in test_cases {
@@ -421,7 +440,11 @@ mod tests {
 
             let card = parsed_result.unwrap();
             assert_eq!(card.reviews.len(), 1, "Failed for case: {}", description);
-            assert_eq!(card.reviews[0].rating, "Good", "Failed for case: {}", description);
+            assert_eq!(
+                card.reviews[0].rating, "Good",
+                "Failed for case: {}",
+                description
+            );
         }
     }
 }

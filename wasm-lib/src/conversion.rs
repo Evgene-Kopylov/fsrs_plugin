@@ -130,12 +130,20 @@ mod tests {
     #[test]
     fn test_state_conversion_consistency() {
         // Проверяем, что каждое состояние имеет уникальное строковое представление
-        let states = vec![State::New, State::Learning, State::Review, State::Relearning];
+        let states = vec![
+            State::New,
+            State::Learning,
+            State::Review,
+            State::Relearning,
+        ];
         let mut seen_strings = std::collections::HashSet::new();
 
         for state in states {
             let string_repr = state_to_string(state);
-            assert!(!seen_strings.contains(&string_repr), "Duplicate string representation for state");
+            assert!(
+                !seen_strings.contains(&string_repr),
+                "Duplicate string representation for state"
+            );
             seen_strings.insert(string_repr);
         }
     }

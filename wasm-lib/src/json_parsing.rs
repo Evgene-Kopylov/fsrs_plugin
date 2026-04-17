@@ -1,8 +1,8 @@
 // Модуль для парсинга JSON и обработки ошибок
 
-use crate::types::{ModernFsrsCard, FsrsParameters};
+use crate::types::{FsrsParameters, ModernFsrsCard};
 use chrono::{DateTime, Utc};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 /// Результат парсинга с информацией об ошибке
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -15,27 +15,25 @@ pub struct ParseResult<T> {
 
 /// Парсит карточку из JSON строки
 pub fn parse_card_from_json(card_json: &str) -> ModernFsrsCard {
-    serde_json::from_str(card_json)
-        .unwrap_or_else(|_| {
-            // Дефолтная карточка при ошибке парсинга
-            ModernFsrsCard {
-                reviews: Vec::new(),
-                file_path: None,
-            }
-        })
+    serde_json::from_str(card_json).unwrap_or_else(|_| {
+        // Дефолтная карточка при ошибке парсинга
+        ModernFsrsCard {
+            reviews: Vec::new(),
+            file_path: None,
+        }
+    })
 }
 
 /// Парсит параметры алгоритма из JSON строки
 pub fn parse_parameters_from_json(parameters_json: &str) -> FsrsParameters {
-    serde_json::from_str(parameters_json)
-        .unwrap_or({
-            // Дефолтные параметры
-            FsrsParameters {
-                request_retention: 0.9,
-                maximum_interval: 36500.0,
-                enable_fuzz: true,
-            }
-        })
+    serde_json::from_str(parameters_json).unwrap_or({
+        // Дефолтные параметры
+        FsrsParameters {
+            request_retention: 0.9,
+            maximum_interval: 36500.0,
+            enable_fuzz: true,
+        }
+    })
 }
 
 /// Парсит дату из строки ISO 8601
@@ -86,14 +84,15 @@ pub fn parse_datetime_flexible(date_str: &str) -> Option<DateTime<Utc>> {
 
 /// Преобразует карточку в JSON строку
 pub fn card_to_json(card: &ModernFsrsCard) -> String {
-    serde_json::to_string(card)
-        .unwrap_or_else(|_| r#"{"reviews": []}"#.to_string())
+    serde_json::to_string(card).unwrap_or_else(|_| r#"{"reviews": []}"#.to_string())
 }
 
 /// Преобразует параметры в JSON строку
 pub fn parameters_to_json(parameters: &FsrsParameters) -> String {
-    serde_json::to_string(parameters)
-        .unwrap_or_else(|_| r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": true}"#.to_string())
+    serde_json::to_string(parameters).unwrap_or_else(|_| {
+        r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": true}"#
+            .to_string()
+    })
 }
 
 /// Создает карточку с дефолтными значениями
@@ -151,8 +150,7 @@ pub fn parse_parameters_with_error_info(parameters_json: &str) -> ParseResult<Fs
 pub fn get_fsrs_yaml() -> String {
     use serde_yaml;
     let card = create_default_card();
-    serde_yaml::to_string(&card)
-        .unwrap_or_else(|_| "reviews: []".to_string())
+    serde_yaml::to_string(&card).unwrap_or_else(|_| "reviews: []".to_string())
 }
 
 /// Получает текущее время в формате ISO 8601
@@ -164,8 +162,8 @@ pub fn get_current_time() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{ModernFsrsCard, FsrsParameters, ReviewSession};
-    use chrono::{DateTime, Utc, TimeZone, Datelike, Timelike};
+    use crate::types::{FsrsParameters, ModernFsrsCard, ReviewSession};
+    use chrono::{DateTime, Datelike, TimeZone, Timelike, Utc};
 
     #[test]
     fn test_parse_card_from_json_valid() {
@@ -305,14 +303,12 @@ mod tests {
     #[test]
     fn test_card_to_json_and_back() {
         let original_card = ModernFsrsCard {
-            reviews: vec![
-                ReviewSession {
-                    date: "2025-01-01T10:00:00Z".to_string(),
-                    rating: "Good".to_string(),
-                    stability: 5.0,
-                    difficulty: 3.0,
-                }
-            ],
+            reviews: vec![ReviewSession {
+                date: "2025-01-01T10:00:00Z".to_string(),
+                rating: "Good".to_string(),
+                stability: 5.0,
+                difficulty: 3.0,
+            }],
             file_path: None,
         };
 
@@ -321,9 +317,18 @@ mod tests {
 
         assert_eq!(parsed_card.reviews.len(), original_card.reviews.len());
         assert_eq!(parsed_card.reviews[0].date, original_card.reviews[0].date);
-        assert_eq!(parsed_card.reviews[0].rating, original_card.reviews[0].rating);
-        assert_eq!(parsed_card.reviews[0].stability, original_card.reviews[0].stability);
-        assert_eq!(parsed_card.reviews[0].difficulty, original_card.reviews[0].difficulty);
+        assert_eq!(
+            parsed_card.reviews[0].rating,
+            original_card.reviews[0].rating
+        );
+        assert_eq!(
+            parsed_card.reviews[0].stability,
+            original_card.reviews[0].stability
+        );
+        assert_eq!(
+            parsed_card.reviews[0].difficulty,
+            original_card.reviews[0].difficulty
+        );
     }
 
     #[test]
@@ -337,8 +342,14 @@ mod tests {
         let json = parameters_to_json(&original_params);
         let parsed_params = parse_parameters_from_json(&json);
 
-        assert_eq!(parsed_params.request_retention, original_params.request_retention);
-        assert_eq!(parsed_params.maximum_interval, original_params.maximum_interval);
+        assert_eq!(
+            parsed_params.request_retention,
+            original_params.request_retention
+        );
+        assert_eq!(
+            parsed_params.maximum_interval,
+            original_params.maximum_interval
+        );
         assert_eq!(parsed_params.enable_fuzz, original_params.enable_fuzz);
     }
 
@@ -379,7 +390,8 @@ mod tests {
     #[test]
     fn test_parse_parameters_with_error_info() {
         // Тест валидных параметров
-        let valid_json = r#"{"request_retention": 0.8, "maximum_interval": 500.0, "enable_fuzz": true}"#;
+        let valid_json =
+            r#"{"request_retention": 0.8, "maximum_interval": 500.0, "enable_fuzz": true}"#;
         let valid_result = parse_parameters_with_error_info(valid_json);
         assert!(!valid_result.had_error);
         assert_eq!(valid_result.value.request_retention, 0.8);

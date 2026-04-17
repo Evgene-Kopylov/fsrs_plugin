@@ -1,7 +1,7 @@
 use crate::types::{FsrsParameters, ReviewSession};
 
-use rs_fsrs::{Card, State};
 use chrono::{DateTime, Utc};
+use rs_fsrs::{Card, State};
 
 /// Создает Card из истории reviews
 pub fn create_card_from_last_session(
@@ -27,8 +27,7 @@ pub fn create_card_from_last_session(
     } else {
         // Парсим дату последней сессии
         let last_session = reviews.last().unwrap();
-        let last_review: DateTime<Utc> = last_session.date.parse()
-            .unwrap_or_else(|_| Utc::now());
+        let last_review: DateTime<Utc> = last_session.date.parse().unwrap_or_else(|_| Utc::now());
 
         // Вычисляем reps и lapses на основе истории
         let mut reps = 0;
@@ -96,8 +95,6 @@ pub fn create_card_from_last_session(
     }
 }
 
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -111,7 +108,12 @@ mod tests {
         }
     }
 
-    fn create_test_review_session(date_str: &str, rating: &str, stability: f64, difficulty: f64) -> ReviewSession {
+    fn create_test_review_session(
+        date_str: &str,
+        rating: &str,
+        stability: f64,
+        difficulty: f64,
+    ) -> ReviewSession {
         ReviewSession {
             date: date_str.to_string(),
             rating: rating.to_string(),
@@ -126,7 +128,8 @@ mod tests {
         let default_stability = 2.5;
         let default_difficulty = 5.0;
 
-        let card = create_card_from_last_session(&[], default_stability, default_difficulty, &params);
+        let card =
+            create_card_from_last_session(&[], default_stability, default_difficulty, &params);
 
         assert_eq!(card.stability, default_stability);
         assert_eq!(card.difficulty, default_difficulty);
@@ -144,9 +147,12 @@ mod tests {
     #[test]
     fn test_create_card_from_last_session_with_single_review() {
         let params = create_test_parameters();
-        let reviews = vec![
-            create_test_review_session("2025-01-01T10:00:00Z", "Good", 5.0, 3.0)
-        ];
+        let reviews = vec![create_test_review_session(
+            "2025-01-01T10:00:00Z",
+            "Good",
+            5.0,
+            3.0,
+        )];
 
         let card = create_card_from_last_session(&reviews, 2.5, 5.0, &params);
 
@@ -186,9 +192,12 @@ mod tests {
     #[test]
     fn test_create_card_from_last_session_learning_state() {
         let params = create_test_parameters();
-        let reviews = vec![
-            create_test_review_session("2025-01-01T10:00:00Z", "Again", 0.8, 7.0),
-        ];
+        let reviews = vec![create_test_review_session(
+            "2025-01-01T10:00:00Z",
+            "Again",
+            0.8,
+            7.0,
+        )];
 
         let card = create_card_from_last_session(&reviews, 2.5, 5.0, &params);
 
@@ -199,14 +208,12 @@ mod tests {
     #[test]
     fn test_create_card_from_last_session_with_invalid_date() {
         let params = create_test_parameters();
-        let reviews = vec![
-            ReviewSession {
-                date: "invalid date".to_string(),
-                rating: "Good".to_string(),
-                stability: 5.0,
-                difficulty: 3.0,
-            }
-        ];
+        let reviews = vec![ReviewSession {
+            date: "invalid date".to_string(),
+            rating: "Good".to_string(),
+            stability: 5.0,
+            difficulty: 3.0,
+        }];
 
         // Не должно паниковать, должно использовать текущее время
         let card = create_card_from_last_session(&reviews, 2.5, 5.0, &params);
@@ -220,5 +227,4 @@ mod tests {
         // due должно быть позже last_review
         assert!(card.due > card.last_review);
     }
-
 }
