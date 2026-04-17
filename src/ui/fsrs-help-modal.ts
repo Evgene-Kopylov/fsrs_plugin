@@ -178,36 +178,6 @@ export class FsrsHelpModal extends Modal {
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
 			null as any,
 		);
-
-		// Кнопки действий
-		const buttonContainer = contentEl.createDiv({
-			cls: "fsrs-help-buttons",
-		});
-
-		// Создаём кнопку закрытия
-		const closeButton = buttonContainer.createEl("button", {
-			text: "Закрыть",
-			cls: "mod-cta",
-		});
-
-		closeButton.addEventListener("click", () => {
-			this.close();
-		});
-
-		// Фокус на кнопке закрытия для удобства навигации с клавиатуры
-		closeButton.focus();
-
-		// Обработка нажатия Escape для закрытия
-		const handleKeydown = (event: KeyboardEvent) => {
-			if (event.key === "Escape") {
-				this.close();
-			}
-		};
-
-		modalEl.addEventListener("keydown", handleKeydown);
-
-		// Сохраняем обработчик для удаления при закрытии
-		this.scope.register([], "keydown", handleKeydown);
 	}
 
 	/**
