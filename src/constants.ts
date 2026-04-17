@@ -45,25 +45,8 @@ export const DEFAULT_IGNORE_PATTERNS = [
 	"*.excalidraw.md",
 ];
 
-// Максимальное количество карточек для отображения в таблице
-export const MAX_CARDS_TO_SHOW = 30;
-
 // Время жизни кэша карточек в миллисекундах
 export const CARD_CACHE_TTL_MS = 5000;
-
-// Доступные поля для отображения в таблице
-export const AVAILABLE_FIELDS = new Set([
-	"file",
-	"reps",
-	"overdue",
-	"stability",
-	"difficulty",
-	"retrievability",
-	"due",
-	"state",
-	"elapsed",
-	"scheduled",
-]);
 
 // Колонки таблицы по умолчанию
 export const DEFAULT_COLUMNS: TableColumn[] = [
