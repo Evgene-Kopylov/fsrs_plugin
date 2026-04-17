@@ -8,6 +8,7 @@ import { ReviewButtonRenderer } from "./ui/review-button-renderer";
 import { FsrsTableRenderer } from "./ui/fsrs-table-renderer";
 import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings";
 import { FsrsSettingTab } from "./settings";
+import { CARD_CACHE_TTL_MS } from "./constants";
 import { base64ToBytes } from "./utils/fsrs-helper";
 import {
 	parseModernFsrsFromFrontmatter,
@@ -33,7 +34,7 @@ export default class FsrsPlugin extends Plugin {
 	// Кэш с TTL
 	private cachedCards: ModernFSRSCard[] | null = null;
 	private lastScanTime = 0;
-	private readonly cacheTTL = 5000; // вынести в константы
+
 	private isScanning = false;
 
 	/**
@@ -131,7 +132,7 @@ export default class FsrsPlugin extends Plugin {
 		const now = Date.now();
 		const cacheValid =
 			this.cachedCards !== null &&
-			now - this.lastScanTime < this.cacheTTL;
+			now - this.lastScanTime < CARD_CACHE_TTL_MS;
 
 		if (cacheValid) {
 			// Возвращаем ссылку на кэш (без копирования)
@@ -178,9 +179,11 @@ export default class FsrsPlugin extends Plugin {
 			}
 		}
 
-		console.log(`✅ Найдено карточек FSRS: ${cards.length}`);
+		console.debug(`✅ Найдено карточек FSRS: ${cards.length}`);
 		const elapsed = (performance.now() - start) / 1000;
-		console.log(`⏱️ Сканирование хранилища: ${elapsed.toFixed(2)} с`);
+		console.debug(
+			`⏱️ Сканирование всего хранилища: ${elapsed.toFixed(2)} с`,
+		);
 		return cards;
 	}
 

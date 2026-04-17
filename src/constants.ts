@@ -48,6 +48,9 @@ export const DEFAULT_IGNORE_PATTERNS = [
 // Максимальное количество карточек для отображения в таблице
 export const MAX_CARDS_TO_SHOW = 30;
 
+// Время жизни кэша карточек в миллисекундах
+export const CARD_CACHE_TTL_MS = 5000;
+
 // Доступные поля для отображения в таблице
 export const AVAILABLE_FIELDS = new Set([
 	"file",
