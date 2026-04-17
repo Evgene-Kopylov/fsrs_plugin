@@ -25,26 +25,14 @@ export const DEFAULT_SETTINGS: FsrsPluginSettings = {
 	default_initial_difficulty: 0.0,
 
 	// Настройки отображения
-	show_stability: true,
-	show_difficulty: true,
-	show_retrievability: true,
-	max_cards_to_show: 30,
+
 	auto_add_review_button: true,
 
-	// Настройки обновления
-	auto_refresh: true,
-	refresh_interval: 5, // 5 минут
-	minimum_review_interval_minutes: 40, // минимальный интервал для досрочного повторения
+	// Минимальный интервал для досрочного повторения
+	minimum_review_interval_minutes: 40,
 
-	// Настройки фильтрации
-	filter_by_folders: [],
-	filter_by_tags: [],
-	exclude_states: [],
+	// Паттерны игнорирования файлов и папок
 	ignore_patterns: [],
-
-	// Настройки уведомлений
-	show_notifications: true,
-	notification_threshold: 5,
 };
 
 export class FsrsSettingTab extends PluginSettingTab {
@@ -168,64 +156,6 @@ export class FsrsSettingTab extends PluginSettingTab {
 		// Настройки отображения
 		new Setting(containerEl).setName("Display").setHeading();
 
-		// show_stability
-		new Setting(containerEl)
-			.setName("Show stability")
-			.setDesc("Display stability values in card lists.")
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.show_stability)
-					.onChange(async (value) => {
-						this.plugin.settings.show_stability = value;
-						await this.plugin.saveSettings();
-					}),
-			);
-
-		// show_difficulty
-		new Setting(containerEl)
-			.setName("Show difficulty")
-			.setDesc("Display difficulty values in card lists.")
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.show_difficulty)
-					.onChange(async (value) => {
-						this.plugin.settings.show_difficulty = value;
-						await this.plugin.saveSettings();
-					}),
-			);
-
-		// show_retrievability
-		new Setting(containerEl)
-			.setName("Show retrievability")
-			.setDesc("Display retrievability (memory strength) values.")
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.show_retrievability)
-					.onChange(async (value) => {
-						this.plugin.settings.show_retrievability = value;
-						await this.plugin.saveSettings();
-					}),
-			);
-
-		// max_cards_to_show
-		new Setting(containerEl)
-			.setName("Max cards to show")
-			.setDesc(
-				"Maximum number of cards to display in lists (0 = unlimited).",
-			)
-			.addText((text) =>
-				text
-					.setPlaceholder("30")
-					.setValue(this.plugin.settings.max_cards_to_show.toString())
-					.onChange(async (value) => {
-						const num = parseInt(value);
-						if (!isNaN(num) && num >= 0) {
-							this.plugin.settings.max_cards_to_show = num;
-							await this.plugin.saveSettings();
-						}
-					}),
-			);
-
 		// auto_add_review_button
 		new Setting(containerEl)
 			.setName("Auto add review button")
@@ -241,79 +171,8 @@ export class FsrsSettingTab extends PluginSettingTab {
 					}),
 			);
 
-		// Разделитель
-		containerEl.createEl("hr");
-
-		// Настройки уведомлений
-		new Setting(containerEl).setName("Notifications").setHeading();
-
-		// show_notifications
-		new Setting(containerEl)
-			.setName("Show notifications")
-			.setDesc("Display desktop notifications for due cards.")
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.show_notifications)
-					.onChange(async (value) => {
-						this.plugin.settings.show_notifications = value;
-						await this.plugin.saveSettings();
-					}),
-			);
-
-		// notification_threshold
-		new Setting(containerEl)
-			.setName("Notification threshold")
-			.setDesc("Minimum number of due cards to trigger notification.")
-			.addText((text) =>
-				text
-					.setPlaceholder("5")
-					.setValue(
-						this.plugin.settings.notification_threshold.toString(),
-					)
-					.onChange(async (value) => {
-						const num = parseInt(value);
-						if (!isNaN(num) && num >= 0) {
-							this.plugin.settings.notification_threshold = num;
-							await this.plugin.saveSettings();
-						}
-					}),
-			);
-
-		// Разделитель
-		containerEl.createEl("hr");
-
-		// Настройки обновления
-		new Setting(containerEl).setName("Refresh").setHeading();
-
-		// auto_refresh
-		new Setting(containerEl)
-			.setName("Auto refresh")
-			.setDesc("Automatically refresh card lists.")
-			.addToggle((toggle) =>
-				toggle
-					.setValue(this.plugin.settings.auto_refresh)
-					.onChange(async (value) => {
-						this.plugin.settings.auto_refresh = value;
-						await this.plugin.saveSettings();
-					}),
-			);
-
-		// refresh_interval
-		new Setting(containerEl)
-			.setName("Refresh interval")
-			.setDesc("How often to auto-refresh card lists.")
-			.addText((text) =>
-				text
-					.setPlaceholder("5")
-					.setValue(this.plugin.settings.refresh_interval.toString())
-					.onChange(async (value) => {
-						const num = parseInt(value);
-						if (!isNaN(num) && num > 0) {
-							this.plugin.settings.refresh_interval = num;
-							await this.plugin.saveSettings();
-						}
-					}),
-			);
+		// Интервал для досрочного повторения
+		new Setting(containerEl).setName("Early review").setHeading();
 
 		// minimum_review_interval_minutes
 		new Setting(containerEl)

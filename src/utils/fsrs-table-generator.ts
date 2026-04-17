@@ -26,8 +26,7 @@ export function generateTableHTML(
 	app: App,
 	now: Date = new Date(),
 ): string {
-	const limit =
-		params.limit > 0 ? params.limit : settings.max_cards_to_show || 30;
+	const limit = params.limit > 0 ? params.limit : 30;
 	const cardsToShow = cardsWithState.slice(0, limit);
 	const totalCards = cardsWithState.length;
 
