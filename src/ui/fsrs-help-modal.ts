@@ -3,12 +3,12 @@ import { AVAILABLE_FIELDS } from "../utils/fsrs-table-params";
 
 /**
  * Генерирует строку колонок для примера полной таблицы
- * file as "📄", остальные поля с первой буквой названия в верхнем регистре
+ * file as "🗎", остальные поля с первой буквой названия в верхнем регистре
  */
 function generateFullExampleColumns(): string {
 	const columns: string[] = [];
 	// file с иконкой
-	columns.push('file as "📄"');
+	columns.push('file as "🗎"');
 
 	// остальные поля с первой буквой в верхнем регистре
 	const otherFields = Array.from(AVAILABLE_FIELDS)
