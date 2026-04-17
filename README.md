@@ -82,7 +82,7 @@ columns: file,reps,state,stability,difficulty,overdue,due
 ```
 
 **Параметры блока:**
-- **`mode`** — режим отображения: `due`, `future` или `all` (по умолчанию: `due`)
+- **`mode`** — режим отображения: `due` или `all` (по умолчанию: `due`)
 - **`limit`** — максимальное количество карточек для отображения (по умолчанию: 30)
 - **`columns`** — список колонок для отображения через запятую (доступные поля: `file`, `reps`, `state`, `stability`, `difficulty`, `overdue`, `due`)
 
@@ -104,10 +104,10 @@ columns: file,reps,state,overdue
 ```
 ```
 
-2. **Для планирования занятий** (режим `future`):
+2. **Для полного обзора** (режим `all`):
 ```markdown
 ```fsrs-table
-mode: future
+mode: all
 limit: 100
 columns: file,reps,due
 ```

@@ -1,6 +1,6 @@
 /**
  * Модуль для фильтрации и сортировки карточек блока fsrs-table
- * Реализует логику для режимов due, future и all
+ * Реализует логику для режимов due и all
  */
 
 import type {
@@ -57,12 +57,9 @@ export async function filterAndSortCards(
 	if (mode === "due") {
 		// Сортируем due карточки по приоритету (возрастание retrievability)
 		return sortCardsForDue(dueCards, now);
-	} else if (mode === "future") {
-		// Сортируем future карточки по дате due (возрастание)
-		return sortCardsForFuture(futureCards);
 	} else {
 		// mode === "all"
-		// Сначала due (сортировка как в due), затем future (сортировка как в future)
+		// Сначала due (сортировка как в due), затем не due карточки (сортировка по дате due)
 		const sortedDueCards = sortCardsForDue(dueCards, now);
 		const sortedFutureCards = sortCardsForFuture(futureCards);
 		return [...sortedDueCards, ...sortedFutureCards];

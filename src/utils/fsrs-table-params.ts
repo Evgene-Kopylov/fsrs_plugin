@@ -1,10 +1,10 @@
 /**
  * Модуль для типов и парсинга параметров универсального блока fsrs-table
- * Поддерживает режимы отображения: due, future, all
+ * Поддерживает режимы отображения: due, all
  */
 
 // Типы режимов отображения
-export type TableMode = "due" | "future" | "all";
+export type TableMode = "due" | "all";
 
 // Определение колонки таблицы
 export interface TableColumn {
@@ -67,11 +67,7 @@ export function parseTableParams(source: string): TableParams {
 		const modeMatch = line.match(/^\s*mode\s*:\s*(\w+)\s*$/i);
 		if (modeMatch && modeMatch[1]) {
 			const modeValue = modeMatch[1].toLowerCase();
-			if (
-				modeValue === "due" ||
-				modeValue === "future" ||
-				modeValue === "all"
-			) {
+			if (modeValue === "due" || modeValue === "all") {
 				params.mode = modeValue;
 			} else {
 				console.warn(

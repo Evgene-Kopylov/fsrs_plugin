@@ -146,8 +146,6 @@ function getModeTitle(mode: TableMode): string {
 	switch (mode) {
 		case "due":
 			return "Карточек для повторения";
-		case "future":
-			return "Карточки на будущее";
 		case "all":
 			return "Всех карточек";
 		default:
@@ -181,8 +179,6 @@ function getEmptyStateMessage(mode: TableMode): string {
 	switch (mode) {
 		case "due":
 			return "Нет карточек для повторения. Все карточки изучены! 🎉";
-		case "future":
-			return "Нет карточек на будущее. Все карточки готовы к повторению или ещё не созданы.";
 		case "all":
 			return "Нет карточек FSRS. Используйте команду 'Добавить FSRS поля' для создания карточек.";
 		default:

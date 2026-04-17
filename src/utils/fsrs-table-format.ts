@@ -39,18 +39,6 @@ export function formatOverdueForMode(
 		return `-${Math.round(absDays)} дн`;
 	}
 
-	// Для режима "future" показываем только положительные значения или 0
-	if (mode === "future") {
-		if (diffDays < 0) {
-			return "0 дн";
-		}
-		if (diffDays < 1) {
-			const hours = Math.round(diffDays * 24);
-			return `+${hours} ч`;
-		}
-		return `+${Math.round(diffDays)} дн`;
-	}
-
 	// Для режима "all" показываем со знаком
 	if (diffDays < 0) {
 		const absDays = Math.abs(diffDays);
@@ -163,9 +151,8 @@ export function createDefaultTableBlock(mode: TableMode = "due"): string {
 
 	if (mode === "due") {
 		block += `columns: file as "Файл", reps as "Повторений", overdue as "Просрочка", retrievability as "Извлекаемость"\n`;
-	} else if (mode === "future") {
-		block += `columns: file as "Файл", reps as "Повторений", due as "Следующее повторение", scheduled as "Интервал"\n`;
 	} else {
+		// mode === "all"
 		block += `columns: file as "Файл", reps as "Повторений", overdue as "Просрочка", state as "Состояние", due as "Следующее повторение"\n`;
 	}
 
