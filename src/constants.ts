@@ -2,12 +2,12 @@ import type {
 	FSRSParameters,
 	FSRSSettings,
 	FSRSState,
-} from "../interfaces/fsrs";
-import type { TableColumn } from "../utils/fsrs-table-params";
+} from "./interfaces/fsrs";
+import type { TableColumn } from "./utils/fsrs-table-params";
 
 // Параметры алгоритма FSRS по умолчанию (совместимые с rs-fsrs)
 export const DEFAULT_PARAMETERS: FSRSParameters = {
-	request_retention: 0.9, // целевой уровень запоминания 90%
+	request_retention: 0.92, // целевой уровень запоминания 92%
 	maximum_interval: 36500, // максимальный интервал 100 лет
 	enable_fuzz: true, // включить случайное изменение интервалов
 };

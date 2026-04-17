@@ -1,14 +1,11 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
 import MyPlugin from "./main";
-import type { FSRSSettings, FSRSParameters } from "./interfaces/fsrs";
+import type { FSRSSettings } from "./interfaces/fsrs";
 import {
 	formatIgnorePatterns,
 	parseIgnorePatterns,
 } from "./utils/fsrs/fsrs-filter";
-import {
-	DEFAULT_PARAMETERS,
-	DEFAULT_SETTINGS as DEFAULT_SETTINGS_FROM_CONSTANTS,
-} from "./constants";
+import { DEFAULT_SETTINGS as DEFAULT_SETTINGS_FROM_CONSTANTS } from "./constants";
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface FsrsPluginSettings extends FSRSSettings {}
