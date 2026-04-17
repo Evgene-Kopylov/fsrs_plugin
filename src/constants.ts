@@ -101,11 +101,6 @@ export const DEFAULT_TABLE_CONFIGS = {
 			'file as "Файл", reps as "Повторений", overdue as "Просрочка", retrievability as "Извлекаемость"',
 		limit: 20,
 	},
-	future: {
-		columns:
-			'file as "Файл", reps as "Повторений", due as "Следующее повторение", scheduled as "Интервал"',
-		limit: 20,
-	},
 	all: {
 		columns:
 			'file as "Файл", reps as "Повторений", overdue as "Просрочка", state as "Состояние", due as "Следующее повторение"',

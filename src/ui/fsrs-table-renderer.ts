@@ -10,7 +10,7 @@ import { FsrsHelpModal } from "./fsrs-help-modal";
 
 /**
  * Класс для динамического рендеринга универсального блока fsrs-table
- * Поддерживает режимы отображения: due (просроченные), future (будущие), all (все карточки)
+ * Поддерживает режимы отображения: due (просроченные), all (все карточки)
  */
 export class FsrsTableRenderer extends MarkdownRenderChild {
 	private params: TableParams;

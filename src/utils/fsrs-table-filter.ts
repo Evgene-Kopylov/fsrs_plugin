@@ -40,16 +40,16 @@ export async function filterAndSortCards(
 	// Вычисляем состояния для всех карточек
 	const cardsWithState = await computeCardsStates(cards, settings, now);
 
-	// Разделяем карточки на due и future
+	// Разделяем карточки на due (просроченные) и scheduled (запланированные)
 	const dueCards: CardWithState[] = [];
-	const futureCards: CardWithState[] = [];
+	const scheduledCards: CardWithState[] = [];
 
 	for (const item of cardsWithState) {
 		const isDue = await isCardDue(item.card, settings, now);
 		if (isDue) {
 			dueCards.push(item);
 		} else {
-			futureCards.push(item);
+			scheduledCards.push(item);
 		}
 	}
 
@@ -59,10 +59,10 @@ export async function filterAndSortCards(
 		return sortCardsForDue(dueCards, now);
 	} else {
 		// mode === "all"
-		// Сначала due (сортировка как в due), затем не due карточки (сортировка по дате due)
+		// Сначала due (сортировка как в due), затем scheduled карточки (сортировка по дате due)
 		const sortedDueCards = sortCardsForDue(dueCards, now);
-		const sortedFutureCards = sortCardsForFuture(futureCards);
-		return [...sortedDueCards, ...sortedFutureCards];
+		const sortedScheduledCards = sortScheduledCards(scheduledCards);
+		return [...sortedDueCards, ...sortedScheduledCards];
 	}
 }
 
@@ -153,9 +153,9 @@ function sortCardsForDue(cards: CardWithState[], now: Date): CardWithState[] {
 }
 
 /**
- * Сортирует future карточки по дате due (возрастание)
+ * Сортирует scheduled карточки по дате due (возрастание)
  */
-function sortCardsForFuture(cards: CardWithState[]): CardWithState[] {
+function sortScheduledCards(cards: CardWithState[]): CardWithState[] {
 	return cards.slice().sort((a, b) => {
 		const aTime = new Date(a.state.due).getTime();
 		const bTime = new Date(b.state.due).getTime();
