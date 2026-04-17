@@ -211,18 +211,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			});
 		});
 
-		// Обработчики для строк таблицы (клик на всю строку)
-		this.container.querySelectorAll(".fsrs-table-row").forEach((row) => {
-			row.addEventListener("click", (e) => {
-				// Чтобы не конфликтовать с кликом по ссылке
-				if ((e.target as HTMLElement).tagName === "A") return;
-				const filePath = (row as HTMLElement).dataset.filePath;
-				if (filePath) {
-					void this.openFile(filePath);
-				}
-			});
-		});
-
 		// Обработчик для кнопки помощи
 		this.container
 			.querySelectorAll(".fsrs-help-toggle")
