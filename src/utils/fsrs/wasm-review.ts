@@ -1,0 +1,77 @@
+// Функции повторения карточек для WASM модуля FSRS
+
+import type {
+	ModernFSRSCard,
+	FSRSRating,
+	FSRSSettings,
+} from "../../interfaces/fsrs";
+import { prepareCommonArgs } from "./wasm-core";
+import * as wasm from "../../../wasm-lib/pkg/wasm_lib";
+
+/** Добавляет сессию повторения через WASM */
+export async function addReviewSession(
+	card: ModernFSRSCard,
+	rating: FSRSRating,
+	settings: FSRSSettings,
+	now: Date = new Date(),
+): Promise<ModernFSRSCard> {
+	try {
+		const {
+			cardJson,
+			nowStr,
+			parametersJson,
+			defaultStability,
+			defaultDifficulty,
+		} = prepareCommonArgs(card, settings, now);
+		const updatedJson = wasm.review_card(
+			cardJson,
+			rating,
+			nowStr,
+			parametersJson,
+			defaultStability,
+			defaultDifficulty,
+		);
+		const parsed = JSON.parse(updatedJson) as ModernFSRSCard;
+		return { ...parsed, filePath: card.filePath };
+	} catch (error) {
+		console.error("addReviewSession failed", error);
+		return card;
+	}
+}
+
+/** Получает YAML новой карточки через WASM */
+export async function getNewCardYaml(): Promise<string> {
+	try {
+		return wasm.get_fsrs_yaml();
+	} catch {
+		return "reviews: []";
+	}
+}
+
+/** Получает YAML карточки после повторения через WASM */
+export async function getCardYamlAfterReview(
+	card: ModernFSRSCard,
+	rating: FSRSRating,
+	settings: FSRSSettings,
+	now: Date = new Date(),
+): Promise<string> {
+	try {
+		const {
+			cardJson,
+			nowStr,
+			parametersJson,
+			defaultStability,
+			defaultDifficulty,
+		} = prepareCommonArgs(card, settings, now);
+		return wasm.get_fsrs_yaml_after_review(
+			cardJson,
+			rating,
+			nowStr,
+			parametersJson,
+			defaultStability,
+			defaultDifficulty,
+		);
+	} catch {
+		return "reviews: []";
+	}
+}
