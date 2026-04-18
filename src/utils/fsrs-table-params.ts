@@ -192,6 +192,59 @@ export const DEFAULT_COLUMNS: TableColumn[] = [
 ];
 
 /**
+ * Проверяет валидность параметров таблицы
+ * @param params Параметры таблицы для проверки
+ * @throws Error при невалидных параметрах
+ */
+function validateTableParams(params: TableParams): void {
+	if (!params.columns || params.columns.length === 0) {
+		throw new Error(
+			formatError("Таблица должна содержать хотя бы одну колонку"),
+		);
+	}
+
+	for (const column of params.columns) {
+		if (!column.field) {
+			throw new Error(formatError(`Колонка должна иметь поле (field)`));
+		}
+		if (!isValidTableField(column.field)) {
+			throw new Error(
+				formatError(`Недопустимое поле таблицы: "${column.field}"`),
+			);
+		}
+	}
+
+	if (params.limit < 0) {
+		throw new Error(
+			formatError(`Лимит не может быть отрицательным: ${params.limit}`),
+		);
+	}
+
+	if (params.sort) {
+		if (!params.sort.field) {
+			throw new Error(formatError("Поле сортировки должно быть указано"));
+		}
+		if (!isValidTableField(params.sort.field)) {
+			throw new Error(
+				formatError(
+					`Недопустимое поле для сортировки: "${params.sort.field}"`,
+				),
+			);
+		}
+		if (
+			params.sort.direction !== "ASC" &&
+			params.sort.direction !== "DESC"
+		) {
+			throw new Error(
+				formatError(
+					`Недопустимое направление сортировки: "${params.sort.direction}"`,
+				),
+			);
+		}
+	}
+}
+
+/**
  * Парсит SQL-подобный синтаксис блока fsrs-table
  * Использует WASM реализацию парсинга на Rust
  * @param source Исходный текст блока
@@ -225,14 +278,6 @@ export function parseSqlBlock(source: string): TableParams {
 		if (parsedResult.error) {
 			const errorMessage = `Ошибка парсинга SQL-подобного синтаксиса: ${parsedResult.error}`;
 			console.error(errorMessage);
-
-			// Если есть ошибка, но params валидны, используем их
-			if (tableParams) {
-				console.warn("Используем параметры из WASM несмотря на ошибку");
-				return tableParams;
-			}
-
-			// Иначе выбрасываем ошибку
 			throw new Error(formatError(errorMessage));
 		}
 
@@ -243,6 +288,8 @@ export function parseSqlBlock(source: string): TableParams {
 			throw new Error(formatError(errorMessage));
 		}
 
+		// Проверяем валидность полученных параметров
+		validateTableParams(tableParams);
 		return tableParams;
 	} catch (error) {
 		if (error instanceof Error) {

@@ -105,6 +105,15 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			return;
 		}
 		try {
+			// Убираем класс ошибки при успешном рендере
+			this.container.removeClass("fsrs-table-error");
+			// Также убираем класс ошибки у родительского элемента блока кода
+			const codeBlockParent = this.container.closest(
+				".block-language-fsrs-table, .cm-preview-code-block.block-language-fsrs-table, .cm-embed-block.block-language-fsrs-table",
+			);
+			if (codeBlockParent) {
+				codeBlockParent.removeClass("fsrs-table-error");
+			}
 			// При первом показе используем индикатор загрузки
 			if (this.isFirstLoad) {
 				this.showLoadingIndicator();
@@ -125,6 +134,12 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 
 			if (allCards.length === 0) {
 				this.renderEmptyState();
+				return;
+			}
+
+			// Проверяем наличие параметров таблицы
+			if (!this.params) {
+				this.renderErrorState(new Error("Invalid table parameters"));
 				return;
 			}
 
@@ -204,7 +219,15 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 		const errorMessage =
 			error instanceof Error ? error.message : String(error);
 
-		// Очищаем контейнер и вставляем текст ошибки как простой текст
+		// Добавляем класс ошибки и очищаем контейнер
+		this.container.addClass("fsrs-table-error");
+		// Также добавляем класс ошибки родительскому элементу блока кода
+		const codeBlockParent = this.container.closest(
+			".block-language-fsrs-table, .cm-preview-code-block.block-language-fsrs-table, .cm-embed-block.block-language-fsrs-table",
+		);
+		if (codeBlockParent) {
+			codeBlockParent.addClass("fsrs-table-error");
+		}
 		this.container.empty();
 		this.container.createEl("pre", {
 			text: errorMessage,
@@ -412,7 +435,16 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 				this.sourceEnd = this.sourceStart + newLineCount;
 				this.sourceText = updatedContent;
 				// Обновляем параметры из внутреннего содержимого
-				this.params = parseSqlBlock(updatedInnerContent);
+				try {
+					this.params = parseSqlBlock(updatedInnerContent);
+					this.parseError = null; // Сбрасываем ошибку при успешном парсинге
+				} catch (error) {
+					this.parseError =
+						error instanceof Error
+							? error
+							: new Error(String(error));
+					this.params = null;
+				}
 			}
 		} catch (error) {
 			console.error("Ошибка при обновлении исходного кода блока:", error);
