@@ -1,14 +1,21 @@
 /**
- * Главный файл с реэкспортами для универсального блока fsrs-table
+ * Главный файл с реэкспортами для блока fsrs-table с SQL-подобным синтаксисом
  * Поддерживает режимы отображения: due (просроченные), all (все карточки)
+ * Синтаксис: SELECT, FROM, ORDER BY, LIMIT
  */
 
 // Реэкспорт типов и функций из модулей fsrs-table
 
 // Типы и парсинг параметров
-export type { TableMode, TableColumn, TableParams } from "./fsrs-table-params";
+export type {
+	TableMode,
+	TableColumn,
+	TableParams,
+	SortDirection,
+	SortParam,
+} from "./fsrs-table-params";
 export {
-	parseTableParams,
+	parseSqlBlock,
 	parseColumnsDefinition,
 	getDefaultTitle,
 	AVAILABLE_FIELDS,

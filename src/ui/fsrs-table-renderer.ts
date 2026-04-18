@@ -3,7 +3,7 @@ import type FsrsPlugin from "../main";
 import type { ModernFSRSCard } from "../interfaces/fsrs";
 import type { TableParams, TableMode } from "../utils/fsrs-table-helpers";
 import {
-	parseTableParams,
+	parseSqlBlock,
 	generateTableHTMLFromCards,
 	generateEmptyTableHTML,
 } from "../utils/fsrs-table-helpers";
@@ -34,7 +34,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 		sourceEnd: number,
 	) {
 		super(container);
-		this.params = parseTableParams(source);
+		this.params = parseSqlBlock(source);
 		this.sourceText = source;
 		this.sourceStart = sourceStart;
 		this.sourceEnd = sourceEnd;
@@ -416,7 +416,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 				this.sourceEnd = this.sourceStart + newLineCount;
 				this.sourceText = updatedContent;
 				// Обновляем параметры из внутреннего содержимого
-				this.params = parseTableParams(updatedInnerContent);
+				this.params = parseSqlBlock(updatedInnerContent);
 			}
 		} catch (error) {
 			console.error("Ошибка при обновлении исходного кода блока:", error);

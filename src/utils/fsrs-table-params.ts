@@ -1,6 +1,7 @@
 /**
- * Модуль для типов и парсинга параметров универсального блока fsrs-table
+ * Модуль для типов и парсинга SQL-подобного синтаксиса блока fsrs-table
  * Поддерживает режимы отображения: due, all
+ * Синтаксис: SELECT, FROM, ORDER BY, LIMIT
  */
 
 // Типы режимов отображения
@@ -51,104 +52,476 @@ export const DEFAULT_COLUMNS: TableColumn[] = [
 	{ field: "overdue", title: "Просрочка" },
 ];
 
-/**
- * Парсит параметры из содержимого блока fsrs-table
- * @param source Исходный текст блока
- * @returns Объект с параметрами таблицы
- */
-export function parseTableParams(source: string): TableParams {
-	const params: TableParams = {
-		mode: "due",
-		columns: [...DEFAULT_COLUMNS],
-		limit: 0, // 0 означает "использовать значение из настроек"
-	};
+// Типы токенов для парсинга
+type TokenType =
+	| "KEYWORD"
+	| "IDENTIFIER"
+	| "NUMBER"
+	| "STRING"
+	| "OPERATOR"
+	| "EOF";
 
-	if (!source || source.trim() === "") {
+interface Token {
+	type: TokenType;
+	value: string;
+	start: number;
+}
+
+/**
+ * Простой лексер для SQL-подобного синтаксиса
+ */
+class SqlLexer {
+	private position = 0;
+	private readonly input: string;
+
+	constructor(input: string) {
+		// Заменяем переносы строк на пробелы для упрощения парсинга
+		this.input = input.replace(/\r?\n/g, " ").trim();
+	}
+
+	/**
+	 * Получает следующий токен
+	 */
+	nextToken(): Token {
+		this.skipWhitespace();
+
+		if (this.position >= this.input.length) {
+			return { type: "EOF", value: "", start: this.position };
+		}
+
+		const currentChar = this.input[this.position]!;
+
+		// Ключевые слова (идентификаторы, начинающиеся с буквы)
+		if (this.isLetter(currentChar!)) {
+			return this.readKeywordOrIdentifier();
+		}
+
+		// Числа
+		if (this.isDigit(currentChar!)) {
+			return this.readNumber();
+		}
+
+		// Строки в двойных кавычках
+		if (currentChar! === '"') {
+			return this.readString();
+		}
+
+		// Операторы и другие символы
+		return this.readOperator();
+	}
+
+	/**
+	 * Пропускает пробельные символы
+	 */
+	private skipWhitespace(): void {
+		while (
+			this.position < this.input.length &&
+			/\s/.test(this.input[this.position]!)
+		) {
+			this.position++;
+		}
+	}
+
+	/**
+	 * Читает ключевое слово или идентификатор
+	 */
+	private readKeywordOrIdentifier(): Token {
+		const start = this.position;
+		let value = "";
+
+		while (
+			this.position < this.input.length &&
+			this.isIdentifierChar(this.input[this.position]!)
+		) {
+			value += this.input[this.position]!;
+			this.position++;
+		}
+
+		// Проверяем, является ли это ключевым словом
+		const upperValue = value.toUpperCase();
+		const keywords = [
+			"SELECT",
+			"FROM",
+			"ORDER",
+			"BY",
+			"ASC",
+			"DESC",
+			"LIMIT",
+			"AS",
+		];
+
+		if (keywords.includes(upperValue)) {
+			return { type: "KEYWORD", value: upperValue, start };
+		}
+
+		return { type: "IDENTIFIER", value, start };
+	}
+
+	/**
+	 * Читает число
+	 */
+	private readNumber(): Token {
+		const start = this.position;
+		let value = "";
+
+		while (
+			this.position < this.input.length &&
+			this.isDigit(this.input[this.position]!)
+		) {
+			value += this.input[this.position]!;
+			this.position++;
+		}
+
+		return { type: "NUMBER", value, start };
+	}
+
+	/**
+	 * Читает строку в двойных кавычках
+	 */
+	private readString(): Token {
+		const start = this.position;
+		let value = "";
+		this.position++; // Пропускаем открывающую кавычку
+
+		while (
+			this.position < this.input.length &&
+			this.input[this.position]! !== '"'
+		) {
+			value += this.input[this.position]!;
+			this.position++;
+		}
+
+		if (
+			this.position < this.input.length &&
+			this.input[this.position]! === '"'
+		) {
+			this.position++; // Пропускаем закрывающую кавычку
+		}
+
+		return { type: "STRING", value, start };
+	}
+
+	/**
+	 * Читает оператор или другой символ
+	 */
+	private readOperator(): Token {
+		const start = this.position;
+		const value = this.input[this.position]!;
+		this.position++;
+
+		return { type: "OPERATOR", value, start };
+	}
+
+	/**
+	 * Проверяет, является ли символ буквой
+	 */
+	private isLetter(char: string): boolean {
+		return /[a-zA-Z]/.test(char);
+	}
+
+	/**
+	 * Проверяет, является ли символ цифрой
+	 */
+	private isDigit(char: string): boolean {
+		return /[0-9]/.test(char);
+	}
+
+	/**
+	 * Проверяет, является ли символ допустимым для идентификатора
+	 */
+	private isIdentifierChar(char: string): boolean {
+		return /[a-zA-Z0-9_]/.test(char);
+	}
+}
+
+/**
+ * Парсер SQL-подобного синтаксиса
+ */
+class SqlParser {
+	private lexer: SqlLexer;
+	private currentToken: Token;
+
+	constructor(input: string) {
+		this.lexer = new SqlLexer(input);
+		this.currentToken = this.lexer.nextToken();
+	}
+
+	/**
+	 * Парсит SQL-запрос и возвращает параметры таблицы
+	 */
+	parse(): TableParams {
+		const params: TableParams = {
+			mode: "due",
+			columns: [...DEFAULT_COLUMNS],
+			limit: 0,
+		};
+
+		// Парсим все ключевые слова в любом порядке
+		while (this.currentToken.type !== "EOF") {
+			if (this.currentToken.type === "KEYWORD") {
+				switch (this.currentToken.value) {
+					case "SELECT":
+						this.consume("KEYWORD", "SELECT");
+						params.columns = this.parseSelectClause();
+						break;
+					case "FROM":
+						this.consume("KEYWORD", "FROM");
+						params.mode = this.parseFromClause();
+						break;
+					case "ORDER":
+						this.consume("KEYWORD", "ORDER");
+						this.consume("KEYWORD", "BY");
+						params.sort = this.parseOrderByClause();
+						break;
+					case "LIMIT":
+						this.consume("KEYWORD", "LIMIT");
+						params.limit = this.parseLimitClause();
+						break;
+					default:
+						// Пропускаем неизвестные ключевые слова
+						this.advance();
+						break;
+				}
+			} else {
+				this.advance();
+			}
+		}
+
 		return params;
 	}
 
-	const lines = source
-		.split("\n")
-		.map((line) => line.trim())
-		.filter((line) => line.length > 0);
+	/**
+	 * Парсит SELECT clause
+	 */
+	private parseSelectClause(): TableColumn[] {
+		const columns: TableColumn[] = [];
 
-	for (const line of lines) {
-		// Парсинг mode
-		const modeMatch = line.match(/^\s*mode\s*:\s*(\w+)\s*$/i);
-		if (modeMatch && modeMatch[1]) {
-			const modeValue = modeMatch[1].toLowerCase();
-			if (modeValue === "due" || modeValue === "all") {
-				params.mode = modeValue;
+		while (
+			this.currentToken.type !== "EOF" &&
+			this.currentToken.value !== "FROM" &&
+			this.currentToken.value !== "ORDER" &&
+			this.currentToken.value !== "LIMIT"
+		) {
+			const column = this.parseColumnDefinition();
+			if (column) {
+				columns.push(column);
+			}
+
+			// Если следующий токен - запятая, пропускаем её
+			if (
+				this.currentToken.type === "OPERATOR" &&
+				this.currentToken.value === ","
+			) {
+				this.advance();
 			} else {
-				console.warn(
-					`Неизвестный режим: ${modeValue}. Используется режим due.`,
-				);
+				break;
 			}
-			continue;
 		}
 
-		// Парсинг limit
-		const limitMatch = line.match(/^\s*limit\s*:\s*(\d+)\s*$/i);
-		if (limitMatch && limitMatch[1]) {
-			const limitValue = parseInt(limitMatch[1], 10);
-			if (!isNaN(limitValue) && limitValue > 0) {
-				params.limit = limitValue;
-			} else {
-				console.warn(
-					`Некорректный лимит: ${limitMatch[1]}. Лимит не применён.`,
-				);
-			}
-			continue;
+		// Если нет валидных колонок, возвращаем колонки по умолчанию
+		if (columns.length === 0) {
+			console.warn(
+				"Нет валидных полей в SELECT. Используются колонки по умолчанию.",
+			);
+			return [...DEFAULT_COLUMNS];
 		}
 
-		// Парсинг sort
-		const sortMatch = line.match(/^\s*sort\s*:\s*(\w+)\s+(ASC|DESC)\s*$/i);
-		if (sortMatch && sortMatch[1] && sortMatch[2]) {
-			const field = sortMatch[1].toLowerCase();
-			const direction = sortMatch[2].toUpperCase() as SortDirection;
-
-			if (AVAILABLE_FIELDS.has(field)) {
-				params.sort = { field, direction };
-			} else {
-				console.warn(
-					`Неизвестное поле для сортировки: "${field}". Параметр сортировки проигнорирован. Допустимые поля: file, reps, overdue, stability, difficulty, retrievability, due, state, elapsed, scheduled. Синтаксис: sort: поле ASC|DESC, например: sort: reps ASC`,
-				);
-			}
-			continue;
-		}
-
-		// Парсинг columns
-		const columnsMatch = line.match(/^\s*columns\s*:\s*(.+)$/i);
-		if (columnsMatch && columnsMatch[1]) {
-			const columnsText = columnsMatch[1];
-			try {
-				const parsedColumns = parseColumnsDefinition(columnsText);
-				// Проверяем, есть ли хотя бы одно валидное поле
-				const validColumns = parsedColumns.filter((col) =>
-					AVAILABLE_FIELDS.has(col.field),
-				);
-				if (validColumns.length > 0) {
-					params.columns = validColumns;
-				} else {
-					console.warn(
-						"Нет валидных полей в определении колонок. Используются колонки по умолчанию.",
-					);
-				}
-			} catch (error) {
-				console.warn(
-					`Ошибка парсинга колонок: ${String(error)}. Используются колонки по умолчанию.`,
-				);
-			}
-			continue;
-		}
-
-		// Если строка не соответствует ни одному паттерну, игнорируем её
-		console.debug(
-			`Строка проигнорирована при парсинге параметров: "${line}"`,
-		);
+		return columns;
 	}
 
-	return params;
+	/**
+	 * Парсит определение колонки: field [as "alias"]
+	 */
+	private parseColumnDefinition(): TableColumn | null {
+		let token = this.currentToken;
+		if (token.type !== "IDENTIFIER") {
+			console.warn(
+				`Ожидается идентификатор поля, получено: ${token.value}`,
+			);
+			this.advance();
+			return null;
+		}
+
+		const field = token.value.toLowerCase();
+		this.advance();
+		token = this.currentToken;
+
+		let title = getDefaultTitle(field);
+
+		// Проверяем наличие алиаса
+		if (token.value === "AS") {
+			this.consume("KEYWORD", "AS");
+			token = this.currentToken;
+			if (token.type === "STRING") {
+				title = token.value;
+				this.advance();
+				token = this.currentToken;
+			} else {
+				console.warn(
+					`Ожидается строка с алиасом в двойных кавычках, получено: ${token.value}`,
+				);
+			}
+		}
+
+		// Проверяем, является ли поле допустимым
+		if (!AVAILABLE_FIELDS.has(field)) {
+			console.warn(`Неизвестное поле: "${field}". Пропущено.`);
+			return null;
+		}
+
+		return { field, title };
+	}
+
+	/**
+	 * Парсит FROM clause
+	 */
+	private parseFromClause(): TableMode {
+		let token = this.currentToken;
+		if (token.type !== "IDENTIFIER") {
+			console.warn(
+				`Ожидается режим (due или all), получено: ${token.value}. Используется режим due.`,
+			);
+			return "due";
+		}
+
+		const mode = token.value.toLowerCase() as TableMode;
+		this.advance();
+
+		if (mode !== "due" && mode !== "all") {
+			console.warn(
+				`Неизвестный режим: "${mode}". Используется режим due.`,
+			);
+			return "due";
+		}
+
+		return mode;
+	}
+
+	/**
+	 * Парсит ORDER BY clause
+	 */
+	private parseOrderByClause(): SortParam | undefined {
+		let token = this.currentToken;
+		if (token.type !== "IDENTIFIER") {
+			console.warn(
+				`Ожидается поле для сортировки, получено: ${token.value}. Параметр сортировки проигнорирован.`,
+			);
+			return undefined;
+		}
+
+		const field = token.value.toLowerCase();
+		this.advance();
+		token = this.currentToken;
+
+		// Проверяем, является ли поле допустимым
+		if (!AVAILABLE_FIELDS.has(field)) {
+			console.warn(
+				`Неизвестное поле для сортировки: "${field}". Параметр сортировки проигнорирован.`,
+			);
+			return undefined;
+		}
+
+		// Определяем направление сортировки (по умолчанию ASC)
+		let direction: SortDirection = "ASC";
+
+		if (token.value === "ASC" || token.value === "DESC") {
+			direction = token.value as SortDirection;
+			this.advance();
+		}
+
+		return { field, direction };
+	}
+
+	/**
+	 * Парсит LIMIT clause
+	 */
+	private parseLimitClause(): number {
+		let token = this.currentToken;
+		if (token.type !== "NUMBER") {
+			console.warn(
+				`Ожидается число для LIMIT, получено: ${token.value}. Лимит не применён.`,
+			);
+			return 0;
+		}
+
+		const value = token.value;
+		const limit = parseInt(value, 10);
+		this.advance();
+
+		if (isNaN(limit) || limit <= 0) {
+			console.warn(`Некорректный LIMIT: ${value}. Лимит не применён.`);
+			return 0;
+		}
+
+		return limit;
+	}
+
+	/**
+	 * Потребляет токен ожидаемого типа и значения
+	 */
+	private consume(expectedType: TokenType, expectedValue?: string): void {
+		if (this.currentToken.type !== expectedType) {
+			throw new Error(
+				`Ожидается ${expectedType}, получено ${this.currentToken.type}`,
+			);
+		}
+
+		if (expectedValue && this.currentToken.value !== expectedValue) {
+			throw new Error(
+				`Ожидается ${expectedValue}, получено ${this.currentToken.value}`,
+			);
+		}
+
+		this.advance();
+	}
+
+	/**
+	 * Переходит к следующему токену
+	 */
+	private advance(): void {
+		this.currentToken = this.lexer.nextToken();
+	}
+}
+
+/**
+ * Парсит SQL-подобный синтаксис блока fsrs-table
+ * @param source Исходный текст блока
+ * @returns Объект с параметрами таблицы
+ */
+export function parseSqlBlock(source: string): TableParams {
+	if (!source || source.trim() === "") {
+		console.warn(
+			"Пустой блок fsrs-table. Используются значения по умолчанию.",
+		);
+		return {
+			mode: "due",
+			columns: [...DEFAULT_COLUMNS],
+			limit: 0,
+		};
+	}
+
+	try {
+		const parser = new SqlParser(source);
+		const params = parser.parse();
+
+		// Проверяем, был ли указан FROM
+		if (params.mode === "due" && !source.toUpperCase().includes("FROM")) {
+			console.warn(
+				"Не найден FROM в SQL-синтаксисе. Используется режим due.",
+			);
+		}
+
+		return params;
+	} catch (error) {
+		console.error(
+			`Ошибка парсинга SQL-подобного синтаксиса: ${String(error)}. Используются значения по умолчанию.`,
+		);
+		return {
+			mode: "due",
+			columns: [...DEFAULT_COLUMNS],
+			limit: 0,
+		};
+	}
 }
 
 /**
@@ -157,9 +530,6 @@ export function parseTableParams(source: string): TableParams {
  * @returns Массив объектов TableColumn
  */
 export function parseColumnsDefinition(columnsText: string): TableColumn[] {
-	console.debug(
-		`[FSRS] parseColumnsDefinition: входной текст = "${columnsText}"`,
-	);
 	const columns: TableColumn[] = [];
 
 	// Удаляем лишние пробелы и разбиваем по запятым
@@ -167,10 +537,6 @@ export function parseColumnsDefinition(columnsText: string): TableColumn[] {
 		.split(",")
 		.map((part) => part.trim())
 		.filter((part) => part.length > 0);
-	console.debug(
-		`[FSRS] parseColumnsDefinition: частей после разбиения = ${parts.length}`,
-		parts,
-	);
 
 	for (const part of parts) {
 		// Пытаемся извлечь поле и заголовок
@@ -178,38 +544,19 @@ export function parseColumnsDefinition(columnsText: string): TableColumn[] {
 		if (fieldMatch && fieldMatch[1]) {
 			const field = fieldMatch[1].toLowerCase();
 			const title = fieldMatch[2] || getDefaultTitle(field);
-			columns.push({ field, title });
-		} else {
-			// Пробуем без кавычек
-			const simpleMatch = part.match(/^(\w+)\s+as\s+(\S+)$/);
-			if (simpleMatch && simpleMatch[1] && simpleMatch[2]) {
-				const field = simpleMatch[1].toLowerCase();
-				const title = simpleMatch[2];
+
+			if (AVAILABLE_FIELDS.has(field)) {
 				columns.push({ field, title });
 			} else {
-				// Просто поле без заголовка
-				const field = part.toLowerCase();
-				console.debug(
-					`[FSRS] parseColumnsDefinition: поле без заголовка = "${field}"`,
+				console.warn(
+					`Неизвестное поле в колонках: "${field}". Пропущено.`,
 				);
-				if (AVAILABLE_FIELDS.has(field)) {
-					columns.push({ field, title: getDefaultTitle(field) });
-					console.debug(
-						`[FSRS] parseColumnsDefinition: добавлена колонка field="${field}", title="${getDefaultTitle(field)}"`,
-					);
-				} else {
-					console.warn(
-						`Неизвестное поле в колонках: "${field}" (исходная часть: "${part}"). Пропущено. Проверьте корректность заполнения блока fsrs-table, обратите внимание на строку "columns:". Синтаксис: поле [as "Заголовок"], например: 'reps as "Повторений", overdue'. Допустимые поля: file, reps, overdue, stability, difficulty, retrievability, due, state, elapsed, scheduled.`,
-					);
-				}
 			}
+		} else {
+			console.warn(`Некорректный формат колонки: "${part}". Пропущено.`);
 		}
 	}
 
-	console.debug(
-		`[FSRS] parseColumnsDefinition: итого колонок = ${columns.length}`,
-		columns,
-	);
 	return columns;
 }
 
@@ -232,4 +579,15 @@ export function getDefaultTitle(field: string): string {
 		scheduled: "Запланировано дней",
 	};
 	return titles[field] || field;
+}
+
+/**
+ * Парсит параметры из содержимого блока fsrs-table (устаревшая функция, для совместимости)
+ * @deprecated Используйте parseSqlBlock
+ */
+export function parseTableParams(source: string): TableParams {
+	console.warn(
+		"Функция parseTableParams устарела. Используйте SQL-подобный синтаксис.",
+	);
+	return parseSqlBlock(source);
 }
