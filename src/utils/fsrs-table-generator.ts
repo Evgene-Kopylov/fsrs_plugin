@@ -65,9 +65,9 @@ export function generateTableHTML(
 		const isSorted = params.sort?.field === column.field;
 		const currentDirection = isSorted ? params.sort!.direction : null;
 
-		// Создаем заголовок с кнопкой для сортировки
+		// Создаем заголовок с кликабельным элементом для сортировки
 		html += `<th class="fsrs-col-${column.field} fsrs-sortable-header"${style}>`;
-		html += `<button type="button" class="fsrs-sort-button" data-field="${column.field}" data-current-direction="${currentDirection || ""}">`;
+		html += `<div class="fsrs-sort-header" data-field="${column.field}" data-current-direction="${currentDirection || ""}">`;
 		html += `<span class="fsrs-header-text">${column.title}</span>`;
 
 		// Добавляем индикатор сортировки
@@ -76,7 +76,7 @@ export function generateTableHTML(
 			html += `<span class="fsrs-sort-indicator"> ${arrow}</span>`;
 		}
 
-		html += `</button>`;
+		html += `</div>`;
 		html += `</th>`;
 	}
 	html += `</tr></thead>`;

@@ -227,9 +227,9 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			});
 		});
 
-		// Обработчик для кнопок сортировки в заголовках таблицы
+		// Обработчик для заголовков сортировки в таблице
 		this.container
-			.querySelectorAll(".fsrs-sort-button")
+			.querySelectorAll(".fsrs-sort-header")
 			.forEach((button) => {
 				button.addEventListener("click", (e) => {
 					e.preventDefault();
