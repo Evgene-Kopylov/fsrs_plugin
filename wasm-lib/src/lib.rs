@@ -301,8 +301,12 @@ pub fn filter_and_sort_cards(
     settings_json: &str,
     now_iso: &str,
 ) -> String {
-    // TODO: реализовать после завершения модуля фильтрации
-    "[]".to_string()
+    crate::table_processing::filtering::filter_and_sort_cards_json(
+        cards_json,
+        params_json,
+        settings_json,
+        now_iso,
+    )
 }
 
 // Проверка валидности поля таблицы

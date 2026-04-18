@@ -1,8 +1,13 @@
 //! Модуль для вычисления значений полей карточек для сортировки в таблице FSRS
 //! Включает вычисление overdue, retrievability, state и других полей
+//! Использует существующие WASM функции для вычислений
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use log;
+
+use crate::json_parsing::parse_datetime_flexible;
 
 /// Вычисленные поля карточки для сортировки
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -42,6 +47,8 @@ pub enum CalculationError {
     MissingField(String),
     /// Ошибка вычисления
     CalculationFailed(String),
+    /// Ошибка парсинга JSON результата WASM
+    WasmResultParseError(String),
     /// Функция не реализована
     NotImplemented,
 }
@@ -53,12 +60,64 @@ impl std::fmt::Display for CalculationError {
             CalculationError::InvalidDateFormat(msg) => write!(f, "Некорректный формат даты: {}", msg),
             CalculationError::MissingField(field) => write!(f, "Отсутствует обязательное поле: {}", field),
             CalculationError::CalculationFailed(msg) => write!(f, "Ошибка вычисления: {}", msg),
+            CalculationError::WasmResultParseError(msg) => write!(f, "Ошибка парсинга результата WASM: {}", msg),
             CalculationError::NotImplemented => write!(f, "Функция не реализована"),
         }
     }
 }
 
 impl std::error::Error for CalculationError {}
+
+/// Преобразует дату из формата Obsidian (ГГГГ-ММ-ДД_чч:мм) в ISO 8601
+pub fn obsidian_to_iso(date_str: &str) -> Option<String> {
+    // Формат Obsidian: "2024-01-10_10:30"
+    // Преобразуем в ISO 8601: "2024-01-10T10:30:00Z"
+
+    if date_str.is_empty() {
+        return None;
+    }
+
+    // Пытаемся распарсить как Obsidian формат
+    if let Ok(dt) = chrono::NaiveDateTime::parse_from_str(date_str, "%Y-%m-%d_%H:%M") {
+        // Преобразуем в DateTime<Utc> и затем в ISO 8601
+        let dt_utc: DateTime<Utc> = DateTime::from_naive_utc_and_offset(dt, Utc);
+        Some(dt_utc.to_rfc3339())
+    } else {
+        // Если не удалось, пробуем как ISO 8601 (возможно уже в правильном формате)
+        // Пытаемся распарсить как ISO 8601 используя нашу гибкую функцию
+        parse_datetime_flexible(date_str).map(|dt| dt.to_rfc3339())
+    }
+}
+
+/// Преобразует дату из ISO 8601 в формат Obsidian (ГГГГ-ММ-ДД_чч:мм)
+pub fn iso_to_obsidian(iso_str: &str) -> Option<String> {
+    if iso_str.is_empty() {
+        return None;
+    }
+
+    // Пытаемся распарсить как ISO 8601 используя нашу гибкую функцию
+    if let Some(dt) = parse_datetime_flexible(iso_str) {
+        // Форматируем в Obsidian формат
+        Some(dt.format("%Y-%m-%d_%H:%M").to_string())
+    } else {
+        // Если уже в Obsidian формате, возвращаем как есть
+        if iso_str.contains('_') && iso_str.contains('-') && iso_str.contains(':') {
+            Some(iso_str.to_string())
+        } else {
+            None
+        }
+    }
+}
+
+/// Извлекает поле из JSON карточки
+fn extract_field(card_json: &str, field: &str) -> Result<serde_json::Value, CalculationError> {
+    let parsed: serde_json::Value = serde_json::from_str(card_json)
+        .map_err(|e| CalculationError::JsonParseError(e.to_string()))?;
+
+    parsed.get(field)
+        .cloned()
+        .ok_or_else(|| CalculationError::MissingField(field.to_string()))
+}
 
 /// Вычисляет просрочку карточки в часах
 ///
@@ -68,14 +127,38 @@ impl std::error::Error for CalculationError {}
 ///
 /// # Возвращает
 /// Количество часов просрочки или ошибку вычисления
-///
-/// # TODO
-/// Реализовать фактическое вычисление с использованием существующих функций WASM
 pub fn calculate_overdue(card_json: &str, now_iso: &str) -> Result<f64, CalculationError> {
-    // TODO: Использовать существующую функцию WASM для вычисления просрочки
-    // Временная заглушка: возвращаем 0.0
-    log::debug!("calculate_overdue заглушка: card_json длина={}, now_iso={}", card_json.len(), now_iso);
-    Ok(0.0)
+    use crate::sort_functions::get_overdue_hours;
+
+    log::debug!("Вычисление просрочки для карточки");
+
+    // Извлекаем поле due из карточки (может отсутствовать)
+    let due_value = match extract_field(card_json, "due") {
+        Ok(value) => value,
+        Err(CalculationError::MissingField(_)) => {
+            // Если поле due отсутствует, значит карточка не имеет даты просрочки
+            log::debug!("Поле due отсутствует, просрочка = 0");
+            return Ok(0.0);
+        }
+        Err(e) => return Err(e),
+    };
+
+    let due_str = due_value.as_str()
+        .ok_or_else(|| CalculationError::MissingField("due".to_string()))?;
+
+    // Преобразуем дату due из Obsidian формата в ISO 8601, если нужно
+    let due_iso = obsidian_to_iso(due_str)
+        .ok_or_else(|| CalculationError::InvalidDateFormat(format!("Некорректный формат даты due: {}", due_str)))?;
+
+    // Вызываем существующую WASM функцию для вычисления просрочки
+    let overdue_json = get_overdue_hours(due_iso, now_iso.to_string());
+
+    // Парсим результат
+    let overdue: f64 = serde_json::from_str(&overdue_json)
+        .map_err(|e| CalculationError::WasmResultParseError(e.to_string()))?;
+
+    log::debug!("Просрочка вычислена: {} часов", overdue);
+    Ok(overdue)
 }
 
 /// Вычисляет извлекаемость (retrievability) карточки
@@ -89,9 +172,6 @@ pub fn calculate_overdue(card_json: &str, now_iso: &str) -> Result<f64, Calculat
 ///
 /// # Возвращает
 /// Значение извлекаемости от 0 до 1 или ошибку вычисления
-///
-/// # TODO
-/// Использовать существующую функцию WASM `get_retrievability`
 pub fn calculate_retrievability(
     card_json: &str,
     now_iso: &str,
@@ -99,14 +179,25 @@ pub fn calculate_retrievability(
     default_stability: f64,
     default_difficulty: f64,
 ) -> Result<f64, CalculationError> {
-    // TODO: Использовать существующую функцию WASM get_retrievability
-    // Временная заглушка: возвращаем 0.5
-    log::debug!(
-        "calculate_retrievability заглушка: card_json длина={}, now_iso={}",
-        card_json.len(),
-        now_iso
+    use crate::state_functions::get_retrievability;
+
+    log::debug!("Вычисление извлекаемости для карточки");
+
+    // Вызываем существующую WASM функцию для вычисления извлекаемости
+    let retrievability_json = get_retrievability(
+        card_json.to_string(),
+        now_iso.to_string(),
+        parameters_json.to_string(),
+        default_stability,
+        default_difficulty,
     );
-    Ok(0.5)
+
+    // Парсим результат
+    let retrievability: f64 = serde_json::from_str(&retrievability_json)
+        .map_err(|e| CalculationError::WasmResultParseError(e.to_string()))?;
+
+    log::debug!("Извлекаемость вычислена: {}", retrievability);
+    Ok(retrievability)
 }
 
 /// Определяет состояние карточки (новое, изучение, повторение, пересмотр)
@@ -120,9 +211,6 @@ pub fn calculate_retrievability(
 ///
 /// # Возвращает
 /// Строку с состоянием карточки или ошибку вычисления
-///
-/// # TODO
-/// Использовать существующую функцию WASM `compute_current_state`
 pub fn calculate_card_state(
     card_json: &str,
     now_iso: &str,
@@ -130,31 +218,31 @@ pub fn calculate_card_state(
     default_stability: f64,
     default_difficulty: f64,
 ) -> Result<String, CalculationError> {
-    // TODO: Использовать существующую функцию WASM compute_current_state
-    // Временная заглушка: возвращаем "new"
-    log::debug!(
-        "calculate_card_state заглушка: card_json длина={}, now_iso={}",
-        card_json.len(),
-        now_iso
+    use crate::state_functions::compute_current_state;
+
+    log::debug!("Вычисление состояния карточки");
+
+    // Вызываем существующую WASM функцию для вычисления состояния
+    let state_json = compute_current_state(
+        card_json.to_string(),
+        now_iso.to_string(),
+        parameters_json.to_string(),
+        default_stability,
+        default_difficulty,
     );
-    Ok("new".to_string())
-}
 
-/// Извлекает поле из JSON карточки
-///
-/// # Аргументы
-/// * `card_json` - JSON карточки
-/// * `field` - имя поля для извлечения
-///
-/// # Возвращает
-/// Значение поля как JSON или ошибку
-fn extract_field(card_json: &str, field: &str) -> Result<serde_json::Value, CalculationError> {
-    let parsed: serde_json::Value = serde_json::from_str(card_json)
-        .map_err(|e| CalculationError::JsonParseError(e.to_string()))?;
+    // Парсим JSON результата
+    let parsed: serde_json::Value = serde_json::from_str(&state_json)
+        .map_err(|e| CalculationError::WasmResultParseError(e.to_string()))?;
 
-    parsed.get(field)
-        .cloned()
-        .ok_or_else(|| CalculationError::MissingField(field.to_string()))
+    // Извлекаем поле state
+    let state = parsed.get("state")
+        .and_then(|s| s.as_str())
+        .ok_or_else(|| CalculationError::WasmResultParseError("Поле 'state' отсутствует в результате".to_string()))?
+        .to_string();
+
+    log::debug!("Состояние карточки: {}", state);
+    Ok(state)
 }
 
 /// Вычисляет все поля для карточки
@@ -175,7 +263,9 @@ pub fn compute_all_fields(
     default_stability: f64,
     default_difficulty: f64,
 ) -> Result<CardWithComputedFields, CalculationError> {
-    log::debug!("Вычисление полей для карточки: длина JSON={}", card_json.len());
+    use crate::state_functions::compute_current_state;
+
+    log::debug!("Вычисление всех полей для карточки: длина JSON={}", card_json.len());
 
     let mut result = CardWithComputedFields {
         file: None,
@@ -198,46 +288,111 @@ pub fn compute_all_fields(
         }
     }
 
-    if let Ok(reps_value) = extract_field(card_json, "reps") {
-        if let Some(reps) = reps_value.as_u64() {
-            result.reps = Some(reps as u32);
+    // Используем поле filePath как альтернативу file
+    if result.file.is_none() {
+        if let Ok(file_path_value) = extract_field(card_json, "filePath") {
+            if let Some(file_path_str) = file_path_value.as_str() {
+                result.file = Some(file_path_str.to_string());
+            }
         }
     }
 
-    if let Ok(stability_value) = extract_field(card_json, "stability") {
-        if let Some(stability) = stability_value.as_f64() {
-            result.stability = Some(stability);
+    // Извлекаем reps из истории reviews
+    if let Ok(reviews_value) = extract_field(card_json, "reviews") {
+        if let Some(reviews_array) = reviews_value.as_array() {
+            // Подсчитываем количество успешных повторений (не "Again")
+            let successful_reps = reviews_array.iter()
+                .filter(|review| {
+                    review.get("rating")
+                        .and_then(|r| r.as_str())
+                        .map(|r| r != "Again")
+                        .unwrap_or(false)
+                })
+                .count();
+            result.reps = Some(successful_reps as u32);
         }
     }
 
-    if let Ok(difficulty_value) = extract_field(card_json, "difficulty") {
-        if let Some(difficulty) = difficulty_value.as_f64() {
-            result.difficulty = Some(difficulty);
+    // Вычисляем полное состояние карточки через WASM функцию
+    let state_json = compute_current_state(
+        card_json.to_string(),
+        now_iso.to_string(),
+        parameters_json.to_string(),
+        default_stability,
+        default_difficulty,
+    );
+    let parsed_state: serde_json::Value = serde_json::from_str(&state_json)
+        .unwrap_or_else(|_| serde_json::Value::Object(serde_json::Map::new()));
+
+    // Извлекаем значения из результата compute_current_state
+    if let Some(stability) = parsed_state.get("stability").and_then(|s| s.as_f64()) {
+        result.stability = Some(stability);
+    }
+
+    if let Some(difficulty) = parsed_state.get("difficulty").and_then(|d| d.as_f64()) {
+        result.difficulty = Some(difficulty);
+    }
+
+    if let Some(due_iso) = parsed_state.get("due").and_then(|d| d.as_str()) {
+        // Преобразуем ISO дату в формат Obsidian для отображения
+        if let Some(due_obsidian) = iso_to_obsidian(due_iso) {
+            result.due = Some(due_obsidian);
+        } else {
+            result.due = Some(due_iso.to_string());
         }
     }
 
-    if let Ok(due_value) = extract_field(card_json, "due") {
-        if let Some(due_str) = due_value.as_str() {
-            result.due = Some(due_str.to_string());
-        }
+    if let Some(state_str) = parsed_state.get("state").and_then(|s| s.as_str()) {
+        result.state = Some(state_str.to_string());
     }
 
-    // Вычисляем сложные поля (заглушки)
-    result.overdue = Some(calculate_overdue(card_json, now_iso)?);
-    result.retrievability = Some(calculate_retrievability(
+    if let Some(elapsed_days) = parsed_state.get("elapsed_days").and_then(|e| e.as_u64()) {
+        result.elapsed = Some(elapsed_days as f64);
+    }
+
+    if let Some(scheduled_days) = parsed_state.get("scheduled_days").and_then(|s| s.as_u64()) {
+        result.scheduled = Some(scheduled_days as f64);
+    }
+
+    // Вычисляем сложные поля через соответствующие функции, с обработкой ошибок
+    result.overdue = match calculate_overdue(card_json, now_iso) {
+        Ok(value) => Some(value),
+        Err(e) => {
+            log::warn!("Ошибка вычисления просрочки: {}", e);
+            None
+        }
+    };
+
+    result.retrievability = match calculate_retrievability(
         card_json,
         now_iso,
         parameters_json,
         default_stability,
         default_difficulty,
-    )?);
-    result.state = Some(calculate_card_state(
-        card_json,
-        now_iso,
-        parameters_json,
-        default_stability,
-        default_difficulty,
-    )?);
+    ) {
+        Ok(value) => Some(value),
+        Err(e) => {
+            log::warn!("Ошибка вычисления извлекаемости: {}", e);
+            None
+        }
+    };
+
+    // Если состояние еще не установлено, вычисляем его отдельно
+    if result.state.is_none() {
+        result.state = match calculate_card_state(
+            card_json,
+            now_iso,
+            parameters_json,
+            default_stability,
+            default_difficulty,
+        ) {
+            Ok(value) => Some(value),
+            Err(e) => {
+                log::warn!("Ошибка вычисления состояния: {}", e);
+                None
+            }
+        };
+    }
 
     log::debug!("Вычисление полей завершено успешно");
     Ok(result)
@@ -254,6 +409,7 @@ mod tests {
             CalculationError::InvalidDateFormat("2024-01-01".to_string()),
             CalculationError::MissingField("due".to_string()),
             CalculationError::CalculationFailed("division by zero".to_string()),
+            CalculationError::WasmResultParseError("parse error".to_string()),
             CalculationError::NotImplemented,
         ];
 
@@ -263,39 +419,53 @@ mod tests {
         assert!(displays[1].contains("Некорректный формат даты"));
         assert!(displays[2].contains("Отсутствует обязательное поле"));
         assert!(displays[3].contains("Ошибка вычисления"));
-        assert!(displays[4].contains("Функция не реализована"));
+        assert!(displays[4].contains("Ошибка парсинга результата WASM"));
+        assert!(displays[5].contains("Функция не реализована"));
     }
 
     #[test]
-    fn test_calculate_overdue_stub() {
-        let card_json = r#"{"file": "test.md", "due": "2024-01-01"}"#;
-        let now_iso = "2024-01-02T10:00:00Z";
+    fn test_obsidian_to_iso() {
+        // Тест преобразования Obsidian формата в ISO
+        let obsidian_date = "2024-01-10_10:30";
+        let iso_date = obsidian_to_iso(obsidian_date);
+        assert!(iso_date.is_some());
+        let iso = iso_date.unwrap();
+        assert!(iso.contains("2024-01-10T10:30:"));
 
-        let result = calculate_overdue(card_json, now_iso);
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), 0.0); // Заглушка возвращает 0.0
+        // Тест с уже ISO датой
+        let iso_input = "2024-01-10T10:30:00Z";
+        let iso_output = obsidian_to_iso(iso_input);
+        assert!(iso_output.is_some());
+        let output = iso_output.unwrap();
+        // Проверяем что дата корректная, формат может быть с Z или +00:00
+        assert!(output.contains("2024-01-10T10:30:00"));
+
+        // Тест с пустой строкой
+        assert!(obsidian_to_iso("").is_none());
+
+        // Тест с некорректным форматом
+        assert!(obsidian_to_iso("invalid date").is_none());
     }
 
     #[test]
-    fn test_calculate_retrievability_stub() {
-        let card_json = r#"{"file": "test.md"}"#;
-        let now_iso = "2024-01-01T10:00:00Z";
-        let parameters_json = r#"{"request_retention": 0.9}"#;
+    fn test_iso_to_obsidian() {
+        // Тест преобразования ISO в Obsidian формат
+        let iso_date = "2024-01-10T10:30:00Z";
+        let obsidian_date = iso_to_obsidian(iso_date);
+        assert!(obsidian_date.is_some());
+        assert_eq!(obsidian_date.unwrap(), "2024-01-10_10:30");
 
-        let result = calculate_retrievability(card_json, now_iso, parameters_json, 1.0, 0.5);
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), 0.5); // Заглушка возвращает 0.5
-    }
+        // Тест с уже Obsidian датой
+        let obsidian_input = "2024-01-10_10:30";
+        let obsidian_output = iso_to_obsidian(obsidian_input);
+        assert!(obsidian_output.is_some());
+        assert_eq!(obsidian_output.unwrap(), obsidian_input);
 
-    #[test]
-    fn test_calculate_card_state_stub() {
-        let card_json = r#"{"file": "test.md"}"#;
-        let now_iso = "2024-01-01T10:00:00Z";
-        let parameters_json = r#"{"request_retention": 0.9}"#;
+        // Тест с пустой строкой
+        assert!(iso_to_obsidian("").is_none());
 
-        let result = calculate_card_state(card_json, now_iso, parameters_json, 1.0, 0.5);
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), "new"); // Заглушка возвращает "new"
+        // Тест с некорректным форматом
+        assert!(iso_to_obsidian("invalid date").is_none());
     }
 
     #[test]
@@ -337,25 +507,5 @@ mod tests {
         } else {
             panic!("Expected JsonParseError");
         }
-    }
-
-    #[test]
-    fn test_compute_all_fields_stub() {
-        let card_json = r#"{"file": "test.md", "reps": 3, "stability": 2.5, "difficulty": 0.7, "due": "2024-01-10_10:30"}"#;
-        let now_iso = "2024-01-01T10:00:00Z";
-        let parameters_json = r#"{"request_retention": 0.9}"#;
-
-        let result = compute_all_fields(card_json, now_iso, parameters_json, 1.0, 0.5);
-        assert!(result.is_ok());
-
-        let computed = result.unwrap();
-        assert_eq!(computed.file, Some("test.md".to_string()));
-        assert_eq!(computed.reps, Some(3));
-        assert_eq!(computed.stability, Some(2.5));
-        assert_eq!(computed.difficulty, Some(0.7));
-        assert_eq!(computed.due, Some("2024-01-10_10:30".to_string()));
-        assert_eq!(computed.overdue, Some(0.0)); // Заглушка
-        assert_eq!(computed.retrievability, Some(0.5)); // Заглушка
-        assert_eq!(computed.state, Some("new".to_string())); // Заглушка
     }
 }
