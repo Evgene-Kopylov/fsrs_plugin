@@ -4,6 +4,8 @@
  * Синтаксис: SELECT, ORDER BY, LIMIT
  */
 
+import * as wasm from "../../../wasm-lib/pkg/wasm_lib";
+
 // Направление сортировки
 export type SortDirection = "ASC" | "DESC";
 
@@ -50,407 +52,9 @@ export const DEFAULT_COLUMNS: TableColumn[] = [
 	{ field: "due", title: "Следующее повторение" },
 ];
 
-// Типы токенов для парсинга
-type TokenType =
-	| "KEYWORD"
-	| "IDENTIFIER"
-	| "NUMBER"
-	| "STRING"
-	| "OPERATOR"
-	| "EOF";
-
-interface Token {
-	type: TokenType;
-	value: string;
-	start: number;
-}
-
-/**
- * Простой лексер для SQL-подобного синтаксиса
- */
-class SqlLexer {
-	private position = 0;
-	private readonly input: string;
-
-	constructor(input: string) {
-		// Заменяем переносы строк на пробелы для упрощения парсинга
-		this.input = input.replace(/\r?\n/g, " ").trim();
-	}
-
-	/**
-	 * Получает следующий токен
-	 */
-	nextToken(): Token {
-		this.skipWhitespace();
-
-		if (this.position >= this.input.length) {
-			return { type: "EOF", value: "", start: this.position };
-		}
-
-		const currentChar = this.input[this.position]!;
-
-		// Ключевые слова (идентификаторы, начинающиеся с буквы)
-		if (this.isLetter(currentChar!)) {
-			return this.readKeywordOrIdentifier();
-		}
-
-		// Числа
-		if (this.isDigit(currentChar!)) {
-			return this.readNumber();
-		}
-
-		// Строки в двойных кавычках
-		if (currentChar! === '"') {
-			return this.readString();
-		}
-
-		// Операторы и другие символы
-		return this.readOperator();
-	}
-
-	/**
-	 * Пропускает пробельные символы
-	 */
-	private skipWhitespace(): void {
-		while (
-			this.position < this.input.length &&
-			/\s/.test(this.input[this.position]!)
-		) {
-			this.position++;
-		}
-	}
-
-	/**
-	 * Читает ключевое слово или идентификатор
-	 */
-	private readKeywordOrIdentifier(): Token {
-		const start = this.position;
-		let value = "";
-
-		while (
-			this.position < this.input.length &&
-			this.isIdentifierChar(this.input[this.position]!)
-		) {
-			value += this.input[this.position]!;
-			this.position++;
-		}
-
-		// Проверяем, является ли это ключевым словом
-		const upperValue = value.toUpperCase();
-		const keywords = [
-			"SELECT",
-			"ORDER",
-			"BY",
-			"ASC",
-			"DESC",
-			"LIMIT",
-			"AS",
-		];
-
-		if (keywords.includes(upperValue)) {
-			return { type: "KEYWORD", value: upperValue, start };
-		}
-
-		return { type: "IDENTIFIER", value, start };
-	}
-
-	/**
-	 * Читает число
-	 */
-	private readNumber(): Token {
-		const start = this.position;
-		let value = "";
-
-		while (
-			this.position < this.input.length &&
-			this.isDigit(this.input[this.position]!)
-		) {
-			value += this.input[this.position]!;
-			this.position++;
-		}
-
-		return { type: "NUMBER", value, start };
-	}
-
-	/**
-	 * Читает строку в двойных кавычках
-	 */
-	private readString(): Token {
-		const start = this.position;
-		let value = "";
-		this.position++; // Пропускаем открывающую кавычку
-
-		while (
-			this.position < this.input.length &&
-			this.input[this.position]! !== '"'
-		) {
-			value += this.input[this.position]!;
-			this.position++;
-		}
-
-		if (
-			this.position < this.input.length &&
-			this.input[this.position]! === '"'
-		) {
-			this.position++; // Пропускаем закрывающую кавычку
-		}
-
-		return { type: "STRING", value, start };
-	}
-
-	/**
-	 * Читает оператор или другой символ
-	 */
-	private readOperator(): Token {
-		const start = this.position;
-		const value = this.input[this.position]!;
-		this.position++;
-
-		return { type: "OPERATOR", value, start };
-	}
-
-	/**
-	 * Проверяет, является ли символ буквой
-	 */
-	private isLetter(char: string): boolean {
-		return /[a-zA-Z]/.test(char);
-	}
-
-	/**
-	 * Проверяет, является ли символ цифрой
-	 */
-	private isDigit(char: string): boolean {
-		return /[0-9]/.test(char);
-	}
-
-	/**
-	 * Проверяет, является ли символ допустимым для идентификатора
-	 */
-	private isIdentifierChar(char: string): boolean {
-		return /[a-zA-Z0-9_]/.test(char);
-	}
-}
-
-/**
- * Парсер SQL-подобного синтаксиса
- */
-class SqlParser {
-	private lexer: SqlLexer;
-	private currentToken: Token;
-
-	constructor(input: string) {
-		this.lexer = new SqlLexer(input);
-		this.currentToken = this.lexer.nextToken();
-	}
-
-	/**
-	 * Парсит SQL-запрос и возвращает параметры таблицы
-	 */
-	parse(): TableParams {
-		const params: TableParams = {
-			columns: [...DEFAULT_COLUMNS],
-			limit: 0,
-		};
-
-		// Парсим все ключевые слова в любом порядке
-		while (this.currentToken.type !== "EOF") {
-			if (this.currentToken.type === "KEYWORD") {
-				switch (this.currentToken.value) {
-					case "SELECT":
-						this.consume("KEYWORD", "SELECT");
-						params.columns = this.parseSelectClause();
-						break;
-					case "ORDER":
-						this.consume("KEYWORD", "ORDER");
-						this.consume("KEYWORD", "BY");
-						params.sort = this.parseOrderByClause();
-						break;
-					case "LIMIT":
-						this.consume("KEYWORD", "LIMIT");
-						params.limit = this.parseLimitClause();
-						break;
-					default:
-						// Пропускаем неизвестные ключевые слова
-						this.advance();
-						break;
-				}
-			} else {
-				this.advance();
-			}
-		}
-
-		return params;
-	}
-
-	/**
-	 * Парсит SELECT clause
-	 */
-	private parseSelectClause(): TableColumn[] {
-		const columns: TableColumn[] = [];
-
-		while (
-			this.currentToken.type !== "EOF" &&
-			this.currentToken.value !== "ORDER" &&
-			this.currentToken.value !== "LIMIT"
-		) {
-			const column = this.parseColumnDefinition();
-			if (column) {
-				columns.push(column);
-			}
-
-			// Если следующий токен - запятая, пропускаем её
-			if (
-				this.currentToken.type === "OPERATOR" &&
-				this.currentToken.value === ","
-			) {
-				this.advance();
-			} else {
-				break;
-			}
-		}
-
-		// Если нет валидных колонок, возвращаем колонки по умолчанию
-		if (columns.length === 0) {
-			console.warn(
-				"Нет валидных полей в SELECT. Используются колонки по умолчанию.",
-			);
-			return [...DEFAULT_COLUMNS];
-		}
-
-		return columns;
-	}
-
-	/**
-	 * Парсит определение колонки: field [as "alias"]
-	 */
-	private parseColumnDefinition(): TableColumn | null {
-		let token = this.currentToken;
-		if (token.type !== "IDENTIFIER") {
-			console.warn(
-				`Ожидается идентификатор поля, получено: ${token.value}`,
-			);
-			this.advance();
-			return null;
-		}
-
-		const field = token.value.toLowerCase();
-		this.advance();
-		token = this.currentToken;
-
-		let title = getDefaultTitle(field);
-
-		// Проверяем наличие алиаса
-		if (token.value === "AS") {
-			this.consume("KEYWORD", "AS");
-			token = this.currentToken;
-			if (token.type === "STRING") {
-				title = token.value;
-				this.advance();
-				token = this.currentToken;
-			} else {
-				console.warn(
-					`Ожидается строка с алиасом в двойных кавычках, получено: ${token.value}`,
-				);
-			}
-		}
-
-		// Проверяем, является ли поле допустимым
-		if (!AVAILABLE_FIELDS.has(field)) {
-			console.warn(`Неизвестное поле: "${field}". Пропущено.`);
-			return null;
-		}
-
-		return { field, title };
-	}
-
-	/**
-	 * Парсит ORDER BY clause
-	 */
-	private parseOrderByClause(): SortParam | undefined {
-		let token = this.currentToken;
-		if (token.type !== "IDENTIFIER") {
-			console.warn(
-				`Ожидается поле для сортировки, получено: ${token.value}. Параметр сортировки проигнорирован.`,
-			);
-			return undefined;
-		}
-
-		const field = token.value.toLowerCase();
-		this.advance();
-		token = this.currentToken;
-
-		// Проверяем, является ли поле допустимым
-		if (!AVAILABLE_FIELDS.has(field)) {
-			console.warn(
-				`Неизвестное поле для сортировки: "${field}". Параметр сортировки проигнорирован.`,
-			);
-			return undefined;
-		}
-
-		// Определяем направление сортировки (по умолчанию ASC)
-		let direction: SortDirection = "ASC";
-
-		if (token.value === "ASC" || token.value === "DESC") {
-			direction = token.value as SortDirection;
-			this.advance();
-		}
-
-		return { field, direction };
-	}
-
-	/**
-	 * Парсит LIMIT clause
-	 */
-	private parseLimitClause(): number {
-		let token = this.currentToken;
-		if (token.type !== "NUMBER") {
-			console.warn(
-				`Ожидается число для LIMIT, получено: ${token.value}. Лимит не применён.`,
-			);
-			return 0;
-		}
-
-		const value = token.value;
-		const limit = parseInt(value, 10);
-		this.advance();
-
-		if (isNaN(limit) || limit <= 0) {
-			console.warn(`Некорректный LIMIT: ${value}. Лимит не применён.`);
-			return 0;
-		}
-
-		return limit;
-	}
-
-	/**
-	 * Потребляет токен ожидаемого типа и значения
-	 */
-	private consume(expectedType: TokenType, expectedValue?: string): void {
-		if (this.currentToken.type !== expectedType) {
-			throw new Error(
-				`Ожидается ${expectedType}, получено ${this.currentToken.type}`,
-			);
-		}
-
-		if (expectedValue && this.currentToken.value !== expectedValue) {
-			throw new Error(
-				`Ожидается ${expectedValue}, получено ${this.currentToken.value}`,
-			);
-		}
-
-		this.advance();
-	}
-
-	/**
-	 * Переходит к следующему токену
-	 */
-	private advance(): void {
-		this.currentToken = this.lexer.nextToken();
-	}
-}
-
 /**
  * Парсит SQL-подобный синтаксис блока fsrs-table
+ * Использует WASM реализацию парсинга на Rust
  * @param source Исходный текст блока
  * @returns Объект с параметрами таблицы
  */
@@ -466,10 +70,50 @@ export function parseSqlBlock(source: string): TableParams {
 	}
 
 	try {
-		const parser = new SqlParser(source);
-		const params = parser.parse();
+		// Вызываем WASM функцию для парсинга
+		const resultJson = wasm.parse_fsrs_table_block(source);
 
-		return params;
+		// Парсим JSON результат
+		const parsedResult = JSON.parse(resultJson);
+
+		// Если в результате есть ошибка, возвращаем параметры по умолчанию
+		if (parsedResult.error) {
+			console.error(
+				`Ошибка парсинга SQL-подобного синтаксиса: ${parsedResult.error}. Используются значения по умолчанию.`,
+			);
+			return (
+				parsedResult.params || {
+					columns: [...DEFAULT_COLUMNS],
+					limit: 0,
+				}
+			);
+		}
+
+		// Преобразуем результат из WASM в TypeScript типы
+		const wasmParams = parsedResult as TableParams;
+
+		// Преобразуем direction из "Asc"/"Desc" в "ASC"/"DESC"
+		if (wasmParams.sort) {
+			const tsSort: SortParam = {
+				field: wasmParams.sort.field,
+				direction: (
+					wasmParams.sort.direction as string
+				).toUpperCase() as SortDirection,
+			};
+
+			// Проверяем, что direction валидный
+			if (tsSort.direction !== "ASC" && tsSort.direction !== "DESC") {
+				tsSort.direction = "ASC"; // Значение по умолчанию
+			}
+
+			return {
+				columns: wasmParams.columns,
+				limit: wasmParams.limit,
+				sort: tsSort,
+			};
+		}
+
+		return wasmParams;
 	} catch (error) {
 		console.error(
 			`Ошибка парсинга SQL-подобного синтаксиса: ${String(error)}. Используются значения по умолчанию.`,
@@ -483,59 +127,86 @@ export function parseSqlBlock(source: string): TableParams {
 
 /**
  * Парсит определение колонок в формате: поле1 as "Заголовок1", поле2 as "Заголовок2", поле3
+ * Использует WASM реализацию для полного парсинга SQL
  * @param columnsText Текст с определением колонок
  * @returns Массив объектов TableColumn
  */
 export function parseColumnsDefinition(columnsText: string): TableColumn[] {
-	const columns: TableColumn[] = [];
-
-	// Удаляем лишние пробелы и разбиваем по запятым
-	const parts = columnsText
-		.split(",")
-		.map((part) => part.trim())
-		.filter((part) => part.length > 0);
-
-	for (const part of parts) {
-		// Пытаемся извлечь поле и заголовок
-		const fieldMatch = part.match(/^(\w+)(?:\s+as\s+"([^"]+)")?$/);
-		if (fieldMatch && fieldMatch[1]) {
-			const field = fieldMatch[1].toLowerCase();
-			const title = fieldMatch[2] || getDefaultTitle(field);
-
-			if (AVAILABLE_FIELDS.has(field)) {
-				columns.push({ field, title });
-			} else {
-				console.warn(
-					`Неизвестное поле в колонках: "${field}". Пропущено.`,
-				);
-			}
-		} else {
-			console.warn(`Некорректный формат колонки: "${part}". Пропущено.`);
-		}
+	if (!columnsText.trim()) {
+		return [...DEFAULT_COLUMNS];
 	}
 
-	return columns;
+	try {
+		// Создаём полный SQL запрос для парсинга
+		const sql = `SELECT ${columnsText}`;
+		const resultJson = wasm.parse_fsrs_table_block(sql);
+		const parsedResult = JSON.parse(resultJson);
+
+		if (parsedResult.error) {
+			console.warn(
+				`Ошибка парсинга колонок: ${parsedResult.error}. Используются колонки по умолчанию.`,
+			);
+			return [...DEFAULT_COLUMNS];
+		}
+
+		const wasmParams = parsedResult as TableParams;
+		return wasmParams.columns;
+	} catch (error) {
+		console.warn(
+			`Ошибка парсинга колонок: ${String(error)}. Используются колонки по умолчанию.`,
+		);
+		return [...DEFAULT_COLUMNS];
+	}
 }
 
 /**
  * Возвращает заголовок по умолчанию для поля
+ * Использует WASM реализацию для получения заголовков
  * @param field Идентификатор поля
  * @returns Заголовок по умолчанию
  */
 export function getDefaultTitle(field: string): string {
-	const titles: Record<string, string> = {
-		file: "Файл",
-		reps: "Повторений",
-		overdue: "Просрочка",
-		stability: "Стабильность",
-		difficulty: "Сложность",
-		retrievability: "Извлекаемость",
-		due: "Следующее повторение",
-		state: "Состояние",
-		elapsed: "Прошло дней",
-		scheduled: "Запланировано дней",
-	};
-	return titles[field] || field;
+	try {
+		// Используем WASM функцию для получения заголовка по умолчанию
+		return wasm.get_default_column_title(field);
+	} catch (error) {
+		console.warn(
+			`Ошибка получения заголовка для поля "${field}": ${String(error)}. Используется локальный заголовок.`,
+		);
+		// Fallback на локальные заголовки
+		const titles: Record<string, string> = {
+			file: "Файл",
+			reps: "Повторений",
+			overdue: "Просрочка",
+			stability: "Стабильность",
+			difficulty: "Сложность",
+			retrievability: "Извлекаемость",
+			due: "Следующее повторение",
+			state: "Состояние",
+			elapsed: "Прошло дней",
+			scheduled: "Запланировано дней",
+		};
+		return titles[field] || field;
+	}
+}
+
+/**
+ * Проверяет, является ли поле валидным для использования в таблице
+ * Использует WASM реализацию для проверки
+ * @param field Идентификатор поля для проверки
+ * @returns true если поле валидное, false если нет
+ */
+export function isValidTableField(field: string): boolean {
+	try {
+		// Используем WASM функцию для проверки валидности поля
+		return wasm.is_valid_table_field(field);
+	} catch (error) {
+		console.warn(
+			`Ошибка проверки валидности поля "${field}": ${String(error)}. Используется локальная проверка.`,
+		);
+		// Fallback на локальную проверку
+		return AVAILABLE_FIELDS.has(field);
+	}
 }
 
 /**
@@ -544,7 +215,7 @@ export function getDefaultTitle(field: string): string {
  */
 export function parseTableParams(source: string): TableParams {
 	console.warn(
-		"Функция parseTableParams устарела. Используйте SQL-подобный синтаксис.",
+		"Функция parseTableParams устарела. Используйте parseSqlBlock.",
 	);
 	return parseSqlBlock(source);
 }

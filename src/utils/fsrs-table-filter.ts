@@ -1,15 +1,16 @@
 /**
  * Модуль для фильтрации и сортировки карточек блока fsrs-table
- * Реализует логику для отображения всех карточек с поддержкой пользовательской сортировки
+ * Использует WASM реализацию на Rust для максимальной производительности и совместимости
  */
 
 import type {
 	ModernFSRSCard,
 	ComputedCardState,
 	FSRSSettings,
+	FSRSState,
 } from "../interfaces/fsrs";
 import type { SortParam, TableParams } from "./fsrs-table-params";
-import { computeCardState, isCardDue } from "./fsrs/fsrs-wasm";
+import * as wasm from "../../../wasm-lib/pkg/wasm_lib";
 
 /**
  * Результат фильтрации и сортировки карточек с состояниями
@@ -21,7 +22,140 @@ export interface CardWithState {
 }
 
 /**
+ * Вычисленные поля карточки из WASM (соответствует Rust структуре CardWithComputedFields)
+ */
+interface WasmComputedFields {
+	file?: string;
+	reps?: number;
+	overdue?: number;
+	stability?: number;
+	difficulty?: number;
+	retrievability?: number;
+	due?: string; // в формате Obsidian: ГГГГ-ММ-ДД_чч:мм
+	state?: string;
+	elapsed?: number;
+	scheduled?: number;
+	additional_fields?: Record<string, unknown>;
+}
+
+/**
+ * Карточка с вычисленными полями из WASM
+ */
+interface WasmCardResult {
+	card_json: string; // JSON строка с ModernFSRSCard
+	computed_fields: WasmComputedFields;
+}
+
+/**
+ * Полный результат фильтрации из WASM
+ */
+interface WasmFilterResult {
+	cards: WasmCardResult[];
+	total_count: number;
+	errors: string[];
+}
+
+/**
+ * Преобразует строку состояния из WASM в FSRSState
+ * @param wasmState Строка состояния из WASM (должна быть на английском)
+ * @returns FSRSState или "New" по умолчанию
+ */
+function convertWasmStateToFSRSState(wasmState?: string): FSRSState {
+	if (!wasmState) {
+		return "New";
+	}
+
+	const stateMap: Record<string, FSRSState> = {
+		new: "New",
+		learning: "Learning",
+		review: "Review",
+		relearning: "Relearning",
+		due: "Review", // "due" преобразуем в "Review", так как в FSRSState нет состояния "due"
+	};
+
+	return stateMap[wasmState.toLowerCase()] || "New";
+}
+
+/**
+ * Преобразует вычисленные поля из WASM в ComputedCardState
+ * @param wasmFields Вычисленные поля из WASM
+ * @returns ComputedCardState
+ */
+function convertWasmFieldsToComputedState(
+	wasmFields: WasmComputedFields,
+): ComputedCardState {
+	// Преобразуем дату из формата Obsidian в ISO
+	let dueDate = "";
+	if (wasmFields.due) {
+		// Формат Obsidian: "2024-01-10_10:30" → ISO: "2024-01-10T10:30:00.000Z"
+		// Пытаемся преобразовать
+		try {
+			const parts = wasmFields.due.split("_");
+			if (parts.length === 2) {
+				dueDate = `${parts[0]}T${parts[1]}:00.000Z`;
+			}
+		} catch {
+			// В случае ошибки оставляем пустую строку
+		}
+	}
+
+	return {
+		due: dueDate,
+		stability: wasmFields.stability || 0,
+		difficulty: wasmFields.difficulty || 0,
+		state: convertWasmStateToFSRSState(wasmFields.state),
+		elapsed_days: wasmFields.elapsed || 0,
+		scheduled_days: wasmFields.scheduled || 0,
+		reps: wasmFields.reps || 0,
+		lapses: 0, // Не вычисляется в текущей WASM реализации
+		retrievability: wasmFields.retrievability || 0,
+	};
+}
+
+/**
+ * Определяет, является ли карточка просроченной
+ * @param fsrsState Состояние карточки (FSRSState)
+ * @param wasmStateStr Исходное состояние из WASM (для определения "due")
+ * @param dueDateStr Дата следующего повторения в ISO формате
+ * @param now Текущее время
+ * @returns true если карточка просрочена
+ */
+function isCardDue(
+	fsrsState: FSRSState,
+	wasmStateStr: string | undefined,
+	dueDateStr: string,
+	now: Date,
+): boolean {
+	if (!dueDateStr) {
+		return false;
+	}
+
+	// Если WASM вернул состояние "due", карточка точно просрочена
+	if (wasmStateStr?.toLowerCase() === "due") {
+		return true;
+	}
+
+	try {
+		const dueDate = new Date(dueDateStr);
+		// Для состояния "Review" проверяем дату
+		if (fsrsState === "Review") {
+			return dueDate.getTime() <= now.getTime();
+		}
+		// Для состояния "Learning" карточка всегда due
+		if (fsrsState === "Learning") {
+			return true;
+		}
+	} catch {
+		// В случае ошибки парсинга даты
+		return false;
+	}
+
+	return false;
+}
+
+/**
  * Фильтрует и сортирует карточки в соответствии с параметрами
+ * Использует WASM реализацию на Rust для максимальной производительности
  * @param cards Массив карточек
  * @param settings Настройки плагина
  * @param params Параметры таблицы (сортировка и лимит)
@@ -38,176 +172,99 @@ export async function filterAndSortCards(
 		return [];
 	}
 
-	// Вычисляем состояния для всех карточек
-	const cardsWithState = await computeCardsStates(cards, settings, now);
+	try {
+		// Преобразуем параметры сортировки для WASM
+		const wasmParams = {
+			columns: params.columns,
+			limit: params.limit,
+			sort: params.sort
+				? {
+						field: params.sort.field,
+						direction: params.sort.direction,
+					}
+				: undefined,
+		};
 
-	// Применяем сортировку в зависимости от наличия пользовательских параметров
-	if (params.sort) {
-		// Если указана пользовательская сортировка, применяем её ко всем карточкам
-		return applyCustomSort(cardsWithState, params.sort, now);
-	} else {
-		// Используем дефолтную логику сортировки: сначала due, затем scheduled
-		return applyDefaultSort(cardsWithState, now);
-	}
-}
+		// Вызываем WASM функцию для фильтрации и сортировки
+		const resultJson = wasm.filter_and_sort_cards(
+			JSON.stringify(cards),
+			JSON.stringify(wasmParams),
+			JSON.stringify(settings),
+			now.toISOString(),
+		);
 
-/**
- * Вычисляет состояния для массива карточек
- * @param cards Массив карточек
- * @param settings Настройки плагина
- * @param now Текущее время
- * @returns Массив карточек с вычисленными состояниями
- */
-async function computeCardsStates(
-	cards: ModernFSRSCard[],
-	settings: FSRSSettings,
-	now: Date,
-): Promise<CardWithState[]> {
-	const cardsWithState: CardWithState[] = [];
+		// Парсим результат
+		const wasmResult: WasmFilterResult = JSON.parse(resultJson);
 
-	for (const card of cards) {
-		// Валидация карточки перед вычислением состояния
-		if (!card || typeof card !== "object") {
-			console.warn(`Пропускаем некорректную карточку: ${String(card)}`);
-			continue;
-		}
-
-		if (!Array.isArray(card.reviews)) {
+		// Обрабатываем ошибки, если есть
+		if (wasmResult.errors && wasmResult.errors.length > 0) {
 			console.warn(
-				`Пропускаем карточку ${card.filePath}: reviews не является массивом`,
+				`При фильтрации и сортировке карточек возникли ошибки:`,
+				wasmResult.errors,
 			);
-			continue;
 		}
 
-		// Проверяем, есть ли хотя бы одна валидная сессия
-		let hasValidSession = false;
-		for (const review of card.reviews) {
-			if (
-				review &&
-				typeof review === "object" &&
-				review.date &&
-				review.rating &&
-				typeof review.stability === "number" &&
-				typeof review.difficulty === "number"
-			) {
-				hasValidSession = true;
-				break;
+		// Преобразуем результат WASM в формат TypeScript
+		const cardsWithState: CardWithState[] = [];
+
+		for (const wasmCard of wasmResult.cards) {
+			try {
+				// Парсим карточку из JSON
+				const card: ModernFSRSCard = JSON.parse(wasmCard.card_json);
+
+				// Преобразуем вычисленные поля в состояние
+				const state = convertWasmFieldsToComputedState(
+					wasmCard.computed_fields,
+				);
+
+				// Определяем, является ли карточка просроченной
+				const isDue = isCardDue(
+					state.state,
+					wasmCard.computed_fields.state,
+					state.due,
+					now,
+				);
+
+				cardsWithState.push({
+					card,
+					state,
+					isDue,
+				});
+			} catch (error) {
+				console.warn(
+					`Ошибка преобразования карточки из WASM результата:`,
+					error,
+				);
+				// Пропускаем карточки с ошибками преобразования
+				continue;
 			}
 		}
 
-		if (!hasValidSession && card.reviews.length > 0) {
-			console.warn(
-				`Пропускаем карточку ${card.filePath}: нет валидных сессий повторения`,
-			);
-			continue;
-		}
-
-		try {
-			const state = await computeCardState(card, settings, now);
-			const isDue = await isCardDue(card, settings, now);
-			cardsWithState.push({ card, state, isDue });
-		} catch (error) {
-			console.error(
-				`Ошибка вычисления состояния для ${card.filePath}:`,
-				error,
-			);
-			// Вместо создания дефолтного состояния пропускаем карточку
-			// чтобы избежать некорректных данных в таблице
-			console.warn(
-				`Пропускаем карточку ${card.filePath} из-за ошибки вычисления состояния`,
-			);
-		}
-	}
-
-	return cardsWithState;
-}
-
-/**
- * Применяет дефолтную логику сортировки: сначала due карточки, затем scheduled
- * @param cardsWithState Все карточки с состояниями и флагом isDue
- * @param now Текущее время
- * @returns Отсортированный массив карточек
- */
-function applyDefaultSort(
-	cardsWithState: CardWithState[],
-	now: Date,
-): CardWithState[] {
-	// Разделяем карточки на due и scheduled
-	const dueCards: CardWithState[] = [];
-	const scheduledCards: CardWithState[] = [];
-
-	for (const item of cardsWithState) {
-		if (item.isDue) {
-			dueCards.push(item);
-		} else {
-			scheduledCards.push(item);
-		}
-	}
-
-	// Сортируем due карточки по приоритету, затем scheduled по дате due
-	const sortedDueCards = sortCardsForDue(dueCards, now);
-	const sortedScheduledCards = sortScheduledCards(scheduledCards);
-	return [...sortedDueCards, ...sortedScheduledCards];
-}
-
-/**
- * Применяет пользовательскую сортировку ко всем карточкам
- * @param cards Все карточки с состояниями
- * @param sort Параметры сортировки
- * @param now Текущее время для вычисления overdue
- * @returns Отсортированный массив карточек
- */
-function applyCustomSort(
-	cards: CardWithState[],
-	sort: SortParam,
-	now: Date,
-): CardWithState[] {
-	return cards.slice().sort((a, b) => {
-		const aValue: string | number | Date = getFieldValue(
-			a,
-			sort.field,
-			now,
-		);
-		const bValue: string | number | Date = getFieldValue(
-			b,
-			sort.field,
-			now,
+		return cardsWithState;
+	} catch (error) {
+		console.error(
+			`Ошибка фильтрации и сортировки карточек через WASM: ${String(error)}. Возвращаем пустой массив.`,
 		);
 
-		// Определяем порядок сортировки
-		let comparison = 0;
-
-		// Сравниваем значения в зависимости от типа
-		if (typeof aValue === "string" && typeof bValue === "string") {
-			comparison = aValue.localeCompare(bValue);
-		} else if (typeof aValue === "number" && typeof bValue === "number") {
-			comparison = aValue - bValue;
-		} else if (aValue instanceof Date && bValue instanceof Date) {
-			comparison = aValue.getTime() - bValue.getTime();
-		} else {
-			// Fallback: преобразуем в строку
-			const aStr = String(aValue);
-			const bStr = String(bValue);
-			comparison = aStr.localeCompare(bStr);
-		}
-
-		// Инвертируем для DESC
-		return sort.direction === "DESC" ? -comparison : comparison;
-	});
+		// В случае ошибки WASM, возвращаем пустой массив
+		// В будущих версиях можно добавить fallback на старую реализацию
+		return [];
+	}
 }
 
 /**
- * Получает значение поля для сортировки
- * @param item Карточка с состоянием
- * @param field Название поля
- * @param now Текущее время для вычисления overdue
- * @returns Значение поля
+ * Получает значение поля для сортировки (заглушка для совместимости)
+ * @deprecated Используется только для обратной совместимости
  */
-function getFieldValue(
+export function getFieldValue(
 	item: CardWithState,
 	field: string,
 	now: Date,
 ): string | number | Date {
+	console.warn(
+		`Функция getFieldValue устарела и используется только для обратной совместимости`,
+	);
+
 	switch (field) {
 		case "file":
 			return item.card.filePath || "";
@@ -244,52 +301,84 @@ function getFieldValue(
 }
 
 /**
- * Сортирует due карточки по приоритету (по возрастанию retrievability)
+ * Сортирует due карточки по приоритету (заглушка для совместимости)
+ * @deprecated Используется только для обратной совместимости
  */
-function sortCardsForDue(cards: CardWithState[], now: Date): CardWithState[] {
-	// Создаем временный массив для сортировки
-	const cardsForSorting = cards.map((item) => ({
-		...item,
-		priorityScore: calculatePriorityScore(item.state, now),
-	}));
-
-	// Сортируем по возрастанию приоритета (чем ниже retrievability, тем выше приоритет)
-	cardsForSorting.sort((a, b) => a.priorityScore - b.priorityScore);
-
-	return cardsForSorting.map(({ card, state, isDue }) => ({
-		card,
-		state,
-		isDue,
-	}));
+export function sortCardsForDue(
+	cards: CardWithState[],
+	now: Date,
+): CardWithState[] {
+	console.warn(
+		`Функция sortCardsForDue устарела и используется только для обратной совместимости. Используйте WASM фильтрацию.`,
+	);
+	return cards;
 }
 
 /**
- * Сортирует scheduled карточки по дате due (возрастание)
+ * Сортирует scheduled карточки по дате due (заглушка для совместимости)
+ * @deprecated Используется только для обратной совместимости
  */
-function sortScheduledCards(cards: CardWithState[]): CardWithState[] {
-	return cards.slice().sort((a, b) => {
-		const aTime = new Date(a.state.due).getTime();
-		const bTime = new Date(b.state.due).getTime();
-		return aTime - bTime;
-	});
+export function sortScheduledCards(cards: CardWithState[]): CardWithState[] {
+	console.warn(
+		`Функция sortScheduledCards устарела и используется только для обратной совместимости. Используйте WASM фильтрацию.`,
+	);
+	return cards;
 }
 
 /**
- * Рассчитывает приоритет для сортировки due карточек
- * Чем ниже retrievability, тем выше приоритет
- * Просроченные карточки получают дополнительный приоритет
+ * Рассчитывает приоритет для сортировки due карточек (заглушка для совместимости)
+ * @deprecated Используется только для обратной совместимости
  */
-function calculatePriorityScore(state: ComputedCardState, now: Date): number {
-	// Приоритет = retrievability (0-1), где 0 = высший приоритет
-	// Для просроченных карточек добавляем бонус к приоритету
-	const dueDate = new Date(state.due);
-	const isOverdue = dueDate.getTime() < now.getTime();
+export function calculatePriorityScore(
+	state: ComputedCardState,
+	now: Date,
+): number {
+	console.warn(
+		`Функция calculatePriorityScore устарела и используется только для обратной совместимости. Используйте WASM фильтрацию.`,
+	);
+	return 0;
+}
 
-	let priority = state.retrievability;
-	if (isOverdue) {
-		// Просроченные карточки получают бонус к приоритету
-		priority -= 0.5; // Уменьшаем retrievability для увеличения приоритета
-	}
+/**
+ * Вычисляет состояния для массива карточек (заглушка для совместимости)
+ * @deprecated Используется только для обратной совместимости
+ */
+export async function computeCardsStates(
+	cards: ModernFSRSCard[],
+	settings: FSRSSettings,
+	now: Date,
+): Promise<CardWithState[]> {
+	console.warn(
+		`Функция computeCardsStates устарела и используется только для обратной совместимости. Используйте WASM фильтрацию.`,
+	);
+	return [];
+}
 
-	return Math.max(0, priority);
+/**
+ * Применяет дефолтную логику сортировки (заглушка для совместимости)
+ * @deprecated Используется только для обратной совместимости
+ */
+export function applyDefaultSort(
+	cardsWithState: CardWithState[],
+	now: Date,
+): CardWithState[] {
+	console.warn(
+		`Функция applyDefaultSort устарела и используется только для обратной совместимости. Используйте WASM фильтрацию.`,
+	);
+	return cardsWithState;
+}
+
+/**
+ * Применяет пользовательскую сортировку (заглушка для совместимости)
+ * @deprecated Используется только для обратной совместимости
+ */
+export function applyCustomSort(
+	cards: CardWithState[],
+	sort: SortParam,
+	now: Date,
+): CardWithState[] {
+	console.warn(
+		`Функция applyCustomSort устарела и используется только для обратной совместимости. Используйте WASM фильтрацию.`,
+	);
+	return cards;
 }
