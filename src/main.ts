@@ -214,6 +214,7 @@ export default class FsrsPlugin extends Plugin {
 	 */
 	async addFsrsFieldsToCurrentFile(): Promise<void> {
 		await addFsrsFieldsToCurrentFileFunction(this.app, this.settings);
+		this.notifyFsrsTableRenderers();
 	}
 
 	/**
