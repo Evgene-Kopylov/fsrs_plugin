@@ -280,15 +280,17 @@ pub fn parse_fsrs_table_block(source: &str) -> String {
     use crate::table_processing::parsing::parse_fsrs_table_block as parse_block;
     match parse_block(source) {
         Ok(parse_result) => {
-            // Возвращаем JSON с параметрами таблицы
-            serde_json::to_string(&parse_result.value).unwrap_or_else(|_| "{}".to_string())
+            // Возвращаем JSON с параметрами таблицы в едином формате
+            serde_json::to_string(&serde_json::json!({
+                "params": parse_result.value
+            })).unwrap_or_else(|_| "{\"error\":\"Failed to serialize params\"}".to_string())
         }
         Err(err) => {
             // Возвращаем JSON с ошибкой
             serde_json::to_string(&serde_json::json!({
                 "error": err.to_string(),
                 "params": crate::table_processing::types::TableParams::default()
-            })).unwrap_or_else(|_| "{}".to_string())
+            })).unwrap_or_else(|_| "{\"error\":\"Failed to serialize error\"}".to_string())
         }
     }
 }

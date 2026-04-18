@@ -7,11 +7,12 @@
 import * as wasm from "../../wasm-lib/pkg/wasm_lib";
 
 /**
- * Результат парсинга из WASM: либо ошибка, либо параметры таблицы
+ * Результат парсинга из WASM: всегда содержит params, может содержать error
  */
-type WasmParseResult =
-	| { error: string; params?: never }
-	| { error?: never; params: unknown };
+interface WasmParseResult {
+	error?: string;
+	params: unknown;
+}
 
 /**
  * Проверяет, что значение является TableParams
@@ -20,8 +21,107 @@ function isTableParams(value: unknown): value is TableParams {
 	if (!value || typeof value !== "object") {
 		return false;
 	}
-	const obj = value as Record<string, unknown>;
-	return Array.isArray(obj.columns) && typeof obj.limit === "number";
+	const obj = value as unknown as Record<string, unknown>;
+
+	// Проверяем наличие обязательных полей
+	if (!("columns" in obj) || !("limit" in obj)) {
+		return false;
+	}
+
+	// Проверяем типы
+	if (!Array.isArray(obj.columns)) {
+		return false;
+	}
+
+	// limit может быть number или string (после JSON сериализации)
+	const limit = obj.limit;
+	if (typeof limit !== "number" && typeof limit !== "string") {
+		return false;
+	}
+
+	// Проверяем структуру колонок (не строгая проверка)
+	for (const col of obj.columns) {
+		if (typeof col !== "object" || col === null) {
+			return false;
+		}
+		const colObj = col as unknown as Record<string, unknown>;
+		if (typeof colObj.field !== "string") {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/**
+ * Преобразует unknown в TableParams, если возможно
+ */
+function convertToTableParams(value: unknown): TableParams | null {
+	if (!isTableParams(value)) {
+		return null;
+	}
+
+	const obj = value as unknown as Record<string, unknown>;
+
+	// Преобразуем limit в number
+	const limit =
+		typeof obj.limit === "string"
+			? parseInt(obj.limit, 10)
+			: (obj.limit as number);
+
+	// Преобразуем колонки
+	const columns: TableColumn[] = [];
+	for (const col of obj.columns as Array<Record<string, unknown>>) {
+		const field = String(col.field);
+		const title =
+			typeof col.title === "string" ? col.title : getDefaultTitle(field);
+		const width = typeof col.width === "string" ? col.width : undefined;
+
+		columns.push({ field, title, width });
+	}
+
+	// Преобразуем сортировку, если есть
+	let sort: SortParam | undefined = undefined;
+	if (obj.sort && typeof obj.sort === "object") {
+		const sortObj = obj.sort as unknown as Record<string, unknown>;
+		if (typeof sortObj.field === "string" && sortObj.direction) {
+			let directionStr = "ASC";
+			if (typeof sortObj.direction === "string") {
+				directionStr = sortObj.direction.toUpperCase();
+			} else if (
+				sortObj.direction !== null &&
+				typeof sortObj.direction === "object"
+			) {
+				// Если это объект, попробуем извлечь значение из возможных ключей
+				const dirObj = sortObj.direction as unknown as Record<
+					string,
+					unknown
+				>;
+				if (dirObj.Asc !== undefined || dirObj.ASC !== undefined) {
+					directionStr = "ASC";
+				} else if (
+					dirObj.Desc !== undefined ||
+					dirObj.DESC !== undefined
+				) {
+					directionStr = "DESC";
+				}
+			}
+			const direction =
+				directionStr === "ASC" || directionStr === "DESC"
+					? (directionStr as SortDirection)
+					: "ASC";
+			sort = {
+				field: sortObj.field,
+				direction,
+			};
+		}
+	}
+
+	return {
+		columns,
+		limit: limit || 0,
+		sort,
+	};
 }
 
 // Направление сортировки
@@ -90,58 +190,50 @@ export function parseSqlBlock(source: string): TableParams {
 	try {
 		// Вызываем WASM функцию для парсинга
 		const resultJson = wasm.parse_fsrs_table_block(source);
+		console.debug("WASM parse result JSON:", resultJson);
 
 		// Парсим JSON результат с явной типизацией
 		const parsedResult: WasmParseResult = JSON.parse(
 			resultJson,
 		) as WasmParseResult;
 
-		// Если в результате есть ошибка, возвращаем параметры по умолчанию
+		console.debug("Parsed WASM result:", parsedResult);
+
+		// Пытаемся преобразовать params в TableParams
+		const tableParams = convertToTableParams(parsedResult.params);
+
 		if (parsedResult.error) {
 			console.error(
-				`Ошибка парсинга SQL-подобного синтаксиса: ${parsedResult.error}. Используются значения по умолчанию.`,
+				`Ошибка парсинга SQL-подобного синтаксиса: ${parsedResult.error}`,
 			);
-			return {
-				columns: [...DEFAULT_COLUMNS],
-				limit: 0,
-			};
-		}
 
-		// Проверяем, что параметры валидны
-		if (!isTableParams(parsedResult.params)) {
-			console.error(
-				"Некорректные параметры таблицы от WASM. Используются значения по умолчанию.",
-			);
-			return {
-				columns: [...DEFAULT_COLUMNS],
-				limit: 0,
-			};
-		}
-
-		const wasmParams = parsedResult.params;
-
-		// Преобразуем direction из "Asc"/"Desc" в "ASC"/"DESC"
-		if (wasmParams.sort) {
-			const tsSort: SortParam = {
-				field: wasmParams.sort.field,
-				direction: ((
-					wasmParams.sort.direction as string
-				)?.toUpperCase() || "ASC") as SortDirection,
-			};
-
-			// Проверяем, что direction валидный
-			if (tsSort.direction !== "ASC" && tsSort.direction !== "DESC") {
-				tsSort.direction = "ASC"; // Значение по умолчанию
+			// Если есть ошибка, но params валидны, используем их
+			if (tableParams) {
+				console.warn("Используем параметры из WASM несмотря на ошибку");
+				return tableParams;
 			}
 
+			// Иначе используем значения по умолчанию
+			console.warn("Используются значения по умолчанию из-за ошибки");
 			return {
-				columns: wasmParams.columns,
-				limit: wasmParams.limit,
-				sort: tsSort,
+				columns: [...DEFAULT_COLUMNS],
+				limit: 0,
 			};
 		}
 
-		return wasmParams;
+		// Если нет ошибки, но params не валидны
+		if (!tableParams) {
+			console.error(
+				"Некорректные параметры таблицы от WASM. Используются значения по умолчанию.",
+				parsedResult.params,
+			);
+			return {
+				columns: [...DEFAULT_COLUMNS],
+				limit: 0,
+			};
+		}
+
+		return tableParams;
 	} catch (error) {
 		console.error(
 			`Ошибка парсинга SQL-подобного синтаксиса: ${String(error)}. Используются значения по умолчанию.`,
@@ -179,15 +271,15 @@ export function parseColumnsDefinition(columnsText: string): TableColumn[] {
 			return [...DEFAULT_COLUMNS];
 		}
 
-		// Проверяем, что параметры валидны
-		if (!isTableParams(parsedResult.params)) {
+		const tableParams = convertToTableParams(parsedResult.params);
+		if (!tableParams) {
 			console.warn(
 				"Некорректные параметры таблицы от WASM для колонок. Используются колонки по умолчанию.",
 			);
 			return [...DEFAULT_COLUMNS];
 		}
 
-		return parsedResult.params.columns;
+		return tableParams.columns;
 	} catch (error) {
 		console.warn(
 			`Ошибка парсинга колонок: ${String(error)}. Используются колонки по умолчанию.`,
