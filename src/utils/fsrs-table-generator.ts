@@ -73,7 +73,7 @@ export function generateTableHTML(
 		// Добавляем индикатор сортировки
 		if (isSorted) {
 			const arrow = currentDirection === "ASC" ? "↑" : "↓";
-			html += `<span class="fsrs-sort-indicator"> ${arrow}</span>`;
+			html += `<span class="fsrs-sort-indicator">${arrow}</span>`;
 		}
 
 		html += `</div>`;
