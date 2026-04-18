@@ -48,15 +48,7 @@ impl ValidationResult {
         Self { warnings }
     }
 
-    /// Создает результат без предупреждений
-    pub fn ok() -> Self {
-        Self { warnings: Vec::new() }
-    }
 
-    /// Проверяет, есть ли предупреждения
-    pub fn has_warnings(&self) -> bool {
-        !self.warnings.is_empty()
-    }
 }
 
 /// Валидирует параметры таблицы, полученные из парсинга
@@ -192,12 +184,12 @@ mod tests {
 
     #[test]
     fn test_validation_result() {
-        let result = ValidationResult::ok();
-        assert!(!result.has_warnings());
+        let result = ValidationResult::new(Vec::new());
+        assert!(result.warnings.is_empty());
 
         let warnings = vec![ParseWarning::Other("test".to_string())];
         let result = ValidationResult::new(warnings);
-        assert!(result.has_warnings());
+        assert!(!result.warnings.is_empty());
     }
 
     #[test]
@@ -223,7 +215,7 @@ mod tests {
         };
 
         let result = validate_table_params(&params);
-        assert!(!result.has_warnings());
+        assert!(result.warnings.is_empty());
     }
 
     #[test]
@@ -246,7 +238,7 @@ mod tests {
         };
 
         let result = validate_table_params(&params);
-        assert!(result.has_warnings());
+        assert!(!result.warnings.is_empty());
 
         let has_unknown_field = result.warnings.iter()
             .any(|w| matches!(w, ParseWarning::UnknownField(f) if f == "unknown_field"));
@@ -278,7 +270,7 @@ mod tests {
         };
 
         let result = validate_table_params(&params);
-        assert!(result.has_warnings());
+        assert!(!result.warnings.is_empty());
 
         let has_duplicate = result.warnings.iter()
             .any(|w| matches!(w, ParseWarning::DuplicateField(f) if f == "file"));
@@ -301,7 +293,7 @@ mod tests {
         };
 
         let result = validate_table_params(&params);
-        assert!(result.has_warnings());
+        assert!(!result.warnings.is_empty());
 
         let has_unknown_sort = result.warnings.iter()
             .any(|w| matches!(w, ParseWarning::UnknownSortField(f) if f == "unknown_field"));
@@ -321,7 +313,7 @@ mod tests {
         };
 
         let result = validate_table_params(&params);
-        assert!(result.has_warnings());
+        assert!(!result.warnings.is_empty());
 
         let has_invalid_limit = result.warnings.iter()
             .any(|w| matches!(w, ParseWarning::InvalidLimit(9999)));
@@ -343,7 +335,7 @@ mod tests {
 
         let result = validate_table_params(&params);
         // Нет предупреждений для limit = 0
-        assert!(!result.has_warnings());
+        assert!(result.warnings.is_empty());
     }
 
     #[test]
@@ -367,7 +359,7 @@ mod tests {
         };
 
         let result = validate_table_params(&params);
-        assert!(result.has_warnings());
+        assert!(!result.warnings.is_empty());
 
         // Должны быть предупреждения о неизвестных полях
         assert_eq!(result.warnings.len(), 3); // 2 unknown field + 1 "нет валидных полей"
@@ -410,7 +402,7 @@ mod tests {
         };
 
         let result = validate_table_params(&params);
-        assert!(result.has_warnings());
+        assert!(!result.warnings.is_empty());
 
         // Подсчитываем типы предупреждений
         let mut unknown_fields = 0;

@@ -7,7 +7,6 @@ mod parser;
 mod validator;
 
 // Реэкспорт публичных типов и функций
-pub use lexer::{Token, TokenType};
 pub use parser::parse_sql_block;
 pub use validator::{validate_table_params, ParseWarning};
 
@@ -20,8 +19,6 @@ pub enum ParseError {
     Lexical(String),
     /// Синтаксическая ошибка (нарушение грамматики)
     Syntax(String),
-    /// Семантическая ошибка (неизвестное поле и т.д.)
-    Semantic(String),
     /// Неожиданный конец входных данных
     UnexpectedEof,
 }
@@ -31,7 +28,6 @@ impl fmt::Display for ParseError {
         match self {
             ParseError::Lexical(msg) => write!(f, "Лексическая ошибка: {}", msg),
             ParseError::Syntax(msg) => write!(f, "Синтаксическая ошибка: {}", msg),
-            ParseError::Semantic(msg) => write!(f, "Семантическая ошибка: {}", msg),
             ParseError::UnexpectedEof => write!(f, "Неожиданный конец входных данных"),
         }
     }

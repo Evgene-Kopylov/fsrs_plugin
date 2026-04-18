@@ -193,8 +193,10 @@ export async function filterAndSortCards(
 			now.toISOString(),
 		);
 
-		// Парсим результат
-		const wasmResult: WasmFilterResult = JSON.parse(resultJson);
+		// Парсим результат с явным приведением типов
+		const wasmResult: WasmFilterResult = JSON.parse(
+			resultJson,
+		) as unknown as WasmFilterResult;
 
 		// Обрабатываем ошибки, если есть
 		if (wasmResult.errors && wasmResult.errors.length > 0) {
@@ -209,8 +211,10 @@ export async function filterAndSortCards(
 
 		for (const wasmCard of wasmResult.cards) {
 			try {
-				// Парсим карточку из JSON
-				const card: ModernFSRSCard = JSON.parse(wasmCard.card_json);
+				// Парсим карточку из JSON с явным приведением типов
+				const card: ModernFSRSCard = JSON.parse(
+					wasmCard.card_json,
+				) as unknown as ModernFSRSCard;
 
 				// Преобразуем вычисленные поля в состояние
 				const state = convertWasmFieldsToComputedState(

@@ -129,14 +129,7 @@ impl SqlLexer {
         Ok(token)
     }
 
-    /// Получает текущий символ без увеличения позиции
-    fn current_char(&self) -> Option<char> {
-        if self.position < self.length {
-            Some(self.chars[self.position])
-        } else {
-            None
-        }
-    }
+
 
     /// Пропускает пробельные символы
     fn skip_whitespace(&mut self) {

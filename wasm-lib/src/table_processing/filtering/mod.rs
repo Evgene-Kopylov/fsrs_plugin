@@ -6,17 +6,8 @@ mod calculator;
 mod sorter;
 
 // Реэкспорт публичных функций и типов
-pub use calculator::{
-    calculate_overdue,
-    calculate_retrievability,
-    calculate_card_state,
-    CardWithComputedFields,
-};
-pub use sorter::{
-    sort_cards_by_field,
-    FilterError,
-    SortError,
-};
+pub use calculator::CardWithComputedFields;
+pub use sorter::FilterError;
 
 use serde::{Deserialize, Serialize};
 use crate::table_processing::types::{TableParams, SortDirection};
