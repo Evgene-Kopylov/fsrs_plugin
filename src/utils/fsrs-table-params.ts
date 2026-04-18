@@ -111,7 +111,7 @@ export function parseTableParams(source: string): TableParams {
 				params.sort = { field, direction };
 			} else {
 				console.warn(
-					`Неизвестное поле для сортировки: ${field}. Параметр сортировки проигнорирован.`,
+					`Неизвестное поле для сортировки: "${field}". Параметр сортировки проигнорирован. Допустимые поля: file, reps, overdue, stability, difficulty, retrievability, due, state, elapsed, scheduled. Синтаксис: sort: поле ASC|DESC, например: sort: reps ASC`,
 				);
 			}
 			continue;
@@ -199,7 +199,7 @@ export function parseColumnsDefinition(columnsText: string): TableColumn[] {
 					);
 				} else {
 					console.warn(
-						`Неизвестное поле в колонках: ${field}. Пропущено.`,
+						`Неизвестное поле в колонках: "${field}" (исходная часть: "${part}"). Пропущено. Проверьте корректность заполнения блока fsrs-table, обратите внимание на строку "columns:". Синтаксис: поле [as "Заголовок"], например: 'reps as "Повторений", overdue'. Допустимые поля: file, reps, overdue, stability, difficulty, retrievability, due, state, elapsed, scheduled.`,
 					);
 				}
 			}
