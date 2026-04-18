@@ -1,5 +1,6 @@
 import { MarkdownRenderChild, Notice, EventRef, Editor } from "obsidian";
 import type FsrsPlugin from "../main";
+import type { ModernFSRSCard } from "../interfaces/fsrs";
 import type { TableParams, TableMode } from "../utils/fsrs-table-helpers";
 import {
 	parseTableParams,
@@ -18,6 +19,8 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	private activeLeafHandler?: EventRef;
 	private activeLeafCallback?: () => void;
 	private lastVisibilityUpdate = 0;
+	private lastAction: "sort" | "refresh" | null = null;
+	private cachedCards: ModernFSRSCard[] | null = null;
 	private sourceText: string;
 	private sourceStart: number;
 	private sourceEnd: number;
@@ -99,8 +102,13 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 				this.container.style.transition = "opacity 0.3s ease"; // eslint-disable-line obsidianmd/no-static-styles-assignment
 			}
 
-			// Получаем все карточки через плагин
-			const allCards = await this.plugin.getCardsForReview();
+			// Получаем все карточки через плагин, при сортировке используем кеш
+			const allCards =
+				this.lastAction === "sort" && this.cachedCards
+					? this.cachedCards
+					: await this.plugin.getCardsForReview();
+			// Сохраняем карточки в кеш для будущих сортировок
+			this.cachedCards = allCards;
 			const now = new Date();
 
 			if (allCards.length === 0) {
@@ -271,7 +279,11 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	 * Может быть вызвано извне для принудительного обновления
 	 */
 	async refresh() {
+		if (this.lastAction !== "sort") {
+			this.lastAction = "refresh";
+		}
 		await this.renderContent();
+		this.lastAction = null;
 	}
 
 	/**
@@ -323,8 +335,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			this.params.sort = { field, direction: nextDirection };
 		}
 
-		// Обновляем исходный код блока
-		await this.updateSourceCode();
+		this.lastAction = "sort";
 
 		// Перерисовываем таблицу с новыми параметрами сортировки
 		await this.refresh();
