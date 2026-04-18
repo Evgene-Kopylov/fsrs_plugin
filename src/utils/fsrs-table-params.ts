@@ -15,6 +15,27 @@ interface WasmParseResult {
 }
 
 /**
+ * Максимальная длина сообщения об ошибке для отображения
+ */
+const MAX_ERROR_MESSAGE_LENGTH = 500;
+
+/**
+ * Форматирует сообщение об ошибке в стиле Dataview
+ * @param errorMessage Сообщение об ошибке
+ * @returns Отформатированное сообщение об ошибке
+ */
+function formatError(errorMessage: string): string {
+	// Ограничиваем длину сообщения об ошибке
+	const truncatedMessage =
+		errorMessage.length > MAX_ERROR_MESSAGE_LENGTH
+			? errorMessage.substring(0, MAX_ERROR_MESSAGE_LENGTH) +
+				"... [truncated]"
+			: errorMessage;
+
+	return `FSRS: Error:\n-- PARSING FAILED --------------------------------------------------\n\n${truncatedMessage}\n`;
+}
+
+/**
  * Проверяет, что значение является TableParams
  */
 function isTableParams(value: unknown): value is TableParams {
@@ -175,16 +196,11 @@ export const DEFAULT_COLUMNS: TableColumn[] = [
  * Использует WASM реализацию парсинга на Rust
  * @param source Исходный текст блока
  * @returns Объект с параметрами таблицы
+ * @throws Error при ошибке парсинга или некорректных данных
  */
 export function parseSqlBlock(source: string): TableParams {
 	if (!source || source.trim() === "") {
-		console.warn(
-			"Пустой блок fsrs-table. Используются значения по умолчанию.",
-		);
-		return {
-			columns: [...DEFAULT_COLUMNS],
-			limit: 0,
-		};
+		throw new Error(formatError("Пустой блок fsrs-table"));
 	}
 
 	try {
@@ -207,9 +223,8 @@ export function parseSqlBlock(source: string): TableParams {
 		const tableParams = convertToTableParams(parsedResult.params);
 
 		if (parsedResult.error) {
-			console.error(
-				`Ошибка парсинга SQL-подобного синтаксиса: ${parsedResult.error}`,
-			);
+			const errorMessage = `Ошибка парсинга SQL-подобного синтаксиса: ${parsedResult.error}`;
+			console.error(errorMessage);
 
 			// Если есть ошибка, но params валидны, используем их
 			if (tableParams) {
@@ -217,35 +232,35 @@ export function parseSqlBlock(source: string): TableParams {
 				return tableParams;
 			}
 
-			// Иначе используем значения по умолчанию
-			console.warn("Используются значения по умолчанию из-за ошибки");
-			return {
-				columns: [...DEFAULT_COLUMNS],
-				limit: 0,
-			};
+			// Иначе выбрасываем ошибку
+			throw new Error(formatError(errorMessage));
 		}
 
 		// Если нет ошибки, но params не валидны
 		if (!tableParams) {
-			console.error(
-				"Некорректные параметры таблицы от WASM. Используются значения по умолчанию.",
-				parsedResult.params,
-			);
-			return {
-				columns: [...DEFAULT_COLUMNS],
-				limit: 0,
-			};
+			const errorMessage = "Некорректные параметры таблицы от WASM";
+			console.error(errorMessage, parsedResult.params);
+			throw new Error(formatError(errorMessage));
 		}
 
 		return tableParams;
 	} catch (error) {
-		console.error(
-			`Ошибка парсинга SQL-подобного синтаксиса: ${String(error)}. Используются значения по умолчанию.`,
+		if (error instanceof Error) {
+			// Если это уже наша отформатированная ошибка, просто пробрасываем её
+			if (error.message.startsWith("FSRS: Error:")) {
+				throw error;
+			}
+			throw new Error(
+				formatError(
+					`Ошибка парсинга SQL-подобного синтаксиса: ${error.message}`,
+				),
+			);
+		}
+		throw new Error(
+			formatError(
+				`Ошибка парсинга SQL-подобного синтаксиса: ${String(error)}`,
+			),
 		);
-		return {
-			columns: [...DEFAULT_COLUMNS],
-			limit: 0,
-		};
 	}
 }
 
@@ -254,10 +269,11 @@ export function parseSqlBlock(source: string): TableParams {
  * Использует WASM реализацию для полного парсинга SQL
  * @param columnsText Текст с определением колонок
  * @returns Массив объектов TableColumn
+ * @throws Error при ошибке парсинга или некорректных данных
  */
 export function parseColumnsDefinition(columnsText: string): TableColumn[] {
 	if (!columnsText.trim()) {
-		return [...DEFAULT_COLUMNS];
+		throw new Error(formatError("Пустое определение колонок"));
 	}
 
 	try {
@@ -269,26 +285,33 @@ export function parseColumnsDefinition(columnsText: string): TableColumn[] {
 		) as WasmParseResult;
 
 		if (parsedResult.error) {
-			console.warn(
-				`Ошибка парсинга колонок: ${parsedResult.error}. Используются колонки по умолчанию.`,
-			);
-			return [...DEFAULT_COLUMNS];
+			const errorMessage = `Ошибка парсинга колонок: ${parsedResult.error}`;
+			console.warn(errorMessage);
+			throw new Error(formatError(errorMessage));
 		}
 
 		const tableParams = convertToTableParams(parsedResult.params);
 		if (!tableParams) {
-			console.warn(
-				"Некорректные параметры таблицы от WASM для колонок. Используются колонки по умолчанию.",
-			);
-			return [...DEFAULT_COLUMNS];
+			const errorMessage =
+				"Некорректные параметры таблицы от WASM для колонок";
+			console.warn(errorMessage);
+			throw new Error(formatError(errorMessage));
 		}
 
 		return tableParams.columns;
 	} catch (error) {
-		console.warn(
-			`Ошибка парсинга колонок: ${String(error)}. Используются колонки по умолчанию.`,
+		if (error instanceof Error) {
+			// Если это уже наша отформатированная ошибка, просто пробрасываем её
+			if (error.message.startsWith("FSRS: Error:")) {
+				throw error;
+			}
+			throw new Error(
+				formatError(`Ошибка парсинга колонок: ${error.message}`),
+			);
+		}
+		throw new Error(
+			formatError(`Ошибка парсинга колонок: ${String(error)}`),
 		);
-		return [...DEFAULT_COLUMNS];
 	}
 }
 

@@ -14,7 +14,8 @@ import { FsrsHelpModal } from "./fsrs-help-modal";
  * Отображает все карточки
  */
 export class FsrsTableRenderer extends MarkdownRenderChild {
-	private params: TableParams;
+	private params: TableParams | null = null;
+	private parseError: Error | null = null;
 	private isFirstLoad = true;
 	private activeLeafHandler?: EventRef;
 	private activeLeafCallback?: () => void;
@@ -34,7 +35,13 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 		sourceEnd: number,
 	) {
 		super(container);
-		this.params = parseSqlBlock(source);
+		try {
+			this.params = parseSqlBlock(source);
+		} catch (error) {
+			this.parseError =
+				error instanceof Error ? error : new Error(String(error));
+			this.params = null;
+		}
 		this.sourceText = source;
 		this.sourceStart = sourceStart;
 		this.sourceEnd = sourceEnd;
@@ -92,6 +99,11 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	 */
 	private async renderContent() {
 		const start = performance.now();
+		// Если была ошибка парсинга, показываем её
+		if (this.parseError) {
+			this.renderErrorState(this.parseError);
+			return;
+		}
 		try {
 			// При первом показе используем индикатор загрузки
 			if (this.isFirstLoad) {
@@ -185,28 +197,19 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	}
 
 	/**
-	 * Отображает состояние ошибки
+	 * Отображает состояние ошибки в виде простого текста без стилей
 	 */
 	private renderErrorState(error: unknown) {
 		console.error(`Ошибка при рендеринге блока fsrs-table:`, error);
 		const errorMessage =
 			error instanceof Error ? error.message : String(error);
 
-		// При ошибке также применяем анимацию, если это не первый показ
-		if (!this.isFirstLoad) {
-			this.container.style.opacity = "0.7"; // eslint-disable-line obsidianmd/no-static-styles-assignment
-			this.container.style.transition = "opacity 0.3s ease"; // eslint-disable-line obsidianmd/no-static-styles-assignment
-		}
+		// Очищаем контейнер и вставляем текст ошибки как простой текст
 		this.container.empty();
-
-		const errorDiv = this.container.createDiv({ cls: "fsrs-table-error" });
-		errorDiv.createEl("small", {
-			text: `Error loading FSRS table: ${errorMessage}`,
+		this.container.createEl("pre", {
+			text: errorMessage,
+			cls: "fsrs-table-error-text",
 		});
-
-		if (!this.isFirstLoad) {
-			this.container.style.opacity = "1"; // eslint-disable-line obsidianmd/no-static-styles-assignment
-		}
 	}
 
 	/**
@@ -313,6 +316,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	 * @param field Поле, по которому нужно сортировать
 	 */
 	private async handleSortClick(field: string) {
+		if (!this.params) return;
 		// Определяем следующее состояние сортировки
 		const nextDirection = this.getNextSortDirection(field);
 
@@ -338,6 +342,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	 * @returns Следующее направление сортировки или null для снятия сортировки
 	 */
 	private getNextSortDirection(field: string): "ASC" | "DESC" | null {
+		if (!this.params) return null;
 		const currentSort = this.params.sort;
 
 		// Если сортируем по другому полю, начинаем с ASC
@@ -358,6 +363,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	 * Обновляет исходный код блока с новыми параметрами сортировки
 	 */
 	private async updateSourceCode(): Promise<void> {
+		if (!this.params) return;
 		try {
 			// Получаем активный редактор
 			const editor = this.plugin.app.workspace.activeEditor?.editor;
@@ -473,6 +479,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	 * @returns Обновленное содержимое блока (без обратных кавычек)
 	 */
 	private generateUpdatedBlockContent(currentContent: string): string {
+		if (!this.params) return currentContent;
 		const lines = currentContent.split("\n");
 		const updatedLines: string[] = [];
 
