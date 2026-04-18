@@ -57,6 +57,7 @@ export function parseModernFsrsFromFrontmatter(
 				wasmError_ instanceof Error
 					? wasmError_.message
 					: String(wasmError_);
+			console.warn(`WASM parsing failed for ${filePath}: ${wasmError}`);
 
 			// Fallback: пытаемся распарсить YAML самостоятельно
 			try {
