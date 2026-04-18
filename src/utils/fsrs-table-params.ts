@@ -190,14 +190,18 @@ export function parseSqlBlock(source: string): TableParams {
 	try {
 		// Вызываем WASM функцию для парсинга
 		const resultJson = wasm.parse_fsrs_table_block(source);
-		console.debug("WASM parse result JSON:", resultJson);
+		// FIXME: убрать перд официальным релизом в Обсидиан
+		// eslint-disable-next-line no-console
+		console.info("WASM parse result JSON:", resultJson);
 
 		// Парсим JSON результат с явной типизацией
 		const parsedResult: WasmParseResult = JSON.parse(
 			resultJson,
 		) as WasmParseResult;
 
-		console.debug("Parsed WASM result:", parsedResult);
+		// FIXME: убрать перд официальным релизом в Обсидиан
+		// eslint-disable-next-line no-console
+		console.info("Parsed WASM result:", parsedResult);
 
 		// Пытаемся преобразовать params в TableParams
 		const tableParams = convertToTableParams(parsedResult.params);
