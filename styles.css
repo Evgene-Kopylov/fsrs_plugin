@@ -47,6 +47,7 @@
 	cursor: pointer;
 	transition: background-color 0.2s ease;
 	text-align: inherit;
+	position: relative;
 }
 
 .fsrs-sort-header:hover {
@@ -63,8 +64,12 @@
 }
 
 .fsrs-sort-indicator {
-	font-size: 0.9em;
-	opacity: 0.8;
+	font-size: 0.8em;
+	opacity: 0.6;
+	position: absolute;
+	right: 2px;
+	top: 50%;
+	transform: translateY(-50%);
 }
 
 .fsrs-table td.fsrs-col-file {
