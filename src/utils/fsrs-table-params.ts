@@ -138,10 +138,17 @@ function convertToTableParams(value: unknown): TableParams | null {
 		}
 	}
 
+	// Преобразуем условие WHERE, если есть
+	let where: WhereCondition | undefined = undefined;
+	if (obj.where_condition && typeof obj.where_condition === "object") {
+		where = obj.where_condition as unknown as WhereCondition;
+	}
+
 	return {
 		columns,
 		limit: limit || 0,
 		sort,
+		where,
 	};
 }
 
@@ -161,11 +168,52 @@ export interface SortParam {
 	direction: SortDirection; // направление сортировки
 }
 
+// Типы для WHERE условий (соответствуют Rust enum Expression с внешней маркировкой)
+
+/** Оператор сравнения */
+export type ComparisonOperator = ">" | "<" | ">=" | "<=" | "=" | "!=";
+
+/** Логический оператор */
+export type LogicalOperator = "AND" | "OR";
+
+/** Значение для сравнения (только числа для Фазы 1) */
+export interface ComparisonValue {
+	number: number;
+}
+
+/** Простое условие сравнения: поле оператор значение */
+export interface ComparisonCondition {
+	field: string;
+	operator: ComparisonOperator;
+	value: ComparisonValue;
+}
+
+/** Логическое выражение: условие оператор условие */
+export interface LogicalCondition {
+	left: WhereCondition;
+	operator: LogicalOperator;
+	right: WhereCondition;
+}
+
+/** Условие сравнения в формате внешней маркировки Rust enum */
+export interface ComparisonExpression {
+	Comparison: ComparisonCondition;
+}
+
+/** Логическое выражение в формате внешней маркировки Rust enum */
+export interface LogicalExpression {
+	Logical: LogicalCondition;
+}
+
+/** Условие WHERE: либо сравнение, либо логическое выражение (внешняя маркировка) */
+export type WhereCondition = ComparisonExpression | LogicalExpression;
+
 // Параметры таблицы
 export interface TableParams {
 	columns: TableColumn[];
 	limit: number; // 0 означает "использовать значение из настроек"
 	sort?: SortParam; // параметры сортировки (опционально)
+	where?: WhereCondition; // условие фильтрации WHERE (опционально)
 }
 
 // Доступные поля для отображения в таблице

@@ -4,7 +4,7 @@
 use log::{debug, warn};
 
 use super::lexer::{SqlLexer, Token, TokenType};
-use super::{ParseError, ParseResult, ParseWarning};
+use super::{ParseError, ParseResult, ParseWarning, Expression, Value, ComparisonOp};
 use crate::table_processing::types::{SortDirection, SortParam, TableColumn, TableParams};
 
 /// Промежуточная структура для хранения результата парсинга
@@ -13,6 +13,8 @@ use crate::table_processing::types::{SortDirection, SortParam, TableColumn, Tabl
 struct ParsedQuery {
     /// Список колонок, указанных в SELECT
     columns: Vec<ColumnDefinition>,
+    /// Условие фильтрации WHERE (опционально)
+    where_condition: Option<Expression>,
     /// Параметры сортировки (опционально)
     sort: Option<SortDefinition>,
     /// Ограничение количества строк (0 = не указано)
@@ -107,7 +109,9 @@ impl<'a> ParserState<'a> {
 
         // Парсим дополнительные части в любом порядке
         while self.current_token.token_type != TokenType::Eof {
-            if self.current_token.is_keyword("ORDER") {
+            if self.current_token.is_keyword("WHERE") {
+                self.parse_where_clause()?;
+            } else if self.current_token.is_keyword("ORDER") {
                 self.parse_order_by_clause()?;
             } else if self.current_token.is_keyword("LIMIT") {
                 self.parse_limit_clause()?;
@@ -171,6 +175,21 @@ impl<'a> ParserState<'a> {
 
         self.result.columns.push(ColumnDefinition { field, alias });
 
+        Ok(())
+    }
+
+    /// Парсит WHERE clause
+    fn parse_where_clause(&mut self) -> Result<(), ParseError> {
+        self.consume_keyword("WHERE")?;
+
+        // Проверяем, не было ли уже условия WHERE
+        if self.result.where_condition.is_some() {
+            warn!("Обнаружено дублирующееся условие WHERE");
+            self.result.warnings.push(ParseWarning::DuplicateWhere("WHERE".to_string()));
+        }
+
+        let condition = self.parse_expression()?;
+        self.result.where_condition = Some(condition);
         Ok(())
     }
 
@@ -243,6 +262,98 @@ impl<'a> ParserState<'a> {
         }
     }
 
+    /// Парсит выражение WHERE
+    fn parse_expression(&mut self) -> Result<Expression, ParseError> {
+        // Начинаем с parse_or_expr
+        self.parse_or_expr()
+    }
+
+    /// Парсит выражение OR (низший приоритет)
+    fn parse_or_expr(&mut self) -> Result<Expression, ParseError> {
+        let mut expr = self.parse_and_expr()?;
+
+        while self.current_token.is_keyword("OR") {
+            self.advance()?; // Пропускаем OR
+            let right = self.parse_and_expr()?;
+            expr = Expression::or(expr, right);
+        }
+
+        Ok(expr)
+    }
+
+    /// Парсит выражение AND (средний приоритет)
+    fn parse_and_expr(&mut self) -> Result<Expression, ParseError> {
+        let mut expr = self.parse_comparison()?;
+
+        while self.current_token.is_keyword("AND") {
+            self.advance()?; // Пропускаем AND
+            let right = self.parse_comparison()?;
+            expr = Expression::and(expr, right);
+        }
+
+        Ok(expr)
+    }
+
+    /// Парсит сравнение: field operator value
+    fn parse_comparison(&mut self) -> Result<Expression, ParseError> {
+        // Поле
+        if self.current_token.token_type != TokenType::Identifier {
+            return Err(ParseError::Syntax(format!(
+                "Ожидается имя поля, получено '{}'",
+                self.current_token.value
+            )));
+        }
+        let field = self.current_token.value.clone().to_lowercase();
+        self.advance()?;
+
+        // Оператор
+        let operator = self.parse_comparison_operator()?;
+
+        // Значение
+        let value = self.parse_value()?;
+
+        Ok(Expression::comparison(&field, operator, value))
+    }
+
+    /// Парсит оператор сравнения
+    fn parse_comparison_operator(&mut self) -> Result<ComparisonOp, ParseError> {
+        let op_str = self.current_token.value.clone();
+        let operator = match op_str.as_str() {
+            ">" => ComparisonOp::Greater,
+            "<" => ComparisonOp::Less,
+            ">=" => ComparisonOp::GreaterOrEqual,
+            "<=" => ComparisonOp::LessOrEqual,
+            "=" => ComparisonOp::Equal,
+            "!=" => ComparisonOp::NotEqual,
+            _ => return Err(ParseError::Syntax(format!(
+                "Неподдерживаемый оператор сравнения: '{}'",
+                op_str
+            ))),
+        };
+        self.advance()?;
+        Ok(operator)
+    }
+
+    /// Парсит значение (число)
+    fn parse_value(&mut self) -> Result<Value, ParseError> {
+        if self.current_token.token_type != TokenType::Number {
+            return Err(ParseError::Syntax(format!(
+                "Ожидается числовое значение, получено '{}'",
+                self.current_token.value
+            )));
+        }
+
+        let num_str = self.current_token.value.clone();
+        let number = num_str.parse::<f64>()
+            .map_err(|_| ParseError::Syntax(format!(
+                "Некорректное число: '{}'",
+                num_str
+            )))?;
+
+        self.advance()?;
+        Ok(Value::number(number))
+    }
+
     /// Преобразует результат парсинга в TableParams
     fn into_table_params(self) -> ParseResult<TableParams> {
         let mut columns = Vec::new();
@@ -270,6 +381,7 @@ impl<'a> ParserState<'a> {
             columns,
             limit: self.result.limit,
             sort,
+            where_condition: self.result.where_condition,
         };
 
         ParseResult::new(params, self.result.warnings)
@@ -300,6 +412,7 @@ pub fn parse_sql_block(source: &str) -> Result<ParseResult<TableParams>, ParseEr
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::table_processing::parsing::LogicalOp;
 
     #[test]
     fn test_parse_simple_select() {
@@ -449,10 +562,10 @@ mod tests {
 
     #[test]
     fn test_parse_warning_unexpected_token() {
-        let result = parse_sql_block("SELECT file WHERE reps > 0");
+        let result = parse_sql_block("SELECT file @ reps");
         // Должен вернуть результат с предупреждением или ошибку
-        // В зависимости от реализации восстановления
-        assert!(result.is_ok() || result.is_err());
+        // из-за неожиданного символа '@'
+        assert!(result.is_err());
     }
 
     #[test]
@@ -492,4 +605,147 @@ mod tests {
         let sort = params.sort.unwrap();
         assert_eq!(sort.direction, SortDirection::Desc);
     }
+
+    #[test]
+    fn test_parse_where_simple() {
+        let result = parse_sql_block("SELECT file WHERE overdue > 0").unwrap();
+        let params = result.value;
+
+        assert_eq!(params.columns.len(), 1);
+        assert!(params.where_condition.is_some());
+
+        let condition = params.where_condition.unwrap();
+        assert!(condition.is_comparison());
+        assert_eq!(condition.get_comparison_field(), Some("overdue"));
+        assert_eq!(condition.get_comparison_operator(), Some(ComparisonOp::Greater));
+    }
+
+    #[test]
+    fn test_parse_where_and() {
+        let result = parse_sql_block("SELECT file WHERE overdue > 0 AND reps < 10").unwrap();
+        let params = result.value;
+
+        assert!(params.where_condition.is_some());
+        let condition = params.where_condition.unwrap();
+        assert!(condition.is_logical());
+
+        // Проверяем структуру AND
+        if let Expression::Logical { left, operator, right } = condition {
+            assert_eq!(operator, LogicalOp::And);
+            assert!(left.is_comparison());
+            assert!(right.is_comparison());
+        } else {
+            panic!("Expected logical expression");
+        }
+    }
+
+    #[test]
+    fn test_parse_where_or() {
+        let result = parse_sql_block("SELECT file WHERE overdue > 24 OR retrievability < 0.2").unwrap();
+        let params = result.value;
+
+        assert!(params.where_condition.is_some());
+        let condition = params.where_condition.unwrap();
+        assert!(condition.is_logical());
+
+        if let Expression::Logical { left, operator, right } = condition {
+            assert_eq!(operator, LogicalOp::Or);
+            assert!(left.is_comparison());
+            assert!(right.is_comparison());
+        } else {
+            panic!("Expected logical expression");
+        }
+    }
+
+    #[test]
+    fn test_parse_where_complex_priority() {
+        // Проверяем приоритет AND перед OR
+        let result = parse_sql_block("SELECT file WHERE overdue > 0 AND reps < 10 OR retrievability < 0.3").unwrap();
+        let params = result.value;
+
+        assert!(params.where_condition.is_some());
+        let condition = params.where_condition.unwrap();
+
+        // Должно быть: ((overdue > 0 AND reps < 10) OR retrievability < 0.3)
+        if let Expression::Logical { left, operator, right } = condition {
+            assert_eq!(operator, LogicalOp::Or);
+            // Левая часть должна быть AND
+            assert!(left.is_logical());
+            // Правая часть - простое сравнение
+            assert!(right.is_comparison());
+        } else {
+            panic!("Expected logical expression with OR at top level");
+        }
+    }
+
+    #[test]
+    fn test_parse_where_with_order_and_limit() {
+        // Комбинация WHERE, ORDER BY и LIMIT
+        let result = parse_sql_block("SELECT file, reps WHERE overdue > 0 ORDER BY due DESC LIMIT 10").unwrap();
+        let params = result.value;
+
+        assert_eq!(params.columns.len(), 2);
+        assert!(params.where_condition.is_some());
+        assert!(params.sort.is_some());
+        assert_eq!(params.limit, 10);
+
+        let sort = params.sort.unwrap();
+        assert_eq!(sort.field, "due");
+        assert_eq!(sort.direction, SortDirection::Desc);
+    }
+
+    #[test]
+    fn test_parse_where_error_unknown_field() {
+        let result = parse_sql_block("SELECT file WHERE unknown_field > 0");
+        // Пока не должно быть ошибки парсинга, но будет предупреждение при валидации
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_parse_where_error_invalid_operator() {
+        let result = parse_sql_block("SELECT file WHERE overdue @ 0");
+        // Должна быть ошибка синтаксиса из-за неверного оператора
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_where_error_missing_value() {
+        let result = parse_sql_block("SELECT file WHERE overdue >");
+        // Должна быть ошибка синтаксиса из-за отсутствия значения
+        assert!(result.is_err());
+    }
 }
+
+    #[test]
+    fn test_parse_where_after_limit() {
+        // WHERE после LIMIT (порядок не должен иметь значения)
+        let result = parse_sql_block("SELECT file as \"Файл\", overdue as \"oDue\", reps LIMIT 10 WHERE overdue < 0").unwrap();
+        let params = result.value;
+
+        // Проверяем колонки
+        assert_eq!(params.columns.len(), 3);
+        assert_eq!(params.columns[0].field, "file");
+        assert_eq!(params.columns[0].title, "Файл");
+        assert_eq!(params.columns[1].field, "overdue");
+        assert_eq!(params.columns[1].title, "oDue");
+        assert_eq!(params.columns[2].field, "reps");
+
+        // Проверяем LIMIT
+        assert_eq!(params.limit, 10);
+
+        // Проверяем WHERE условие
+        assert!(params.where_condition.is_some());
+        let condition = params.where_condition.unwrap();
+
+        // Убедимся, что это сравнение
+        match condition {
+            Expression::Comparison { field, operator, value } => {
+                assert_eq!(field, "overdue");
+                assert_eq!(operator, ComparisonOp::Less);
+                match value {
+                    Value::Number(n) => assert_eq!(n, 0.0),
+                }
+            }
+            _ => panic!("Expected comparison expression"),
+        }
+    }

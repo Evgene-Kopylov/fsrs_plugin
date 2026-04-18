@@ -311,6 +311,40 @@ pub fn filter_and_sort_cards(
     )
 }
 
+// Фильтрация и сортировка карточек с SQL строкой напрямую
+#[wasm_bindgen]
+pub fn filter_and_sort_cards_with_sql(
+    cards_json: &str,
+    sql_source: &str,
+    settings_json: &str,
+    now_iso: &str,
+) -> String {
+    use crate::table_processing::parsing::parse_fsrs_table_block as parse_block;
+    match parse_block(sql_source) {
+        Ok(parse_result) => {
+            // Преобразуем параметры в JSON для существующей функции
+            let params_json = serde_json::to_string(&parse_result.value)
+                .unwrap_or_else(|_| "{\"error\":\"Failed to serialize params\"}".to_string());
+            // Вызываем существующую функцию фильтрации
+            crate::table_processing::filtering::filter_and_sort_cards_json(
+                cards_json,
+                &params_json,
+                settings_json,
+                now_iso,
+            )
+        }
+        Err(err) => {
+            // Возвращаем JSON с ошибкой
+            serde_json::to_string(&serde_json::json!({
+                "error": err.to_string(),
+                "cards": [],
+                "total_count": 0,
+                "errors": []
+            })).unwrap_or_else(|_| "{\"error\":\"Failed to serialize error\"}".to_string())
+        }
+    }
+}
+
 // Проверка валидности поля таблицы
 #[wasm_bindgen]
 pub fn is_valid_table_field(field: &str) -> bool {

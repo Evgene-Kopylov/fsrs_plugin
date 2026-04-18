@@ -3,6 +3,7 @@
 
 // Подмодули
 mod calculator;
+mod evaluator;
 mod sorter;
 
 // Реэкспорт публичных функций и типов
@@ -11,6 +12,7 @@ pub use sorter::FilterError;
 
 use serde::{Deserialize, Serialize};
 use crate::table_processing::types::{TableParams, SortDirection};
+
 use log::{debug, warn};
 
 /// Карточка с вычисленными полями для сортировки
@@ -101,6 +103,21 @@ pub fn filter_and_sort_cards(
     }
 
     debug!("Вычислены поля для {} карточек, ошибок: {}", computed_cards.len(), errors.len());
+
+    // Применяем фильтрацию WHERE если указана
+    if let Some(condition) = &params.where_condition {
+        debug!("Применение фильтрации WHERE");
+        computed_cards.retain(|card| {
+            match crate::table_processing::filtering::evaluator::evaluate_condition(condition, &card.computed_fields) {
+                Ok(result) => result,
+                Err(e) => {
+                    warn!("Ошибка оценки условия WHERE для карточки: {}", e);
+                    false // Исключаем карточку при ошибке
+                }
+            }
+        });
+        debug!("После фильтрации WHERE осталось {} карточек", computed_cards.len());
+    }
 
     // Применяем сортировку если указана
     if let Some(sort) = &params.sort {
@@ -525,6 +542,7 @@ mod tests {
                 field: field.to_string(),
                 direction: sort_direction.unwrap_or(SortDirection::Asc),
             }),
+            where_condition: None,
         }
     }
 
@@ -704,6 +722,79 @@ mod tests {
         assert!(filter_result.cards.len() <= params.limit);
 
         // Проверяем что нет ошибок вычислений (для простых карточек)
+        assert_eq!(filter_result.errors.len(), 0);
+    }
+
+    /// Тест для фильтрации WHERE с условием overdue < 0
+    #[test]
+    fn test_filter_and_sort_cards_with_where_overdue() {
+        use crate::table_processing::parsing::{Expression, Value, ComparisonOp};
+
+        // Создаем JSON карточек с разными значениями overdue
+        let cards_json = r#"[
+            {
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "filePath": "card1.md"
+            },
+            {
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "filePath": "card2.md"
+            },
+            {
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "filePath": "card3.md"
+            }
+        ]"#;
+
+        // Создаем параметры таблицы с WHERE условием overdue < 0
+        let params = TableParams {
+            columns: vec![
+                TableColumn {
+                    field: "file".to_string(),
+                    title: "Файл".to_string(),
+                    width: None,
+                },
+                TableColumn {
+                    field: "overdue".to_string(),
+                    title: "Просрочка".to_string(),
+                    width: None,
+                },
+            ],
+            limit: 0, // Без лимита
+            sort: None, // Без сортировки
+            where_condition: Some(Expression::comparison(
+                "overdue",
+                ComparisonOp::Less,
+                Value::Number(0.0),
+            )),
+        };
+
+        // Создаем настройки
+        let settings_json = r#"{
+            "default_initial_stability": 2.0,
+            "default_initial_difficulty": 5.0,
+            "parameters": "{\"request_retention\": 0.9, \"maximum_interval\": 36500.0, \"enable_fuzz\": true}"
+        }"#;
+
+        // Используем фиксированное время, чтобы overdue было предсказуемым
+        let now_iso = "2024-01-02T00:00:00.000Z"; // На 1 день после создания карточек
+
+        // Вызываем фильтрацию
+        let result = filter_and_sort_cards(
+            cards_json,
+            &params,
+            settings_json,
+            now_iso,
+        );
+
+        assert!(result.is_ok(), "Фильтрация должна завершиться успешно: {:?}", result);
+        let filter_result = result.unwrap();
+
+        // Проверяем, что все отфильтрованные карточки имеют overdue < 0
+        // Поскольку все карточки созданы за 1 день до now, их overdue должно быть -1 (т.е. < 0)
+        // Поэтому все 3 карточки должны пройти фильтрацию
+        assert_eq!(filter_result.cards.len(), 3);
+        assert_eq!(filter_result.total_count, 3);
         assert_eq!(filter_result.errors.len(), 0);
     }
 }

@@ -5,10 +5,12 @@
 mod lexer;
 mod parser;
 mod validator;
+mod expression;
 
 // Реэкспорт публичных типов и функций
 pub use parser::parse_sql_block;
 pub use validator::{validate_table_params, ParseWarning};
+pub use expression::{Expression, ComparisonOp, LogicalOp, Value};
 
 use std::fmt;
 

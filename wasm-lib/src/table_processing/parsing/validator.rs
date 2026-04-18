@@ -4,6 +4,7 @@
 use log::{debug, warn};
 
 use crate::table_processing::types::{TableParams, is_valid_table_field};
+use super::Expression;
 
 /// Типы предупреждений, обнаруженных при валидации
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -18,6 +19,8 @@ pub enum ParseWarning {
     UnknownSortField(String),
     /// Неожиданный токен (для восстановления после ошибок)
     UnexpectedToken(String),
+    /// Дублирующееся условие WHERE (в текущей версии поддерживается только одно)
+    DuplicateWhere(String),
     /// Прочие предупреждения
     Other(String),
 }
@@ -30,6 +33,7 @@ impl std::fmt::Display for ParseWarning {
             ParseWarning::InvalidLimit(limit) => write!(f, "Некорректный LIMIT: {}", limit),
             ParseWarning::UnknownSortField(field) => write!(f, "Неизвестное поле для сортировки: '{}'", field),
             ParseWarning::UnexpectedToken(token) => write!(f, "Неожиданный токен: '{}'", token),
+            ParseWarning::DuplicateWhere(field) => write!(f, "Дублирующееся условие WHERE: '{}'", field),
             ParseWarning::Other(msg) => write!(f, "{}", msg),
         }
     }
@@ -47,8 +51,6 @@ impl ValidationResult {
     pub fn new(warnings: Vec<ParseWarning>) -> Self {
         Self { warnings }
     }
-
-
 }
 
 /// Валидирует параметры таблицы, полученные из парсинга
@@ -85,6 +87,9 @@ pub fn validate_table_params(params: &TableParams) -> ValidationResult {
     // Проверка лимита
     validate_limit(params, &mut warnings);
 
+    // Проверка условия WHERE
+    validate_where_condition(params, &mut warnings);
+
     if warnings.is_empty() {
         debug!("Валидация параметров таблицы завершена без предупреждений");
     } else {
@@ -120,14 +125,11 @@ fn validate_columns(params: &TableParams, warnings: &mut Vec<ParseWarning>) {
 
 /// Валидирует параметры сортировки
 fn validate_sort_params(params: &TableParams, warnings: &mut Vec<ParseWarning>) {
-    if let Some(sort) = &params.sort
-        && !is_valid_table_field(&sort.field) {
+    if let Some(sort) = &params.sort {
+        if !is_valid_table_field(&sort.field) {
             warnings.push(ParseWarning::UnknownSortField(sort.field.clone()));
         }
-
-        // Дополнительная проверка: можно ли сортировать по этому полю
-        // Некоторые поля могут не поддерживать сортировку (например, state требует специальной обработки)
-        // Но пока просто проверяем существование поля
+    }
 }
 
 /// Валидирует лимит
@@ -155,6 +157,40 @@ fn validate_limit(params: &TableParams, warnings: &mut Vec<ParseWarning>) {
     }
 }
 
+/// Валидирует условие WHERE
+fn validate_where_condition(params: &TableParams, warnings: &mut Vec<ParseWarning>) {
+    if let Some(ref condition) = params.where_condition {
+        validate_expression(condition, warnings);
+    }
+}
+
+/// Валидирует выражение WHERE рекурсивно
+fn validate_expression(expr: &Expression, warnings: &mut Vec<ParseWarning>) {
+    match expr {
+        Expression::Comparison { field, operator: _, value: _ } => {
+            // Проверяем, что поле существует и является числовым
+            if !is_numeric_field(field) {
+                warnings.push(ParseWarning::UnknownField(field.clone()));
+            }
+            // Для Фазы 1 значения всегда числа, поэтому проверка значения не требуется
+        }
+        Expression::Logical { left, operator: _, right } => {
+            // Рекурсивно валидируем левую и правую части
+            validate_expression(left, warnings);
+            validate_expression(right, warnings);
+        }
+    }
+}
+
+/// Проверяет, является ли поле числовым
+fn is_numeric_field(field: &str) -> bool {
+    const NUMERIC_FIELDS: &[&str] = &[
+        "overdue", "reps", "stability", "difficulty",
+        "retrievability", "elapsed", "scheduled"
+    ];
+    NUMERIC_FIELDS.contains(&field)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -168,6 +204,7 @@ mod tests {
             ParseWarning::InvalidLimit(9999),
             ParseWarning::UnknownSortField("invalid".to_string()),
             ParseWarning::UnexpectedToken("@".to_string()),
+            ParseWarning::DuplicateWhere("WHERE".to_string()),
             ParseWarning::Other("Тестовое предупреждение".to_string()),
         ];
 
@@ -178,7 +215,8 @@ mod tests {
         assert!(displays[2].contains("Некорректный LIMIT"));
         assert!(displays[3].contains("Неизвестное поле для сортировки"));
         assert!(displays[4].contains("Неожиданный токен"));
-        assert!(displays[5].contains("Тестовое предупреждение"));
+        assert!(displays[5].contains("Дублирующееся условие WHERE"));
+        assert!(displays[6].contains("Тестовое предупреждение"));
     }
 
     #[test]
@@ -211,6 +249,7 @@ mod tests {
                 field: "due".to_string(),
                 direction: SortDirection::Desc,
             }),
+            where_condition: None,
         };
 
         let result = validate_table_params(&params);
@@ -234,6 +273,7 @@ mod tests {
             ],
             limit: 10,
             sort: None,
+            where_condition: None,
         };
 
         let result = validate_table_params(&params);
@@ -266,6 +306,7 @@ mod tests {
             ],
             limit: 10,
             sort: None,
+            where_condition: None,
         };
 
         let result = validate_table_params(&params);
@@ -289,6 +330,7 @@ mod tests {
                 field: "unknown_field".to_string(),
                 direction: SortDirection::Asc,
             }),
+            where_condition: None,
         };
 
         let result = validate_table_params(&params);
@@ -309,6 +351,7 @@ mod tests {
             }],
             limit: 9999, // Превышает максимальный лимит
             sort: None,
+            where_condition: None,
         };
 
         let result = validate_table_params(&params);
@@ -330,6 +373,7 @@ mod tests {
             }],
             limit: 0,
             sort: None,
+            where_condition: None,
         };
 
         let result = validate_table_params(&params);
@@ -355,6 +399,7 @@ mod tests {
             ],
             limit: 10,
             sort: None,
+            where_condition: None,
         };
 
         let result = validate_table_params(&params);
@@ -398,6 +443,7 @@ mod tests {
                 field: "unknown_sort".to_string(),
                 direction: SortDirection::Desc,
             }),
+            where_condition: None,
         };
 
         let result = validate_table_params(&params);
@@ -420,7 +466,6 @@ mod tests {
         }
 
         // Ожидаем: 2 unknown fields (invalid появляется дважды, но duplicate только для valid полей)
-        // 1 duplicate field (invalid появляется дважды, но unknown приоритетнее)
         // 1 invalid limit
         // 1 unknown sort field
 

@@ -77,6 +77,104 @@ function convertWasmStateToFSRSState(wasmState?: string): FSRSState {
 }
 
 /**
+ * Фильтрует и сортирует карточки в соответствии с SQL-запросом
+ * Использует WASM реализацию на Rust для максимальной производительности
+ * @param cards Массив карточек
+ * @param settings Настройки плагина
+ * @param sqlSource SQL-подобный запрос для фильтрации и сортировки
+ * @param now Текущее время
+ * @returns Отфильтрованный и отсортированный массив карточек с состояниями
+ */
+export async function filterAndSortCardsWithSql(
+	cards: ModernFSRSCard[],
+	settings: FSRSSettings,
+	sqlSource: string,
+	now: Date = new Date(),
+): Promise<CardWithState[]> {
+	if (!cards || cards.length === 0) {
+		return [];
+	}
+
+	try {
+		// Вызываем WASM функцию для фильтрации и сортировки с SQL напрямую
+		const resultJson = wasm.filter_and_sort_cards_with_sql(
+			JSON.stringify(cards),
+			sqlSource,
+			JSON.stringify(settings),
+			now.toISOString(),
+		);
+
+		// Парсим результат с явным приведением типов
+		const wasmResult: WasmFilterResult = JSON.parse(
+			resultJson,
+		) as unknown as WasmFilterResult;
+
+		// Обрабатываем ошибки, если есть
+		if (wasmResult.errors && wasmResult.errors.length > 0) {
+			console.warn(
+				`При фильтрации и сортировке карточек возникли ошибки:`,
+				wasmResult.errors,
+			);
+		}
+
+		// Проверяем наличие ошибки парсинга SQL
+		if ((wasmResult as any).error) {
+			const errorMessage = (wasmResult as any).error;
+			console.error(`Ошибка парсинга SQL запроса: ${errorMessage}`);
+			throw new Error(`Ошибка парсинга SQL запроса: ${errorMessage}`);
+		}
+
+		// Преобразуем результат WASM в формат TypeScript
+		const cardsWithState: CardWithState[] = [];
+
+		for (const wasmCard of wasmResult.cards) {
+			try {
+				// Парсим карточку из JSON с явным приведением типов
+				const card: ModernFSRSCard = JSON.parse(
+					wasmCard.card_json,
+				) as unknown as ModernFSRSCard;
+
+				// Преобразуем вычисленные поля в состояние
+				const state = convertWasmFieldsToComputedState(
+					wasmCard.computed_fields,
+				);
+
+				// Определяем, является ли карточка просроченной
+				const isDue = isCardDue(
+					state.state,
+					wasmCard.computed_fields.state,
+					state.due,
+					now,
+				);
+
+				cardsWithState.push({
+					card,
+					state,
+					isDue,
+				});
+			} catch (error) {
+				console.warn(
+					`Ошибка преобразования карточки из WASM результата:`,
+					error,
+				);
+				// Пропускаем карточки с ошибками преобразования
+				continue;
+			}
+		}
+
+		return cardsWithState;
+	} catch (error) {
+		console.error(
+			`Ошибка фильтрации и сортировки карточек через WASM: ${String(error)}. Возвращаем пустой массив.`,
+		);
+
+		// В случае ошибки WASM, возвращаем пустой массив
+		// В будущих версиях можно добавить fallback на старую реализацию
+		return [];
+	}
+}
+
+/**
  * Преобразует вычисленные поля из WASM в ComputedCardState
  * @param wasmFields Вычисленные поля из WASM
  * @returns ComputedCardState
@@ -183,6 +281,7 @@ export async function filterAndSortCards(
 						direction: params.sort.direction,
 					}
 				: undefined,
+			where_condition: params.where,
 		};
 
 		// Вызываем WASM функцию для фильтрации и сортировки

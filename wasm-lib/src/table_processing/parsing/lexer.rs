@@ -120,7 +120,7 @@ impl SqlLexer {
             self.read_number(start)?
         } else if current_char == '"' {
             self.read_string(start)?
-        } else if current_char == ',' {
+        } else if Self::is_operator_char(current_char) {
             self.read_operator(start)?
         } else {
             return Err(format!("Нераспознанный символ '{}' в позиции {}", current_char, start));
@@ -156,7 +156,7 @@ impl SqlLexer {
 
         // Проверяем, является ли это ключевым словом
         let upper_value = value.to_uppercase();
-        let keywords = ["SELECT", "ORDER", "BY", "ASC", "DESC", "LIMIT", "AS"];
+        let keywords = ["SELECT", "ORDER", "BY", "ASC", "DESC", "LIMIT", "AS", "WHERE", "AND", "OR"];
 
         let token_type = if keywords.contains(&upper_value.as_str()) {
             TokenType::Keyword
@@ -173,18 +173,37 @@ impl SqlLexer {
         Ok(Token::new(token_type, token_value, start, end))
     }
 
-    /// Читает число
+    /// Читает число (целое или с плавающей точкой)
     fn read_number(&mut self, start: usize) -> Result<Token, String> {
         let mut value = String::new();
+        let mut has_decimal_point = false;
 
         while self.position < self.length {
             let current_char = self.chars[self.position];
+
             if Self::is_digit(current_char) {
                 value.push(current_char);
                 self.position += 1;
+            } else if current_char == '.' && !has_decimal_point {
+                // Разрешаем только одну десятичную точку
+                value.push(current_char);
+                self.position += 1;
+                has_decimal_point = true;
             } else {
                 break;
             }
+        }
+
+        // Проверяем, что число не заканчивается точкой
+        if value.ends_with('.') {
+            // Возвращаем точку в поток
+            self.position -= 1;
+            value.pop();
+        }
+
+        // Проверяем, что число не пустое (например, только точка)
+        if value.is_empty() {
+            return Err("Пустое число".to_string());
         }
 
         let end = self.position;
@@ -222,8 +241,20 @@ impl SqlLexer {
 
     /// Читает оператор
     fn read_operator(&mut self, start: usize) -> Result<Token, String> {
-        let value = self.chars[self.position].to_string();
+        let current_char = self.chars[self.position];
+        let mut value = current_char.to_string();
         self.position += 1;
+
+        // Проверяем двухсимвольные операторы
+        if self.position < self.length {
+            let next_char = self.chars[self.position];
+            let two_char_op = format!("{}{}", current_char, next_char);
+            if two_char_op == ">=" || two_char_op == "<=" || two_char_op == "!=" {
+                value = two_char_op;
+                self.position += 1;
+            }
+        }
+
         let end = self.position;
         Ok(Token::new(TokenType::Operator, value, start, end))
     }
@@ -241,6 +272,11 @@ impl SqlLexer {
     /// Проверяет, является ли символ допустимым для идентификатора
     fn is_identifier_char(ch: char) -> bool {
         ch.is_ascii_alphanumeric() || ch == '_'
+    }
+
+    /// Проверяет, является ли символ оператором
+    fn is_operator_char(ch: char) -> bool {
+        matches!(ch, '>' | '<' | '=' | '!' | ',')
     }
 }
 

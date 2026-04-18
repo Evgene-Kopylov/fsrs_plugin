@@ -3,6 +3,7 @@
 
 use std::collections::HashSet;
 use serde::{Deserialize, Serialize};
+use super::parsing::Expression;
 
 /// Колонка таблицы с полем и заголовком
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -46,6 +47,9 @@ pub struct TableParams {
     /// Параметры сортировки (опционально)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sort: Option<SortParam>,
+    /// Условие фильтрации WHERE (опционально)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub where_condition: Option<Expression>,
 }
 
 /// Доступные поля для отображения в таблице
@@ -123,6 +127,7 @@ impl Default for TableParams {
             columns: default_columns(),
             limit: 0,
             sort: None,
+            where_condition: None,
         }
     }
 }
@@ -180,6 +185,7 @@ mod tests {
                 field: "due".to_string(),
                 direction: SortDirection::Desc,
             }),
+            where_condition: None,
         };
 
         let json = serde_json::to_string(&params).unwrap();
