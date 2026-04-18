@@ -9,6 +9,7 @@ mod sort_functions;
 mod state_functions;
 mod types;
 mod yaml_parsing;
+mod table_processing;
 
 // Функция для получения YAML строки для новой карточки
 #[wasm_bindgen]
@@ -271,6 +272,49 @@ pub fn is_card_overdue(due_iso: String, now_iso: String) -> String {
 #[wasm_bindgen]
 pub fn get_card_age_days(card_json: String, now_iso: String) -> String {
     sort_functions::get_card_age_days(card_json, now_iso)
+}
+
+// Парсинг SQL-подобного синтаксиса для блоков fsrs-table
+#[wasm_bindgen]
+pub fn parse_fsrs_table_block(source: &str) -> String {
+    use crate::table_processing::parsing::parse_fsrs_table_block as parse_block;
+    match parse_block(source) {
+        Ok(parse_result) => {
+            // Возвращаем JSON с параметрами таблицы
+            serde_json::to_string(&parse_result.value).unwrap_or_else(|_| "{}".to_string())
+        }
+        Err(err) => {
+            // Возвращаем JSON с ошибкой
+            serde_json::to_string(&serde_json::json!({
+                "error": err.to_string(),
+                "params": crate::table_processing::types::TableParams::default()
+            })).unwrap_or_else(|_| "{}".to_string())
+        }
+    }
+}
+
+// Фильтрация и сортировка карточек для таблицы
+#[wasm_bindgen]
+pub fn filter_and_sort_cards(
+    cards_json: &str,
+    params_json: &str,
+    settings_json: &str,
+    now_iso: &str,
+) -> String {
+    // TODO: реализовать после завершения модуля фильтрации
+    "[]".to_string()
+}
+
+// Проверка валидности поля таблицы
+#[wasm_bindgen]
+pub fn is_valid_table_field(field: &str) -> bool {
+    crate::table_processing::types::is_valid_table_field(field)
+}
+
+// Получение заголовка по умолчанию для поля
+#[wasm_bindgen]
+pub fn get_default_column_title(field: &str) -> String {
+    crate::table_processing::types::get_default_title(field)
 }
 
 // Оригинальная функция для обратной совместимости
