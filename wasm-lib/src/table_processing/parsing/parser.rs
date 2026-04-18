@@ -53,7 +53,7 @@ impl<'a> ParserState<'a> {
     /// Создает новое состояние парсера
     fn new(lexer: &'a mut SqlLexer) -> Result<Self, ParseError> {
         let current_token = lexer.next_token()
-            .map_err(|e| ParseError::Lexical(e))?;
+            .map_err(ParseError::Lexical)?;
 
         Ok(Self {
             lexer,
@@ -65,7 +65,7 @@ impl<'a> ParserState<'a> {
     /// Переходит к следующему токену
     fn advance(&mut self) -> Result<(), ParseError> {
         self.current_token = self.lexer.next_token()
-            .map_err(|e| ParseError::Lexical(e))?;
+            .map_err(ParseError::Lexical)?;
         Ok(())
     }
 
@@ -82,14 +82,13 @@ impl<'a> ParserState<'a> {
             )));
         }
 
-        if let Some(expected) = expected_value {
-            if self.current_token.value != expected {
+        if let Some(expected) = expected_value
+            && self.current_token.value != expected {
                 return Err(ParseError::Syntax(format!(
                     "Ожидается '{}', получено '{}'",
                     expected, self.current_token.value
                 )));
             }
-        }
 
         self.advance()
     }

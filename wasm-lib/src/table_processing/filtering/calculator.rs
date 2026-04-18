@@ -282,24 +282,21 @@ pub fn compute_all_fields(
     };
 
     // Пытаемся извлечь базовые поля из JSON
-    if let Ok(file_value) = extract_field(card_json, "file") {
-        if let Some(file_str) = file_value.as_str() {
+    if let Ok(file_value) = extract_field(card_json, "file")
+        && let Some(file_str) = file_value.as_str() {
             result.file = Some(file_str.to_string());
         }
-    }
 
     // Используем поле filePath как альтернативу file
-    if result.file.is_none() {
-        if let Ok(file_path_value) = extract_field(card_json, "filePath") {
-            if let Some(file_path_str) = file_path_value.as_str() {
+    if result.file.is_none()
+        && let Ok(file_path_value) = extract_field(card_json, "filePath")
+            && let Some(file_path_str) = file_path_value.as_str() {
                 result.file = Some(file_path_str.to_string());
             }
-        }
-    }
 
     // Извлекаем reps из истории reviews
-    if let Ok(reviews_value) = extract_field(card_json, "reviews") {
-        if let Some(reviews_array) = reviews_value.as_array() {
+    if let Ok(reviews_value) = extract_field(card_json, "reviews")
+        && let Some(reviews_array) = reviews_value.as_array() {
             // Подсчитываем количество успешных повторений (не "Again")
             let successful_reps = reviews_array.iter()
                 .filter(|review| {
@@ -311,7 +308,6 @@ pub fn compute_all_fields(
                 .count();
             result.reps = Some(successful_reps as u32);
         }
-    }
 
     // Вычисляем полное состояние карточки через WASM функцию
     let state_json = compute_current_state(

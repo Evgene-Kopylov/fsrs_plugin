@@ -120,15 +120,14 @@ fn validate_columns(params: &TableParams, warnings: &mut Vec<ParseWarning>) {
 
 /// Валидирует параметры сортировки
 fn validate_sort_params(params: &TableParams, warnings: &mut Vec<ParseWarning>) {
-    if let Some(sort) = &params.sort {
-        if !is_valid_table_field(&sort.field) {
+    if let Some(sort) = &params.sort
+        && !is_valid_table_field(&sort.field) {
             warnings.push(ParseWarning::UnknownSortField(sort.field.clone()));
         }
 
         // Дополнительная проверка: можно ли сортировать по этому полю
         // Некоторые поля могут не поддерживать сортировку (например, state требует специальной обработки)
         // Но пока просто проверяем существование поля
-    }
 }
 
 /// Валидирует лимит
