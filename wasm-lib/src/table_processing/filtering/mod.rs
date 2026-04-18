@@ -408,7 +408,7 @@ mod tests {
     fn test_compare_computed_fields_overdue() {
         let a = create_test_fields(None, None, Some(1.5), None, None, None, None, None, None, None);
         let b = create_test_fields(None, None, Some(2.5), None, None, None, None, None, None, None);
-        let c = create_test_fields(None, None, None, None, None, None, None, None, None, None);
+
 
         // ASC: 1.5 < 2.5
         assert_eq!(
@@ -658,7 +658,6 @@ mod tests {
 
         // Проверяем что результат содержит корректные карточки
         // (некоторые карточки могут быть пропущены из-за ошибок)
-        assert!(filter_result.total_count >= 0, "Должен быть результат обработки");
 
         // Проверяем что структура результата корректна
         assert!(filter_result.cards.len() <= filter_result.total_count);
