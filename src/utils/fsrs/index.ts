@@ -36,23 +36,6 @@ export {
 	getMinutesSinceLastReview,
 } from "./fsrs-time";
 
-// Экспорт функций генерации HTML
-export {
-	generateFsrsNowHTML,
-	generateFsrsFutureHTML,
-	generateEmptyStateHTML,
-} from "./fsrs-html";
-
-// Экспорт функций сортировки и фильтрации
-export {
-	sortCardsByPriority,
-	filterCardsForReview,
-	filterCardsForFuture,
-	limitCards,
-	calculateCardPriorityScore,
-	groupCardsByState,
-} from "./fsrs-sort";
-
 // Экспорт функций работы с YAML
 export {
 	updateReviewsInYaml,

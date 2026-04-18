@@ -1,0 +1,101 @@
+stages:
+    - build-wasm
+    - encode-wasm
+    - lint
+
+variables:
+    NODE_VERSION: "24-alpine"
+    RUST_VERSION: "latest"
+    NPM_CONFIG_CACHE: "${CI_PROJECT_DIR}/.npm"
+
+cache:
+    key: "${CI_COMMIT_REF_SLUG}"
+    paths:
+        - node_modules/
+        - .npm/
+    policy: pull-push
+
+.rules: &rules
+    rules:
+        - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
+
+build_wasm:
+    stage: build-wasm
+    <<: *rules
+    image: rust:latest
+    before_script:
+        - cargo --version
+        - rustc --version
+    script:
+        - cd wasm-lib
+        - rustup component add rustfmt
+        - cargo fmt -- --check
+        - rustup component add clippy
+        - cargo clippy -- -D warnings
+        - cargo test
+        - cd ..
+        - cargo install wasm-pack
+        - wasm-pack build wasm-lib --target web --out-dir pkg --out-name wasm_lib
+    artifacts:
+        paths:
+            - wasm-lib/pkg/
+        expire_in: 1 hour
+    timeout: 10m
+
+encode_wasm:
+    stage: encode-wasm
+    <<: *rules
+    image: node:${NODE_VERSION}
+    needs:
+        - build_wasm
+    before_script:
+        - node --version
+        - npm --version
+    script:
+        - npm ci --prefer-offline
+        - npm run encode-wasm
+    artifacts:
+        paths:
+            - wasm-lib/pkg/
+        expire_in: 1 hour
+    cache:
+        key: "${CI_COMMIT_REF_SLUG}"
+        paths:
+            - node_modules/
+            - .npm/
+        policy: pull-push
+    timeout: 10m
+
+typescript-check:
+    stage: lint
+    image: node:${NODE_VERSION}
+    needs:
+        - encode_wasm
+    script:
+        - npm ci --prefer-offline
+        - npx tsc --noEmit --skipLibCheck
+    <<: *rules
+    cache:
+        key: "${CI_COMMIT_REF_SLUG}"
+        paths:
+            - node_modules/
+            - .npm/
+        policy: pull-push
+    timeout: 10m
+
+eslint-check:
+    stage: lint
+    image: node:${NODE_VERSION}
+    needs:
+        - encode_wasm
+    script:
+        - npm ci --prefer-offline
+        - npm run lint
+    <<: *rules
+    cache:
+        key: "${CI_COMMIT_REF_SLUG}"
+        paths:
+            - node_modules/
+            - .npm/
+        policy: pull-push
+    timeout: 10m

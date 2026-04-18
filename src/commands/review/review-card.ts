@@ -11,9 +11,10 @@ import {
 	getRussianNoun,
 	extractFrontmatterWithMatch,
 } from "../../utils/fsrs-helper";
-import type { ModernFSRSCard, FSRSRating } from "../../interfaces/fsrs";
+import type { FSRSRating } from "../../interfaces/fsrs";
 import type MyPlugin from "../../main";
 import { ReviewModal } from "./review-modal";
+import { DEFAULT_SETTINGS } from "../../settings";
 
 /**
  * Основная функция повторения текущей карточки FSRS
@@ -121,10 +122,10 @@ export async function reviewCurrentCard(
 		// Заменяем старый frontmatter на новый, сохраняя все остальные поля и пустые строки
 		const beforeFrontmatter = content.substring(
 			0,
-			frontmatterMatch.match.index!,
+			frontmatterMatch.match.index,
 		);
 		const afterFrontmatter = content.substring(
-			frontmatterMatch.match.index! + frontmatterMatch.match[0].length,
+			frontmatterMatch.match.index + frontmatterMatch.match[0].length,
 		);
 		const newContent =
 			beforeFrontmatter +
@@ -145,13 +146,12 @@ export async function reviewCurrentCard(
 		// Показываем уведомление с информацией
 		let message = `Карточка повторена: ${rating}`;
 		if (nextDates[rating]) {
-			const nextDate = new Date(nextDates[rating]!);
+			const nextDate = new Date(nextDates[rating]);
 			message += `\nСледующее повторение: ${nextDate.toLocaleDateString()}`;
 		}
 
 		new Notice(message);
-		plugin.notifyFsrsNowRenderers();
-		plugin.notifyFsrsFutureRenderers();
+		plugin.notifyFsrsTableRenderers();
 		console.debug("Карточка успешно обновлена");
 
 		// Логируем следующие даты для всех оценок
@@ -159,7 +159,7 @@ export async function reviewCurrentCard(
 		Object.entries(nextDates).forEach(([rating, date]) => {
 			if (date) {
 				console.debug(
-					`  ${rating}: ${new Date(date as string).toLocaleString()}`,
+					`  ${rating}: ${new Date(date).toLocaleString()}`,
 				);
 			}
 		});
@@ -222,16 +222,8 @@ export async function reviewCurrentCardSimple(app: App): Promise<void> {
 		// Используем фиксированную оценку Good
 		const rating: FSRSRating = "Good";
 
-		// Для простой версии создаем минимальные настройки
-		const defaultSettings = {
-			parameters: {
-				request_retention: 0.9,
-				maximum_interval: 36500,
-				enable_fuzz: true,
-			},
-			default_initial_stability: 0.0,
-			default_initial_difficulty: 0.0,
-		} as any;
+		// Используем настройки по умолчанию
+		const defaultSettings = DEFAULT_SETTINGS;
 
 		const updatedCard = await addReviewSession(
 			card,
@@ -246,10 +238,10 @@ export async function reviewCurrentCardSimple(app: App): Promise<void> {
 		// Заменяем старый frontmatter на новый, сохраняя все остальные поля и пустые строки
 		const beforeFrontmatter = content.substring(
 			0,
-			frontmatterMatch.match.index!,
+			frontmatterMatch.match.index,
 		);
 		const afterFrontmatter = content.substring(
-			frontmatterMatch.match.index! + frontmatterMatch.match[0].length,
+			frontmatterMatch.match.index + frontmatterMatch.match[0].length,
 		);
 		const newContent =
 			beforeFrontmatter +
@@ -372,10 +364,10 @@ export async function reviewCardByPath(
 		// Заменяем старый frontmatter на новый, сохраняя все остальные поля и пустые строки
 		const beforeFrontmatter = content.substring(
 			0,
-			frontmatterMatch.match.index!,
+			frontmatterMatch.match.index,
 		);
 		const afterFrontmatter = content.substring(
-			frontmatterMatch.match.index! + frontmatterMatch.match[0].length,
+			frontmatterMatch.match.index + frontmatterMatch.match[0].length,
 		);
 		const newContent =
 			beforeFrontmatter +
@@ -396,13 +388,12 @@ export async function reviewCardByPath(
 		// Показываем уведомление с информацией
 		let message = `Карточка повторена: ${rating}`;
 		if (nextDates[rating]) {
-			const nextDate = new Date(nextDates[rating]!);
+			const nextDate = new Date(nextDates[rating]);
 			message += `\nСледующее повторение: ${nextDate.toLocaleDateString()}`;
 		}
 
 		new Notice(message);
-		plugin.notifyFsrsNowRenderers();
-		plugin.notifyFsrsFutureRenderers();
+		plugin.notifyFsrsTableRenderers();
 		console.debug("Карточка успешно обновлена");
 
 		// Логируем следующие даты для всех оценок
@@ -410,7 +401,7 @@ export async function reviewCardByPath(
 		Object.entries(nextDates).forEach(([rating, date]) => {
 			if (date) {
 				console.debug(
-					`  ${rating}: ${new Date(date as string).toLocaleString()}`,
+					`  ${rating}: ${new Date(date).toLocaleString()}`,
 				);
 			}
 		});

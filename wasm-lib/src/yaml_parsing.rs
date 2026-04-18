@@ -1,6 +1,6 @@
 // Модуль для парсинга YAML в Rust с использованием serde_yaml
 
-use crate::types::{ModernFsrsCard, FsrsParameters, ReviewSession};
+use crate::types::{FsrsParameters, ModernFsrsCard, ReviewSession};
 
 #[cfg(target_arch = "wasm32")]
 #[allow(unused_imports)]
@@ -16,10 +16,6 @@ macro_rules! log_trace {
     };
 }
 
-
-
-
-
 macro_rules! log_warn {
     ($($arg:tt)*) => {
         #[cfg(target_arch = "wasm32")]
@@ -28,8 +24,6 @@ macro_rules! log_warn {
         eprintln!("WARN: {}", format!($($arg)*));
     };
 }
-
-
 
 /// Парсит YAML строку в карточку FSRS
 pub fn parse_yaml_to_card(yaml_str: &str) -> ModernFsrsCard {
@@ -67,7 +61,10 @@ pub fn parse_yaml_to_parameters(yaml_str: &str) -> FsrsParameters {
 
 /// Извлекает FSRS карточку из frontmatter Obsidian
 pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<ModernFsrsCard> {
-    log_trace!("extract_fsrs_from_frontmatter called with frontmatter length: {}", frontmatter.len());
+    log_trace!(
+        "extract_fsrs_from_frontmatter called with frontmatter length: {}",
+        frontmatter.len()
+    );
 
     // Извлекаем YAML между первым и вторым "---"
     let trimmed = frontmatter.trim();
@@ -84,7 +81,10 @@ pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<ModernFsrsCard
 
     let yaml_content = parts[1].trim();
     log_trace!("yaml_content length: {}", yaml_content.len());
-    log_trace!("yaml_content first 200 chars: {}", &yaml_content[..yaml_content.len().min(200)]);
+    log_trace!(
+        "yaml_content first 200 chars: {}",
+        &yaml_content[..yaml_content.len().min(200)]
+    );
 
     if yaml_content.is_empty() {
         log_trace!("yaml_content is empty");
@@ -97,7 +97,7 @@ pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<ModernFsrsCard
         Ok(value) => {
             log_trace!("YAML parsed successfully, type: {:?}", value);
             value
-        },
+        }
         Err(e) => {
             log_warn!("YAML parsing error: {}", e);
             return None; // невалидный YAML
@@ -118,11 +118,16 @@ pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<ModernFsrsCard
             Some(serde_yaml::Value::Sequence(seq)) => {
                 log_trace!("reviews is a sequence with {} elements", seq.len());
                 // Десериализуем reviews
-                match serde_yaml::from_value::<Vec<ReviewSession>>(serde_yaml::Value::Sequence(seq.clone())) {
+                match serde_yaml::from_value::<Vec<ReviewSession>>(serde_yaml::Value::Sequence(
+                    seq.clone(),
+                )) {
                     Ok(reviews) => {
-                        log_trace!("Successfully deserialized {} review sessions", reviews.len());
+                        log_trace!(
+                            "Successfully deserialized {} review sessions",
+                            reviews.len()
+                        );
                         reviews
-                    },
+                    }
                     Err(e) => {
                         log_warn!("Error deserializing reviews: {}", e);
                         return None;
@@ -188,21 +193,33 @@ pub fn validate_review_sessions(card: &ModernFsrsCard) -> Vec<String> {
 
         // Пробуем парсить дату
         if let Err(e) = chrono::DateTime::parse_from_rfc3339(&session.date) {
-            errors.push(format!("Session {}: invalid date format '{}': {}", i, session.date, e));
+            errors.push(format!(
+                "Session {}: invalid date format '{}': {}",
+                i, session.date, e
+            ));
         }
 
         // Проверяем рейтинг
         if !["Again", "Hard", "Good", "Easy"].contains(&session.rating.as_str()) {
-            errors.push(format!("Session {}: invalid rating '{}'", i, session.rating));
+            errors.push(format!(
+                "Session {}: invalid rating '{}'",
+                i, session.rating
+            ));
         }
 
         // Проверяем числовые значения
         if session.stability < 0.0 || session.stability > 1000.0 {
-            errors.push(format!("Session {}: stability out of range: {}", i, session.stability));
+            errors.push(format!(
+                "Session {}: stability out of range: {}",
+                i, session.stability
+            ));
         }
 
         if session.difficulty < 1.0 || session.difficulty > 10.0 {
-            errors.push(format!("Session {}: difficulty out of range: {}", i, session.difficulty));
+            errors.push(format!(
+                "Session {}: difficulty out of range: {}",
+                i, session.difficulty
+            ));
         }
     }
 
@@ -266,14 +283,12 @@ reviews:
     #[test]
     fn test_card_to_yaml_and_back() {
         let original_card = ModernFsrsCard {
-            reviews: vec![
-                ReviewSession {
-                    date: "2025-01-01T10:00:00Z".to_string(),
-                    rating: "Good".to_string(),
-                    stability: 5.0,
-                    difficulty: 3.0,
-                }
-            ],
+            reviews: vec![ReviewSession {
+                date: "2025-01-01T10:00:00Z".to_string(),
+                rating: "Good".to_string(),
+                stability: 5.0,
+                difficulty: 3.0,
+            }],
             file_path: None,
         };
 
@@ -282,9 +297,18 @@ reviews:
 
         assert_eq!(parsed_card.reviews.len(), original_card.reviews.len());
         assert_eq!(parsed_card.reviews[0].date, original_card.reviews[0].date);
-        assert_eq!(parsed_card.reviews[0].rating, original_card.reviews[0].rating);
-        assert_eq!(parsed_card.reviews[0].stability, original_card.reviews[0].stability);
-        assert_eq!(parsed_card.reviews[0].difficulty, original_card.reviews[0].difficulty);
+        assert_eq!(
+            parsed_card.reviews[0].rating,
+            original_card.reviews[0].rating
+        );
+        assert_eq!(
+            parsed_card.reviews[0].stability,
+            original_card.reviews[0].stability
+        );
+        assert_eq!(
+            parsed_card.reviews[0].difficulty,
+            original_card.reviews[0].difficulty
+        );
     }
 
     #[test]
@@ -342,14 +366,12 @@ Content"#;
     #[test]
     fn test_create_frontmatter_with_fsrs() {
         let card = ModernFsrsCard {
-            reviews: vec![
-                ReviewSession {
-                    date: "2025-01-01T10:00:00Z".to_string(),
-                    rating: "Good".to_string(),
-                    stability: 5.0,
-                    difficulty: 3.0,
-                }
-            ],
+            reviews: vec![ReviewSession {
+                date: "2025-01-01T10:00:00Z".to_string(),
+                rating: "Good".to_string(),
+                stability: 5.0,
+                difficulty: 3.0,
+            }],
             file_path: None,
         };
 
@@ -365,14 +387,12 @@ Content"#;
     #[test]
     fn test_validate_review_sessions_valid() {
         let card = ModernFsrsCard {
-            reviews: vec![
-                ReviewSession {
-                    date: "2025-01-01T10:00:00Z".to_string(),
-                    rating: "Good".to_string(),
-                    stability: 5.0,
-                    difficulty: 3.0,
-                }
-            ],
+            reviews: vec![ReviewSession {
+                date: "2025-01-01T10:00:00Z".to_string(),
+                rating: "Good".to_string(),
+                stability: 5.0,
+                difficulty: 3.0,
+            }],
             file_path: None,
         };
 
@@ -383,14 +403,12 @@ Content"#;
     #[test]
     fn test_validate_review_sessions_invalid_date() {
         let card = ModernFsrsCard {
-            reviews: vec![
-                ReviewSession {
-                    date: "invalid-date".to_string(),
-                    rating: "Good".to_string(),
-                    stability: 5.0,
-                    difficulty: 3.0,
-                }
-            ],
+            reviews: vec![ReviewSession {
+                date: "invalid-date".to_string(),
+                rating: "Good".to_string(),
+                stability: 5.0,
+                difficulty: 3.0,
+            }],
             file_path: None,
         };
 
@@ -402,14 +420,12 @@ Content"#;
     #[test]
     fn test_validate_review_sessions_invalid_rating() {
         let card = ModernFsrsCard {
-            reviews: vec![
-                ReviewSession {
-                    date: "2025-01-01T10:00:00Z".to_string(),
-                    rating: "InvalidRating".to_string(),
-                    stability: 5.0,
-                    difficulty: 3.0,
-                }
-            ],
+            reviews: vec![ReviewSession {
+                date: "2025-01-01T10:00:00Z".to_string(),
+                rating: "InvalidRating".to_string(),
+                stability: 5.0,
+                difficulty: 3.0,
+            }],
             file_path: None,
         };
 
@@ -421,14 +437,12 @@ Content"#;
     #[test]
     fn test_validate_review_sessions_out_of_range() {
         let card = ModernFsrsCard {
-            reviews: vec![
-                ReviewSession {
-                    date: "2025-01-01T10:00:00Z".to_string(),
-                    rating: "Good".to_string(),
-                    stability: -5.0, // отрицательная стабильность
-                    difficulty: 15.0, // сложность вне диапазона
-                }
-            ],
+            reviews: vec![ReviewSession {
+                date: "2025-01-01T10:00:00Z".to_string(),
+                rating: "Good".to_string(),
+                stability: -5.0,  // отрицательная стабильность
+                difficulty: 15.0, // сложность вне диапазона
+            }],
             file_path: None,
         };
 

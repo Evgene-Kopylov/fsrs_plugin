@@ -1,286 +1,155 @@
-/*
-
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
-
-If your plugin does not need CSS, delete this file.
-
-*/
-
-/* Стили для блока fsrs-now */
-.fsrs-now-render-container {
-	margin: 1em 0;
-	padding: 1em;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 8px;
-	background-color: var(--background-primary);
+.markdown-rendered .block-language-fsrs-table,
+.cm-preview-code-block.block-language-fsrs-table,
+.cm-embed-block.block-language-fsrs-table {
+	border: none !important;
+	background: transparent !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	box-shadow: none !important;
 }
 
-.fsrs-now-container {
-	font-family: var(--font-text);
-	color: var(--text-normal);
-}
-
-.fsrs-now-loading,
-.fsrs-now-empty,
-.fsrs-now-error {
-	padding: 1em;
-	text-align: center;
-	color: var(--text-muted);
-	font-style: italic;
-}
-
-/* Стили для блока fsrs-future */
-.fsrs-future-render-container {
-	margin: 1em 0;
-	padding: 1em;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 8px;
-	background-color: var(--background-primary);
-}
-
-.fsrs-future-container {
-	font-family: var(--font-text);
-	color: var(--text-normal);
-}
-
-.fsrs-future-loading,
-.fsrs-future-empty,
-.fsrs-future-error {
-	padding: 1em;
-	text-align: center;
-	color: var(--text-muted);
-	font-style: italic;
-}
-
-.fsrs-future-table {
+.fsrs-table-container {
 	width: 100%;
-	border-collapse: collapse;
-	font-size: 0.9em;
+	font-family: var(--font-text);
+	overflow-x: auto;
 }
 
-.fsrs-future-table th,
-.fsrs-future-table td {
-	border: 1px solid var(--background-modifier-border);
-	padding: 6px 8px;
-	text-align: left;
+.fsrs-table {
+	width: 100% !important;
+	border-collapse: collapse !important;
+	table-layout: auto !important;
+	font-size: 0.85em !important;
+	line-height: 1.4 !important;
+}
+
+.fsrs-table th,
+.fsrs-table td {
+	border: 1px solid var(--background-modifier-border) !important;
+	padding: 6px 10px !important;
+	vertical-align: middle !important;
+	box-sizing: border-box;
+}
+
+.fsrs-sortable-header {
+	padding: 0 !important;
+}
+
+.fsrs-sort-header {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	width: 100%;
+	height: 100%;
+	padding: 6px 10px;
+	font: inherit;
+	font-weight: 600;
+	color: inherit;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
+	text-align: inherit;
+	position: relative;
+}
+
+.fsrs-sort-header:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+/* Выравнивание кнопок сортировки для разных колонок */
+.fsrs-table th.fsrs-col-file .fsrs-sort-header {
+	justify-content: flex-start;
+}
+
+.fsrs-table th:not(.fsrs-col-file) .fsrs-sort-header {
+	justify-content: center;
+}
+
+.fsrs-sort-indicator {
+	font-size: 0.8em;
+	opacity: 0.6;
+	position: absolute;
+	right: 2px;
+	top: 50%;
+	transform: translateY(-50%);
+}
+
+.fsrs-table td.fsrs-col-file {
+	text-align: left !important;
+	width: auto !important;
+	white-space: nowrap !important;
+	max-width: 300px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.fsrs-table td.fsrs-col-file a.internal-link {
+	display: inline-block !important;
+	margin: 0 !important;
+	padding: 0 !important;
+	color: var(--text-accent);
 	vertical-align: top;
+	text-decoration: none !important;
 }
 
-.fsrs-future-table th {
+.fsrs-table .fsrs-col-reps,
+.fsrs-table .fsrs-col-overdue,
+.fsrs-table .fsrs-col-stability,
+.fsrs-table .fsrs-col-difficulty,
+.fsrs-table .fsrs-col-retrievability,
+.fsrs-table .fsrs-col-elapsed,
+.fsrs-table .fsrs-col-scheduled,
+.fsrs-table .fsrs-col-due,
+.fsrs-table .fsrs-col-state,
+.fsrs-table .fsrs-col-next,
+.fsrs-table .fsrs-col-in,
+.fsrs-table .fsrs-col-interval {
+	width: 1% !important;
+	white-space: nowrap !important;
+	text-align: center !important;
+	padding: 4px 12px !important;
+}
+
+.fsrs-table th {
 	background-color: var(--background-secondary);
 	font-weight: 600;
 }
 
-.fsrs-future-row:hover {
+.fsrs-table th:not(.fsrs-col-file) {
+	text-align: center !important;
+}
+
+.fsrs-table th.fsrs-col-file {
+	text-align: left !important;
+}
+
+.fsrs-table tr:hover {
 	background-color: var(--background-modifier-hover);
-	cursor: pointer;
-}
-.fsrs-future-table a.internal-link {
-	cursor: pointer;
 }
 
-.fsrs-col-reps,
-.fsrs-col-interval,
-.fsrs-col-in {
-	white-space: nowrap;
-	width: 1%;
-	text-align: right;
-	padding: 4px 6px;
-}
-
-.fsrs-col-next {
-	white-space: nowrap;
-	width: 25%;
-	text-align: left;
-}
-
-.fsrs-col-file {
-	width: auto;
-}
-
-.fsrs-info-icon {
-	cursor: help;
-	color: var(--text-muted);
-	font-size: 0.9em;
-	margin-left: 0.5em;
-}
-
-.fsrs-now-card {
-	margin-bottom: 1em;
-	padding: 0.75em;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 6px;
-	background-color: var(--background-secondary);
-	transition: border-color 0.2s ease;
-}
-
-.fsrs-now-card:hover {
-	border-color: var(--interactive-accent);
-}
-
-.fsrs-now-card-header {
-	margin-bottom: 0.5em;
-	padding-bottom: 0.5em;
-	border-bottom: 1px solid var(--background-modifier-border);
-}
-
-.fsrs-now-card-content {
-	margin-bottom: 0.5em;
-	line-height: 1.4;
-}
-
-.fsrs-now-field {
-	display: inline-block;
-	margin-right: 1em;
-	margin-bottom: 0.25em;
-	color: var(--text-muted);
-}
-
-.fsrs-now-field strong {
-	color: var(--text-normal);
-}
-
-.fsrs-now-info {
-	margin-top: 1em;
-	padding: 0.5em;
-	text-align: center;
-	color: var(--text-muted);
-	font-size: 0.9em;
-	border-top: 1px dashed var(--background-modifier-border);
-}
-
-/* Состояния карточек по цветам */
-.fsrs-now-card[data-state="New"] {
-	border-left: 3px solid var(--text-muted);
-}
-
-.fsrs-now-card[data-state="Learning"] {
-	border-left: 3px solid var(--color-blue);
-}
-
-.fsrs-now-card[data-state="Review"] {
-	border-left: 3px solid var(--color-green);
-}
-
-.fsrs-now-card[data-state="Relearning"] {
-	border-left: 3px solid var(--color-orange);
-}
-
-/* Адаптивность */
-@media (max-width: 768px) {
-	.fsrs-now-field {
-		display: block;
-		margin-right: 0;
-	}
-}
-
-/* Контейнер для кнопки повторения в frontmatter */
-.fsrs-review-button-container {
-	margin: 1em 0;
-}
-
-/* Контейнер для кнопок */
 .fsrs-buttons-container {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
-	margin: 0 auto;
+	margin: 1em 0;
 }
 
-/* Основная кнопка с фиксированной шириной */
 .fsrs-review-button {
-	padding: 8px 16px;
+	padding: 6px 16px;
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
 	border: none;
-	border-radius: 6px;
+	border-radius: 4px;
 	cursor: pointer;
-	font-size: 14px;
-	font-family: var(--font-text);
+	font-size: 13px;
 	font-weight: 500;
-	transition:
-		background-color 0.2s ease,
-		opacity 0.2s ease,
-		transform 0.1s ease;
-	min-width: 160px; /* Фиксированная минимальная ширина */
-	text-align: center;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	min-width: 140px;
+	transition: background 0.2s ease;
 }
 
 .fsrs-review-button:hover {
 	background: var(--interactive-accent-hover);
-	opacity: 0.9;
-	transform: translateY(-1px);
 }
 
-.fsrs-review-button:active {
-	background: var(--interactive-accent-hover);
-	opacity: 0.8;
-	transform: translateY(0);
-}
-
-.fsrs-review-button:disabled {
-	background: var(--background-modifier-border);
-	color: var(--text-muted);
-	cursor: not-allowed;
-	opacity: 0.7;
-}
-
-/* Состояния кнопки повторения */
-.fsrs-review-button--not-fsrs {
-	background: var(--background-modifier-border);
-	color: var(--text-muted);
-	opacity: 0.7;
-}
-
-.fsrs-review-button--not-fsrs:hover {
-	background: var(--background-modifier-border);
-	color: var(--text-muted);
-	opacity: 0.8;
-}
-
-.fsrs-review-button--reviewed {
-	background: var(--color-green);
-	color: var(--text-on-accent);
-}
-
-.fsrs-review-button--reviewed:hover {
-	background: var(--color-green);
-	opacity: 0.9;
-}
-
-.fsrs-review-button--due {
-	background: var(--interactive-accent);
-	color: var(--text-on-accent);
-}
-
-.fsrs-review-button--due:hover {
-	background: var(--interactive-accent-hover);
-	opacity: 0.9;
-}
-
-.fsrs-review-button--error {
-	background: var(--color-red);
-	color: var(--text-on-accent);
-}
-
-.fsrs-review-button--error:hover {
-	background: var(--color-red);
-	opacity: 0.9;
-}
-
-.fsrs-review-button--loading {
-	background: var(--background-modifier-border);
-	color: var(--text-muted);
-	cursor: wait;
-	opacity: 0.7;
-}
-
-/* Кнопка удаления */
 .fsrs-delete-button {
 	display: flex;
 	align-items: center;
@@ -289,165 +158,117 @@ If your plugin does not need CSS, delete this file.
 	height: 28px;
 	background: var(--background-modifier-border);
 	color: var(--text-muted);
+	border-radius: 4px;
 	border: none;
-	border-radius: 6px;
 	cursor: pointer;
-	font-size: 20px;
-	font-weight: bold;
-	line-height: 1;
-	padding: 0;
-	transition:
-		background-color 0.2s ease,
-		opacity 0.2s ease,
-		transform 0.1s ease;
+	transition: all 0.2s ease;
 }
 
 .fsrs-delete-button:hover {
 	background: var(--background-modifier-border-hover);
 	color: var(--text-normal);
-	opacity: 0.9;
-	transform: translateY(-1px);
 }
 
-.fsrs-delete-button:active {
-	background: var(--background-modifier-border-hover);
-	opacity: 0.8;
-	transform: translateY(0);
+.fsrs-table-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 6px;
 }
 
-/* Таблица для блока fsrs-now */
-.fsrs-now-table {
-	width: 100%;
-	border-collapse: collapse;
+.fsrs-header-text {
 	font-size: 0.9em;
+	font-weight: 600;
+	color: var(--text-muted);
 }
-.fsrs-now-table th,
-.fsrs-now-table td {
-	border: 1px solid var(--background-modifier-border);
-	padding: 6px 8px;
-	text-align: left;
-	vertical-align: top;
+
+.fsrs-help-toggle {
+	/* Отодвигаем от края на 2.5 ширины буквы 'M' текущего шрифта */
+	margin-right: 2.5em;
+
+	/* Делаем максимально бледным */
+	color: var(--text-faint) !important;
+	opacity: 0.5;
+
+	/* Уменьшаем размер относительно родительского текста */
+	font-size: 0.75em;
+	transition: opacity 0.3s ease;
 }
-.fsrs-now-table th {
+
+.fsrs-help-toggle:hover {
+	opacity: 0.7;
+	color: var(--text-muted) !important;
+}
+
+/* Стили для модального окна справки */
+.fsrs-help-title {
+	font-size: 1.5em;
+	font-weight: 600;
+	margin-bottom: 0.5em;
+	color: var(--text-normal);
+}
+
+.fsrs-help-info {
+	font-size: 0.9em;
+	color: var(--text-muted);
+	margin-bottom: 1.5em;
+}
+
+.fsrs-help-content-container {
+	font-size: 1.3em;
+	line-height: 1.7;
+	overflow-y: auto;
+	max-height: 60vh;
+	padding-right: 10px;
+	word-wrap: break-word;
+}
+
+.fsrs-help-content-container p {
+	margin-bottom: 1em;
+}
+
+.fsrs-help-content-container code {
+	font-size: 1.1em;
 	background-color: var(--background-secondary);
+	padding: 6px 10px;
+	border-radius: 4px;
+}
+
+.fsrs-help-content-container pre {
+	background-color: var(--background-secondary);
+	padding: 20px;
+	border-radius: 6px;
+	overflow-x: auto;
+	font-size: 1.1em;
+	line-height: 1.7;
+}
+
+.fsrs-help-content-container h1,
+.fsrs-help-content-container h2,
+.fsrs-help-content-container h3 {
+	margin-top: 1.5em;
+	margin-bottom: 0.5em;
 	font-weight: 600;
 }
-.fsrs-now-table tr:hover {
-	background-color: var(--background-modifier-hover);
-	cursor: pointer;
-}
-.fsrs-now-table a.internal-link {
-	cursor: pointer;
+
+.fsrs-help-content-container h1 {
+	font-size: 1.6em;
 }
 
-/* Уменьшаем ширину колонок "Повторений" и "Просрочка" */
-.fsrs-now-table .fsrs-col-reps,
-.fsrs-now-table .fsrs-col-overdue {
-	white-space: nowrap;
-	width: 1%;
-	text-align: right;
-}
-/* Имя файла занимает всё оставшееся пространство */
-.fsrs-now-table .fsrs-col-file {
-	width: auto;
+.fsrs-help-content-container h2 {
+	font-size: 1.4em;
 }
 
-.fsrs-delete-button:disabled {
-	background: var(--background-modifier-border);
-	color: var(--text-muted);
-	cursor: not-allowed;
-	opacity: 0.5;
+.fsrs-help-content-container h3 {
+	font-size: 1.3em;
 }
 
-/* Убираем рамку и фон у блока fsrs-now в режиме редактирования */
-.cm-preview-code-block.block-language-fsrs-now,
-.cm-embed-block.block-language-fsrs-now {
-	border: none !important;
-	background: transparent !important;
-	box-shadow: none !important;
-	outline: none !important;
-	padding: 0 !important;
-	margin: 0 !important;
+.fsrs-help-content-container ul,
+.fsrs-help-content-container ol {
+	margin-left: 1.5em;
+	margin-bottom: 1em;
 }
 
-/* Убираем рамку и фон у блока fsrs-future в режиме редактирования */
-.cm-preview-code-block.block-language-fsrs-future,
-.cm-embed-block.block-language-fsrs-future {
-	border: none !important;
-	background: transparent !important;
-	box-shadow: none !important;
-	outline: none !important;
-	padding: 0 !important;
-	margin: 0 !important;
-}
-
-/* Убираем рамку в режиме чтения */
-.markdown-reading-view .block-language-fsrs-now {
-	border: none !important;
-	background: transparent !important;
-	padding: 0 !important;
-}
-
-.markdown-reading-view .block-language-fsrs-future {
-	border: none !important;
-	background: transparent !important;
-	padding: 0 !important;
-}
-
-/* Внутренние контейнеры без рамок */
-.fsrs-now-render-container,
-.fsrs-now-container {
-	border: none;
-	background: transparent;
-	width: 100%;
-}
-
-.fsrs-future-render-container,
-.fsrs-future-container {
-	border: none;
-	background: transparent;
-	width: 100%;
-}
-
-/* Иконка информации в заголовке */
-.fsrs-info-icon {
-	color: var(--text-muted);
-	opacity: 0.7;
-	font-size: 0.9em;
-	font-weight: normal;
-	font-style: italic;
-	cursor: help;
-	margin-left: 0.5em;
-	vertical-align: baseline;
-}
-.fsrs-info-icon:hover {
-	opacity: 0.9;
-}
-
-/* Flex заголовок для блока fsrs-now */
-.fsrs-now-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-top: 0;
+.fsrs-help-content-container li {
 	margin-bottom: 0.5em;
-}
-.fsrs-future-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-top: 0;
-	margin-bottom: 0.5em;
-}
-.fsrs-header-text {
-	flex: 1;
-}
-/* Иконка внутри flex заголовка */
-.fsrs-now-header .fsrs-info-icon {
-	margin-left: auto;
-	margin-right: 0.5em;
-}
-.fsrs-future-header .fsrs-info-icon {
-	margin-left: auto;
-	margin-right: 0.5em;
 }

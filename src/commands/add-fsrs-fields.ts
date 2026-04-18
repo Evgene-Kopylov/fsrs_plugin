@@ -3,7 +3,7 @@ import {
 	createNewReviewsYaml,
 	extractFrontmatterWithMatch,
 } from "../utils/fsrs-helper";
-import type { MyPluginSettings } from "../settings";
+import type { FsrsPluginSettings } from "../settings";
 
 /**
  * Добавляет поля FSRS в новый формате (с reviews) в текущий активный файл
@@ -12,7 +12,7 @@ import type { MyPluginSettings } from "../settings";
  */
 export async function addFsrsFieldsToCurrentFile(
 	app: App,
-	settings?: MyPluginSettings,
+	settings?: FsrsPluginSettings,
 ): Promise<void> {
 	try {
 		// Получаем активный файл
@@ -22,9 +22,9 @@ export async function addFsrsFieldsToCurrentFile(
 			return;
 		}
 
-		console.log("Получение YAML полей FSRS в новом формате...");
+		console.debug("Получение YAML полей FSRS в новом формате...");
 		const fsrsYaml = createNewReviewsYaml([]);
-		console.log("FSRS YAML поля (новый формат):", fsrsYaml);
+		console.debug("FSRS YAML поля (новый формат):", fsrsYaml);
 
 		// Читаем содержимое файла
 		const fileContent = await app.vault.read(activeFile);
@@ -35,7 +35,6 @@ export async function addFsrsFieldsToCurrentFile(
 
 		if (frontmatterMatch) {
 			// Есть frontmatter - проверяем, есть ли уже поля FSRS
-			const existingFrontmatter = frontmatterMatch.match[0];
 			const existingContent = frontmatterMatch.content;
 			if (!existingContent) {
 				new Notice("Ошибка: frontmatter пуст");
@@ -46,7 +45,7 @@ export async function addFsrsFieldsToCurrentFile(
 			if (/^reviews\s*:/m.test(existingContent)) {
 				// Уже есть поля FSRS - обновляем их
 				new Notice(
-					"В файле уже есть поля FSRS. Используйте команду повторения для обновления.",
+					"В файле уже есть поля FSRS. Используйте команду повторения для обновления.", // eslint-disable-line obsidianmd/ui/sentence-case
 				);
 				return;
 			}
@@ -66,7 +65,7 @@ export async function addFsrsFieldsToCurrentFile(
 
 			// Блок кнопки добавляется после frontmatter
 			const afterFrontmatter = fileContent.slice(
-				frontmatterMatch.match.index! +
+				frontmatterMatch.match.index! + // eslint-disable-line @typescript-eslint/no-unnecessary-type-assertion
 					frontmatterMatch.match[0].length,
 			);
 			let buttonBlock = "";
@@ -92,15 +91,14 @@ export async function addFsrsFieldsToCurrentFile(
 
 		// Сохраняем изменения
 		await app.vault.modify(activeFile, newContent);
-
-		new Notice("Поля FSRS (новый формат) добавлены в файл");
-		console.log("Поля FSRS успешно добавлены в файл:", activeFile.name);
+		new Notice("Поля FSRS (новый формат) добавлены в файл"); // eslint-disable-line obsidianmd/ui/sentence-case
+		console.debug("Поля FSRS успешно добавлены в файл:", activeFile.name);
 
 		// Показываем информацию о формате
-		console.log("Новый формат карточки FSRS:");
-		console.log("- Хранит историю повторений в массиве reviews");
-		console.log("- Параметры алгоритма вынесены в настройки плагина");
-		console.log(
+		console.debug("Новый формат карточки FSRS:");
+		console.debug("- Хранит историю повторений в массиве reviews");
+		console.debug("- Параметры алгоритма вынесены в настройки плагина");
+		console.debug(
 			"- Текущее состояние вычисляется на основе последней сессии",
 		);
 	} catch (error) {

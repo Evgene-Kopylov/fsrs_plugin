@@ -1,10 +1,11 @@
 // Модуль для фильтрации файлов FSRS плагина
 // Оптимизирует производительность путем исключения служебных файлов и папок
 
-import type { MyPluginSettings } from "../../settings";
+import type { FsrsPluginSettings } from "../../settings";
 
 // Паттерны игнорирования файлов и папок по умолчанию
 export const DEFAULT_IGNORE_PATTERNS = [
+	// eslint-disable-next-line obsidianmd/hardcoded-config-path
 	".obsidian/",
 	"templates/",
 	"attachments/",
@@ -68,7 +69,7 @@ export function shouldIgnoreFile(
  */
 export function shouldIgnoreFileWithSettings(
 	filePath: string,
-	settings: MyPluginSettings,
+	settings: FsrsPluginSettings,
 ): boolean {
 	return shouldIgnoreFile(
 		filePath,
@@ -103,6 +104,6 @@ export function parseIgnorePatterns(patternsString: string): string[] {
  * @param settings Настройки плагина
  * @returns Массив всех активных паттернов
  */
-export function getAllIgnorePatterns(settings: MyPluginSettings): string[] {
+export function getAllIgnorePatterns(settings: FsrsPluginSettings): string[] {
 	return [...DEFAULT_IGNORE_PATTERNS, ...settings.ignore_patterns];
 }

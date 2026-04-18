@@ -3,21 +3,20 @@ import { registerCommands } from "./commands/index";
 import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from "./commands/add-fsrs-fields";
 import { findFsrsCards } from "./commands/find-fsrs-cards";
 import { reviewCurrentCard, reviewCardByPath } from "./commands/review";
-import { FsrsNowRenderer } from "./ui/fsrs-now-renderer";
-import { FsrsFutureRenderer } from "./ui/fsrs-future-renderer";
+
 import { ReviewButtonRenderer } from "./ui/review-button-renderer";
-import { MyPluginSettings, DEFAULT_SETTINGS } from "./settings";
-import { SampleSettingTab } from "./settings";
+import { FsrsTableRenderer } from "./ui/fsrs-table-renderer";
+import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings";
+import { FsrsSettingTab } from "./settings";
+import { CARD_CACHE_TTL_MS } from "./constants";
 import { base64ToBytes } from "./utils/fsrs-helper";
 import {
 	parseModernFsrsFromFrontmatter,
-	filterCardsForReview,
-	sortCardsByPriority,
 	shouldProcessFile,
 	extractFrontmatter,
 } from "./utils/fsrs-helper";
 import { shouldIgnoreFileWithSettings } from "./utils/fsrs/fsrs-filter";
-import type { ModernFSRSCard, FSRSCard, FSRSRating } from "./interfaces/fsrs";
+import type { ModernFSRSCard, FSRSRating } from "./interfaces/fsrs";
 
 // Импорт WASM функций
 import init, { my_wasm_function } from "../wasm-lib/pkg/wasm_lib";
@@ -28,63 +27,30 @@ import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
  * Интегрирует алгоритм интервального повторения FSRS в Obsidian
  */
 export default class FsrsPlugin extends Plugin {
-	settings: MyPluginSettings;
+	settings: FsrsPluginSettings;
 	private isWasmInitialized = false;
-	private fsrsNowRenderers = new Set<FsrsNowRenderer>();
-	private fsrsFutureRenderers = new Set<FsrsFutureRenderer>();
+
+	private fsrsTableRenderers = new Set<FsrsTableRenderer>();
+	// Кэш с TTL
+	private cachedCards: ModernFSRSCard[] | null = null;
+	private lastScanTime = 0;
+
+	private isScanning = false;
 
 	/**
 	 * Загрузка плагина
 	 */
 	async onload() {
 		await this.loadSettings();
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new FsrsSettingTab(this.app, this));
 
-		console.log("=== Загрузка FSRS плагина с WASM ===");
+		console.debug("=== Загрузка FSRS плагина с WASM ===");
 
 		// Инициализация WASM модуля
 		await this.initializeWasm();
 
 		// Регистрация команд плагина
 		registerCommands(this);
-
-		// Регистрация MarkdownCodeBlockProcessor для блоков fsrs-now
-		this.registerMarkdownCodeBlockProcessor(
-			"fsrs-now",
-			async (source, el, ctx) => {
-				// Создаем контейнер для рендеринга
-				const renderContainer = document.createElement("div");
-				renderContainer.className = "fsrs-now-render-container";
-				el.appendChild(renderContainer);
-
-				// Создаем и добавляем рендерер
-				const renderer = new FsrsNowRenderer(
-					this,
-					renderContainer,
-					ctx.sourcePath,
-				);
-				ctx.addChild(renderer);
-			},
-		);
-
-		// Регистрация MarkdownCodeBlockProcessor для блоков fsrs-future
-		this.registerMarkdownCodeBlockProcessor(
-			"fsrs-future",
-			async (source, el, ctx) => {
-				// Создаем контейнер для рендеринга
-				const renderContainer = document.createElement("div");
-				renderContainer.className = "fsrs-future-render-container";
-				el.appendChild(renderContainer);
-
-				// Создаем и добавляем рендерер
-				const renderer = new FsrsFutureRenderer(
-					this,
-					renderContainer,
-					ctx.sourcePath,
-				);
-				ctx.addChild(renderer);
-			},
-		);
 
 		// Регистрация процессора для кнопки повторения карточки
 		this.registerMarkdownCodeBlockProcessor(
@@ -105,7 +71,34 @@ export default class FsrsPlugin extends Plugin {
 			},
 		);
 
-		console.log("FSRS плагин успешно загружен");
+		// Регистрация MarkdownCodeBlockProcessor для блоков fsrs-table
+		this.registerMarkdownCodeBlockProcessor(
+			"fsrs-table",
+			async (source, el, ctx) => {
+				// Создаем контейнер для рендеринга
+				const renderContainer = document.createElement("div");
+				renderContainer.className = "fsrs-table-render-container";
+				el.appendChild(renderContainer);
+
+				// Получаем позиции блока для обновления исходного кода
+				const sectionInfo = ctx.getSectionInfo(el);
+				const sourceStart = sectionInfo?.lineStart ?? 0;
+				const sourceEnd = sectionInfo?.lineEnd ?? 0;
+
+				// Создаем и добавляем рендерер
+				const renderer = new FsrsTableRenderer(
+					this,
+					renderContainer,
+					ctx.sourcePath,
+					source,
+					sourceStart,
+					sourceEnd,
+				);
+				ctx.addChild(renderer);
+			},
+		);
+
+		console.debug("FSRS плагин успешно загружен");
 	}
 
 	/**
@@ -113,99 +106,102 @@ export default class FsrsPlugin extends Plugin {
 	 */
 	private async initializeWasm(): Promise<void> {
 		try {
-			console.log("1. Конвертируем base64 в байты...");
+			console.debug("1. Конвертируем base64 в байты...");
 			const wasmBytes = base64ToBytes(WASM_BASE64);
-			console.log("2. Длина WASM байтов:", wasmBytes.length);
+			console.debug("2. Длина WASM байтов:", wasmBytes.length);
 
-			console.log("3. Вызываем init...");
+			console.debug("3. Вызываем init...");
 			await init({ module_or_path: wasmBytes });
-			console.log("4. WASM инициализирован");
+			console.debug("4. WASM инициализирован");
 
 			// Тестовая функция для проверки работы WASM
-			console.log("5. Вызываем тестовую функцию...");
+			console.debug("5. Вызываем тестовую функцию...");
 			const result = my_wasm_function("тестовые данные из FSRS плагина");
-			console.log("6. Результат из Rust:", result);
+			console.debug("6. Результат из Rust:", result);
 
-			console.log("7. Показываем Notice...");
+			console.debug("7. Показываем Notice...");
 			new Notice(result);
-			console.log("8. Notice показано");
+			console.debug("8. Notice показано");
 
 			this.isWasmInitialized = true;
 		} catch (error) {
 			console.error("Ошибка загрузки WASM модуля:", error);
-			new Notice("Ошибка загрузки WASM компонента FSRS");
+			new Notice("Ошибка загрузки WASM компонента FSRS"); // eslint-disable-line obsidianmd/ui/sentence-case
 			this.isWasmInitialized = false;
 		}
 	}
 
 	/**
-	 * Получает все карточки FSRS из хранилища (новый формат с reviews)
+	 * Получает карточки с кэшированием по TTL.
+	 * Никакой ручной инвалидации — кэш устаревает сам через 5 секунд.
 	 */
 	async getCardsForReview(): Promise<ModernFSRSCard[]> {
-		const start = performance.now();
+		const now = Date.now();
+		const cacheValid =
+			this.cachedCards !== null &&
+			now - this.lastScanTime < CARD_CACHE_TTL_MS;
+
+		if (cacheValid) {
+			// Возвращаем ссылку на кэш (без копирования)
+			return this.cachedCards!;
+		}
+
+		if (this.isScanning) {
+			await this.waitForScanCompletion();
+			return this.cachedCards ?? [];
+		}
+
+		this.isScanning = true;
 		try {
-			console.log(
-				"Сканирование хранилища на наличие карточек FSRS (новый формат)...",
-			);
-
-			// Получаем все markdown файлы
-			const files = this.app.vault.getMarkdownFiles();
-			const cards: ModernFSRSCard[] = [];
-
-			console.log(`📁 Всего markdown файлов: ${files.length}`);
-
-			for (const file of files) {
-				// Пропускаем файлы, соответствующие паттернам игнорирования
-				if (shouldIgnoreFileWithSettings(file.path, this.settings)) {
-					continue;
-				}
-
-				try {
-					const content = await this.app.vault.read(file);
-
-					// Быстрая проверка: пропускаем файлы без признаков FSRS
-					// 📊 Оптимизация дает ускорение >1000x (с ~950-1000 мс до ~0.7-0.8 мс)
-					if (!shouldProcessFile(content)) {
-						continue;
-					}
-
-					// Извлекаем frontmatter
-					const frontmatter = extractFrontmatter(content);
-					if (!frontmatter) {
-						continue;
-					}
-
-					// Парсим карточку в новом формате
-					const parseResult = parseModernFsrsFromFrontmatter(
-						frontmatter,
-						file.path,
-					);
-
-					if (parseResult.success && parseResult.card) {
-						cards.push(parseResult.card);
-					}
-				} catch (error) {
-					console.warn(
-						`Ошибка при чтении файла ${file.path}:`,
-						error,
-					);
-				}
-			}
-
-			console.log(`✅ Найдено карточек FSRS: ${cards.length}`);
+			const cards = await this.performFullScan();
+			this.cachedCards = cards;
+			this.lastScanTime = Date.now();
 			return cards;
-		} catch (error) {
-			console.error(
-				"Ошибка при получении карточек для повторения:",
-				error,
-			);
-			throw error;
 		} finally {
-			const elapsedMs = performance.now() - start;
-			const elapsedSec = elapsedMs / 1000;
-			console.log(
-				`⏱️ Полное время сканирования карточек: ${elapsedSec.toFixed(2)} с`,
-			);
+			this.isScanning = false;
+		}
+	}
+
+	private async performFullScan(): Promise<ModernFSRSCard[]> {
+		const start = performance.now();
+		const files = this.app.vault.getMarkdownFiles();
+		const cards: ModernFSRSCard[] = [];
+
+		for (const file of files) {
+			if (shouldIgnoreFileWithSettings(file.path, this.settings))
+				continue;
+			try {
+				const content = await this.app.vault.read(file);
+				if (!shouldProcessFile(content)) continue;
+				const frontmatter = extractFrontmatter(content);
+				if (!frontmatter) continue;
+				const parseResult = parseModernFsrsFromFrontmatter(
+					frontmatter,
+					file.path,
+				);
+				if (parseResult.success && parseResult.card)
+					cards.push(parseResult.card);
+			} catch (error) {
+				console.warn(`Ошибка при чтении файла ${file.path}:`, error);
+			}
+		}
+
+		console.debug(`✅ Найдено карточек FSRS: ${cards.length}`);
+		const elapsed = (performance.now() - start) / 1000;
+		console.debug(
+			`⏱️ Сканирование всего хранилища: ${elapsed.toFixed(2)} с`,
+		);
+		return cards;
+	}
+
+	private async waitForScanCompletion(): Promise<void> {
+		const start = Date.now();
+		while (this.isScanning && Date.now() - start < 30000) {
+			await new Promise((r) => setTimeout(r, 50));
+		}
+		if (this.isScanning) {
+			console.warn("⚠️ Таймаут ожидания сканирования");
+			this.isScanning = false;
 		}
 	}
 
@@ -218,10 +214,11 @@ export default class FsrsPlugin extends Plugin {
 	 */
 	async addFsrsFieldsToCurrentFile(): Promise<void> {
 		await addFsrsFieldsToCurrentFileFunction(this.app, this.settings);
+		this.notifyFsrsTableRenderers();
 	}
 
 	/**
-	 * Находит карточки для повторения и вставляет блок fsrs-now
+	 * Находит карточки для повторения
 	 * Реализация для команды плагина
 	 */
 	async findCardsForReview(): Promise<void> {
@@ -248,6 +245,7 @@ export default class FsrsPlugin extends Plugin {
 	 * Загружает настройки плагина
 	 */
 	async loadSettings() {
+		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
@@ -273,61 +271,33 @@ export default class FsrsPlugin extends Plugin {
 	 * Выгрузка плагина
 	 */
 	onunload() {
-		console.log("Выгрузка FSRS плагина");
+		console.debug("Выгрузка FSRS плагина");
 		this.isWasmInitialized = false;
-		this.fsrsNowRenderers.clear();
+		this.fsrsTableRenderers.clear();
 	}
 
 	/**
-	 * Регистрирует активный рендерер fsrs-now для уведомлений об обновлениях
+	 * Регистрирует активный рендерер fsrs-table для уведомлений об обновлениях
 	 */
-	registerFsrsNowRenderer(renderer: FsrsNowRenderer): void {
-		this.fsrsNowRenderers.add(renderer);
+	registerFsrsTableRenderer(renderer: FsrsTableRenderer): void {
+		this.fsrsTableRenderers.add(renderer);
 	}
 
 	/**
-	 * Удаляет рендерер fsrs-now из списка активных
+	 * Удаляет рендерер fsrs-table из списка активных
 	 */
-	unregisterFsrsNowRenderer(renderer: FsrsNowRenderer): void {
-		this.fsrsNowRenderers.delete(renderer);
+	unregisterFsrsTableRenderer(renderer: FsrsTableRenderer): void {
+		this.fsrsTableRenderers.delete(renderer);
 	}
 
 	/**
-	 * Уведомляет все активные рендереры fsrs-now об обновлении данных
+	 * Уведомляет все активные рендереры fsrs-table об обновлении данных
 	 */
-	notifyFsrsNowRenderers(): void {
-		for (const renderer of this.fsrsNowRenderers) {
+	notifyFsrsTableRenderers(): void {
+		for (const renderer of this.fsrsTableRenderers) {
 			renderer.refresh().catch((error) => {
 				console.error(
-					"Ошибка при обновлении рендерера fsrs-now:",
-					error,
-				);
-			});
-		}
-	}
-
-	/**
-	 * Регистрирует активный рендерер fsrs-future для уведомлений об обновлениях
-	 */
-	registerFsrsFutureRenderer(renderer: FsrsFutureRenderer): void {
-		this.fsrsFutureRenderers.add(renderer);
-	}
-
-	/**
-	 * Удаляет рендерер fsrs-future из списка активных
-	 */
-	unregisterFsrsFutureRenderer(renderer: FsrsFutureRenderer): void {
-		this.fsrsFutureRenderers.delete(renderer);
-	}
-
-	/**
-	 * Уведомляет все активные рендереры fsrs-future об обновлении данных
-	 */
-	notifyFsrsFutureRenderers(): void {
-		for (const renderer of this.fsrsFutureRenderers) {
-			renderer.refresh().catch((error) => {
-				console.error(
-					"Ошибка при обновлении рендерера fsrs-future:",
+					"Ошибка при обновлении рендерера fsrs-table:",
 					error,
 				);
 			});

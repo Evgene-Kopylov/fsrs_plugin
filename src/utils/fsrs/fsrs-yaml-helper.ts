@@ -1,6 +1,6 @@
 // Вспомогательные функции для работы с YAML и обновлением FSRS полей
 
-import type { ReviewSession } from "../../interfaces/fsrs";
+import type { ReviewSession, FSRSRating } from "../../interfaces/fsrs";
 
 /**
  * Обновляет поле reviews в YAML, сохраняя все остальные поля неизменными
@@ -130,7 +130,8 @@ function generateReviewsYaml(
 			" ".repeat(fieldIndent) + `date: ${JSON.stringify(review.date)}`,
 		);
 		lines.push(
-			" ".repeat(fieldIndent) + `rating: ${JSON.stringify(review.rating)}`,
+			" ".repeat(fieldIndent) +
+				`rating: ${JSON.stringify(review.rating)}`,
 		);
 		lines.push(" ".repeat(fieldIndent) + `stability: ${review.stability}`);
 		lines.push(
@@ -159,7 +160,6 @@ export function extractReviewsFromYaml(yaml: string): {
 		let indentLevel = 0;
 		const reviews: ReviewSession[] = [];
 		let currentReview: Partial<ReviewSession> = {};
-		let currentField = "";
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i]!;
@@ -206,21 +206,24 @@ export function extractReviewsFromYaml(yaml: string): {
 						}
 					}
 					currentReview = {};
-					currentField = "";
 				} else if (trimmed.includes(":")) {
 					// Поле элемента массива
 					const colonIndex = trimmed.indexOf(":");
 					const fieldName = trimmed.substring(0, colonIndex).trim();
-					const fieldValue = trimmed
-						.substring(colonIndex + 1)
-						.trim();
+					const fieldValue = trimmed.substring(colonIndex + 1).trim();
 
 					switch (fieldName.toLowerCase()) {
 						case "date":
-							currentReview.date = fieldValue.replace(/^['"]|['"]$/g, "");
+							currentReview.date = fieldValue.replace(
+								/^['"]|['"]$/g,
+								"",
+							);
 							break;
 						case "rating":
-							currentReview.rating = fieldValue.replace(/^['"]|['"]$/g, "") as any;
+							currentReview.rating = fieldValue.replace(
+								/^['"]|['"]$/g,
+								"",
+							) as FSRSRating;
 							break;
 						case "stability":
 							currentReview.stability = parseFloat(fieldValue);

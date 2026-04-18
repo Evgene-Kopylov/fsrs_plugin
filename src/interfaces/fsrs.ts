@@ -58,30 +58,14 @@ export interface FSRSSettings {
 	default_initial_stability: number;
 	default_initial_difficulty: number;
 
-	// Настройки отображения
-	show_stability: boolean;
-	show_difficulty: boolean;
-	show_retrievability: boolean;
-	show_advanced_stats: boolean;
-	max_cards_to_show: number;
-
 	// Настройка для автоматического добавления кнопки повторения
 	auto_add_review_button: boolean;
 
-	// Настройки обновления
-	auto_refresh: boolean;
-	refresh_interval: number; // в минутах
-	minimum_review_interval_minutes: number; // минимальный интервал для досрочного повторения (40 минут)
+	// Минимальный интервал для досрочного повторения
+	minimum_review_interval_minutes: number;
 
-	// Настройки фильтрации
-	filter_by_folders: string[];
-	filter_by_tags: string[];
-	exclude_states: FSRSState[];
+	// Паттерны игнорирования файлов и папок
 	ignore_patterns: string[];
-
-	// Настройки уведомлений
-	show_notifications: boolean;
-	notification_threshold: number; // минимальное количество карточек для уведомления
 }
 
 // Интерфейс для результатов повторения карточки

@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Notice } from "obsidian";
+import { MarkdownRenderChild, Notice, TAbstractFile } from "obsidian";
 import {
 	parseModernFsrsFromFrontmatter,
 	extractFrontmatterWithMatch,
@@ -10,7 +10,6 @@ import {
 	getRussianNoun,
 } from "../utils/fsrs-helper";
 import type FsrsPlugin from "../main";
-import type { ModernFSRSCard, ReviewSession } from "../interfaces/fsrs";
 
 /**
  * Рендерер кнопки повторения карточки FSRS для блока `fsrs-review-button`
@@ -27,7 +26,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 		| "due"
 		| "error"
 		| "loading" = "loading";
-	private fileChangeHandler?: (file: any) => void;
+	private fileChangeHandler?: (file: TAbstractFile) => void;
 
 	/**
 	 * Создает новый рендерер кнопки
@@ -54,8 +53,8 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 		// Создаем кнопку удаления
 		this.deleteButton = document.createElement("button");
 		this.deleteButton.className = "fsrs-delete-button";
-		this.deleteButton.innerHTML = "✕";
-		this.deleteButton.title = "Удалить последнее повторение";
+		this.deleteButton.textContent = "✕";
+		this.deleteButton.title = "Delete last review";
 
 		// Добавляем кнопки в контейнер
 		this.buttonsContainer.appendChild(this.mainButton);
@@ -68,8 +67,8 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	/**
 	 * Вызывается Obsidian при загрузке компонента
 	 */
-	async onload(): Promise<void> {
-		await this.updateButtonState();
+	onload(): void {
+		void this.updateButtonState();
 		this.setupClickHandlers();
 		this.setupFileWatcher();
 	}
@@ -116,7 +115,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 
 			if (!parseResult.success || !parseResult.card) {
 				// Карточка не является FSRS карточкой - кнопка активна, но затемнена
-				this.mainButton.textContent = "Не FSRS карточка";
+				this.mainButton.textContent = "Not an fsrs card";
 				this.mainButton.disabled = false;
 				this.updateButtonClass("not-fsrs");
 				this.deleteButton.disabled = true; // Нет повторений для удаления
@@ -184,38 +183,52 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	 */
 	private setupClickHandlers(): void {
 		// Основная кнопка
-		const mainClickHandler = async () => {
-			await this.handleMainButtonClick();
+		const mainClickHandler = () => {
+			void this.handleMainButtonClick();
 		};
 		this.mainButton.addEventListener("click", mainClickHandler);
-		(this.mainButton as any)._clickHandler = mainClickHandler;
+		(
+			this.mainButton as HTMLElement & {
+				_clickHandler?: typeof mainClickHandler;
+			}
+		)._clickHandler = mainClickHandler;
 
 		// Кнопка удаления
-		const deleteClickHandler = async () => {
-			await this.handleDeleteButtonClick();
+		const deleteClickHandler = () => {
+			void this.handleDeleteButtonClick();
 		};
 		this.deleteButton.addEventListener("click", deleteClickHandler);
-		(this.deleteButton as any)._clickHandler = deleteClickHandler;
+		(
+			this.deleteButton as HTMLElement & {
+				_clickHandler?: typeof deleteClickHandler;
+			}
+		)._clickHandler = deleteClickHandler;
 	}
 
 	/**
 	 * Очищает обработчики событий
 	 */
 	private cleanup(): void {
-		if (this.mainButton && (this.mainButton as any)._clickHandler) {
-			this.mainButton.removeEventListener(
-				"click",
-				(this.mainButton as any)._clickHandler,
-			);
-			delete (this.mainButton as any)._clickHandler;
+		const mainButtonWithHandler = this.mainButton as HTMLElement & {
+			_clickHandler?: () => Promise<void>;
+		};
+		if (this.mainButton && mainButtonWithHandler._clickHandler) {
+			const handler = mainButtonWithHandler._clickHandler as (
+				ev: Event,
+			) => void;
+			this.mainButton.removeEventListener("click", handler);
+			delete mainButtonWithHandler._clickHandler;
 		}
 
-		if (this.deleteButton && (this.deleteButton as any)._clickHandler) {
-			this.deleteButton.removeEventListener(
-				"click",
-				(this.deleteButton as any)._clickHandler,
-			);
-			delete (this.deleteButton as any)._clickHandler;
+		const deleteButtonWithHandler = this.deleteButton as HTMLElement & {
+			_clickHandler?: () => Promise<void>;
+		};
+		if (this.deleteButton && deleteButtonWithHandler._clickHandler) {
+			const handler = deleteButtonWithHandler._clickHandler as (
+				ev: Event,
+			) => void;
+			this.deleteButton.removeEventListener("click", handler);
+			delete deleteButtonWithHandler._clickHandler;
 		}
 	}
 
@@ -253,7 +266,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 
 			if (!parseResult.success || !parseResult.card) {
 				// Карточка не является FSRS карточкой - показываем уведомление
-				new Notice("Не FSRS карточка");
+				new Notice("Not an fsrs card");
 				// Обновляем состояние кнопки (на случай, если статус изменился)
 				await this.updateButtonState();
 				return;
@@ -346,7 +359,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			);
 
 			if (!parseResult.success || !parseResult.card) {
-				new Notice("Не FSRS карточка. Удалять нечего.");
+				new Notice("Not an fsrs card. Nothing to delete.");
 				await this.updateButtonState();
 				return;
 			}
@@ -373,11 +386,10 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			// Собираем обновленное содержимое файла
 			const beforeFrontmatter = content.substring(
 				0,
-				frontmatterMatch.match.index!,
+				frontmatterMatch.match.index,
 			);
 			const afterFrontmatter = content.substring(
-				frontmatterMatch.match.index! +
-					frontmatterMatch.match[0].length,
+				frontmatterMatch.match.index + frontmatterMatch.match[0].length,
 			);
 			const newContent =
 				beforeFrontmatter +
@@ -390,8 +402,8 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			await this.plugin.app.vault.modify(file, newContent);
 
 			new Notice("Последнее повторение удалено");
-			this.plugin.notifyFsrsNowRenderers();
-			this.plugin.notifyFsrsFutureRenderers();
+
+			this.plugin.notifyFsrsTableRenderers();
 			await this.updateButtonState();
 		} catch (error) {
 			console.error("Ошибка при удалении повторения:", error);
@@ -405,9 +417,9 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	 * Настраивает отслеживание изменений файла
 	 */
 	private setupFileWatcher(): void {
-		this.fileChangeHandler = (file: any) => {
+		this.fileChangeHandler = (file: TAbstractFile) => {
 			if (file.path === this.sourcePath) {
-				this.refresh();
+				void this.refresh();
 			}
 		};
 		this.plugin.app.vault.on("modify", this.fileChangeHandler);
@@ -424,7 +436,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 	 * Обновляет рендерер (например, при изменении файла)
 	 * Может быть вызван извне для принудительного обновления
 	 */
-	async refresh(): Promise<void> {
+	private async refresh(): Promise<void> {
 		await this.updateButtonState();
 	}
 }

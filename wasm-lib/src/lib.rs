@@ -1,14 +1,14 @@
 use wasm_bindgen::prelude::*;
 
 // Объявляем модули
-mod types;
 mod conversion;
 mod fsrs_logic;
 mod json_parsing;
 mod review_functions;
-mod state_functions;
-mod yaml_parsing;
 mod sort_functions;
+mod state_functions;
+mod types;
+mod yaml_parsing;
 
 // Функция для получения YAML строки для новой карточки
 #[wasm_bindgen]
@@ -137,8 +137,8 @@ pub fn get_current_time() -> String {
 // Парсит YAML строку в карточку FSRS (JSON строка)
 #[wasm_bindgen]
 pub fn parse_fsrs_yaml(yaml: String) -> String {
-    use crate::yaml_parsing::parse_yaml_to_card;
     use crate::json_parsing::card_to_json;
+    use crate::yaml_parsing::parse_yaml_to_card;
 
     let card = parse_yaml_to_card(&yaml);
     card_to_json(&card)
@@ -157,25 +157,43 @@ pub fn card_to_fsrs_yaml(card_json: String) -> String {
 // Извлекает FSRS карточку из frontmatter Obsidian
 #[wasm_bindgen]
 pub fn extract_fsrs_from_frontmatter_wrapped(frontmatter: String) -> String {
-    use crate::yaml_parsing::extract_fsrs_from_frontmatter;
     use crate::json_parsing::card_to_json;
-    use crate::json_parsing::create_default_card;
+    use crate::yaml_parsing::extract_fsrs_from_frontmatter;
+
     use web_sys::console;
 
-    console::debug_1(&format!("extract_fsrs_from_frontmatter_wrapped called with frontmatter length: {}", frontmatter.len()).into());
+    console::debug_1(
+        &format!(
+            "extract_fsrs_from_frontmatter_wrapped called with frontmatter length: {}",
+            frontmatter.len()
+        )
+        .into(),
+    );
 
     let result = match extract_fsrs_from_frontmatter(&frontmatter) {
         Some(card) => {
-            console::debug_1(&format!("extract_fsrs_from_frontmatter found card with {} reviews", card.reviews.len()).into());
+            console::debug_1(
+                &format!(
+                    "extract_fsrs_from_frontmatter found card with {} reviews",
+                    card.reviews.len()
+                )
+                .into(),
+            );
             card_to_json(&card)
-        },
+        }
         None => {
-            console::debug_1(&"extract_fsrs_from_frontmatter returned None, using default card".into());
-            card_to_json(&create_default_card())
-        },
+            console::debug_1(&"extract_fsrs_from_frontmatter returned None, returning null".into());
+            "null".to_string()
+        }
     };
 
-    console::debug_1(&format!("extract_fsrs_from_frontmatter_wrapped returning JSON length: {}", result.len()).into());
+    console::debug_1(
+        &format!(
+            "extract_fsrs_from_frontmatter_wrapped returning JSON length: {}",
+            result.len()
+        )
+        .into(),
+    );
     result
 }
 
@@ -195,7 +213,6 @@ pub fn validate_fsrs_card(card_json: String) -> String {
     use crate::json_parsing::parse_card_from_json;
     use crate::yaml_parsing::validate_review_sessions;
 
-
     let card = parse_card_from_json(&card_json);
     let errors = validate_review_sessions(&card);
 
@@ -205,8 +222,8 @@ pub fn validate_fsrs_card(card_json: String) -> String {
 // Парсит YAML с параметрами FSRS
 #[wasm_bindgen]
 pub fn parse_fsrs_parameters_yaml(yaml: String) -> String {
-    use crate::yaml_parsing::parse_yaml_to_parameters;
     use crate::json_parsing::parameters_to_json;
+    use crate::yaml_parsing::parse_yaml_to_parameters;
 
     let params = parse_yaml_to_parameters(&yaml);
     parameters_to_json(&params)
@@ -232,11 +249,7 @@ pub fn sort_cards_by_priority(
 }
 
 #[wasm_bindgen]
-pub fn group_cards_by_state(
-    cards_json: String,
-    settings_json: String,
-    now_iso: String,
-) -> String {
+pub fn group_cards_by_state(cards_json: String, settings_json: String, now_iso: String) -> String {
     sort_functions::group_cards_by_state(cards_json, settings_json, now_iso)
 }
 
