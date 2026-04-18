@@ -4,7 +4,7 @@
  * Синтаксис: SELECT, ORDER BY, LIMIT
  */
 
-import * as wasm from "../../../wasm-lib/pkg/wasm_lib";
+import * as wasm from "../../wasm-lib/pkg/wasm_lib";
 
 // Направление сортировки
 export type SortDirection = "ASC" | "DESC";

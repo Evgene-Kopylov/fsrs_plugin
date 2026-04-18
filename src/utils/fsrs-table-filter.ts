@@ -10,7 +10,7 @@ import type {
 	FSRSState,
 } from "../interfaces/fsrs";
 import type { SortParam, TableParams } from "./fsrs-table-params";
-import * as wasm from "../../../wasm-lib/pkg/wasm_lib";
+import * as wasm from "../../wasm-lib/pkg/wasm_lib";
 
 /**
  * Результат фильтрации и сортировки карточек с состояниями
