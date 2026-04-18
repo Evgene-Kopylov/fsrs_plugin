@@ -1,6 +1,6 @@
 /**
  * Модуль для фильтрации и сортировки карточек блока fsrs-table
- * Реализует логику для режимов due и all с поддержкой пользовательской сортировки
+ * Реализует логику для отображения всех карточек с поддержкой пользовательской сортировки
  */
 
 import type {
@@ -8,7 +8,7 @@ import type {
 	ComputedCardState,
 	FSRSSettings,
 } from "../interfaces/fsrs";
-import type { TableMode, SortParam, TableParams } from "./fsrs-table-params";
+import type { SortParam, TableParams } from "./fsrs-table-params";
 import { computeCardState, isCardDue } from "./fsrs/fsrs-wasm";
 
 /**
@@ -17,13 +17,14 @@ import { computeCardState, isCardDue } from "./fsrs/fsrs-wasm";
 export interface CardWithState {
 	card: ModernFSRSCard;
 	state: ComputedCardState;
+	isDue: boolean;
 }
 
 /**
- * Фильтрует и сортирует карточки в соответствии с режимом и параметрами сортировки
+ * Фильтрует и сортирует карточки в соответствии с параметрами
  * @param cards Массив карточек
  * @param settings Настройки плагина
- * @param params Параметры таблицы (режим и сортировка)
+ * @param params Параметры таблицы (сортировка и лимит)
  * @param now Текущее время
  * @returns Отфильтрованный и отсортированный массив карточек с состояниями
  */
@@ -40,32 +41,13 @@ export async function filterAndSortCards(
 	// Вычисляем состояния для всех карточек
 	const cardsWithState = await computeCardsStates(cards, settings, now);
 
-	// Разделяем карточки на due (просроченные) и scheduled (запланированные)
-	const dueCards: CardWithState[] = [];
-	const scheduledCards: CardWithState[] = [];
-
-	for (const item of cardsWithState) {
-		const isDue = await isCardDue(item.card, settings, now);
-		if (isDue) {
-			dueCards.push(item);
-		} else {
-			scheduledCards.push(item);
-		}
-	}
-
 	// Применяем сортировку в зависимости от наличия пользовательских параметров
 	if (params.sort) {
-		// Если указана пользовательская сортировка, применяем её в зависимости от режима
-		if (params.mode === "all") {
-			// Для режима all сортируем все карточки
-			return applyCustomSort(cardsWithState, params.sort, now);
-		} else {
-			// Для режима due сортируем только due карточки
-			return applyCustomSort(dueCards, params.sort, now);
-		}
+		// Если указана пользовательская сортировка, применяем её ко всем карточкам
+		return applyCustomSort(cardsWithState, params.sort, now);
 	} else {
-		// Используем дефолтную логику сортировки в зависимости от режима
-		return applyDefaultSort(dueCards, scheduledCards, params.mode, now);
+		// Используем дефолтную логику сортировки: сначала due, затем scheduled
+		return applyDefaultSort(cardsWithState, now);
 	}
 }
 
@@ -122,7 +104,8 @@ async function computeCardsStates(
 
 		try {
 			const state = await computeCardState(card, settings, now);
-			cardsWithState.push({ card, state });
+			const isDue = await isCardDue(card, settings, now);
+			cardsWithState.push({ card, state, isDue });
 		} catch (error) {
 			console.error(
 				`Ошибка вычисления состояния для ${card.filePath}:`,
@@ -140,29 +123,31 @@ async function computeCardsStates(
 }
 
 /**
- * Применяет дефолтную логику сортировки в зависимости от режима
- * @param dueCards Просроченные карточки
- * @param scheduledCards Запланированные карточки
- * @param mode Режим отображения
+ * Применяет дефолтную логику сортировки: сначала due карточки, затем scheduled
+ * @param cardsWithState Все карточки с состояниями и флагом isDue
  * @param now Текущее время
  * @returns Отсортированный массив карточек
  */
 function applyDefaultSort(
-	dueCards: CardWithState[],
-	scheduledCards: CardWithState[],
-	mode: TableMode,
+	cardsWithState: CardWithState[],
 	now: Date,
 ): CardWithState[] {
-	if (mode === "due") {
-		// Сортируем due карточки по приоритету (возрастание retrievability)
-		return sortCardsForDue(dueCards, now);
-	} else {
-		// mode === "all"
-		// Сначала due (сортировка как в due), затем scheduled карточки (сортировка по дате due)
-		const sortedDueCards = sortCardsForDue(dueCards, now);
-		const sortedScheduledCards = sortScheduledCards(scheduledCards);
-		return [...sortedDueCards, ...sortedScheduledCards];
+	// Разделяем карточки на due и scheduled
+	const dueCards: CardWithState[] = [];
+	const scheduledCards: CardWithState[] = [];
+
+	for (const item of cardsWithState) {
+		if (item.isDue) {
+			dueCards.push(item);
+		} else {
+			scheduledCards.push(item);
+		}
 	}
+
+	// Сортируем due карточки по приоритету, затем scheduled по дате due
+	const sortedDueCards = sortCardsForDue(dueCards, now);
+	const sortedScheduledCards = sortScheduledCards(scheduledCards);
+	return [...sortedDueCards, ...sortedScheduledCards];
 }
 
 /**
@@ -271,7 +256,11 @@ function sortCardsForDue(cards: CardWithState[], now: Date): CardWithState[] {
 	// Сортируем по возрастанию приоритета (чем ниже retrievability, тем выше приоритет)
 	cardsForSorting.sort((a, b) => a.priorityScore - b.priorityScore);
 
-	return cardsForSorting.map(({ card, state }) => ({ card, state }));
+	return cardsForSorting.map(({ card, state, isDue }) => ({
+		card,
+		state,
+		isDue,
+	}));
 }
 
 /**

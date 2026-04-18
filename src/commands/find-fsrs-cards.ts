@@ -33,7 +33,7 @@ export async function findFsrsCards(plugin: FsrsPlugin): Promise<void> {
 
 		// Ищем существующий блок кода fsrs-table
 		const fsrsTableBlockRegex = /```fsrs-table\n([\s\S]*?)\n```/g;
-		const defaultBlock = createDefaultTableBlock("due");
+		const defaultBlock = createDefaultTableBlock();
 
 		let newContent: string;
 

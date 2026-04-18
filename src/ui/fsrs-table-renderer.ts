@@ -1,7 +1,7 @@
 import { MarkdownRenderChild, Notice, EventRef, Editor } from "obsidian";
 import type FsrsPlugin from "../main";
 import type { ModernFSRSCard } from "../interfaces/fsrs";
-import type { TableParams, TableMode } from "../utils/fsrs-table-helpers";
+import type { TableParams } from "../utils/fsrs-table-helpers";
 import {
 	parseSqlBlock,
 	generateTableHTMLFromCards,
@@ -10,8 +10,8 @@ import {
 import { FsrsHelpModal } from "./fsrs-help-modal";
 
 /**
- * Класс для динамического рендеринга универсального блока fsrs-table
- * Поддерживает режимы отображения: due (просроченные), all (все карточки)
+ * Класс для динамического рендеринга блока fsrs-table
+ * Отображает все карточки
  */
 export class FsrsTableRenderer extends MarkdownRenderChild {
 	private params: TableParams;
@@ -146,7 +146,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			const elapsedMs = performance.now() - start;
 			const elapsedSec = elapsedMs / 1000;
 			console.debug(
-				`⏱️ Загрузка таблицы FSRS (режим ${this.params.mode}): ${elapsedSec.toFixed(2)} с`,
+				`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`,
 			);
 		}
 	}
@@ -175,7 +175,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 		}
 		this.container.empty();
 
-		const emptyHTML = generateEmptyTableHTML(this.params.mode);
+		const emptyHTML = generateEmptyTableHTML();
 		// eslint-disable-next-line @microsoft/sdl/no-inner-html
 		this.container.insertAdjacentHTML("afterbegin", emptyHTML);
 
@@ -188,10 +188,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	 * Отображает состояние ошибки
 	 */
 	private renderErrorState(error: unknown) {
-		console.error(
-			`Ошибка при рендеринге блока fsrs-table (режим ${this.params.mode}):`,
-			error,
-		);
+		console.error(`Ошибка при рендеринге блока fsrs-table:`, error);
 		const errorMessage =
 			error instanceof Error ? error.message : String(error);
 
@@ -301,13 +298,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			this.lastVisibilityUpdate = now;
 			await this.refresh();
 		}
-	}
-
-	/**
-	 * Возвращает режим отображения этого рендерера
-	 */
-	getMode(): TableMode {
-		return this.params.mode;
 	}
 
 	/**
@@ -497,14 +487,14 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 				continue;
 			}
 
-			// Проверяем, является ли строка параметром sort
-			if (trimmed.startsWith("sort:")) {
+			// Проверяем, является ли строка параметром ORDER BY
+			if (trimmed.startsWith("ORDER BY")) {
 				sortProcessed = true;
 				// Если есть параметр sort, добавляем или заменяем его
 				if (this.params.sort) {
 					const indent = line.match(/^(\s*)/)?.[1] || "";
 					updatedLines.push(
-						`${indent}sort: ${this.params.sort.field} ${this.params.sort.direction}`,
+						`${indent}ORDER BY ${this.params.sort.field} ${this.params.sort.direction}`,
 					);
 				}
 				// Если this.params.sort === undefined, строка удаляется (не добавляется)
@@ -524,7 +514,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 				updatedLines.splice(
 					insertIndex,
 					0,
-					`${indent}sort: ${this.params.sort.field} ${this.params.sort.direction}`,
+					`${indent}ORDER BY ${this.params.sort.field} ${this.params.sort.direction}`,
 				);
 			}
 		}
@@ -538,28 +528,28 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	 * @returns Индекс для вставки или -1 если не найдено подходящее место
 	 */
 	private findSortInsertPosition(lines: string[]): number {
-		// Ищем строку с mode, затем ищем подходящее место после нее
-		let modeIndex = -1;
-		let columnsIndex = -1;
+		// Ищем строки с SELECT, затем LIMIT
+		let selectIndex = -1;
+		let limitIndex = -1;
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
-			if (line && line.trim().startsWith("mode:")) {
-				modeIndex = i;
-			} else if (line && line.trim().startsWith("columns:")) {
-				columnsIndex = i;
+			if (line && line.trim().toUpperCase().startsWith("SELECT")) {
+				selectIndex = i;
+			} else if (line && line.trim().toUpperCase().startsWith("LIMIT")) {
+				limitIndex = i;
 				break;
 			}
 		}
 
-		// Если нашли columns, вставляем перед ними
-		if (columnsIndex !== -1) {
-			return columnsIndex;
+		// Если нашли LIMIT, вставляем перед ним
+		if (limitIndex !== -1) {
+			return limitIndex;
 		}
 
-		// Если нашли mode, вставляем после него
-		if (modeIndex !== -1) {
-			return modeIndex + 1;
+		// Если нашли SELECT, вставляем после него
+		if (selectIndex !== -1) {
+			return selectIndex + 1;
 		}
 
 		// Вставляем после первой непустой строки

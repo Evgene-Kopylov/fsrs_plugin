@@ -9,37 +9,20 @@ import type {
 	ComputedCardState,
 	FSRSState,
 } from "../interfaces/fsrs";
-import type { TableMode } from "./fsrs-table-params";
+
 import { formatDateTime } from "./date-format";
 
 /**
- * Форматирует просрочку в зависимости от режима
+ * Форматирует просрочку
  * @param diffDays Разница в днях (положительная - до повторения, отрицательная - просрочка)
- * @param mode Режим отображения
  * @returns Форматированная строка
  */
-export function formatOverdueForMode(
-	diffDays: number,
-	mode: TableMode,
-): string {
+export function formatOverdue(diffDays: number): string {
 	if (typeof diffDays !== "number" || isNaN(diffDays)) {
 		return "0 дн";
 	}
 
-	// Для режима "due" показываем только отрицательные значения или 0
-	if (mode === "due") {
-		if (diffDays > 0) {
-			return "0 дн";
-		}
-		const absDays = Math.abs(diffDays);
-		if (absDays < 1) {
-			const hours = Math.round(absDays * 24);
-			return `-${hours} ч`;
-		}
-		return `-${Math.round(absDays)} дн`;
-	}
-
-	// Для режима "all" показываем со знаком
+	// Показываем со знаком
 	if (diffDays < 0) {
 		const absDays = Math.abs(diffDays);
 		if (absDays < 1) {
@@ -89,7 +72,6 @@ export function translateState(state: FSRSState): string {
  * @param state Вычисленное состояние карточки
  * @param app Экземпляр приложения Obsidian
  * @param now Текущее время
- * @param mode Режим отображения
  * @returns Форматированное значение
  */
 export function formatFieldValue(
@@ -98,7 +80,6 @@ export function formatFieldValue(
 	state: ComputedCardState,
 	app: App,
 	now: Date,
-	mode: TableMode,
 ): string {
 	switch (field) {
 		case "file":
@@ -108,10 +89,11 @@ export function formatFieldValue(
 			return card.reviews.length.toString();
 
 		case "overdue": {
+			// Вычисляем дни просрочки
 			const dueDate = new Date(state.due);
 			const diffMs = dueDate.getTime() - now.getTime();
 			const diffDays = diffMs / (1000 * 3600 * 24);
-			return formatOverdueForMode(diffDays, mode);
+			return formatOverdue(diffDays);
 		}
 
 		case "stability":
@@ -141,23 +123,12 @@ export function formatFieldValue(
 }
 
 /**
- * Создает текст блока fsrs-table с параметрами по умолчанию для режима
- * @param mode Режим отображения
+ * Создает текст блока fsrs-table с параметрами по умолчанию
  * @returns Текст для вставки в блок
  */
-export function createDefaultTableBlock(mode: TableMode = "due"): string {
-	let block = "```fsrs-table\n";
-	block += `mode: ${mode}\n`;
-
-	if (mode === "due") {
-		block += `columns: file as "Файл", reps as "Повторений", overdue as "Просрочка", retrievability as "Извлекаемость"\n`;
-	} else {
-		// mode === "all"
-		block += `columns: file as "Файл", reps as "Повторений", overdue as "Просрочка", state as "Состояние", due as "Следующее повторение"\n`;
-	}
-
-	block += `limit: 20\n`;
-	block += "```";
-
-	return block;
+export function createDefaultTableBlock(): string {
+	return `\`\`\`fsrs-table
+SELECT file as "Файл", reps as "Повторений", overdue as "Просрочка", state as "Состояние", due as "Следующее повторение"
+LIMIT 20
+\`\`\``;
 }

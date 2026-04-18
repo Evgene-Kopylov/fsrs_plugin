@@ -1,11 +1,8 @@
 /**
  * Модуль для типов и парсинга SQL-подобного синтаксиса блока fsrs-table
- * Поддерживает режимы отображения: due, all
- * Синтаксис: SELECT, FROM, ORDER BY, LIMIT
+ * Поддерживает отображение всех карточек
+ * Синтаксис: SELECT, ORDER BY, LIMIT
  */
-
-// Типы режимов отображения
-export type TableMode = "due" | "all";
 
 // Направление сортировки
 export type SortDirection = "ASC" | "DESC";
@@ -25,7 +22,6 @@ export interface SortParam {
 
 // Параметры таблицы
 export interface TableParams {
-	mode: TableMode;
 	columns: TableColumn[];
 	limit: number; // 0 означает "использовать значение из настроек"
 	sort?: SortParam; // параметры сортировки (опционально)
@@ -45,11 +41,13 @@ export const AVAILABLE_FIELDS = new Set([
 	"scheduled",
 ]);
 
-// Поля по умолчанию для каждого режима
+// Поля по умолчанию
 export const DEFAULT_COLUMNS: TableColumn[] = [
 	{ field: "file", title: "Файл" },
 	{ field: "reps", title: "Повторений" },
 	{ field: "overdue", title: "Просрочка" },
+	{ field: "state", title: "Состояние" },
+	{ field: "due", title: "Следующее повторение" },
 ];
 
 // Типы токенов для парсинга
@@ -141,7 +139,6 @@ class SqlLexer {
 		const upperValue = value.toUpperCase();
 		const keywords = [
 			"SELECT",
-			"FROM",
 			"ORDER",
 			"BY",
 			"ASC",
@@ -251,7 +248,6 @@ class SqlParser {
 	 */
 	parse(): TableParams {
 		const params: TableParams = {
-			mode: "due",
 			columns: [...DEFAULT_COLUMNS],
 			limit: 0,
 		};
@@ -263,10 +259,6 @@ class SqlParser {
 					case "SELECT":
 						this.consume("KEYWORD", "SELECT");
 						params.columns = this.parseSelectClause();
-						break;
-					case "FROM":
-						this.consume("KEYWORD", "FROM");
-						params.mode = this.parseFromClause();
 						break;
 					case "ORDER":
 						this.consume("KEYWORD", "ORDER");
@@ -298,7 +290,6 @@ class SqlParser {
 
 		while (
 			this.currentToken.type !== "EOF" &&
-			this.currentToken.value !== "FROM" &&
 			this.currentToken.value !== "ORDER" &&
 			this.currentToken.value !== "LIMIT"
 		) {
@@ -370,31 +361,6 @@ class SqlParser {
 		}
 
 		return { field, title };
-	}
-
-	/**
-	 * Парсит FROM clause
-	 */
-	private parseFromClause(): TableMode {
-		let token = this.currentToken;
-		if (token.type !== "IDENTIFIER") {
-			console.warn(
-				`Ожидается режим (due или all), получено: ${token.value}. Используется режим due.`,
-			);
-			return "due";
-		}
-
-		const mode = token.value.toLowerCase() as TableMode;
-		this.advance();
-
-		if (mode !== "due" && mode !== "all") {
-			console.warn(
-				`Неизвестный режим: "${mode}". Используется режим due.`,
-			);
-			return "due";
-		}
-
-		return mode;
 	}
 
 	/**
@@ -494,7 +460,6 @@ export function parseSqlBlock(source: string): TableParams {
 			"Пустой блок fsrs-table. Используются значения по умолчанию.",
 		);
 		return {
-			mode: "due",
 			columns: [...DEFAULT_COLUMNS],
 			limit: 0,
 		};
@@ -504,20 +469,12 @@ export function parseSqlBlock(source: string): TableParams {
 		const parser = new SqlParser(source);
 		const params = parser.parse();
 
-		// Проверяем, был ли указан FROM
-		if (params.mode === "due" && !source.toUpperCase().includes("FROM")) {
-			console.warn(
-				"Не найден FROM в SQL-синтаксисе. Используется режим due.",
-			);
-		}
-
 		return params;
 	} catch (error) {
 		console.error(
 			`Ошибка парсинга SQL-подобного синтаксиса: ${String(error)}. Используются значения по умолчанию.`,
 		);
 		return {
-			mode: "due",
 			columns: [...DEFAULT_COLUMNS],
 			limit: 0,
 		};

@@ -5,7 +5,7 @@
 
 import type { App } from "obsidian";
 import type { ModernFSRSCard, FSRSSettings } from "../interfaces/fsrs";
-import type { TableParams, TableMode } from "./fsrs-table-params";
+import type { TableParams } from "./fsrs-table-params";
 import type { CardWithState } from "./fsrs-table-filter";
 
 import { formatFieldValue } from "./fsrs-table-format";
@@ -32,7 +32,7 @@ export function generateTableHTML(
 
 	// Отладочный вывод для проверки колонок
 	console.debug(
-		`[FSRS] Генерация таблицы в режиме ${params.mode}, колонок: ${params.columns.length}`,
+		`[FSRS] Генерация таблицы, колонок: ${params.columns.length}`,
 	);
 	params.columns.forEach((col, idx) => {
 		console.debug(
@@ -40,10 +40,10 @@ export function generateTableHTML(
 		);
 	});
 
-	let html = `<div class="fsrs-table-container" data-mode="${params.mode}">`;
+	let html = `<div class="fsrs-table-container">`;
 
 	// Заголовок таблицы
-	const modeTitle = getModeTitle(params.mode);
+	const modeTitle = "Карточек";
 
 	html += `<h4 class="fsrs-table-header">
 		<span class="fsrs-header-text">${modeTitle}: ${totalCards}</span>
@@ -83,21 +83,18 @@ export function generateTableHTML(
 
 	// Тело таблицы
 	html += `<tbody>`;
-	for (const { card, state } of cardsToShow) {
-		html += `<tr class="fsrs-table-row" data-file-path="${card.filePath}">`;
+	for (const { card, state, isDue } of cardsToShow) {
+		// Добавляем класс для due карточек
+		const rowClass = isDue
+			? "fsrs-table-row fsrs-due-card"
+			: "fsrs-table-row";
+		html += `<tr class="${rowClass}" data-file-path="${card.filePath}">`;
 
 		for (const column of params.columns) {
 			console.debug(
 				`[FSRS] Генерация ячейки для поля: ${column.field}, карточка: ${card.filePath}`,
 			);
-			const value = formatFieldValue(
-				column.field,
-				card,
-				state,
-				app,
-				now,
-				params.mode,
-			);
+			const value = formatFieldValue(column.field, card, state, app, now);
 			// Для поля file делаем ссылку
 			if (column.field === "file") {
 				html += `<td class="fsrs-col-${column.field}">
@@ -155,50 +152,16 @@ export async function generateTableHTMLFromCards(
 }
 
 /**
- * Возвращает заголовок таблицы в зависимости от режима
- * @param mode Режим отображения
- * @returns Заголовок таблицы
- */
-function getModeTitle(mode: TableMode): string {
-	switch (mode) {
-		case "due":
-			return "Карточек для повторения";
-		case "all":
-			return "Всех карточек";
-		default:
-			return "Карточек";
-	}
-}
-
-/**
  * Создает HTML для пустого состояния таблицы
- * @param mode Режим отображения
  * @returns HTML строка для пустого состояния
  */
-export function generateEmptyTableHTML(mode: TableMode = "due"): string {
-	const modeTitle = getModeTitle(mode);
-	const message = getEmptyStateMessage(mode);
-
-	return `<div class="fsrs-table-container" data-mode="${mode}">
+export function generateEmptyTableHTML(): string {
+	return `<div class="fsrs-table-container">
 		<h4 class="fsrs-table-header">
-			<span class="fsrs-header-text">${modeTitle}: 0</span>
+			<span class="fsrs-header-text">Карточек: 0</span>
 		</h4>
 		<div class="fsrs-table-empty">
-			<p>${message}</p>
+			<p>Нет карточек FSRS. Используйте команду 'Добавить FSRS поля' для создания карточек.</p>
 		</div>
 	</div>`;
-}
-
-/**
- * Возвращает сообщение для пустого состояния в зависимости от режима
- */
-function getEmptyStateMessage(mode: TableMode): string {
-	switch (mode) {
-		case "due":
-			return "Нет карточек для повторения. Все карточки изучены! 🎉";
-		case "all":
-			return "Нет карточек FSRS. Используйте команду 'Добавить FSRS поля' для создания карточек.";
-		default:
-			return "Нет карточек для отображения.";
-	}
 }
