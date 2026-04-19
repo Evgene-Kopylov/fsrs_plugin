@@ -51,14 +51,6 @@ impl<T> ParseResult<T> {
     pub fn new(value: T, warnings: Vec<ParseWarning>) -> Self {
         Self { value, warnings }
     }
-
-    /// Создает результат без предупреждений
-    pub fn ok(value: T) -> Self {
-        Self {
-            value,
-            warnings: Vec::new(),
-        }
-    }
 }
 
 /// Основная функция парсинга блока fsrs-table
@@ -93,8 +85,8 @@ pub fn parse_fsrs_table_block(source: &str) -> Result<ParseResult<crate::table_p
     debug!("Начало парсинга fsrs-table блока: {}", source);
 
     if source.trim().is_empty() {
-        info!("Пустой блок fsrs-table, используются значения по умолчанию");
-        return Ok(ParseResult::ok(crate::table_processing::types::TableParams::default()));
+        info!("Пустой блок fsrs-table, возвращаем ошибку");
+        return Err(ParseError::Syntax("Пустой блок fsrs-table".to_string()));
     }
 
     // Парсинг SQL-подобного синтаксиса

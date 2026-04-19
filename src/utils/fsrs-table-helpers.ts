@@ -23,7 +23,10 @@ export {
 
 // Фильтрация и сортировка карточек
 export type { CardWithState } from "./fsrs-table-filter";
-export { filterAndSortCards } from "./fsrs-table-filter";
+export {
+	filterAndSortCards,
+	filterAndSortCardsWithSql,
+} from "./fsrs-table-filter";
 
 // Форматирование значений
 export {
@@ -38,6 +41,7 @@ export {
 export {
 	generateTableHTML,
 	generateTableHTMLFromCards,
+	generateTableHTMLFromSql,
 	generateEmptyTableHTML,
 } from "./fsrs-table-generator";
 

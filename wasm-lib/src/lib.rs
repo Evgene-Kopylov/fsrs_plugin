@@ -326,20 +326,34 @@ pub fn filter_and_sort_cards_with_sql(
             let params_json = serde_json::to_string(&parse_result.value)
                 .unwrap_or_else(|_| "{\"error\":\"Failed to serialize params\"}".to_string());
             // Вызываем существующую функцию фильтрации
-            crate::table_processing::filtering::filter_and_sort_cards_json(
+            let filter_result = crate::table_processing::filtering::filter_and_sort_cards_json(
                 cards_json,
                 &params_json,
                 settings_json,
                 now_iso,
-            )
+            );
+
+            // Возвращаем объединённый результат с параметрами и отфильтрованными карточками
+            serde_json::to_string(&serde_json::json!({
+                "params": parse_result.value,
+                "cards": serde_json::from_str::<serde_json::Value>(&filter_result)
+                    .unwrap_or_else(|_| serde_json::json!({
+                        "cards": [],
+                        "total_count": 0,
+                        "errors": []
+                    })),
+            })).unwrap_or_else(|_| "{\"error\":\"Failed to serialize combined result\"}".to_string())
         }
         Err(err) => {
             // Возвращаем JSON с ошибкой
             serde_json::to_string(&serde_json::json!({
                 "error": err.to_string(),
-                "cards": [],
-                "total_count": 0,
-                "errors": []
+                "params": crate::table_processing::types::TableParams::default(),
+                "cards": {
+                    "cards": [],
+                    "total_count": 0,
+                    "errors": []
+                }
             })).unwrap_or_else(|_| "{\"error\":\"Failed to serialize error\"}".to_string())
         }
     }

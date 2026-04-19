@@ -3,8 +3,8 @@ import type FsrsPlugin from "../main";
 import type { ModernFSRSCard } from "../interfaces/fsrs";
 import type { TableParams } from "../utils/fsrs-table-helpers";
 import {
-	parseSqlBlock,
 	generateTableHTMLFromCards,
+	generateTableHTMLFromSql,
 	generateEmptyTableHTML,
 } from "../utils/fsrs-table-helpers";
 import { FsrsHelpModal } from "./fsrs-help-modal";
@@ -15,7 +15,6 @@ import { FsrsHelpModal } from "./fsrs-help-modal";
  */
 export class FsrsTableRenderer extends MarkdownRenderChild {
 	private params: TableParams | null = null;
-	private parseError: Error | null = null;
 	private isFirstLoad = true;
 	private activeLeafHandler?: EventRef;
 	private activeLeafCallback?: () => void;
@@ -35,13 +34,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 		sourceEnd: number,
 	) {
 		super(container);
-		try {
-			this.params = parseSqlBlock(source);
-		} catch (error) {
-			this.parseError =
-				error instanceof Error ? error : new Error(String(error));
-			this.params = null;
-		}
+		this.params = null;
 		this.sourceText = source;
 		this.sourceStart = sourceStart;
 		this.sourceEnd = sourceEnd;
@@ -99,11 +92,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	 */
 	private async renderContent() {
 		const start = performance.now();
-		// Если была ошибка парсинга, показываем её
-		if (this.parseError) {
-			this.renderErrorState(this.parseError);
-			return;
-		}
 		try {
 			// Убираем класс ошибки при успешном рендере
 			this.container.removeClass("fsrs-table-error");
@@ -137,20 +125,38 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 				return;
 			}
 
-			// Проверяем наличие параметров таблицы
-			if (!this.params) {
-				this.renderErrorState(new Error("Invalid table parameters"));
+			// Проверяем на пустой SQL запрос (только при первом рендере)
+			if (
+				!this.params &&
+				(!this.sourceText || this.sourceText.trim() === "")
+			) {
+				this.renderErrorState(new Error("Пустой блок fsrs-table"));
 				return;
 			}
 
+			let html: string;
 			// Генерируем HTML таблицы
-			const html = await generateTableHTMLFromCards(
-				allCards,
-				this.params,
-				this.plugin.settings,
-				this.plugin.app,
-				now,
-			);
+			if (this.params) {
+				// Если параметры уже есть (при сортировке), используем их
+				html = await generateTableHTMLFromCards(
+					allCards,
+					this.params,
+					this.plugin.settings,
+					this.plugin.app,
+					now,
+				);
+			} else {
+				// При первом рендере используем SQL напрямую
+				const result = await generateTableHTMLFromSql(
+					allCards,
+					this.sourceText,
+					this.plugin.settings,
+					this.plugin.app,
+					now,
+				);
+				html = result.html;
+				this.params = result.params;
+			}
 
 			// Очищаем контейнер и вставляем новый HTML
 			this.container.empty();
@@ -436,13 +442,18 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 				this.sourceText = updatedContent;
 				// Обновляем параметры из внутреннего содержимого
 				try {
-					this.params = parseSqlBlock(updatedInnerContent);
-					this.parseError = null; // Сбрасываем ошибку при успешном парсинге
+					// При обновлении кода блока используем новую функцию generateTableHTMLFromSql
+					// чтобы получить параметры из SQL
+					const { params } = await generateTableHTMLFromSql(
+						this.cachedCards || [],
+						updatedInnerContent,
+						this.plugin.settings,
+						this.plugin.app,
+						new Date(),
+					);
+					this.params = params;
 				} catch (error) {
-					this.parseError =
-						error instanceof Error
-							? error
-							: new Error(String(error));
+					// Игнорируем ошибку парсинга, так как теперь будем использовать SQL напрямую
 					this.params = null;
 				}
 			}

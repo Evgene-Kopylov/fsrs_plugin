@@ -30,7 +30,7 @@ function generateHelpText(): string {
 	const fieldDescMap: Record<string, string> = {
 		file: "Имя файла карточки (кликабельная ссылка)",
 		reps: "Количество выполненных повторений",
-		overdue: "Дней просрочки",
+		overdue: "Часов просрочки",
 		stability:
 			"Стабильность карточки (S) — параметр FSRS, определяет интервал роста",
 		difficulty: "Сложность карточки (D) — значение от 0 до 10",

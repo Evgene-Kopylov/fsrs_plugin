@@ -122,9 +122,9 @@ export function generateTableHTML(
 }
 
 /**
- * Генерирует HTML таблицы на основе исходных карточек
- * Вычисляет состояния, фильтрует и сортирует карточки, затем генерирует HTML
- * @param cards Исходные карточки
+ * Генерирует HTML таблицу из массива карточек и параметров таблицы
+ * Выполняет фильтрацию и сортировку перед генерацией HTML
+ * @param cards Массив карточек FSRS
  * @param params Параметры таблицы
  * @param settings Настройки плагина
  * @param app Экземпляр приложения Obsidian
@@ -149,6 +149,37 @@ export async function generateTableHTMLFromCards(
 	);
 
 	return generateTableHTML(cardsWithState, params, settings, app, now);
+}
+
+/**
+ * Генерирует HTML таблицу из массива карточек и SQL-запроса
+ * Выполняет фильтрацию и сортировку перед генерацией HTML
+ * @param cards Массив карточек FSRS
+ * @param sqlSource SQL-подобный запрос для фильтрации и сортировки
+ * @param settings Настройки плагина
+ * @param app Экземпляр приложения Obsidian
+ * @param now Текущее время
+ * @returns Promise с объектом содержащим HTML строку таблицы и параметры
+ */
+export async function generateTableHTMLFromSql(
+	cards: ModernFSRSCard[],
+	sqlSource: string,
+	settings: FSRSSettings,
+	app: App,
+	now: Date = new Date(),
+): Promise<{ html: string; params: TableParams }> {
+	// Импортируем функции динамически для избежания циклических зависимостей
+	const { filterAndSortCardsWithSql } = await import("./fsrs-table-filter");
+
+	const { params, cards: cardsWithState } = await filterAndSortCardsWithSql(
+		cards,
+		settings,
+		sqlSource,
+		now,
+	);
+
+	const html = generateTableHTML(cardsWithState, params, settings, app, now);
+	return { html, params };
 }
 
 /**

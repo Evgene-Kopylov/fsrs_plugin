@@ -10,23 +10,15 @@ use crate::table_processing::filtering::calculator::CardWithComputedFields;
 pub enum EvaluationError {
     /// Неизвестное поле
     UnknownField(String),
-    /// Неподдерживаемый оператор для данного типа поля
-    UnsupportedOperator(String, String),
     /// Отсутствующее значение поля в карточке
     MissingField(String),
-    /// Ошибка вычисления значения поля
-    CalculationError(String),
 }
 
 impl std::fmt::Display for EvaluationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             EvaluationError::UnknownField(field) => write!(f, "Неизвестное поле: {}", field),
-            EvaluationError::UnsupportedOperator(field, op) => {
-                write!(f, "Неподдерживаемый оператор {} для поля {}", op, field)
-            }
             EvaluationError::MissingField(field) => write!(f, "Отсутствует поле: {}", field),
-            EvaluationError::CalculationError(msg) => write!(f, "Ошибка вычисления: {}", msg),
         }
     }
 }
@@ -94,14 +86,6 @@ fn get_field_value(field: &str, card: &CardWithComputedFields) -> Result<f64, Ev
         "scheduled" => card.scheduled.ok_or_else(|| EvaluationError::MissingField("scheduled".to_string())),
         _ => Err(EvaluationError::UnknownField(field.to_string())),
     }
-}
-
-/// Проверяет, является ли поле числовым и поддерживается ли оно
-pub fn is_field_supported(field: &str) -> bool {
-    matches!(
-        field,
-        "overdue" | "reps" | "stability" | "difficulty" | "retrievability" | "elapsed" | "scheduled"
-    )
 }
 
 #[cfg(test)]
@@ -242,18 +226,5 @@ mod tests {
 
         let result = evaluate_condition(&expr, &card);
         assert!(matches!(result, Err(EvaluationError::MissingField(_))));
-    }
-
-    #[test]
-    fn test_is_field_supported() {
-        assert!(is_field_supported("overdue"));
-        assert!(is_field_supported("reps"));
-        assert!(is_field_supported("stability"));
-        assert!(is_field_supported("difficulty"));
-        assert!(is_field_supported("retrievability"));
-        assert!(is_field_supported("elapsed"));
-        assert!(is_field_supported("scheduled"));
-        assert!(!is_field_supported("file")); // не числовое поле
-        assert!(!is_field_supported("unknown"));
     }
 }

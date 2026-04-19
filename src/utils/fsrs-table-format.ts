@@ -19,26 +19,11 @@ import { formatDateTime } from "./date-format";
  */
 export function formatOverdue(diffDays: number): string {
 	if (typeof diffDays !== "number" || isNaN(diffDays)) {
-		return "0 дн";
+		return "0.00";
 	}
 
-	// Показываем со знаком
-	if (diffDays < 0) {
-		const absDays = Math.abs(diffDays);
-		if (absDays < 1) {
-			const hours = Math.round(absDays * 24);
-			return `-${hours} ч`;
-		}
-		return `-${Math.round(absDays)} дн`;
-	} else if (diffDays > 0) {
-		if (diffDays < 1) {
-			const hours = Math.round(diffDays * 24);
-			return `+${hours} ч`;
-		}
-		return `+${Math.round(diffDays)} дн`;
-	}
-
-	return "0 дн";
+	// Показываем сырое значение для дебага
+	return `${diffDays.toFixed(2)}`;
 }
 
 /**
@@ -89,11 +74,9 @@ export function formatFieldValue(
 			return card.reviews.length.toString();
 
 		case "overdue": {
-			// Вычисляем дни просрочки
-			const dueDate = new Date(state.due);
-			const diffMs = dueDate.getTime() - now.getTime();
-			const diffDays = diffMs / (1000 * 3600 * 24);
-			return formatOverdue(diffDays);
+			// Используем предвычисленное значение просрочки из состояния
+			const overdue = state.overdue ?? 0;
+			return formatOverdue(overdue);
 		}
 
 		case "stability":

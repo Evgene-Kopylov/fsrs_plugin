@@ -357,19 +357,32 @@ fn group_cards_by_state_internal(
 /// Функции для работы со временем
 /// Рассчитывает время просрочки карточки в часах
 pub fn get_overdue_hours(due_iso: String, now_iso: String) -> String {
+    web_sys::console::log_1(&format!("get_overdue_hours called: due_iso={}, now_iso={}", due_iso, now_iso).into());
+
     let result = match (
         parse_datetime_flexible(&due_iso),
         parse_datetime_flexible(&now_iso),
     ) {
         (Some(due_date), Some(now)) => {
-            let diff_ms = now.timestamp_millis() - due_date.timestamp_millis();
+            web_sys::console::log_1(&format!("Dates parsed successfully: due_date={:?}, now={:?}", due_date, now).into());
 
-            (diff_ms as f64 / (1000.0 * 60.0 * 60.0)).floor()
+            let diff_ms = now.timestamp_millis() - due_date.timestamp_millis();
+            web_sys::console::log_1(&format!("diff_ms = {} (now {} - due {})", diff_ms, now.timestamp_millis(), due_date.timestamp_millis()).into());
+
+            let hours = (diff_ms as f64 / (1000.0 * 60.0 * 60.0)).floor();
+            web_sys::console::log_1(&format!("overdue_hours = {} (diff_ms / (1000*60*60))", hours).into());
+
+            hours
         }
-        _ => 0.0,
+        _ => {
+            web_sys::console::log_1(&"Failed to parse dates, returning 0.0".into());
+            0.0
+        },
     };
 
-    serde_json::to_string(&result).unwrap_or_else(|_| "0.0".to_string())
+    let json_result = serde_json::to_string(&result).unwrap_or_else(|_| "0.0".to_string());
+    web_sys::console::log_1(&format!("get_overdue_hours returning: {}", json_result).into());
+    json_result
 }
 
 /// Рассчитывает оставшееся время до повторения карточки в часах

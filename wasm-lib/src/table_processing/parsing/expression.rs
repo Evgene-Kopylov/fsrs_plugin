@@ -82,7 +82,8 @@ impl Value {
         Value::Number(value)
     }
 
-    /// Получает числовое значение, если оно есть
+    /// Получает числовое значение, если оно есть (только для тестов)
+    #[cfg(test)]
     pub fn as_number(&self) -> Option<f64> {
         match self {
             Value::Number(n) => Some(*n),
@@ -158,17 +159,20 @@ impl Expression {
         }
     }
 
-    /// Проверяет, является ли выражение простым сравнением
+    /// Проверяет, является ли выражение простым сравнением (только для тестов)
+    #[cfg(test)]
     pub fn is_comparison(&self) -> bool {
         matches!(self, Expression::Comparison { .. })
     }
 
-    /// Проверяет, является ли выражение логическим
+    /// Проверяет, является ли выражение логическим (только для тестов)
+    #[cfg(test)]
     pub fn is_logical(&self) -> bool {
         matches!(self, Expression::Logical { .. })
     }
 
-    /// Получает поле из выражения сравнения, если оно есть
+    /// Получает поле из выражения сравнения, если оно есть (только для тестов)
+    #[cfg(test)]
     pub fn get_comparison_field(&self) -> Option<&str> {
         match self {
             Expression::Comparison { field, .. } => Some(field),
@@ -176,7 +180,8 @@ impl Expression {
         }
     }
 
-    /// Получает оператор из выражения сравнения, если оно есть
+    /// Получает оператор из выражения сравнения, если оно есть (только для тестов)
+    #[cfg(test)]
     pub fn get_comparison_operator(&self) -> Option<ComparisonOp> {
         match self {
             Expression::Comparison { operator, .. } => Some(*operator),
@@ -184,7 +189,8 @@ impl Expression {
         }
     }
 
-    /// Получает значение из выражения сравнения, если оно есть
+    /// Получает значение из выражения сравнения, если оно есть (только для тестов)
+    #[cfg(test)]
     pub fn get_comparison_value(&self) -> Option<&Value> {
         match self {
             Expression::Comparison { value, .. } => Some(value),

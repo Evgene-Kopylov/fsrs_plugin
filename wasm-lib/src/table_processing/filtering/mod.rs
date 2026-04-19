@@ -734,15 +734,18 @@ mod tests {
         let cards_json = r#"[
             {
                 "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
-                "filePath": "card1.md"
+                "filePath": "card1.md",
+                "due": "2024-01-03_00:00"
             },
             {
                 "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
-                "filePath": "card2.md"
+                "filePath": "card2.md",
+                "due": "2024-01-03_00:00"
             },
             {
                 "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
-                "filePath": "card3.md"
+                "filePath": "card3.md",
+                "due": "2024-01-03_00:00"
             }
         ]"#;
 
@@ -796,5 +799,191 @@ mod tests {
         assert_eq!(filter_result.cards.len(), 3);
         assert_eq!(filter_result.total_count, 3);
         assert_eq!(filter_result.errors.len(), 0);
+    }
+
+    /// Тест для фильтрации с SQL строкой напрямую (WHERE после LIMIT)
+    #[test]
+    fn test_filter_and_sort_cards_with_sql() {
+        use crate::table_processing::parsing::parse_fsrs_table_block;
+
+        // Создаем JSON карточек с разными значениями overdue
+        let cards_json = r#"[
+            {
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "filePath": "card1.md",
+                "due": "2024-01-03_00:00"
+            },
+            {
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "filePath": "card2.md",
+                "due": "2024-01-03_00:00"
+            },
+            {
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "filePath": "card3.md",
+                "due": "2024-01-03_00:00"
+            }
+        ]"#;
+
+        // SQL запрос из примера пользователя
+        let sql_source = r#"SELECT file as "Файл", overdue as "oDue", reps LIMIT 10 WHERE overdue < 0"#;
+
+        // Парсим SQL для получения параметров
+        let parse_result = parse_fsrs_table_block(sql_source).unwrap();
+        let params = parse_result.value;
+
+        // Создаем настройки
+        let settings_json = r#"{
+            "default_initial_stability": 2.0,
+            "default_initial_difficulty": 5.0,
+            "parameters": "{\"request_retention\": 0.9, \"maximum_interval\": 36500.0, \"enable_fuzz\": true}"
+        }"#;
+
+        // Используем фиксированное время
+        let now_iso = "2024-01-02T00:00:00.000Z"; // На 1 день после создания карточек
+
+        // Вызываем фильтрацию через существующую функцию
+        let result = filter_and_sort_cards(
+            cards_json,
+            &params,
+            settings_json,
+            now_iso,
+        );
+
+        assert!(result.is_ok(), "Фильтрация должна завершиться успешно: {:?}", result);
+        let filter_result = result.unwrap();
+
+        // Проверяем, что все карточки отфильтрованы (overdue < 0)
+        assert_eq!(filter_result.cards.len(), 3);
+        assert_eq!(filter_result.total_count, 3);
+        assert_eq!(filter_result.errors.len(), 0);
+
+        // Проверяем, что LIMIT 10 не применяется, так как всего 3 карточки
+        // (но лимит все равно должен быть учтен в params.limit)
+        assert_eq!(params.limit, 10);
+    }
+
+    /// Тест для фильтрации с SQL строкой, содержащей WHERE AND
+    #[test]
+    fn test_filter_and_sort_cards_with_sql_and() {
+        use crate::table_processing::parsing::parse_fsrs_table_block;
+
+        // Создаем JSON карточек
+        let cards_json = r#"[
+            {
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "filePath": "card1.md",
+                "due": "2024-01-03_00:00"
+            },
+            {
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "filePath": "card2.md",
+                "due": "2024-01-03_00:00"
+            }
+        ]"#;
+
+        // SQL запрос с WHERE AND
+        let sql_source = r#"SELECT file WHERE overdue < 0 AND stability > 0.5"#;
+
+        // Парсим SQL для получения параметров
+        let parse_result = parse_fsrs_table_block(sql_source).unwrap();
+        let params = parse_result.value;
+
+        // Создаем настройки
+        let settings_json = r#"{
+            "default_initial_stability": 2.0,
+            "default_initial_difficulty": 5.0,
+            "parameters": "{\"request_retention\": 0.9, \"maximum_interval\": 36500.0, \"enable_fuzz\": true}"
+        }"#;
+
+        // Используем фиксированное время
+        let now_iso = "2024-01-02T00:00:00.000Z"; // На 1 день после создания карточек
+
+        // Вызываем фильтрацию
+        let result = filter_and_sort_cards(
+            cards_json,
+            &params,
+            settings_json,
+            now_iso,
+        );
+
+        assert!(result.is_ok(), "Фильтрация должна завершиться успешно: {:?}", result);
+        let filter_result = result.unwrap();
+
+        // Обе карточки должны пройти фильтр: overdue < 0 (т.к. due в будущем) AND stability > 0.5 (stability = 5.0)
+        assert_eq!(filter_result.cards.len(), 2);
+        assert_eq!(filter_result.total_count, 2);
+        assert_eq!(filter_result.errors.len(), 0);
+    }
+
+    /// Тест для WASM функции filter_and_sort_cards_with_sql
+    #[test]
+    fn test_wasm_filter_and_sort_cards_with_sql() {
+        // Создаем JSON карточек
+        let cards_json = r#"[
+            {
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "filePath": "card1.md",
+                "due": "2024-01-03_00:00"
+            },
+            {
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "filePath": "card2.md",
+                "due": "2024-01-03_00:00"
+            }
+        ]"#;
+
+        // SQL запрос с WHERE
+        let sql_source = r#"SELECT file WHERE overdue < 0"#;
+
+        // Создаем настройки
+        let settings_json = r#"{
+            "default_initial_stability": 2.0,
+            "default_initial_difficulty": 5.0,
+            "parameters": "{\"request_retention\": 0.9, \"maximum_interval\": 36500.0, \"enable_fuzz\": true}"
+        }"#;
+
+        // Используем фиксированное время
+        let now_iso = "2024-01-02T00:00:00.000Z"; // На 1 день после создания карточек
+
+        // Вызываем WASM функцию напрямую
+        let result_json = crate::filter_and_sort_cards_with_sql(
+            cards_json,
+            sql_source,
+            settings_json,
+            now_iso,
+        );
+
+        // Парсим результат
+        let result: serde_json::Value = serde_json::from_str(&result_json)
+            .expect("Failed to parse result JSON");
+
+        // Проверяем, что нет ошибок
+        assert!(!result.get("error").is_some(), "Result contains error: {:?}", result.get("error"));
+
+        // Извлекаем объект cards
+        let cards_obj = result.get("cards")
+            .and_then(|c| c.as_object())
+            .expect("No cards object in result");
+
+        // Извлекаем массив карточек
+        let cards = cards_obj.get("cards")
+            .and_then(|c| c.as_array())
+            .expect("No cards array in result");
+
+        // Обе карточки должны пройти фильтр: overdue < 0 (т.к. due в будущем)
+        assert_eq!(cards.len(), 2);
+
+        // Проверяем общее количество
+        let total_count = cards_obj.get("total_count")
+            .and_then(|tc| tc.as_u64())
+            .expect("No total_count in result");
+        assert_eq!(total_count, 2);
+
+        // Проверяем ошибки (должны быть пустыми)
+        let errors = cards_obj.get("errors")
+            .and_then(|e| e.as_array())
+            .expect("No errors array in result");
+        assert_eq!(errors.len(), 0);
     }
 }

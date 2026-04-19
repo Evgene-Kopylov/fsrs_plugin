@@ -10,6 +10,7 @@ import type {
 	FSRSState,
 } from "../interfaces/fsrs";
 import type { SortParam, TableParams } from "./fsrs-table-params";
+import { DEFAULT_COLUMNS } from "./fsrs-table-params";
 import * as wasm from "../../wasm-lib/pkg/wasm_lib";
 
 /**
@@ -56,6 +57,19 @@ interface WasmFilterResult {
 }
 
 /**
+ * Результат фильтрации из WASM с SQL запросом
+ */
+interface WasmSqlFilterResult {
+	params: unknown;
+	cards: {
+		cards: WasmCardResult[];
+		total_count: number;
+		errors: string[];
+	};
+	error?: string;
+}
+
+/**
  * Преобразует строку состояния из WASM в FSRSState
  * @param wasmState Строка состояния из WASM (должна быть на английском)
  * @returns FSRSState или "New" по умолчанию
@@ -90,13 +104,38 @@ export async function filterAndSortCardsWithSql(
 	settings: FSRSSettings,
 	sqlSource: string,
 	now: Date = new Date(),
-): Promise<CardWithState[]> {
+): Promise<{ params: TableParams; cards: CardWithState[] }> {
 	if (!cards || cards.length === 0) {
-		return [];
+		const defaultParams: TableParams = {
+			columns: DEFAULT_COLUMNS,
+			limit: 0,
+		};
+		return { params: defaultParams, cards: [] };
 	}
 
 	try {
 		// Вызываем WASM функцию для фильтрации и сортировки с SQL напрямую
+		console.debug("filterAndSortCardsWithSql:", {
+			cardCount: cards.length,
+			sqlSource,
+			now: now.toISOString(),
+			settings: JSON.parse(JSON.stringify(settings)),
+		});
+		// Логируем первые 3 карточки для отладки фильтрации WHERE
+		if (cards.length > 0) {
+			console.debug(
+				"First 3 cards:",
+				cards.slice(0, 3).map((card) => ({
+					filePath: card.filePath,
+					reviewsCount: card.reviews.length,
+					lastReview:
+						card.reviews.length > 0
+							? (card.reviews[card.reviews.length - 1]?.date ??
+								null)
+							: null,
+				})),
+			);
+		}
 		const resultJson = wasm.filter_and_sort_cards_with_sql(
 			JSON.stringify(cards),
 			sqlSource,
@@ -104,10 +143,39 @@ export async function filterAndSortCardsWithSql(
 			now.toISOString(),
 		);
 
-		// Парсим результат с явным приведением типов
-		const wasmResult: WasmFilterResult = JSON.parse(
+		// Парсим результат с новым форматом
+		const wasmSqlResult: WasmSqlFilterResult = JSON.parse(
 			resultJson,
-		) as unknown as WasmFilterResult;
+		) as unknown as WasmSqlFilterResult;
+
+		console.debug("wasmSqlResult structure:", {
+			hasError: !!wasmSqlResult.error,
+			hasCards: !!wasmSqlResult.cards,
+			hasParams: !!wasmSqlResult.params,
+			cardsKeys: wasmSqlResult.cards
+				? Object.keys(wasmSqlResult.cards)
+				: [],
+			paramsKeys: wasmSqlResult.params
+				? Object.keys(wasmSqlResult.params)
+				: [],
+		});
+
+		// Проверяем наличие ошибки парсинга SQL
+		if (wasmSqlResult.error) {
+			const errorMessage = wasmSqlResult.error;
+			console.error(`Ошибка парсинга SQL запроса: ${errorMessage}`);
+			throw new Error(`Ошибка парсинга SQL запроса: ${errorMessage}`);
+		}
+
+		// Извлекаем результат фильтрации и параметры
+		const wasmResult = wasmSqlResult.cards;
+		const params = wasmSqlResult.params as TableParams;
+
+		console.debug("wasmResult structure:", {
+			cardsCount: wasmResult?.cards?.length || 0,
+			errors: wasmResult?.errors?.length || 0,
+			total_count: wasmResult?.total_count || 0,
+		});
 
 		// Обрабатываем ошибки, если есть
 		if (wasmResult.errors && wasmResult.errors.length > 0) {
@@ -117,18 +185,20 @@ export async function filterAndSortCardsWithSql(
 			);
 		}
 
-		// Проверяем наличие ошибки парсинга SQL
-		if ((wasmResult as any).error) {
-			const errorMessage = (wasmResult as any).error;
-			console.error(`Ошибка парсинга SQL запроса: ${errorMessage}`);
-			throw new Error(`Ошибка парсинга SQL запроса: ${errorMessage}`);
-		}
-
 		// Преобразуем результат WASM в формат TypeScript
 		const cardsWithState: CardWithState[] = [];
 
 		for (const wasmCard of wasmResult.cards) {
 			try {
+				console.debug("Processing wasmCard - detailed:", {
+					hasCardJson: !!wasmCard.card_json,
+					computedFields: wasmCard.computed_fields,
+					computedFieldsKeys: wasmCard.computed_fields
+						? Object.keys(wasmCard.computed_fields)
+						: [],
+					computedFieldsFull: wasmCard.computed_fields,
+				});
+
 				// Парсим карточку из JSON с явным приведением типов
 				const card: ModernFSRSCard = JSON.parse(
 					wasmCard.card_json,
@@ -138,6 +208,14 @@ export async function filterAndSortCardsWithSql(
 				const state = convertWasmFieldsToComputedState(
 					wasmCard.computed_fields,
 				);
+
+				// Логируем значение overdue для отладки фильтрации WHERE
+				console.debug("Card overdue value:", {
+					file: card.filePath,
+					overdue: state.overdue,
+					due: state.due,
+					computed_fields: wasmCard.computed_fields,
+				});
 
 				// Определяем, является ли карточка просроченной
 				const isDue = isCardDue(
@@ -162,7 +240,7 @@ export async function filterAndSortCardsWithSql(
 			}
 		}
 
-		return cardsWithState;
+		return { params, cards: cardsWithState };
 	} catch (error) {
 		console.error(
 			`Ошибка фильтрации и сортировки карточек через WASM: ${String(error)}. Возвращаем пустой массив.`,
@@ -170,7 +248,11 @@ export async function filterAndSortCardsWithSql(
 
 		// В случае ошибки WASM, возвращаем пустой массив
 		// В будущих версиях можно добавить fallback на старую реализацию
-		return [];
+		const defaultParams: TableParams = {
+			columns: DEFAULT_COLUMNS,
+			limit: 0,
+		};
+		return { params: defaultParams, cards: [] };
 	}
 }
 
@@ -182,6 +264,24 @@ export async function filterAndSortCardsWithSql(
 function convertWasmFieldsToComputedState(
 	wasmFields: WasmComputedFields,
 ): ComputedCardState {
+	// Логируем все поля wasmFields для отладки
+	console.debug("convertWasmFieldsToComputedState - full structure:", {
+		file: wasmFields.file,
+		reps: wasmFields.reps,
+		overdue: wasmFields.overdue,
+		stability: wasmFields.stability,
+		difficulty: wasmFields.difficulty,
+		retrievability: wasmFields.retrievability,
+		due: wasmFields.due,
+		state: wasmFields.state,
+		elapsed: wasmFields.elapsed,
+		scheduled: wasmFields.scheduled,
+		additional_fields: wasmFields.additional_fields,
+		has_additional_fields: wasmFields.additional_fields
+			? Object.keys(wasmFields.additional_fields).length
+			: 0,
+	});
+
 	// Преобразуем дату из формата Obsidian в ISO
 	let dueDate = "";
 	if (wasmFields.due) {
@@ -199,6 +299,7 @@ function convertWasmFieldsToComputedState(
 
 	return {
 		due: dueDate,
+		overdue: wasmFields.overdue ?? 0,
 		stability: wasmFields.stability || 0,
 		difficulty: wasmFields.difficulty || 0,
 		state: convertWasmStateToFSRSState(wasmFields.state),
