@@ -9,6 +9,7 @@ import {
 	getRussianNoun,
 } from "../utils/fsrs-helper";
 import type FsrsPlugin from "../main";
+import { ReviewHistoryModal } from "./review-history-modal";
 
 /**
  * Рендерер кнопки повторения карточки FSRS для блока `fsrs-review-button`
@@ -17,6 +18,7 @@ import type FsrsPlugin from "../main";
  */
 export class ReviewButtonRenderer extends MarkdownRenderChild {
 	private mainButton: HTMLButtonElement;
+	private historyButton: HTMLButtonElement;
 
 	private buttonsContainer: HTMLDivElement;
 	private currentState:
@@ -49,8 +51,29 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 		this.mainButton = document.createElement("button");
 		this.mainButton.className = "fsrs-review-button";
 
+		// Создаем кнопку истории повторений
+		this.historyButton = document.createElement("button");
+		this.historyButton.className = "fsrs-history-button";
+		this.historyButton.textContent = "📊";
+		this.historyButton.title = "История повторений";
+		this.historyButton.style.display = "flex";
+		this.historyButton.style.alignItems = "center";
+		this.historyButton.style.justifyContent = "center";
+		this.historyButton.style.width = "32px";
+		this.historyButton.style.height = "32px";
+		this.historyButton.style.backgroundColor =
+			"var(--background-secondary)";
+		this.historyButton.style.color = "var(--text-muted)";
+		this.historyButton.style.border =
+			"1px solid var(--background-modifier-border)";
+		this.historyButton.style.borderRadius = "4px";
+		this.historyButton.style.cursor = "pointer";
+		this.historyButton.style.fontSize = "14px";
+		this.historyButton.style.transition = "all 0.2s ease";
+
 		// Добавляем кнопки в контейнер
 		this.buttonsContainer.appendChild(this.mainButton);
+		this.buttonsContainer.appendChild(this.historyButton);
 
 		// Устанавливаем фиксированный класс для контейнера
 		container.className = "fsrs-review-button-container";
@@ -177,6 +200,17 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 				_clickHandler?: typeof mainClickHandler;
 			}
 		)._clickHandler = mainClickHandler;
+
+		// Кнопка истории повторений
+		const historyClickHandler = () => {
+			void this.handleHistoryButtonClick();
+		};
+		this.historyButton.addEventListener("click", historyClickHandler);
+		(
+			this.historyButton as HTMLElement & {
+				_clickHandler?: typeof historyClickHandler;
+			}
+		)._clickHandler = historyClickHandler;
 	}
 
 	/**
@@ -192,6 +226,17 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			) => void;
 			this.mainButton.removeEventListener("click", handler);
 			delete mainButtonWithHandler._clickHandler;
+		}
+
+		const historyButtonWithHandler = this.historyButton as HTMLElement & {
+			_clickHandler?: () => Promise<void>;
+		};
+		if (this.historyButton && historyButtonWithHandler._clickHandler) {
+			const handler = historyButtonWithHandler._clickHandler as (
+				ev: Event,
+			) => void;
+			this.historyButton.removeEventListener("click", handler);
+			delete historyButtonWithHandler._clickHandler;
 		}
 	}
 
@@ -305,6 +350,22 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 		if (this.fileChangeHandler) {
 			this.plugin.app.vault.off("modify", this.fileChangeHandler);
 			this.fileChangeHandler = undefined;
+		}
+	}
+
+	/**
+	 * Обрабатывает клик на кнопке истории повторений
+	 */
+	private async handleHistoryButtonClick(): Promise<void> {
+		try {
+			const modal = new ReviewHistoryModal(
+				this.plugin.app,
+				this.sourcePath,
+			);
+			await modal.show();
+		} catch (error) {
+			console.error("Ошибка при открытии истории повторений:", error);
+			new Notice("Ошибка при открытии истории повторений");
 		}
 	}
 

@@ -1,5 +1,6 @@
 import type FsrsPlugin from "../main";
 import { FsrsHelpModal } from "../ui/fsrs-help-modal";
+import { showReviewHistoryForCurrentFile } from "../ui/review-history-modal";
 
 /**
  * Регистрирует все команды плагина FSRS
@@ -52,6 +53,15 @@ export function registerCommands(plugin: FsrsPlugin): void {
 		callback: () => {
 			const modal = new FsrsHelpModal(plugin.app);
 			modal.show();
+		},
+	});
+
+	// Команда для просмотра истории повторений текущей карточки
+	plugin.addCommand({
+		id: "show-review-history",
+		name: "Показать историю повторений",
+		callback: async () => {
+			await showReviewHistoryForCurrentFile(plugin.app);
 		},
 	});
 }

@@ -296,7 +296,7 @@ export class ReviewHistoryModal extends Modal {
 			}
 
 			const ratingsItem = statsList.createEl("li");
-			ratingsItem.textContent = `Оценки: ${ratingCounts.Again}×❌ ${ratingCounts.Hard}×😣 ${ratingCounts.Good}×😐 ${ratingCounts.Easy}×😊`;
+			ratingsItem.textContent = `Оценки: ${ratingCounts.Again}×🟥 ${ratingCounts.Hard}×🟨 ${ratingCounts.Good}×🟩 ${ratingCounts.Easy}×🟦`;
 		}
 	}
 
@@ -305,10 +305,10 @@ export class ReviewHistoryModal extends Modal {
 	 */
 	private translateRating(rating: FSRSRating): string {
 		const translations: Record<FSRSRating, string> = {
-			Again: "❌ Снова",
-			Hard: "😣 Трудно",
-			Good: "😐 Нормально",
-			Easy: "😊 Легко",
+			Again: "🟥 Снова",
+			Hard: "🟨 Трудно",
+			Good: "🟩 Нормально",
+			Easy: "🟦 Легко",
 		};
 		return translations[rating] || rating;
 	}
