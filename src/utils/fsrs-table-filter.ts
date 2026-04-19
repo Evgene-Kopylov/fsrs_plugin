@@ -460,88 +460,11 @@ export async function filterAndSortCards(
  * Получает значение поля для сортировки (заглушка для совместимости)
  * @deprecated Используется только для обратной совместимости
  */
-export function getFieldValue(
-	item: CardWithState,
-	field: string,
-	now: Date,
-): string | number | Date {
-	console.warn(
-		`Функция getFieldValue устарела и используется только для обратной совместимости`,
-	);
-
-	switch (field) {
-		case "file":
-			return item.card.filePath || "";
-		case "reps":
-			return item.state.reps || 0;
-		case "overdue": {
-			// Вычисляем дни просрочки
-			const dueDate = new Date(item.state.due || 0);
-			const overdueMs = now.getTime() - dueDate.getTime();
-			const overdueDays = Math.max(
-				0,
-				Math.floor(overdueMs / (1000 * 60 * 60 * 24)),
-			);
-			return overdueDays;
-		}
-		case "stability":
-			return item.state.stability || 0;
-		case "difficulty":
-			return item.state.difficulty || 0;
-		case "retrievability":
-			return item.state.retrievability || 0;
-		case "due":
-			return new Date(item.state.due || 0);
-		case "state":
-			return item.state.state || "";
-		case "elapsed":
-			return item.state.elapsed_days || 0;
-		case "scheduled":
-			return item.state.scheduled_days || 0;
-		default:
-			console.warn(`Неизвестное поле для сортировки: ${field}`);
-			return "";
-	}
-}
-
-/**
- * Сортирует due карточки по приоритету (заглушка для совместимости)
- * @deprecated Используется только для обратной совместимости
- */
-export function sortCardsForDue(
-	cards: CardWithState[],
-	now: Date,
-): CardWithState[] {
-	console.warn(
-		`Функция sortCardsForDue устарела и используется только для обратной совместимости. Используйте WASM фильтрацию.`,
-	);
-	return cards;
-}
 
 /**
  * Сортирует scheduled карточки по дате due (заглушка для совместимости)
  * @deprecated Используется только для обратной совместимости
  */
-export function sortScheduledCards(cards: CardWithState[]): CardWithState[] {
-	console.warn(
-		`Функция sortScheduledCards устарела и используется только для обратной совместимости. Используйте WASM фильтрацию.`,
-	);
-	return cards;
-}
-
-/**
- * Рассчитывает приоритет для сортировки due карточек (заглушка для совместимости)
- * @deprecated Используется только для обратной совместимости
- */
-export function calculatePriorityScore(
-	state: ComputedCardState,
-	now: Date,
-): number {
-	console.warn(
-		`Функция calculatePriorityScore устарела и используется только для обратной совместимости. Используйте WASM фильтрацию.`,
-	);
-	return 0;
-}
 
 /**
  * Вычисляет состояния для массива карточек (заглушка для совместимости)
