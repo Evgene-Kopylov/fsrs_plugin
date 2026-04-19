@@ -2,7 +2,6 @@
 //! Включает вычисление overdue, retrievability, state и других полей
 //! Использует существующие WASM функции для вычислений
 
-
 use log;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -73,8 +72,6 @@ impl std::fmt::Display for CalculationError {
 }
 
 impl std::error::Error for CalculationError {}
-
-
 
 /// Извлекает поле из JSON карточки
 fn extract_field(card_json: &str, field: &str) -> Result<serde_json::Value, CalculationError> {
@@ -504,8 +501,6 @@ mod tests {
         assert!(displays[4].contains("Ошибка парсинга результата WASM"));
         assert!(displays[5].contains("Функция не реализована"));
     }
-
-
 
     #[test]
     fn test_extract_field_success() {

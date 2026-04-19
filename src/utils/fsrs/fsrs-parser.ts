@@ -1,5 +1,5 @@
 // Парсеры для работы с YAML и FSRS данными
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 
 import type {
 	ModernFSRSCard,
@@ -61,106 +61,39 @@ export function parseModernFsrsFromFrontmatter(
 			};
 		}
 
-		// Валидируем каждую сессию
-
+		// Собираем сессии (уже валидированы в Rust)
 		const reviews: ReviewSession[] = [];
-		const validRatings = ["Again", "Hard", "Good", "Easy"];
-		const validationErrors: string[] = [];
-
-		for (let i = 0; i < parsedCard.reviews.length; i++) {
-			const session = parsedCard.reviews[i];
-
-			// Пропускаем пустые объекты или null
+		for (const session of parsedCard.reviews) {
+			// Базовая проверка на наличие полей (на всякий случай)
 			if (!session || typeof session !== "object") {
-				validationErrors.push(`Session ${i}: is not a valid object`);
+				console.warn(`Invalid session object in ${filePath}, skipping`);
 				continue;
 			}
-
-			// Проверяем обязательные поля
-
-			if (!session.date || typeof session.date !== "string") {
-				validationErrors.push(`Session ${i}: invalid or missing date`);
-				continue;
-			}
-
-			// Проверяем валидность рейтинга
-
 			if (
+				!session.date ||
+				typeof session.date !== "string" ||
 				!session.rating ||
 				typeof session.rating !== "string" ||
-				!validRatings.includes(session.rating)
-			) {
-				validationErrors.push(
-					`Session ${i}: invalid rating "${session.rating}"`,
-				);
-				continue;
-			}
-
-			// Проверяем числовые поля
-
-			if (
 				typeof session.stability !== "number" ||
-				isNaN(session.stability)
-			) {
-				validationErrors.push(
-					`Session ${i}: invalid stability "${session.stability}"`,
-				);
-				continue;
-			}
-
-			if (
+				isNaN(session.stability) ||
 				typeof session.difficulty !== "number" ||
 				isNaN(session.difficulty)
 			) {
-				validationErrors.push(
-					`Session ${i}: invalid difficulty "${session.difficulty}"`,
+				console.warn(
+					`Missing or invalid fields in session for ${filePath}, skipping`,
 				);
 				continue;
 			}
-
-			// Проверяем валидность даты (примерная проверка ISO формата)
-			try {
-				const date = new Date(session.date);
-				if (isNaN(date.getTime())) {
-					validationErrors.push(
-						`Session ${i}: invalid date format "${session.date}"`,
-					);
-					continue;
-				}
-			} catch {
-				validationErrors.push(
-					`Session ${i}: invalid date format "${session.date}"`,
-				);
-				continue;
-			}
-
 			reviews.push({
 				date: session.date,
-
 				rating: session.rating,
-
 				stability: session.stability,
-
 				difficulty: session.difficulty,
 			});
 		}
 
-		// Проверяем, является ли карточка битой (любые ошибки валидации)
-		if (validationErrors.length > 0) {
-			// Есть невалидные сессии - карточка битая
-			console.warn(
-				`FSRS card in ${filePath} is broken: ${validationErrors.length} invalid review sessions out of ${parsedCard.reviews.length} total. Ignoring card.`,
-			);
-			return {
-				success: false,
-				card: null,
-				error: "review sessions validation failed",
-			};
-		}
-
-		// Если после валидации нет ни одной сессии, но файл содержит reviews поле,
+		// Если после фильтрации нет сессий, но файл содержит reviews поле,
 		// считаем это успехом с пустым массивом сессий (карточка без повторений)
-
 		const card: ModernFSRSCard = {
 			reviews,
 			filePath,

@@ -1,5 +1,6 @@
 // Модуль для парсинга YAML в Rust с использованием serde_yaml
 
+use crate::json_parsing::parse_datetime_flexible;
 use crate::types::{FsrsParameters, ModernFsrsCard, ReviewSession};
 
 #[cfg(target_arch = "wasm32")]
@@ -117,22 +118,28 @@ pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<ModernFsrsCard
         match mapping.get("reviews") {
             Some(serde_yaml::Value::Sequence(seq)) => {
                 log_trace!("reviews is a sequence with {} elements", seq.len());
+                // Если массив пустой — это валидная карточка без сессий
+                if seq.is_empty() {
+                    return Some(ModernFsrsCard {
+                        reviews: Vec::new(),
+                        file_path: None,
+                    });
+                }
                 // Десериализуем reviews
-                match serde_yaml::from_value::<Vec<ReviewSession>>(serde_yaml::Value::Sequence(
-                    seq.clone(),
-                )) {
-                    Ok(reviews) => {
-                        log_trace!(
-                            "Successfully deserialized {} review sessions",
-                            reviews.len()
-                        );
-                        reviews
-                    }
-                    Err(e) => {
-                        log_warn!("Error deserializing reviews: {}", e);
-                        return None;
+                let mut validated_reviews = Vec::new();
+                for (i, session_value) in seq.iter().enumerate() {
+                    if let Some(session) = validate_review_session(session_value) {
+                        validated_reviews.push(session);
+                    } else {
+                        log_warn!("Invalid review session at index {}, skipping", i);
                     }
                 }
+                // Если были элементы, но все невалидные — карточка битая
+                if validated_reviews.is_empty() {
+                    log_warn!("No valid review sessions found");
+                    return None;
+                }
+                validated_reviews
             }
             other => {
                 log_warn!("reviews is not a sequence, type: {:?}", other);
@@ -181,6 +188,29 @@ pub fn create_default_parameters() -> FsrsParameters {
 }
 
 /// Валидирует сессии повторений в карточке
+fn validate_review_session(session: &serde_yaml::Value) -> Option<ReviewSession> {
+    let date_str = session.get("date")?.as_str()?;
+    let date = parse_datetime_flexible(date_str)?;
+    let rating = session.get("rating")?.as_str()?;
+    if !["Again", "Hard", "Good", "Easy"].contains(&rating) {
+        return None;
+    }
+    let stability = session.get("stability")?.as_f64()?;
+    if !(0.0..=1000.0).contains(&stability) {
+        return None;
+    }
+    let difficulty = session.get("difficulty")?.as_f64()?;
+    if !(1.0..=10.0).contains(&difficulty) {
+        return None;
+    }
+    Some(ReviewSession {
+        date: date.to_rfc3339(),
+        rating: rating.to_string(),
+        stability,
+        difficulty,
+    })
+}
+
 pub fn validate_review_sessions(card: &ModernFsrsCard) -> Vec<String> {
     let mut errors = Vec::new();
 
@@ -192,10 +222,10 @@ pub fn validate_review_sessions(card: &ModernFsrsCard) -> Vec<String> {
         }
 
         // Пробуем парсить дату
-        if let Err(e) = chrono::DateTime::parse_from_rfc3339(&session.date) {
+        if parse_datetime_flexible(&session.date).is_none() {
             errors.push(format!(
-                "Session {}: invalid date format '{}': {}",
-                i, session.date, e
+                "Session {}: invalid date format '{}'",
+                i, session.date
             ));
         }
 
@@ -466,7 +496,7 @@ reviews:
         let card = extract_fsrs_from_frontmatter(frontmatter).unwrap();
 
         assert_eq!(card.reviews.len(), 1);
-        assert_eq!(card.reviews[0].date, "2026-04-13T09:00:00+02:00");
+        assert_eq!(card.reviews[0].date, "2026-04-13T07:00:00+00:00");
         assert_eq!(card.reviews[0].rating, "Good");
         assert_eq!(card.reviews[0].stability, 25.8);
         assert_eq!(card.reviews[0].difficulty, 2.3);
@@ -487,7 +517,7 @@ reviews:
         let card = extract_fsrs_from_frontmatter(frontmatter).unwrap();
 
         assert_eq!(card.reviews.len(), 1);
-        assert_eq!(card.reviews[0].date, "2026-04-13T09:00:00+02:00");
+        assert_eq!(card.reviews[0].date, "2026-04-13T07:00:00+00:00");
         assert_eq!(card.reviews[0].rating, "Good");
         assert_eq!(card.reviews[0].stability, 25.8);
         assert_eq!(card.reviews[0].difficulty, 2.3);
