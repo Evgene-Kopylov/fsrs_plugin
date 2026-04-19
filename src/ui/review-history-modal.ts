@@ -4,11 +4,7 @@ import {
 	extractFrontmatter,
 	formatLocalDate,
 } from "../utils/fsrs-helper";
-import type {
-	ModernFSRSCard,
-	ReviewSession,
-	FSRSRating,
-} from "../interfaces/fsrs";
+import type { ModernFSRSCard, FSRSRating } from "../interfaces/fsrs";
 
 /**
  * Модальное окно для просмотра истории повторений карточки FSRS

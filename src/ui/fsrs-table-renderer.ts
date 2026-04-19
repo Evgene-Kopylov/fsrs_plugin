@@ -123,7 +123,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 				cardCount: allCards.length,
 				hasParams: !!this.params,
 				params: this.params
-					? JSON.parse(JSON.stringify(this.params))
+					? (JSON.parse(JSON.stringify(this.params)) as unknown)
 					: null,
 				sourceText: this.sourceText,
 				lastAction: this.lastAction,
@@ -361,7 +361,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			field,
 			nextDirection,
 			params: this.params
-				? JSON.parse(JSON.stringify(this.params))
+				? (JSON.parse(JSON.stringify(this.params)) as unknown)
 				: null,
 		});
 

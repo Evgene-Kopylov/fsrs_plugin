@@ -32,7 +32,7 @@ export interface TableParams {
 	columns: TableColumn[];
 	limit: number; // 0 означает "использовать значение из настроек"
 	sort?: SortParam; // параметры сортировки (опционально)
-	where?: any; // условие фильтрации WHERE (опционально) - сериализованное выражение Expression из WASM (поле where_condition)
+	where?: unknown; // условие фильтрации WHERE (опционально) - сериализованное выражение Expression из WASM (поле where_condition)
 }
 
 /**

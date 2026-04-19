@@ -14,7 +14,6 @@ import {
 import type { FSRSRating } from "../../interfaces/fsrs";
 import type MyPlugin from "../../main";
 import { ReviewModal } from "./review-modal";
-import { DEFAULT_SETTINGS } from "../../settings";
 
 /**
  * Основная функция повторения текущей карточки FSRS

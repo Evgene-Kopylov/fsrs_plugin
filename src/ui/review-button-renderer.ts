@@ -56,20 +56,6 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 		this.historyButton.className = "fsrs-history-button";
 		this.historyButton.textContent = "📊";
 		this.historyButton.title = "История повторений";
-		this.historyButton.style.display = "flex";
-		this.historyButton.style.alignItems = "center";
-		this.historyButton.style.justifyContent = "center";
-		this.historyButton.style.width = "32px";
-		this.historyButton.style.height = "32px";
-		this.historyButton.style.backgroundColor =
-			"var(--background-secondary)";
-		this.historyButton.style.color = "var(--text-muted)";
-		this.historyButton.style.border =
-			"1px solid var(--background-modifier-border)";
-		this.historyButton.style.borderRadius = "4px";
-		this.historyButton.style.cursor = "pointer";
-		this.historyButton.style.fontSize = "14px";
-		this.historyButton.style.transition = "all 0.2s ease";
 
 		// Добавляем кнопки в контейнер
 		this.buttonsContainer.appendChild(this.mainButton);
