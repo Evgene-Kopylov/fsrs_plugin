@@ -149,7 +149,7 @@ pub fn filter_and_sort_cards(
         // Логируем полные computed_fields в JSON для отладки
         match serde_json::to_string(&card.computed_fields) {
             Ok(json_str) => {
-                console::log_1(&format!("computed_fields JSON (первые 500 символов): {}",
+                console::debug_1(&format!("computed_fields JSON (первые 500 символов): {}",
                     &json_str[..json_str.len().min(500)]).into());
             }
             Err(e) => {
