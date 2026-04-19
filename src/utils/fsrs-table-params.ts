@@ -165,8 +165,8 @@ function convertToTableParams(value: unknown): TableParams | null {
 		}
 	}
 
-	// Условие WHERE (передаётся как where_condition из WASM, тип any)
-	const where = obj.where_condition as any;
+	// Условие WHERE (передаётся как where_condition из WASM)
+	const where = obj.where_condition;
 
 	return {
 		columns,

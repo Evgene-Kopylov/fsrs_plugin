@@ -457,7 +457,8 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 						new Date(),
 					);
 					this.params = params;
-				} catch (error) {
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
+				} catch (_error) {
 					// Игнорируем ошибку парсинга, так как теперь будем использовать SQL напрямую
 					this.params = null;
 				}
