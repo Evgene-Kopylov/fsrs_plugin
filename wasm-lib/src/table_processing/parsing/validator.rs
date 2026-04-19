@@ -107,6 +107,7 @@ impl ValidationResult {
     }
 
     /// Создает пустой результат валидации
+    #[allow(unused)]
     pub fn empty() -> Self {
         Self {
             warnings: Vec::new(),
