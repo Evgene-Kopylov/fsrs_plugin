@@ -17,19 +17,6 @@ export interface SortParam {
 export type SortDirection = "ASC" | "DESC";
 
 /**
- * Условие фильтрации WHERE
- */
-// Тип для WHERE условий (используется только в TypeScript, в WASM передается как есть)
-export interface WhereCondition {
-	field: string;
-	operator: string;
-	value: unknown;
-	left?: WhereCondition;
-	right?: WhereCondition;
-	operatorLogical?: "AND" | "OR";
-}
-
-/**
  * Колонка таблицы
  */
 export interface TableColumn {
@@ -45,7 +32,7 @@ export interface TableParams {
 	columns: TableColumn[];
 	limit: number; // 0 означает "использовать значение из настроек"
 	sort?: SortParam; // параметры сортировки (опционально)
-	where?: any; // условие фильтрации WHERE (опционально) - передается как есть из WASM
+	where?: any; // условие фильтрации WHERE (опционально) - сериализованное выражение Expression из WASM (поле where_condition)
 }
 
 /**
@@ -181,16 +168,6 @@ function convertToTableParams(value: unknown): TableParams | null {
 	// Условие WHERE (передаётся как where_condition из WASM, тип any)
 	const where = obj.where_condition as any;
 
-	// Отладочный вывод для WHERE условия
-	console.debug("convertToTableParams - where condition:", {
-		hasWhere: !!where,
-		where: where,
-		whereType: typeof where,
-		whereString: JSON.stringify(where, null, 2),
-		rawWhereCondition: obj.where_condition,
-		hasWhereCondition: !!obj.where_condition,
-	});
-
 	return {
 		columns,
 		limit,
@@ -233,16 +210,6 @@ export function parseSqlBlock(source: string): TableParams {
 			);
 		}
 
-		// Логируем полный результат парсинга от WASM
-		console.debug("parseSqlBlock - parsedResult from WASM:", {
-			hasParams: !!parsedResult.params,
-			params: parsedResult.params,
-			paramsType: typeof parsedResult.params,
-			paramsString: JSON.stringify(parsedResult.params, null, 2),
-			warningsCount: parsedResult.warnings?.length || 0,
-			warnings: parsedResult.warnings,
-		});
-
 		const tableParams = convertToTableParams(parsedResult.params);
 		if (!tableParams) {
 			throw new Error(
@@ -253,20 +220,6 @@ export function parseSqlBlock(source: string): TableParams {
 				),
 			);
 		}
-
-		// Логируем параметры для отладки
-		console.debug("parseSqlBlock - параметры парсинга:", {
-			source,
-			hasParams: !!parsedResult.params,
-			warningsCount: parsedResult.warnings?.length || 0,
-			tableParams: {
-				columns: tableParams.columns,
-				limit: tableParams.limit,
-				hasSort: !!tableParams.sort,
-				hasWhere: !!tableParams.where,
-				where: tableParams.where,
-			},
-		});
 
 		// Обрабатываем предупреждения, если есть
 		if (parsedResult.warnings && parsedResult.warnings.length > 0) {

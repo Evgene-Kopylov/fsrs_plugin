@@ -165,7 +165,6 @@ export async function generateTableHTMLFromSql(
 		cardCount: cards.length,
 		sqlSource,
 		params,
-		hasWhere: !!params.where,
 		hasSort: !!params.sort,
 	});
 

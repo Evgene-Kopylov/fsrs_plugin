@@ -127,7 +127,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 					: null,
 				sourceText: this.sourceText,
 				lastAction: this.lastAction,
-				hasWhere: this.params?.where ? true : false,
 				hasSort: this.params?.sort ? true : false,
 			});
 
@@ -364,7 +363,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			params: this.params
 				? JSON.parse(JSON.stringify(this.params))
 				: null,
-			hasWhere: this.params?.where ? true : false,
 		});
 
 		// Перерисовываем таблицу с новыми параметрами сортировки

@@ -13,7 +13,7 @@ pub use sorter::FilterError;
 use serde::{Deserialize, Serialize};
 use crate::table_processing::types::{TableParams, SortDirection};
 
-use log::{debug, warn};
+use log::{debug, warn, info};
 
 
 /// Карточка с вычисленными полями для сортировки
@@ -107,7 +107,8 @@ pub fn filter_and_sort_cards(
 
     // Применяем фильтрацию WHERE если указана
     if let Some(condition) = &params.where_condition {
-        debug!("Применение фильтрации WHERE");
+        info!("Применение фильтрации WHERE");
+        info!("Условие WHERE для фильтрации: {:?}", condition);
         computed_cards.retain(|card| {
             match crate::table_processing::filtering::evaluator::evaluate_condition(condition, &card.computed_fields) {
                 Ok(result) => result,
@@ -117,7 +118,7 @@ pub fn filter_and_sort_cards(
                 }
             }
         });
-        debug!("После фильтрации WHERE осталось {} карточек", computed_cards.len());
+        info!("После фильтрации WHERE осталось {} карточек", computed_cards.len());
     }
 
     // Применяем сортировку если указана
