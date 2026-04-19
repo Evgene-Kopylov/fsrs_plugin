@@ -220,6 +220,7 @@ export async function filterAndSortCards(
 		console.debug("WASM parameters for filter_and_sort_cards:", {
 			wasmParams: JSON.parse(JSON.stringify(wasmParams)),
 			hasWhereCondition: !!wasmParams.where_condition,
+			whereCondition: wasmParams.where_condition,
 		});
 
 		// Вызываем WASM функцию для фильтрации и сортировки
@@ -230,10 +231,21 @@ export async function filterAndSortCards(
 			now.toISOString(),
 		);
 
+		console.debug(
+			"WASM filter_and_sort_cards result JSON length:",
+			resultJson.length,
+		);
+
 		// Парсим результат с явным приведением типов
 		const wasmResult: WasmFilterResult = JSON.parse(
 			resultJson,
 		) as unknown as WasmFilterResult;
+
+		console.debug("WASM filter result:", {
+			totalCards: wasmResult.cards?.length || 0,
+			totalCount: wasmResult.total_count,
+			errorCount: wasmResult.errors?.length || 0,
+		});
 
 		// Обрабатываем ошибки, если есть
 		if (wasmResult.errors && wasmResult.errors.length > 0) {
@@ -252,6 +264,13 @@ export async function filterAndSortCards(
 				const card: ModernFSRSCard = JSON.parse(
 					wasmCard.card_json,
 				) as unknown as ModernFSRSCard;
+
+				// Отладочная информация о карточке
+				console.debug("Processing card:", {
+					file: card.filePath,
+					reviewsCount: card.reviews?.length || 0,
+					computedFields: wasmCard.computed_fields,
+				});
 
 				// Преобразуем вычисленные поля в состояние
 				const state = convertWasmFieldsToComputedState(

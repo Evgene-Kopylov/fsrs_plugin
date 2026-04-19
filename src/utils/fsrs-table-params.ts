@@ -178,8 +178,18 @@ function convertToTableParams(value: unknown): TableParams | null {
 		}
 	}
 
-	// Условие WHERE (передаётся как есть из WASM, тип any)
-	const where = obj.where as any;
+	// Условие WHERE (передаётся как where_condition из WASM, тип any)
+	const where = obj.where_condition as any;
+
+	// Отладочный вывод для WHERE условия
+	console.debug("convertToTableParams - where condition:", {
+		hasWhere: !!where,
+		where: where,
+		whereType: typeof where,
+		whereString: JSON.stringify(where, null, 2),
+		rawWhereCondition: obj.where_condition,
+		hasWhereCondition: !!obj.where_condition,
+	});
 
 	return {
 		columns,
@@ -222,6 +232,17 @@ export function parseSqlBlock(source: string): TableParams {
 				formatError("Ошибка парсинга SQL: отсутствуют параметры"),
 			);
 		}
+
+		// Логируем полный результат парсинга от WASM
+		console.debug("parseSqlBlock - parsedResult from WASM:", {
+			hasParams: !!parsedResult.params,
+			params: parsedResult.params,
+			paramsType: typeof parsedResult.params,
+			paramsString: JSON.stringify(parsedResult.params, null, 2),
+			warningsCount: parsedResult.warnings?.length || 0,
+			warnings: parsedResult.warnings,
+		});
+
 		const tableParams = convertToTableParams(parsedResult.params);
 		if (!tableParams) {
 			throw new Error(

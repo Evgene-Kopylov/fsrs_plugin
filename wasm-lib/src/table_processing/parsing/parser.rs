@@ -1,7 +1,7 @@
 //! Синтаксический анализатор для SQL-подобного синтаксиса блоков `fsrs-table`
 //! Преобразует последовательность токенов в структуру TableParams
 
-use log::{debug, warn};
+use log::{debug, warn, info};
 
 use super::lexer::{SqlLexer, Token, TokenType};
 use super::{ParseError, ParseResult, ParseWarning, Expression, Value, ComparisonOp};
@@ -55,7 +55,7 @@ impl<'a> ParserState<'a> {
     /// Создает новое состояние парсера
     fn new(lexer: &'a mut SqlLexer) -> Result<Self, ParseError> {
         let current_token = lexer.next_token()
-            .map_err(ParseError::Lexical)?;
+            .map_err(|e| ParseError::Lexical(e))?;
 
         Ok(Self {
             lexer,
@@ -66,8 +66,9 @@ impl<'a> ParserState<'a> {
 
     /// Переходит к следующему токену
     fn advance(&mut self) -> Result<(), ParseError> {
-        self.current_token = self.lexer.next_token()
-            .map_err(ParseError::Lexical)?;
+        let old_token = self.current_token.clone();
+        self.current_token = self.lexer.next_token().map_err(|e| ParseError::Lexical(e))?;
+        debug!("advance: {} -> {}", old_token, self.current_token);
         Ok(())
     }
 
@@ -106,19 +107,24 @@ impl<'a> ParserState<'a> {
 
         // Парсим SELECT clause
         self.parse_select_clause()?;
+        debug!("parse_query: after select clause, current token = {:?}", self.current_token);
 
         // Парсим дополнительные части в любом порядке
         while self.current_token.token_type != TokenType::Eof {
+            debug!("parse_query loop: current token = {:?}", self.current_token);
             if self.current_token.is_keyword("WHERE") {
+                info!("Found WHERE keyword");
                 self.parse_where_clause()?;
             } else if self.current_token.is_keyword("ORDER") {
+                debug!("Found ORDER keyword");
                 self.parse_order_by_clause()?;
             } else if self.current_token.is_keyword("LIMIT") {
+                debug!("Found LIMIT keyword");
                 self.parse_limit_clause()?;
             } else {
                 // Неожиданный токен, но пытаемся восстановиться
                 let unexpected = self.current_token.value.clone();
-                warn!("Неожиданный токен '{}', пропускаем", unexpected);
+                warn!("Неожиданный токен '{}' (type: {:?}), пропускаем", unexpected, self.current_token.token_type);
                 self.result.warnings.push(ParseWarning::UnexpectedToken(unexpected));
                 self.advance()?;
             }
@@ -132,10 +138,14 @@ impl<'a> ParserState<'a> {
     fn parse_select_clause(&mut self) -> Result<(), ParseError> {
         self.consume_keyword("SELECT")?;
 
+        debug!("parse_select_clause: current token = {:?}", self.current_token);
+
         // Проверяем, является ли первая колонка звездочкой
         if self.current_token.is_operator('*') {
+            debug!("Found * operator, parsing star column");
             // Обрабатываем SELECT *
             self.parse_star_column()?;
+            debug!("After parse_star_column: current token = {:?}", self.current_token);
 
             // После звездочки не должно быть других колонок
             if self.current_token.is_operator(',') {
@@ -144,8 +154,10 @@ impl<'a> ParserState<'a> {
                 ));
             }
         } else {
+            debug!("Parsing regular column definition");
             // Парсим первую колонку
             self.parse_column_definition()?;
+            debug!("After first column: current token = {:?}", self.current_token);
 
             // Парсим остальные колонки, разделенные запятыми
             while self.current_token.is_operator(',') {
@@ -154,11 +166,14 @@ impl<'a> ParserState<'a> {
             }
         }
 
+        debug!("parse_select_clause completed, current token = {:?}", self.current_token);
         Ok(())
     }
 
     /// Обрабатывает звездочку (*) для выбора всех полей
     fn parse_star_column(&mut self) -> Result<(), ParseError> {
+        debug!("parse_star_column: current token = {:?}", self.current_token);
+
         // Проверяем, что текущий токен - звездочка
         if !self.current_token.is_operator('*') {
             return Err(ParseError::Syntax(
@@ -168,6 +183,7 @@ impl<'a> ParserState<'a> {
 
         // Пропускаем звездочку
         self.advance()?;
+        debug!("parse_star_column: star processed, adding all available fields, next token = {:?}", self.current_token);
 
         // Добавляем все доступные поля
         for &field in AVAILABLE_FIELDS.iter() {
@@ -232,6 +248,7 @@ impl<'a> ParserState<'a> {
         }
 
         let condition = self.parse_expression()?;
+        info!("parse_where_clause: parsed condition = {:?}", condition);
         self.result.where_condition = Some(condition);
         Ok(())
     }

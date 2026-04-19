@@ -1,4 +1,5 @@
 use chrono::{DateTime, Utc};
+use log;
 use serde::{Deserialize, Serialize};
 
 use crate::json_parsing::{parse_datetime_flexible, parse_parameters_from_json};
@@ -357,31 +358,31 @@ fn group_cards_by_state_internal(
 /// Функции для работы со временем
 /// Рассчитывает время просрочки карточки в часах
 pub fn get_overdue_hours(due_iso: String, now_iso: String) -> String {
-    web_sys::console::debug_1(&format!("get_overdue_hours called: due_iso={}, now_iso={}", due_iso, now_iso).into());
+    log::debug!("get_overdue_hours called: due_iso={}, now_iso={}", due_iso, now_iso);
 
     let result = match (
         parse_datetime_flexible(&due_iso),
         parse_datetime_flexible(&now_iso),
     ) {
         (Some(due_date), Some(now)) => {
-            web_sys::console::debug_1(&format!("Dates parsed successfully: due_date={:?}, now={:?}", due_date, now).into());
+            log::debug!("Dates parsed successfully: due_date={:?}, now={:?}", due_date, now);
 
             let diff_ms = now.timestamp_millis() - due_date.timestamp_millis();
-            web_sys::console::debug_1(&format!("diff_ms = {} (now {} - due {})", diff_ms, now.timestamp_millis(), due_date.timestamp_millis()).into());
+            log::debug!("diff_ms = {} (now {} - due {})", diff_ms, now.timestamp_millis(), due_date.timestamp_millis());
 
             let hours = (diff_ms as f64 / (1000.0 * 60.0 * 60.0)).floor();
-            web_sys::console::debug_1(&format!("overdue_hours = {} (diff_ms / (1000*60*60))", hours).into());
+            log::debug!("overdue_hours = {} (diff_ms / (1000*60*60))", hours);
 
             hours
         }
         _ => {
-            web_sys::console::warn_1(&"Failed to parse dates, returning 0.0".into());
+            log::warn!("Failed to parse dates, returning 0.0");
             0.0
         },
     };
 
     let json_result = serde_json::to_string(&result).unwrap_or_else(|_| "0.0".to_string());
-    web_sys::console::debug_1(&format!("get_overdue_hours returning: {}", json_result).into());
+    log::debug!("get_overdue_hours returning: {}", json_result);
     json_result
 }
 
