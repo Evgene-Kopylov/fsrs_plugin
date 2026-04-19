@@ -276,7 +276,7 @@ impl SqlLexer {
 
     /// Проверяет, является ли символ оператором
     fn is_operator_char(ch: char) -> bool {
-        matches!(ch, '>' | '<' | '=' | '!' | ',')
+        matches!(ch, '>' | '<' | '=' | '!' | ',' | '*')
     }
 }
 

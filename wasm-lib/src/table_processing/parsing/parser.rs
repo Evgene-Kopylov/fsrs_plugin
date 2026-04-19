@@ -5,7 +5,7 @@ use log::{debug, warn};
 
 use super::lexer::{SqlLexer, Token, TokenType};
 use super::{ParseError, ParseResult, ParseWarning, Expression, Value, ComparisonOp};
-use crate::table_processing::types::{SortDirection, SortParam, TableColumn, TableParams};
+use crate::table_processing::types::{SortDirection, SortParam, TableColumn, TableParams, AVAILABLE_FIELDS};
 
 /// Промежуточная структура для хранения результата парсинга
 /// перед валидацией и преобразованием в TableParams
@@ -132,13 +132,49 @@ impl<'a> ParserState<'a> {
     fn parse_select_clause(&mut self) -> Result<(), ParseError> {
         self.consume_keyword("SELECT")?;
 
-        // Парсим первую колонку
-        self.parse_column_definition()?;
+        // Проверяем, является ли первая колонка звездочкой
+        if self.current_token.is_operator('*') {
+            // Обрабатываем SELECT *
+            self.parse_star_column()?;
 
-        // Парсим остальные колонки, разделенные запятыми
-        while self.current_token.is_operator(',') {
-            self.advance()?; // Пропускаем запятую
+            // После звездочки не должно быть других колонок
+            if self.current_token.is_operator(',') {
+                return Err(ParseError::Syntax(
+                    "Нельзя использовать запятую после SELECT *".to_string()
+                ));
+            }
+        } else {
+            // Парсим первую колонку
             self.parse_column_definition()?;
+
+            // Парсим остальные колонки, разделенные запятыми
+            while self.current_token.is_operator(',') {
+                self.advance()?; // Пропускаем запятую
+                self.parse_column_definition()?;
+            }
+        }
+
+        Ok(())
+    }
+
+    /// Обрабатывает звездочку (*) для выбора всех полей
+    fn parse_star_column(&mut self) -> Result<(), ParseError> {
+        // Проверяем, что текущий токен - звездочка
+        if !self.current_token.is_operator('*') {
+            return Err(ParseError::Syntax(
+                "Ожидается оператор '*' для выбора всех полей".to_string()
+            ));
+        }
+
+        // Пропускаем звездочку
+        self.advance()?;
+
+        // Добавляем все доступные поля
+        for &field in AVAILABLE_FIELDS.iter() {
+            self.result.columns.push(ColumnDefinition {
+                field: field.to_string(),
+                alias: None,
+            });
         }
 
         Ok(())
@@ -146,36 +182,43 @@ impl<'a> ParserState<'a> {
 
     /// Парсит определение колонки: identifier [AS string]
     fn parse_column_definition(&mut self) -> Result<(), ParseError> {
-        if self.current_token.token_type != TokenType::Identifier {
-            return Err(ParseError::Syntax(format!(
+        // Проверяем, является ли токен идентификатором или звездочкой
+        match self.current_token.token_type {
+            TokenType::Identifier => {
+                let field = self.current_token.value.clone().to_lowercase();
+                self.advance()?;
+
+                let mut alias = None;
+
+                // Проверяем наличие алиаса
+                if self.current_token.is_keyword("AS") {
+                    self.advance()?; // Пропускаем AS
+
+                    if self.current_token.token_type != TokenType::String {
+                        return Err(ParseError::Syntax(format!(
+                            "Ожидается строка с алиасом в двойных кавычках, получено '{}'",
+                            self.current_token.value
+                        )));
+                    }
+
+                    alias = Some(self.current_token.value.clone());
+                    self.advance()?;
+                }
+
+                self.result.columns.push(ColumnDefinition { field, alias });
+                Ok(())
+            }
+            TokenType::Operator if self.current_token.value == "*" => {
+                // Звездочка должна обрабатываться в parse_select_clause
+                Err(ParseError::Syntax(
+                    "Звездочка (*) должна быть единственным элементом в SELECT".to_string()
+                ))
+            }
+            _ => Err(ParseError::Syntax(format!(
                 "Ожидается идентификатор поля, получено '{}'",
                 self.current_token.value
-            )));
+            ))),
         }
-
-        let field = self.current_token.value.clone().to_lowercase();
-        self.advance()?;
-
-        let mut alias = None;
-
-        // Проверяем наличие алиаса
-        if self.current_token.is_keyword("AS") {
-            self.advance()?; // Пропускаем AS
-
-            if self.current_token.token_type != TokenType::String {
-                return Err(ParseError::Syntax(format!(
-                    "Ожидается строка с алиасом в двойных кавычках, получено '{}'",
-                    self.current_token.value
-                )));
-            }
-
-            alias = Some(self.current_token.value.clone());
-            self.advance()?;
-        }
-
-        self.result.columns.push(ColumnDefinition { field, alias });
-
-        Ok(())
     }
 
     /// Парсит WHERE clause
