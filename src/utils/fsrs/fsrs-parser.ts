@@ -25,75 +25,32 @@ export function parseModernFsrsFromFrontmatter(
 			};
 		}
 
-		let parsedCard: any;
-		let wasmFailed = false;
-		let wasmError: string | undefined;
+		// WASM ожидает полный frontmatter с ---, поэтому оборачиваем
+		const wrappedFrontmatter = `---\n${frontmatter}\n---`;
 
-		// Пытаемся использовать WASM для извлечения FSRS карточки из frontmatter
-		try {
-			// WASM ожидает полный frontmatter с ---, поэтому оборачиваем
-			const wrappedFrontmatter = `---\n${frontmatter}\n---`;
+		const cardJson =
+			extract_fsrs_from_frontmatter_wrapped(wrappedFrontmatter);
 
-			const cardJson =
-				extract_fsrs_from_frontmatter_wrapped(wrappedFrontmatter);
-
-			// Парсим JSON результат из WASM
-			parsedCard = JSON.parse(cardJson);
-
-			// Если WASM вернул null, значит карточка битая
-			if (parsedCard === null) {
-				console.warn(
-					`FSRS card in ${filePath} is broken: WASM parsing returned null. Ignoring card.`,
-				);
-				return {
-					success: false,
-					card: null,
-					error: "WASM parsing failed - broken card",
-				};
-			}
-		} catch (wasmError_) {
-			wasmFailed = true;
-			wasmError =
-				wasmError_ instanceof Error
-					? wasmError_.message
-					: String(wasmError_);
-			console.warn(`WASM parsing failed for ${filePath}: ${wasmError}`);
-
-			// Fallback: пытаемся распарсить YAML самостоятельно
-			try {
-				parsedCard = parseYaml(frontmatter);
-
-				// Если fallback парсинг вернул null, значит карточка битая
-				if (parsedCard === null) {
-					console.warn(
-						`FSRS card in ${filePath} is broken: fallback YAML parsing returned null. Ignoring card.`,
-					);
-					return {
-						success: false,
-						card: null,
-						error: "fallback YAML parsing failed - broken card",
-					};
-				}
-			} catch (yamlError) {
-				console.error(
-					`Fallback YAML parsing also failed for ${filePath}:`,
-					yamlError,
-				);
-				return {
-					success: false,
-					card: null,
-					error: `WASM and fallback parsing failed: ${wasmError}`,
-				};
-			}
+		// Проверяем результат WASM перед парсингом JSON
+		if (cardJson === "null" || !cardJson) {
+			console.warn(
+				`FSRS card in ${filePath} is broken: WASM parsing returned null or empty. Ignoring card.`,
+			);
+			return {
+				success: false,
+				card: null,
+				error: "WASM parsing failed - broken card",
+			};
 		}
+
+		// Парсим JSON результат из WASM
+		const parsedCard = JSON.parse(cardJson);
 
 		if (
 			!parsedCard ||
 			!parsedCard.reviews ||
 			!Array.isArray(parsedCard.reviews)
 		) {
-			// Эта проверка уже должна была сработать выше для null,
-			// но оставляем для других случаев
 			console.warn(
 				`FSRS card in ${filePath} has invalid reviews field. Ignoring card.`,
 			);
@@ -201,14 +158,7 @@ export function parseModernFsrsFromFrontmatter(
 			};
 		}
 
-		// Если WASM парсинг не удался, но карточка валидна, выводим предупреждение
-		if (wasmFailed && reviews.length > 0) {
-			console.warn(
-				`WASM parsing failed for ${filePath}, but fallback parser found ${reviews.length} valid sessions. Error: ${wasmError}`,
-			);
-		}
-
-		// Если после валидации нет ни одной сессии, но WASM не падал (т.е. файл содержит reviews поле),
+		// Если после валидации нет ни одной сессии, но файл содержит reviews поле,
 		// считаем это успехом с пустым массивом сессий (карточка без повторений)
 
 		const card: ModernFSRSCard = {
@@ -219,9 +169,7 @@ export function parseModernFsrsFromFrontmatter(
 		return {
 			success: true,
 			card,
-			error: wasmFailed
-				? `WASM parsing failed, used fallback: ${wasmError}`
-				: undefined,
+			error: undefined,
 		};
 	} catch (error) {
 		console.error(
@@ -234,167 +182,4 @@ export function parseModernFsrsFromFrontmatter(
 			error: error instanceof Error ? error.message : String(error),
 		};
 	}
-}
-
-/**
- * Основной парсер YAML (fallback)
- */
-export function parseYaml(yaml: string): any {
-	try {
-		const lines = yaml.split("\n");
-		const stack: Array<{
-			obj: any;
-			key: string | null;
-			indent: number;
-		}> = [];
-		const root: any = {};
-		let current: { obj: any; key: string | null; indent: number } = {
-			obj: root,
-			key: null,
-			indent: -1,
-		};
-		let i = 0;
-
-		while (i < lines.length) {
-			const line = lines[i]!;
-			const trimmed = line.trim();
-
-			// Пропускаем пустые строки и комментарии
-			if (trimmed === "" || trimmed.startsWith("#")) {
-				i++;
-				continue;
-			}
-
-			// Определяем уровень отступа
-			const indent = line.search(/\S/);
-			if (indent === -1) {
-				i++;
-				continue;
-			}
-
-			// Возвращаемся на нужный уровень в стеке
-			while (
-				stack.length > 0 &&
-				indent <= stack[stack.length - 1]!.indent
-			) {
-				stack.pop();
-			}
-			if (stack.length > 0) {
-				current = stack[stack.length - 1]!;
-			} else {
-				current = { obj: root, key: null, indent: -1 };
-			}
-
-			// Обработка элемента массива
-			if (trimmed.startsWith("- ")) {
-				const content = trimmed.substring(2).trim();
-
-				// Если текущий объект не массив, создаем его
-				if (!Array.isArray(current.obj[current.key!])) {
-					current.obj[current.key!] = [];
-				}
-
-				const array = current.obj[current.key!] as any[];
-
-				if (content.includes(":")) {
-					// Объект внутри массива - делим только по первому двоеточию
-					const colonIndex = content.indexOf(":");
-					const key = content.substring(0, colonIndex).trim();
-					const value = content.substring(colonIndex + 1).trim();
-
-					const item: any = {};
-					item[key] = parseYamlValue(value);
-					array.push(item);
-
-					// Добавляем в стек для возможных вложенных элементов
-					stack.push({
-						obj: item,
-						key: key,
-						indent: indent,
-					});
-				} else {
-					// Простое значение в массиве
-					array.push(parseYamlValue(content));
-				}
-			} else if (trimmed.includes(":")) {
-				// Обработка пары ключ-значение
-				const colonIndex = trimmed.indexOf(":");
-				const key = trimmed.substring(0, colonIndex).trim();
-				let value = trimmed.substring(colonIndex + 1).trim();
-
-				// Проверяем, является ли значение массивом (следующая строка начинается с "-")
-				if (value === "" && i + 1 < lines.length) {
-					const nextLine = lines[i + 1]!;
-					const nextIndent = nextLine.search(/\S/);
-					if (
-						nextIndent > indent &&
-						nextLine.trim().startsWith("-")
-					) {
-						// Это начало массива
-						current.obj[key] = [];
-						stack.push({
-							obj: current.obj,
-							key: key,
-							indent: indent,
-						});
-						i++;
-						continue;
-					}
-				}
-
-				// Обычное значение
-				current.obj[key] = parseYamlValue(value);
-
-				// Если значение объект (пустая строка после двоеточия), добавляем в стек
-				if (value === "" && i + 1 < lines.length) {
-					const nextLine = lines[i + 1]!;
-					const nextIndent = nextLine.search(/\S/);
-					if (nextIndent > indent && nextLine.includes(":")) {
-						current.obj[key] = {};
-						stack.push({
-							obj: current.obj[key],
-							key: null,
-							indent: indent,
-						});
-					}
-				}
-			}
-
-			i++;
-		}
-
-		return root;
-	} catch (error) {
-		console.error("Ошибка при парсинге YAML:", error);
-		return null;
-	}
-}
-
-/**
- * Парсер значений YAML
- */
-export function parseYamlValue(valueStr: string): any {
-	if (valueStr === "true") return true;
-	if (valueStr === "false") return false;
-	if (valueStr === "null") return null;
-	if (valueStr === "[]") return [];
-	if (valueStr === "{}") return {};
-
-	// Числа
-	const trimmed = valueStr.trim();
-	if (/^-?\d+(\.\d+)?$/.test(trimmed)) {
-		const num = parseFloat(trimmed);
-		return isNaN(num) ? trimmed : num;
-	}
-
-	// Строки в кавычках
-	if (
-		(valueStr.startsWith('"') && valueStr.endsWith('"')) ||
-		(valueStr.startsWith("'") && valueStr.endsWith("'"))
-	) {
-		return valueStr.substring(1, valueStr.length - 1);
-	}
-
-	// Простые строки
-	return valueStr;
 }
