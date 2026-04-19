@@ -2,3 +2,7 @@
 
 export { ReviewModal } from "./review-modal";
 export { reviewCurrentCard, reviewCardByPath } from "./review-card";
+export {
+	deleteLastReview,
+	deleteLastReviewCurrentCard,
+} from "./delete-last-review";

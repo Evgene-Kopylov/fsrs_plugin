@@ -5,7 +5,6 @@ import {
 	isCardDue,
 	computeCardState,
 	formatLocalDate,
-	updateReviewsInYaml,
 	getMinutesSinceLastReview,
 	getRussianNoun,
 } from "../utils/fsrs-helper";
@@ -18,7 +17,7 @@ import type FsrsPlugin from "../main";
  */
 export class ReviewButtonRenderer extends MarkdownRenderChild {
 	private mainButton: HTMLButtonElement;
-	private deleteButton: HTMLButtonElement;
+
 	private buttonsContainer: HTMLDivElement;
 	private currentState:
 		| "not-fsrs"
@@ -50,15 +49,8 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 		this.mainButton = document.createElement("button");
 		this.mainButton.className = "fsrs-review-button";
 
-		// Создаем кнопку удаления
-		this.deleteButton = document.createElement("button");
-		this.deleteButton.className = "fsrs-delete-button";
-		this.deleteButton.textContent = "✕";
-		this.deleteButton.title = "Delete last review";
-
 		// Добавляем кнопки в контейнер
 		this.buttonsContainer.appendChild(this.mainButton);
-		this.buttonsContainer.appendChild(this.deleteButton);
 
 		// Устанавливаем фиксированный класс для контейнера
 		container.className = "fsrs-review-button-container";
@@ -92,7 +84,6 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 				this.mainButton.textContent = "Файл не найден";
 				this.mainButton.disabled = true;
 				this.updateButtonClass("error");
-				this.deleteButton.disabled = true;
 				return;
 			}
 
@@ -103,7 +94,6 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 				this.mainButton.textContent = "Нет frontmatter";
 				this.mainButton.disabled = true;
 				this.updateButtonClass("error");
-				this.deleteButton.disabled = true;
 				return;
 			}
 
@@ -118,7 +108,6 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 				this.mainButton.textContent = "Not an fsrs card";
 				this.mainButton.disabled = false;
 				this.updateButtonClass("not-fsrs");
-				this.deleteButton.disabled = true; // Нет повторений для удаления
 				return;
 			}
 
@@ -145,15 +134,11 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 				this.mainButton.disabled = false;
 				this.updateButtonClass("due");
 			}
-
-			// Кнопка удаления активна только если есть повторения
-			this.deleteButton.disabled = card.reviews.length === 0;
 		} catch (error) {
 			console.error("Ошибка при обновлении состояния кнопки:", error);
 			this.mainButton.textContent = "Ошибка загрузки";
 			this.mainButton.disabled = true;
 			this.updateButtonClass("error");
-			this.deleteButton.disabled = true;
 		}
 	}
 
@@ -192,17 +177,6 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 				_clickHandler?: typeof mainClickHandler;
 			}
 		)._clickHandler = mainClickHandler;
-
-		// Кнопка удаления
-		const deleteClickHandler = () => {
-			void this.handleDeleteButtonClick();
-		};
-		this.deleteButton.addEventListener("click", deleteClickHandler);
-		(
-			this.deleteButton as HTMLElement & {
-				_clickHandler?: typeof deleteClickHandler;
-			}
-		)._clickHandler = deleteClickHandler;
 	}
 
 	/**
@@ -219,17 +193,6 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 			this.mainButton.removeEventListener("click", handler);
 			delete mainButtonWithHandler._clickHandler;
 		}
-
-		const deleteButtonWithHandler = this.deleteButton as HTMLElement & {
-			_clickHandler?: () => Promise<void>;
-		};
-		if (this.deleteButton && deleteButtonWithHandler._clickHandler) {
-			const handler = deleteButtonWithHandler._clickHandler as (
-				ev: Event,
-			) => void;
-			this.deleteButton.removeEventListener("click", handler);
-			delete deleteButtonWithHandler._clickHandler;
-		}
 	}
 
 	/**
@@ -239,7 +202,6 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 		try {
 			// Блокируем кнопки на время обработки
 			this.mainButton.disabled = true;
-			this.deleteButton.disabled = true;
 
 			// Проверяем статус карточки перед открытием модального окна
 			const file = this.plugin.app.vault.getFileByPath(this.sourcePath);
@@ -322,92 +284,6 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 		} catch (error) {
 			console.error("Ошибка при обработке карточки:", error);
 			new Notice("Ошибка при обработке карточки");
-			// Восстанавливаем состояние при ошибке
-			await this.updateButtonState();
-		}
-	}
-
-	/**
-	 * Обрабатывает клик на кнопке удаления
-	 */
-	private async handleDeleteButtonClick(): Promise<void> {
-		try {
-			// Блокируем кнопки на время обработки
-			this.mainButton.disabled = true;
-			this.deleteButton.disabled = true;
-
-			const file = this.plugin.app.vault.getFileByPath(this.sourcePath);
-			if (!file) {
-				new Notice("Файл не найден");
-				await this.updateButtonState();
-				return;
-			}
-
-			const content = await this.plugin.app.vault.read(file);
-			const frontmatterMatch = extractFrontmatterWithMatch(content);
-
-			if (!frontmatterMatch) {
-				new Notice("Файл не содержит frontmatter");
-				await this.updateButtonState();
-				return;
-			}
-
-			const frontmatter = frontmatterMatch.content;
-			const parseResult = parseModernFsrsFromFrontmatter(
-				frontmatter,
-				this.sourcePath,
-			);
-
-			if (!parseResult.success || !parseResult.card) {
-				new Notice("Not an fsrs card. Nothing to delete.");
-				await this.updateButtonState();
-				return;
-			}
-
-			const card = parseResult.card;
-
-			// Проверяем, есть ли что удалять
-			if (card.reviews.length === 0) {
-				new Notice("Нет повторений для удаления");
-				await this.updateButtonState();
-				return;
-			}
-
-			// Удаляем последнее повторение
-			const updatedReviews = [...card.reviews];
-			updatedReviews.pop();
-
-			// Обновляем frontmatter
-			const updatedFrontmatter = updateReviewsInYaml(
-				frontmatter,
-				updatedReviews,
-			);
-
-			// Собираем обновленное содержимое файла
-			const beforeFrontmatter = content.substring(
-				0,
-				frontmatterMatch.match.index,
-			);
-			const afterFrontmatter = content.substring(
-				frontmatterMatch.match.index + frontmatterMatch.match[0].length,
-			);
-			const newContent =
-				beforeFrontmatter +
-				"---\n" +
-				updatedFrontmatter +
-				"\n---" +
-				afterFrontmatter;
-
-			// Сохраняем изменения
-			await this.plugin.app.vault.modify(file, newContent);
-
-			new Notice("Последнее повторение удалено");
-
-			this.plugin.notifyFsrsTableRenderers();
-			await this.updateButtonState();
-		} catch (error) {
-			console.error("Ошибка при удалении повторения:", error);
-			new Notice("Ошибка при удалении повторения");
 			// Восстанавливаем состояние при ошибке
 			await this.updateButtonState();
 		}

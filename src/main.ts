@@ -2,7 +2,12 @@ import { Plugin, Notice } from "obsidian";
 import { registerCommands } from "./commands/index";
 import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from "./commands/add-fsrs-fields";
 import { findFsrsCards } from "./commands/find-fsrs-cards";
-import { reviewCurrentCard, reviewCardByPath } from "./commands/review";
+import {
+	reviewCurrentCard,
+	reviewCardByPath,
+	deleteLastReview,
+	deleteLastReviewCurrentCard,
+} from "./commands/review";
 
 import { ReviewButtonRenderer } from "./ui/review-button-renderer";
 import { FsrsTableRenderer } from "./ui/fsrs-table-renderer";
@@ -240,6 +245,22 @@ export default class FsrsPlugin extends Plugin {
 	 */
 	async reviewCardByPath(filePath: string): Promise<FSRSRating | null> {
 		return await reviewCardByPath(this.app, this, filePath);
+	}
+
+	/**
+	 * Удаляет последнее повторение карточки по указанному пути файла
+	 * Можно вызывать из команды плагина
+	 */
+	async deleteLastReview(filePath: string): Promise<boolean> {
+		return await deleteLastReview(this.app, this, filePath);
+	}
+
+	/**
+	 * Удаляет последнее повторение текущей карточки
+	 * Можно вызывать из команды плагина
+	 */
+	async deleteLastReviewForCurrentFile(): Promise<boolean> {
+		return await deleteLastReviewCurrentCard(this.app, this);
 	}
 
 	/**
