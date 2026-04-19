@@ -25,7 +25,7 @@ import { shouldIgnoreFileWithSettings } from "./utils/fsrs/fsrs-filter";
 import type { ModernFSRSCard, FSRSRating } from "./interfaces/fsrs";
 
 // Импорт WASM функций
-import init, { my_wasm_function } from "../wasm-lib/pkg/wasm_lib";
+import init from "../wasm-lib/pkg/wasm_lib";
 import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
 
 /**
@@ -119,16 +119,6 @@ export default class FsrsPlugin extends Plugin {
 			console.debug("3. Вызываем init...");
 			await init({ module_or_path: wasmBytes });
 			console.debug("4. WASM инициализирован");
-
-			// Тестовая функция для проверки работы WASM
-			console.debug("5. Вызываем тестовую функцию...");
-			const result = my_wasm_function("тестовые данные из FSRS плагина");
-			console.debug("6. Результат из Rust:", result);
-
-			console.debug("7. Показываем Notice...");
-			new Notice(result);
-			console.debug("8. Notice показано");
-
 			this.isWasmInitialized = true;
 		} catch (error) {
 			console.error("Ошибка загрузки WASM модуля:", error);
