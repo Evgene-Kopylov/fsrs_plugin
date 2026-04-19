@@ -104,17 +104,3 @@ export interface ParseResult {
 	card: ModernFSRSCard | null;
 	error?: string;
 }
-
-// Интерфейс для миграции (если понадобится в будущем)
-export interface LegacyFSRSCard {
-	due: string;
-	stability: number;
-	difficulty: number;
-	elapsed_days: number;
-	scheduled_days: number;
-	reps: number;
-	lapses: number;
-	state: FSRSState;
-	last_review: string;
-	filePath: string;
-}

@@ -9,6 +9,7 @@ import type { TableParams } from "./fsrs-table-params";
 import type { CardWithState } from "./fsrs-table-filter";
 
 import { formatFieldValue } from "./fsrs-table-format";
+import { parseSqlBlock, DEFAULT_COLUMNS } from "./fsrs-table-params";
 
 /**
  * Генерирует HTML таблицы для блока fsrs-table
@@ -168,18 +169,41 @@ export async function generateTableHTMLFromSql(
 	app: App,
 	now: Date = new Date(),
 ): Promise<{ html: string; params: TableParams }> {
-	// Импортируем функции динамически для избежания циклических зависимостей
-	const { filterAndSortCardsWithSql } = await import("./fsrs-table-filter");
+	try {
+		// Парсим SQL для получения параметров таблицы
+		const params = parseSqlBlock(sqlSource);
 
-	const { params, cards: cardsWithState } = await filterAndSortCardsWithSql(
-		cards,
-		settings,
-		sqlSource,
-		now,
-	);
+		// Импортируем функцию фильтрации динамически для избежания циклических зависимостей
+		const { filterAndSortCards } = await import("./fsrs-table-filter");
 
-	const html = generateTableHTML(cardsWithState, params, settings, app, now);
-	return { html, params };
+		const cardsWithState = await filterAndSortCards(
+			cards,
+			settings,
+			params,
+			now,
+		);
+
+		const html = generateTableHTML(
+			cardsWithState,
+			params,
+			settings,
+			app,
+			now,
+		);
+		return { html, params };
+	} catch (error) {
+		console.error(
+			`Ошибка парсинга SQL запроса или фильтрации карточек: ${String(error)}. Возвращаем пустой массив.`,
+		);
+
+		// В случае ошибки, возвращаем пустой массив с дефолтными параметрами
+		const defaultParams: TableParams = {
+			columns: DEFAULT_COLUMNS,
+			limit: 0,
+		};
+		const html = generateTableHTML([], defaultParams, settings, app, now);
+		return { html, params: defaultParams };
+	}
 }
 
 /**

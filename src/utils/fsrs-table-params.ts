@@ -307,18 +307,11 @@ export function parseSqlBlock(source: string): TableParams {
 	try {
 		// Вызываем WASM функцию для парсинга
 		const resultJson = wasm.parse_fsrs_table_block(source);
-		// FIXME: убрать перд официальным релизом в Обсидиан
-		// eslint-disable-next-line no-console
-		console.info("WASM parse result JSON:", resultJson);
 
 		// Парсим JSON результат с явной типизацией
 		const parsedResult: WasmParseResult = JSON.parse(
 			resultJson,
 		) as WasmParseResult;
-
-		// FIXME: убрать перд официальным релизом в Обсидиан
-		// eslint-disable-next-line no-console
-		console.info("Parsed WASM result:", parsedResult);
 
 		// Пытаемся преобразовать params в TableParams
 		const tableParams = convertToTableParams(parsedResult.params);
@@ -458,15 +451,4 @@ export function isValidTableField(field: string): boolean {
 		// Fallback на локальную проверку
 		return AVAILABLE_FIELDS.has(field);
 	}
-}
-
-/**
- * Парсит параметры из содержимого блока fsrs-table (устаревшая функция, для совместимости)
- * @deprecated Используйте parseSqlBlock
- */
-export function parseTableParams(source: string): TableParams {
-	console.warn(
-		"Функция parseTableParams устарела. Используйте parseSqlBlock.",
-	);
-	return parseSqlBlock(source);
 }
