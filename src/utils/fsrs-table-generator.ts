@@ -43,16 +43,6 @@ export function generateTableHTML(
 
 	let html = `<div class="fsrs-table-container">`;
 
-	// Заголовок таблицы
-	const modeTitle = "Карточек";
-
-	html += `<h4 class="fsrs-table-header">
-		<span class="fsrs-header-text">${modeTitle}: ${totalCards}</span>
-		<button type="button" class="fsrs-help-toggle" title="Показать справку по синтаксису">
-			?
-		</button>
-	</h4>`;
-
 	// Таблица
 	html += `<table class="fsrs-table">`;
 
@@ -199,9 +189,7 @@ export async function generateTableHTMLFromSql(
  */
 export function generateEmptyTableHTML(): string {
 	return `<div class="fsrs-table-container">
-		<h4 class="fsrs-table-header">
-			<span class="fsrs-header-text">Карточек: 0</span>
-		</h4>
+
 		<div class="fsrs-table-empty">
 			<p>Нет карточек FSRS. Используйте команду 'Добавить FSRS поля' для создания карточек.</p>
 		</div>
