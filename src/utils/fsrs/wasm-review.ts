@@ -35,7 +35,7 @@ export async function addReviewSession(
 		return { ...parsed, filePath: card.filePath };
 	} catch (error) {
 		console.error("addReviewSession failed", error);
-		return card;
+		throw error;
 	}
 }
 

@@ -28,3 +28,4 @@ data.json
 # Rust
 Cargo.lock
 target/
+.last_rebuild_timestamp

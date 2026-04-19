@@ -1,83 +1,53 @@
-/**
- * Модуль для форматирования значений блока fsrs-table
- * Форматирует значения полей для отображения в таблице
- */
-
+import type { ModernFSRSCard, ComputedCardState } from "../interfaces/fsrs";
 import type { App } from "obsidian";
-import type {
-	ModernFSRSCard,
-	ComputedCardState,
-	FSRSState,
-} from "../interfaces/fsrs";
-import type { TableMode } from "./fsrs-table-params";
 import { formatDateTime } from "./date-format";
 
 /**
- * Форматирует просрочку в зависимости от режима
- * @param diffDays Разница в днях (положительная - до повторения, отрицательная - просрочка)
- * @param mode Режим отображения
- * @returns Форматированная строка
+ * Форматирует просрочку в читаемый вид
+ * @param overdueHours Просрочка в часах
+ * @returns Отформатированная строка
  */
-export function formatOverdueForMode(
-	diffDays: number,
-	mode: TableMode,
-): string {
-	if (typeof diffDays !== "number" || isNaN(diffDays)) {
-		return "0 дн";
+export function formatOverdue(overdueHours: number): string {
+	if (overdueHours <= 0) {
+		return "—";
 	}
-
-	// Для режима "due" показываем только отрицательные значения или 0
-	if (mode === "due") {
-		if (diffDays > 0) {
-			return "0 дн";
-		}
-		const absDays = Math.abs(diffDays);
-		if (absDays < 1) {
-			const hours = Math.round(absDays * 24);
-			return `-${hours} ч`;
-		}
-		return `-${Math.round(absDays)} дн`;
+	if (overdueHours < 1) {
+		const minutes = Math.round(overdueHours * 60);
+		return `${minutes}м`;
 	}
-
-	// Для режима "all" показываем со знаком
-	if (diffDays < 0) {
-		const absDays = Math.abs(diffDays);
-		if (absDays < 1) {
-			const hours = Math.round(absDays * 24);
-			return `-${hours} ч`;
-		}
-		return `-${Math.round(absDays)} дн`;
-	} else if (diffDays > 0) {
-		if (diffDays < 1) {
-			const hours = Math.round(diffDays * 24);
-			return `+${hours} ч`;
-		}
-		return `+${Math.round(diffDays)} дн`;
+	if (overdueHours < 24) {
+		const hours = Math.round(overdueHours * 10) / 10;
+		return `${hours}ч`;
 	}
-
-	return "0 дн";
+	const days = Math.round((overdueHours / 24) * 10) / 10;
+	return `${days}д`;
 }
 
 /**
- * Извлекает имя файла из пути для отображения
- * @param filePath Путь к файлу
- * @returns Отображаемое имя файла
+ * Извлекает отображаемое имя файла из пути
+ * @param filePath Полный путь к файлу
+ * @returns Короткое имя файла для отображения
  */
 export function extractDisplayName(filePath: string): string {
-	const parts = filePath.split("/");
-	const fileName = parts[parts.length - 1] || filePath;
-	return fileName.endsWith(".md") ? fileName.slice(0, -3) : fileName;
+	// Удаляем расширение .md если есть
+	const withoutExt = filePath.replace(/\.md$/, "");
+	// Берем только имя файла (последнюю часть пути)
+	const parts = withoutExt.split(/[\\/]/);
+	return parts[parts.length - 1] || filePath;
 }
 
 /**
  * Переводит состояние карточки на русский язык
+ * @param state Английское название состояния
+ * @returns Русский перевод
  */
-export function translateState(state: FSRSState): string {
-	const translations: Record<FSRSState, string> = {
+export function translateState(state: string): string {
+	const translations: Record<string, string> = {
 		New: "Новая",
 		Learning: "Изучение",
 		Review: "Повторение",
-		Relearning: "Переизучение",
+		Relearning: "Переучивание",
+		due: "Повторить",
 	};
 	return translations[state] || state;
 }
@@ -85,79 +55,70 @@ export function translateState(state: FSRSState): string {
 /**
  * Форматирует значение поля для отображения в таблице
  * @param field Идентификатор поля
- * @param card Карточка
+ * @param card Карточка FSRS
  * @param state Вычисленное состояние карточки
  * @param app Экземпляр приложения Obsidian
  * @param now Текущее время
- * @param mode Режим отображения
- * @returns Форматированное значение
+ * @returns Отформатированное значение для отображения
  */
 export function formatFieldValue(
 	field: string,
 	card: ModernFSRSCard,
 	state: ComputedCardState,
 	app: App,
-	now: Date,
-	mode: TableMode,
+	now: Date = new Date(),
 ): string {
 	switch (field) {
 		case "file":
 			return extractDisplayName(card.filePath);
-
 		case "reps":
-			return card.reviews.length.toString();
-
-		case "overdue": {
-			const dueDate = new Date(state.due);
-			const diffMs = dueDate.getTime() - now.getTime();
-			const diffDays = diffMs / (1000 * 3600 * 24);
-			return formatOverdueForMode(diffDays, mode);
-		}
-
+			return String(state.reps);
+		case "overdue":
+			return formatOverdue(state.overdue ?? 0);
 		case "stability":
-			return state.stability.toFixed(2);
-
+			return state.stability.toFixed(1);
 		case "difficulty":
-			return state.difficulty.toFixed(2);
-
+			return state.difficulty.toFixed(1);
 		case "retrievability":
-			return `${(state.retrievability * 100).toFixed(1)}%`;
-
+			return state.retrievability.toFixed(1);
 		case "due":
 			return formatDateTime(app, new Date(state.due));
-
 		case "state":
 			return translateState(state.state);
-
 		case "elapsed":
-			return state.elapsed_days.toFixed(0);
-
+			return String(state.elapsed_days);
 		case "scheduled":
-			return state.scheduled_days.toFixed(0);
-
+			return String(state.scheduled_days);
 		default:
+			console.warn(`Неизвестное поле: ${field}`);
 			return "";
 	}
 }
 
 /**
- * Создает текст блока fsrs-table с параметрами по умолчанию для режима
- * @param mode Режим отображения
+ * Создает блок fsrs-table по умолчанию для вставки в файл
  * @returns Текст для вставки в блок
  */
-export function createDefaultTableBlock(mode: TableMode = "due"): string {
-	let block = "```fsrs-table\n";
-	block += `mode: ${mode}\n`;
+export function createDefaultTableBlock(): string {
+	return `\`\`\`fsrs-table
+SELECT file, reps, overdue, state, due
+LIMIT 20
+\`\`\``;
+}
 
-	if (mode === "due") {
-		block += `columns: file as "Файл", reps as "Повторений", overdue as "Просрочка", retrievability as "Извлекаемость"\n`;
-	} else {
-		// mode === "all"
-		block += `columns: file as "Файл", reps as "Повторений", overdue as "Просрочка", state as "Состояние", due as "Следующее повторение"\n`;
-	}
+/**
+ * Форматирует сообщение об ошибке в стиле Dataview
+ * @param errorMessage Сообщение об ошибке
+ * @returns Отформатированное сообщение об ошибке
+ */
+export function formatError(errorMessage: string): string {
+	const MAX_ERROR_MESSAGE_LENGTH = 500;
+	// Ограничиваем длину сообщения об ошибке
+	const truncatedMessage =
+		errorMessage.length > MAX_ERROR_MESSAGE_LENGTH
+			? errorMessage.substring(0, MAX_ERROR_MESSAGE_LENGTH) +
+				"... [truncated]"
+			: errorMessage;
 
-	block += `limit: 20\n`;
-	block += "```";
-
-	return block;
+	return `FSRS: Error:\n-- PARSING FAILED --------------------------------------------------\n\n${truncatedMessage}\n`;
 }

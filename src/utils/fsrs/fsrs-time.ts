@@ -3,16 +3,17 @@
 import type { ModernFSRSCard, ComputedCardState } from "../../interfaces/fsrs";
 import type { App } from "obsidian";
 import { formatDate } from "../date-format";
+import * as wasm from "../../../wasm-lib/pkg/wasm_lib";
 
 /**
  * Рассчитывает время просрочки карточки в часах
  */
 export function getOverdueHours(dueDate: Date, now: Date = new Date()): number {
 	try {
-		const diffMs = now.getTime() - dueDate.getTime();
-		return Math.floor(diffMs / (1000 * 60 * 60));
-	} catch (error) {
-		console.error("Ошибка при расчете просрочки:", error);
+		return JSON.parse(
+			wasm.get_overdue_hours(dueDate.toISOString(), now.toISOString()),
+		) as number;
+	} catch {
 		return 0;
 	}
 }
@@ -73,7 +74,13 @@ export function formatLocalDate(date: Date, app?: App): string {
  * Проверяет, просрочена ли карточка
  */
 export function isCardOverdue(dueDate: Date, now: Date = new Date()): boolean {
-	return dueDate.getTime() <= now.getTime();
+	try {
+		return JSON.parse(
+			wasm.is_card_overdue(dueDate.toISOString(), now.toISOString()),
+		) as boolean;
+	} catch {
+		return false;
+	}
 }
 
 /**
@@ -84,8 +91,13 @@ export function getHoursUntilDue(
 	dueDate: Date,
 	now: Date = new Date(),
 ): number {
-	const diffMs = dueDate.getTime() - now.getTime();
-	return Math.floor(diffMs / (1000 * 60 * 60));
+	try {
+		return JSON.parse(
+			wasm.get_hours_until_due(dueDate.toISOString(), now.toISOString()),
+		) as number;
+	} catch {
+		return 0;
+	}
 }
 
 /**
@@ -130,7 +142,7 @@ export function describeCardState(
 	now: Date = new Date(),
 ): string {
 	const dueDate = new Date(computedState.due);
-	const overdueHours = getOverdueHours(dueDate, now);
+	const overdueHours = computedState.overdue ?? getOverdueHours(dueDate, now);
 
 	if (overdueHours > 0) {
 		return `Просрочена: ${formatOverdueTime(overdueHours)}`;

@@ -1,61 +1,251 @@
-# Obsidian community plugin
+# SKILLS.md
+---
+name: caveman
+description: >
+  Ultra-compressed communication mode. Cuts token usage ~75% by speaking like caveman
+  while keeping full technical accuracy. Supports intensity levels: lite, full (default), ultra,
+  wenyan-lite, wenyan-full, wenyan-ultra.
+  Use when user says "caveman mode", "talk like caveman", "use caveman", "less tokens",
+  "be brief", or invokes /caveman. Also auto-triggers when token efficiency is requested.
+---
+
+Respond terse like smart caveman. All technical substance stay. Only fluff die.
+
+## Persistence
+
+ACTIVE EVERY RESPONSE. No revert after many turns. No filler drift. Still active if unsure. Off only: "stop caveman" / "normal mode".
+
+Default: **full**. Switch: `/caveman lite|full|ultra`.
+
+## Rules
+
+Drop: articles (a/an/the), filler (just/really/basically/actually/simply), pleasantries (sure/certainly/of course/happy to), hedging. Fragments OK. Short synonyms (big not extensive, fix not "implement a solution for"). Technical terms exact. Code blocks unchanged. Errors quoted exact.
+
+Pattern: `[thing] [action] [reason]. [next step].`
+
+Not: "Sure! I'd be happy to help you with that. The issue you're experiencing is likely caused by..."
+Yes: "Bug in auth middleware. Token expiry check use `<` not `<=`. Fix:"
+
+## Intensity
+
+| Level | What change |
+|-------|------------|
+| **lite** | No filler/hedging. Keep articles + full sentences. Professional but tight |
+| **full** | Drop articles, fragments OK, short synonyms. Classic caveman |
+| **ultra** | Abbreviate (DB/auth/config/req/res/fn/impl), strip conjunctions, arrows for causality (X → Y), one word when one word enough |
+| **wenyan-lite** | Semi-classical. Drop filler/hedging but keep grammar structure, classical register |
+| **wenyan-full** | Maximum classical terseness. Fully 文言文. 80-90% character reduction. Classical sentence patterns, verbs precede objects, subjects often omitted, classical particles (之/乃/為/其) |
+| **wenyan-ultra** | Extreme abbreviation while keeping classical Chinese feel. Maximum compression, ultra terse |
+
+Example — "Why React component re-render?"
+- lite: "Your component re-renders because you create a new object reference each render. Wrap it in `useMemo`."
+- full: "New object ref each render. Inline object prop = new ref = re-render. Wrap in `useMemo`."
+- ultra: "Inline obj prop → new ref → re-render. `useMemo`."
+- wenyan-lite: "組件頻重繪，以每繪新生對象參照故。以 useMemo 包之。"
+- wenyan-full: "物出新參照，致重繪。useMemo .Wrap之。"
+- wenyan-ultra: "新參照→重繪。useMemo Wrap。"
+
+Example — "Explain database connection pooling."
+- lite: "Connection pooling reuses open connections instead of creating new ones per request. Avoids repeated handshake overhead."
+- full: "Pool reuse open DB connections. No new connection per request. Skip handshake overhead."
+- ultra: "Pool = reuse DB conn. Skip handshake → fast under load."
+- wenyan-full: "池reuse open connection。不每req新開。skip handshake overhead。"
+- wenyan-ultra: "池reuse conn。skip handshake → fast。"
+
+## Auto-Clarity
+
+Drop caveman for: security warnings, irreversible action confirmations, multi-step sequences where fragment order risks misread, user asks to clarify or repeats question. Resume caveman after clear part done.
+
+Example — destructive op:
+> **Warning:** This will permanently delete all rows in the `users` table and cannot be undone.
+> ```sql
+> DROP TABLE users;
+> ```
+> Caveman resume. Verify backup exist first.
+
+## Boundaries
+
+Code/commits/PRs: write normal. "stop caveman" or "normal mode": revert. Level persist until changed or session end.
+
+---
+name: caveman-compress
+description: >
+  Compress natural language memory files (CLAUDE.md, todos, preferences) into caveman format
+  to save input tokens. Preserves all technical substance, code, URLs, and structure.
+  Compressed version overwrites the original file. Human-readable backup saved as FILE.original.md.
+  Trigger: /caveman:compress <filepath> or "compress memory file"
+---
+
+# Caveman Compress
+
+## Purpose
+
+Compress natural language files (CLAUDE.md, todos, preferences) into caveman-speak to reduce input tokens. Compressed version overwrites original. Human-readable backup saved as `<filename>.original.md`.
+
+## Trigger
+
+`/caveman:compress <filepath>` or when user asks to compress a memory file.
+
+## Process
+
+1. Сжатие выполняет суб-агент.
+
+2. Передай суб-агенту:
+   - абсолютный путь к файлу
+   - команду «сжать в caveman-формат»
+
+3. Суб-агент:
+   - определяет тип файла (без подсчёта токенов)
+   - производит сжатие
+   - проверяет результат
+   - при ошибках: точечно исправляет (только ошибки, без полного пересжатия)
+   - повторяет до 2 раз
+
+4. Если после 2 попыток ошибка осталась → сообщи пользователю, исходный файл не трогай.
+
+5. Верни результат работы суб-агента.
+
+## Compression Rules
+
+### Remove
+- Articles: a, an, the
+- Filler: just, really, basically, actually, simply, essentially, generally
+- Pleasantries: "sure", "certainly", "of course", "happy to", "I'd recommend"
+- Hedging: "it might be worth", "you could consider", "it would be good to"
+- Redundant phrasing: "in order to" → "to", "make sure to" → "ensure", "the reason is because" → "because"
+- Connective fluff: "however", "furthermore", "additionally", "in addition"
+
+### Preserve EXACTLY (never modify)
+- Code blocks (fenced ``` and indented)
+- Inline code (`backtick content`)
+- URLs and links (full URLs, markdown links)
+- File paths (`/src/components/...`, `./config.yaml`)
+- Commands (`npm install`, `git commit`, `docker build`)
+- Technical terms (library names, API names, protocols, algorithms)
+- Proper nouns (project names, people, companies)
+- Dates, version numbers, numeric values
+- Environment variables (`$HOME`, `NODE_ENV`)
+
+### Preserve Structure
+- All markdown headings (keep exact heading text, compress body below)
+- Bullet point hierarchy (keep nesting level)
+- Numbered lists (keep numbering)
+- Tables (compress cell text, keep structure)
+- Frontmatter/YAML headers in markdown files
+
+### Compress
+- Use short synonyms: "big" not "extensive", "fix" not "implement a solution for", "use" not "utilize"
+- Fragments OK: "Run tests before commit" not "You should always run tests before committing"
+- Drop "you should", "make sure to", "remember to" — just state the action
+- Merge redundant bullets that say the same thing differently
+- Keep one example where multiple examples show the same pattern
+
+CRITICAL RULE:
+Anything inside ``` ... ``` must be copied EXACTLY.
+Do not:
+- remove comments
+- remove spacing
+- reorder lines
+- shorten commands
+- simplify anything
+
+Inline code (`...`) must be preserved EXACTLY.
+Do not modify anything inside backticks.
+
+If file contains code blocks:
+- Treat code blocks as read-only regions
+- Only compress text outside them
+- Do not merge sections around code
+
+## Pattern
+
+Original:
+> You should always make sure to run the test suite before pushing any changes to the main branch. This is important because it helps catch bugs early and prevents broken builds from being deployed to production.
+
+Compressed:
+> Run tests before push to main. Catch bugs early, prevent broken prod deploys.
+
+Original:
+> The application uses a microservices architecture with the following components. The API gateway handles all incoming requests and routes them to the appropriate service. The authentication service is responsible for managing user sessions and JWT tokens.
+
+Compressed:
+> Microservices architecture. API gateway route all requests to services. Auth service manage user sessions + JWT tokens.
+
+## Boundaries
+
+- ONLY compress natural language files (.md, .txt, extensionless)
+- NEVER modify: .py, .js, .ts, .json, .yaml, .yml, .toml, .env, .lock, .css, .html, .xml, .sql, .sh
+- If file has mixed content (prose + code), compress ONLY the prose sections
+- If unsure whether something is code or prose, leave it unchanged
+- Original file is backed up as FILE.original.md before overwriting
+- Never compress FILE.original.md (skip it)
+
+# Agents.md — правила для FSRS Plugin
 
 ## 🚫 Запрещённые файлы (никогда не читать)
-- `node_modules/` — зависимости npm, огромный объём
+
+- `node_modules/` — npm зависимости, большой объём
 - `wasm-lib/target/` — скомпилированные артефакты Rust
 - `main.js` — сгенерированный бандл (очень большой, длинные строки)
-- Любые другие сгенерированные или бинарные файлы
+- любые другие сгенерированные файлы
 
 ## Язык
 
 - Пиши и рассуждай по-русски.
-- коммит сообщеня пиши по-русски.
-- логи ошибок пиши по-русски.
-- не переводи логи и комментарии.
+- Сообщения коммитов по-русски.
+- Логи ошибок по-русски.
+- Не переводи логи и комментарии (оставляй как есть).
 
 ## Документация проекта
 
-- docs/PROJECT_STRUCTURE.md - структуры проекта
-- docs/DATA_MODEL.md - структура данных
-- docs/FSRS_DEV_PLAN.md - план разработки
-- docs/FSRS_USAGE.md - рукаводство по использованию. 
+- `docs/PROJECT_STRUCTURE.md`
+- `docs/DATA_MODEL.md`
+- `docs/FSRS_DEV_PLAN.md`
+- `docs/FSRS_USAGE.md`
 
-## Миграция данных
+## Как увидеть консольный вывод Obsidian
 
-- без миграций данных
-- без миграций фич. Если новая фича заменяет старую, упоминания старой следует полностью убирать.
+- `tests/test_script/rebuild-log.sh` — скрипт сбора логов
+- Скрипт: пересборка (`npm run build`), пауза для обновления Obsidian, сбор файлов и логов из тестового хранилища.
+- Уровень логов в тестовом хранилище — Verbose (видны debug).
+- Если логов нет → остановись, сообщи пользователю.
 
-## Общая философия
+## Общие правила
 
-- не используемые методы оставлять не надо. 
-- Следует сохранять чистоту и простоту. 
-- Устаревшая, не верная документация хуже чем никакой.
-- Следует стремиться к лаконичности формулировок.
-- Избегать равноправильных вариантов, предпочтительно иметь один вариант.
-
+- Неиспользуемые методы удалять без сожаления.
+- Избегать равноправных вариантов → один способ делать что-либо.
+- Без миграций данных.
+- Обратная совместимость не важна.
 
 ## Постановка и выполнение задач
 
-- если пользователь просит составить план, его следует предоствлять в .md фале, в директории .tmp/plan/,
-после чего, прерваться до получения указаний.
-- если задача обьемная и требует планирования, но указания составить план не было, записать в .md файл, и прерваться если требуются уточнения, если нет приступать сразу. 
+- План → `.md` файл в `tmp/plan/`, затем прерваться до указаний.
+
+## 🔥 Строгое отношение к неиспользуемому коду
+
+- Запрещён код «для обратной совместимости».
+- Запрещён код «на всякий случай».
+- Запрещены закомментированные неиспользуемые блоки.
+- Запрещены неиспользуемые переменные, функции, импорты, экспорты, методы класса.
+- Любой невыполняемый код удалить.
+- Перед коммитом проверять мёртвый код (ESLint `no-unused-vars`, TS `noUnusedLocals`/`noUnusedParameters`).
+- Временно не нужная функциональность → удалить (не комментировать). Восстановить из git.
 
 ## Project overview
 
-- Target: Obsidian Community Plugin (TypeScript → bundled JavaScript).
-- Entry point: `main.ts` compiled to `main.js` and loaded by Obsidian.
-- Required release artifacts: `main.js`, `manifest.json`, and optional `styles.css`.
-Важно: НЕ ЧИТАЙ main.js. Этот файл генерируется автоматически, он слишком большой, с очень длинными строками. Ты истратишь контекстное окно и провалишь задание. Игнорируй этот файл.
-
+- Target: Obsidian Community Plugin (TS → bundled JS).
+- Entry: `main.ts` → `main.js`, loaded by Obsidian.
+- Release artifacts: `main.js`, `manifest.json`, `styles.css` (optional).
+- **Important:** DO NOT read `main.js`. Auto-generated, too big, long lines. Wastes context. Ignore.
 
 ## Environment & tooling
 
-- Node.js: use current LTS (Node 18+ recommended).
-- **Package manager: npm** (required for this sample - `package.json` defines npm scripts and dependencies).
-- **Bundler: esbuild** (required for this sample - `esbuild.config.mjs` and build scripts depend on it). Alternative bundlers like Rollup or webpack are acceptable for other projects if they bundle all external dependencies into `main.js`.
-- Types: `obsidian` type definitions.
+- Node.js: current LTS (18+ recommended).
+- **Package manager: npm** (required – `package.json` defines scripts/deps).
+- **Bundler: esbuild** (required – `esbuild.config.mjs` depends on it). Rollup/webpack acceptable if bundle all external deps into `main.js`.
+- Types: `obsidian` definitions.
 
-**Note**: This sample project has specific technical dependencies on npm and esbuild. If you're creating a plugin from scratch, you can choose different tools, but you'll need to replace the build configuration accordingly.
+**Note**: This sample uses npm + esbuild. Different tools allowed, but replace build config accordingly.
 
 ### Install
 
@@ -77,134 +267,124 @@ npm run build
 
 ## Linting
 
-- To use eslint install eslint from terminal: `npm install -g eslint`
-- To use eslint to analyze this project use this command: `eslint main.ts`
-- eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder: `eslint ./src/`
+- Install eslint: `npm install -g eslint`
+- Run: `eslint main.ts`
+- eslint → report with suggestions (file + line).
+- For source in `src/`: `eslint ./src/`
 
 ## File & folder conventions
 
-- **Organize code into multiple files**: Split functionality across separate modules rather than putting everything in `main.ts`.
-- Source lives in `src/`. Keep `main.ts` small and focused on plugin lifecycle (loading, unloading, registering commands).
-- **Example file structure**:
+- **Organize into multiple files**: Split functionality, not everything in `main.ts`.
+- Source in `src/`. `main.ts` small → plugin lifecycle (load, unload, register commands).
+- **Example structure**:
   ```
   src/
-    main.ts           # Plugin entry point, lifecycle management
-    settings.ts       # Settings interface and defaults
-    commands/         # Command implementations
-      command1.ts
-      command2.ts
-    ui/              # UI components, modals, views
-      modal.ts
-      view.ts
-    utils/           # Utility functions, helpers
-      helpers.ts
-      constants.ts
-    types.ts         # TypeScript interfaces and types
+    main.ts
+    settings.ts
+    commands/
+    ui/
+    utils/
+    types.ts
   ```
-- **Do not commit build artifacts**: Never commit `node_modules/`, `main.js`, or other generated files to version control.
-- **Agent context considerations**: When working with agents, use the `.agentignore` file (included in this project) to exclude generated files, binaries, and other non-source artifacts from agent analysis.
-- Keep the plugin small. Avoid large dependencies. Prefer browser-compatible packages.
-- Generated output should be placed at the plugin root or `dist/` depending on your build setup. Release artifacts must end up at the top level of the plugin folder in the vault (`main.js`, `manifest.json`, `styles.css`).
+- **Never commit build artifacts**: `node_modules/`, `main.js`, generated files.
+- **Agent context**: use `.agentignore` (included) to exclude generated files.
+- Keep plugin small. Avoid large deps. Prefer browser-compatible packages.
+- Generated output → plugin root or `dist/`. Release artifacts at top level (`main.js`, `manifest.json`, `styles.css`).
 
 ## Manifest rules (`manifest.json`)
 
-- Must include (non-exhaustive):  
-  - `id` (plugin ID; for local dev it should match the folder name)  
-  - `name`  
-  - `version` (Semantic Versioning `x.y.z`)  
-  - `minAppVersion`  
-  - `description`  
-  - `isDesktopOnly` (boolean)  
+- Must include (non-exhaustive):
+  - `id` (plugin ID, matches folder name for local dev)
+  - `name`, `version` (SemVer `x.y.z`), `minAppVersion`, `description`, `isDesktopOnly` (bool)
   - Optional: `author`, `authorUrl`, `fundingUrl` (string or map)
-- Never change `id` after release. Treat it as stable API.
-- Keep `minAppVersion` accurate when using newer APIs.
-- Canonical requirements are coded here: https://github.com/obsidianmd/obsidian-releases/blob/master/.github/workflows/validate-plugin-entry.yml
+- Never change `id` after release. Stable API.
+- Keep `minAppVersion` accurate for newer APIs.
+- Canonical validation: https://github.com/obsidianmd/obsidian-releases/blob/master/.github/workflows/validate-plugin-entry.yml
 
 ## Testing
 
-- Manual install for testing: copy `main.js`, `manifest.json`, `styles.css` (if any) to:
+- Manual test: copy `main.js`, `manifest.json`, `styles.css` (if any) to:
   ```
   <Vault>/.obsidian/plugins/<plugin-id>/
   ```
-- Reload Obsidian and enable the plugin in **Settings → Community plugins**.
+- Reload Obsidian, enable plugin in **Settings → Community plugins**.
 
 ## Commands & settings
 
-- Any user-facing commands should be added via `this.addCommand(...)`.
-- If the plugin has configuration, provide a settings tab and sensible defaults.
-- Persist settings using `this.loadData()` / `this.saveData()`.
-- Use stable command IDs; avoid renaming once released.
+- User-facing commands via `this.addCommand(...)`.
+- Config → settings tab + sensible defaults.
+- Persist settings: `this.loadData()` / `this.saveData()`.
+- Use stable command IDs; avoid renaming after release.
 
 ## Versioning & releases
 
-- Bump `version` in `manifest.json` (SemVer) and update `versions.json` to map plugin version → minimum app version.
-- Create a GitHub release whose tag exactly matches `manifest.json`'s `version`. Do not use a leading `v`.
-- Attach `manifest.json`, `main.js`, and `styles.css` (if present) to the release as individual assets.
-- After the initial release, follow the process to add/update your plugin in the community catalog as required.
+- Bump `version` in `manifest.json` (SemVer). Update `versions.json` (plugin version → min app version).
+- GitHub release: tag exactly matches `manifest.json` version (no leading `v`).
+- Attach `manifest.json`, `main.js`, `styles.css` (if present) as individual assets.
+- After initial release, follow community catalog process.
 
-## Security, privacy, and compliance
+## Security, privacy, compliance
 
-Follow Obsidian's **Developer Policies** and **Plugin Guidelines**. In particular:
+Follow Obsidian's **Developer Policies** + **Plugin Guidelines**:
 
-- Default to local/offline operation. Only make network requests when essential to the feature.
-- No hidden telemetry. If you collect optional analytics or call third-party services, require explicit opt-in and document clearly in `README.md` and in settings.
-- Never execute remote code, fetch and eval scripts, or auto-update plugin code outside of normal releases.
-- Minimize scope: read/write only what's necessary inside the vault. Do not access files outside the vault.
-- Clearly disclose any external services used, data sent, and risks.
-- Respect user privacy. Do not collect vault contents, filenames, or personal information unless absolutely necessary and explicitly consented.
-- Avoid deceptive patterns, ads, or spammy notifications.
-- Register and clean up all DOM, app, and interval listeners using the provided `register*` helpers so the plugin unloads safely.
+- Default to local/offline. Network only if essential.
+- No hidden telemetry. Optional analytics/third-party → explicit opt-in, document in `README.md` + settings.
+- Never remote code, fetch/eval scripts, or auto-update outside normal releases.
+- Minimize scope: read/write only what's necessary inside vault. No outside vault access.
+- Disclose external services, data sent, risks.
+- Respect privacy. No vault contents, filenames, personal info unless essential + explicit consent.
+- No deceptive patterns, ads, spammy notifications.
+- Register & clean up DOM, app, interval listeners with `register*` helpers → safe unload.
 
-## UX & copy guidelines (for UI text, commands, settings)
+## UX & copy guidelines
 
-- Prefer sentence case for headings, buttons, and titles.
-- Use clear, action-oriented imperatives in step-by-step copy.
-- Use **bold** to indicate literal UI labels. Prefer "select" for interactions.
-- Use arrow notation for navigation: **Settings → Community plugins**.
-- Keep in-app strings short, consistent, and free of jargon.
+- Sentence case for headings, buttons, titles.
+- Clear action-oriented imperatives.
+- **Bold** for literal UI labels. Prefer "select".
+- Arrow notation for navigation: **Settings → Community plugins**.
+- Short, consistent strings, jargon-free.
 
 ## Performance
 
-- Keep startup light. Defer heavy work until needed.
-- Avoid long-running tasks during `onload`; use lazy initialization.
-- Batch disk access and avoid excessive vault scans.
-- Debounce/throttle expensive operations in response to file system events.
+- Light startup. Defer heavy work.
+- Avoid long-running tasks in `onload`. Lazy init.
+- Batch disk access, avoid excessive vault scans.
+- Debounce/throttle expensive ops on file system events.
 
 ## Coding conventions
 
 - TypeScript with `"strict": true` preferred.
-- **Keep `main.ts` minimal**: Focus only on plugin lifecycle (onload, onunload, addCommand calls). Delegate all feature logic to separate modules.
-- **Split large files**: If any file exceeds ~200-300 lines, consider breaking it into smaller, focused modules.
-- **Use clear module boundaries**: Each file should have a single, well-defined responsibility.
+- **Keep `main.ts` minimal**: lifecycle only (onload, onunload, addCommand). Delegate feature logic to separate modules.
+- **Split large files**: >200-300 lines → break into smaller focused modules.
+- **Clear module boundaries**: single responsibility per file.
 - Bundle everything into `main.js` (no unbundled runtime deps).
-- Avoid Node/Electron APIs if you want mobile compatibility; set `isDesktopOnly` accordingly.
+- Avoid Node/Electron APIs for mobile compat; set `isDesktopOnly` accordingly.
 - Prefer `async/await` over promise chains; handle errors gracefully.
 
 ## Mobile
 
-- Where feasible, test on iOS and Android.
-- Don't assume desktop-only behavior unless `isDesktopOnly` is `true`.
-- Avoid large in-memory structures; be mindful of memory and storage constraints.
+- Test on iOS + Android where feasible.
+- Don't assume desktop-only unless `isDesktopOnly: true`.
+- Avoid large in-memory structures; mindful of memory/storage.
 
 ## Agent do/don't
 
 **Do**
-- Add commands with stable IDs (don't rename once released).
-- Provide defaults and validation in settings.
-- Write idempotent code paths so reload/unload doesn't leak listeners or intervals.
-- Use `this.register*` helpers for everything that needs cleanup.
+- Add commands with stable IDs (don't rename after release).
+- Provide defaults + validation in settings.
+- Idempotent code paths → reload/unload doesn't leak listeners/intervals.
+- Use `this.register*` helpers for everything needing cleanup.
 
 **Don't**
-- Introduce network calls without an obvious user-facing reason and documentation.
-- Ship features that require cloud services without clear disclosure and explicit opt-in.
-- Store or transmit vault contents unless essential and consented.
+- Network calls without obvious user-facing reason + docs.
+- Features requiring cloud services without clear disclosure + explicit opt-in.
+- Store/transmit vault contents unless essential + consented.
 
 ## Common tasks
 
 ### Organize code across multiple files
 
-**main.ts** (minimal, lifecycle only):
+**main.ts** (minimal):
 ```ts
 import { Plugin } from "obsidian";
 import { MySettings, DEFAULT_SETTINGS } from "./settings";
@@ -279,16 +459,16 @@ this.registerInterval(window.setInterval(() => { /* ... */ }, 1000));
 
 ## Troubleshooting
 
-- Plugin doesn't load after build: ensure `main.js` and `manifest.json` are at the top level of the plugin folder under `<Vault>/.obsidian/plugins/<plugin-id>/`. 
-- Build issues: if `main.js` is missing, run `npm run build` or `npm run dev` to compile your TypeScript source code.
-- Commands not appearing: verify `addCommand` runs after `onload` and IDs are unique.
-- Settings not persisting: ensure `loadData`/`saveData` are awaited and you re-render the UI after changes.
-- Mobile-only issues: confirm you're not using desktop-only APIs; check `isDesktopOnly` and adjust.
+- Plugin doesn't load after build: ensure `main.js` + `manifest.json` at top level of `<Vault>/.obsidian/plugins/<plugin-id>/`.
+- Build issues: missing `main.js` → run `npm run build` or `npm run dev`.
+- Commands not appearing: verify `addCommand` runs after `onload` + unique IDs.
+- Settings not persisting: ensure `loadData`/`saveData` awaited + re-render UI after changes.
+- Mobile-only issues: check no desktop-only APIs; adjust `isDesktopOnly`.
 
 ## References
 
 - Obsidian sample plugin: https://github.com/obsidianmd/obsidian-sample-plugin
-- API documentation: https://docs.obsidian.md
+- API docs: https://docs.obsidian.md
 - Developer policies: https://docs.obsidian.md/Developer+policies
 - Plugin guidelines: https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines
 - Style guide: https://help.obsidian.md/style-guide

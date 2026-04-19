@@ -1,20 +1,18 @@
 import { MarkdownRenderChild, Notice, EventRef, Editor } from "obsidian";
 import type FsrsPlugin from "../main";
 import type { ModernFSRSCard } from "../interfaces/fsrs";
-import type { TableParams, TableMode } from "../utils/fsrs-table-helpers";
+import type { TableParams } from "../utils/fsrs-table-helpers";
 import {
-	parseTableParams,
 	generateTableHTMLFromCards,
-	generateEmptyTableHTML,
+	generateTableHTMLFromSql,
 } from "../utils/fsrs-table-helpers";
-import { FsrsHelpModal } from "./fsrs-help-modal";
 
 /**
- * Класс для динамического рендеринга универсального блока fsrs-table
- * Поддерживает режимы отображения: due (просроченные), all (все карточки)
+ * Класс для динамического рендеринга блока fsrs-table
+ * Отображает все карточки
  */
 export class FsrsTableRenderer extends MarkdownRenderChild {
-	private params: TableParams;
+	private params: TableParams | null = null;
 	private isFirstLoad = true;
 	private activeLeafHandler?: EventRef;
 	private activeLeafCallback?: () => void;
@@ -34,7 +32,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 		sourceEnd: number,
 	) {
 		super(container);
-		this.params = parseTableParams(source);
+		this.params = null;
 		this.sourceText = source;
 		this.sourceStart = sourceStart;
 		this.sourceEnd = sourceEnd;
@@ -93,6 +91,15 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	private async renderContent() {
 		const start = performance.now();
 		try {
+			// Убираем класс ошибки при успешном рендере
+			this.container.removeClass("fsrs-table-error");
+			// Также убираем класс ошибки у родительского элемента блока кода
+			const codeBlockParent = this.container.closest(
+				".block-language-fsrs-table, .cm-preview-code-block.block-language-fsrs-table, .cm-embed-block.block-language-fsrs-table",
+			);
+			if (codeBlockParent) {
+				codeBlockParent.removeClass("fsrs-table-error");
+			}
 			// При первом показе используем индикатор загрузки
 			if (this.isFirstLoad) {
 				this.showLoadingIndicator();
@@ -111,19 +118,64 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			this.cachedCards = allCards;
 			const now = new Date();
 
+			// Отладочный вывод для отслеживания параметров
+			console.debug("FsrsTableRenderer.renderContent:", {
+				cardCount: allCards.length,
+				hasParams: !!this.params,
+				params: this.params
+					? (JSON.parse(JSON.stringify(this.params)) as unknown)
+					: null,
+				sourceText: this.sourceText,
+				lastAction: this.lastAction,
+				hasSort: this.params?.sort ? true : false,
+			});
+
 			if (allCards.length === 0) {
 				this.renderEmptyState();
 				return;
 			}
 
+			// Проверяем на пустой SQL запрос (только при первом рендере)
+			if (
+				!this.params &&
+				(!this.sourceText || this.sourceText.trim() === "")
+			) {
+				this.renderErrorState(new Error("Пустой блок fsrs-table"));
+				return;
+			}
+
+			let html: string;
 			// Генерируем HTML таблицы
-			const html = await generateTableHTMLFromCards(
-				allCards,
-				this.params,
-				this.plugin.settings,
-				this.plugin.app,
-				now,
-			);
+			if (this.params) {
+				// Если параметры уже есть (при сортировке), используем их
+				console.debug(
+					"Using existing params for table generation:",
+					this.params,
+				);
+				html = await generateTableHTMLFromCards(
+					allCards,
+					this.params,
+					this.plugin.settings,
+					this.plugin.app,
+					now,
+				);
+			} else {
+				// При первом рендере используем SQL напрямую
+				console.debug(
+					"Parsing SQL source for table generation:",
+					this.sourceText,
+				);
+				const result = await generateTableHTMLFromSql(
+					allCards,
+					this.sourceText,
+					this.plugin.settings,
+					this.plugin.app,
+					now,
+				);
+				html = result.html;
+				this.params = result.params;
+				console.debug("Parsed params from SQL:", this.params);
+			}
 
 			// Очищаем контейнер и вставляем новый HTML
 			this.container.empty();
@@ -146,7 +198,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			const elapsedMs = performance.now() - start;
 			const elapsedSec = elapsedMs / 1000;
 			console.debug(
-				`⏱️ Загрузка таблицы FSRS (режим ${this.params.mode}): ${elapsedSec.toFixed(2)} с`,
+				`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`,
 			);
 		}
 	}
@@ -175,41 +227,34 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 		}
 		this.container.empty();
 
-		const emptyHTML = generateEmptyTableHTML(this.params.mode);
-		// eslint-disable-next-line @microsoft/sdl/no-inner-html
-		this.container.insertAdjacentHTML("afterbegin", emptyHTML);
-
+		// Просто очищаем контейнер без вставки сообщения
 		if (!this.isFirstLoad) {
 			this.container.style.opacity = "1"; // eslint-disable-line obsidianmd/no-static-styles-assignment
 		}
 	}
 
 	/**
-	 * Отображает состояние ошибки
+	 * Отображает состояние ошибки в виде простого текста без стилей
 	 */
 	private renderErrorState(error: unknown) {
-		console.error(
-			`Ошибка при рендеринге блока fsrs-table (режим ${this.params.mode}):`,
-			error,
-		);
+		console.error(`Ошибка при рендеринге блока fsrs-table:`, error);
 		const errorMessage =
 			error instanceof Error ? error.message : String(error);
 
-		// При ошибке также применяем анимацию, если это не первый показ
-		if (!this.isFirstLoad) {
-			this.container.style.opacity = "0.7"; // eslint-disable-line obsidianmd/no-static-styles-assignment
-			this.container.style.transition = "opacity 0.3s ease"; // eslint-disable-line obsidianmd/no-static-styles-assignment
+		// Добавляем класс ошибки и очищаем контейнер
+		this.container.addClass("fsrs-table-error");
+		// Также добавляем класс ошибки родительскому элементу блока кода
+		const codeBlockParent = this.container.closest(
+			".block-language-fsrs-table, .cm-preview-code-block.block-language-fsrs-table, .cm-embed-block.block-language-fsrs-table",
+		);
+		if (codeBlockParent) {
+			codeBlockParent.addClass("fsrs-table-error");
 		}
 		this.container.empty();
-
-		const errorDiv = this.container.createDiv({ cls: "fsrs-table-error" });
-		errorDiv.createEl("small", {
-			text: `Error loading FSRS table: ${errorMessage}`,
+		this.container.createEl("pre", {
+			text: errorMessage,
+			cls: "fsrs-table-error-text",
 		});
-
-		if (!this.isFirstLoad) {
-			this.container.style.opacity = "1"; // eslint-disable-line obsidianmd/no-static-styles-assignment
-		}
 	}
 
 	/**
@@ -238,17 +283,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 					if (field) {
 						void this.handleSortClick(field);
 					}
-				});
-			});
-
-		// Обработчик для кнопки помощи
-		this.container
-			.querySelectorAll(".fsrs-help-toggle")
-			.forEach((button) => {
-				button.addEventListener("click", (e) => {
-					e.preventDefault();
-					e.stopPropagation();
-					this.showHelpModal();
 				});
 			});
 	}
@@ -304,25 +338,11 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	}
 
 	/**
-	 * Возвращает режим отображения этого рендерера
-	 */
-	getMode(): TableMode {
-		return this.params.mode;
-	}
-
-	/**
-	 * Показывает модальное окно со справкой по синтаксису
-	 */
-	private showHelpModal() {
-		const modal = new FsrsHelpModal(this.plugin.app);
-		modal.show();
-	}
-
-	/**
 	 * Обрабатывает клик на заголовок для сортировки
 	 * @param field Поле, по которому нужно сортировать
 	 */
 	private async handleSortClick(field: string) {
+		if (!this.params) return;
 		// Определяем следующее состояние сортировки
 		const nextDirection = this.getNextSortDirection(field);
 
@@ -337,6 +357,14 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 
 		this.lastAction = "sort";
 
+		console.debug("handleSortClick:", {
+			field,
+			nextDirection,
+			params: this.params
+				? (JSON.parse(JSON.stringify(this.params)) as unknown)
+				: null,
+		});
+
 		// Перерисовываем таблицу с новыми параметрами сортировки
 		await this.refresh();
 	}
@@ -348,6 +376,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	 * @returns Следующее направление сортировки или null для снятия сортировки
 	 */
 	private getNextSortDirection(field: string): "ASC" | "DESC" | null {
+		if (!this.params) return null;
 		const currentSort = this.params.sort;
 
 		// Если сортируем по другому полю, начинаем с ASC
@@ -368,6 +397,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	 * Обновляет исходный код блока с новыми параметрами сортировки
 	 */
 	private async updateSourceCode(): Promise<void> {
+		if (!this.params) return;
 		try {
 			// Получаем активный редактор
 			const editor = this.plugin.app.workspace.activeEditor?.editor;
@@ -416,7 +446,22 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 				this.sourceEnd = this.sourceStart + newLineCount;
 				this.sourceText = updatedContent;
 				// Обновляем параметры из внутреннего содержимого
-				this.params = parseTableParams(updatedInnerContent);
+				try {
+					// При обновлении кода блока используем новую функцию generateTableHTMLFromSql
+					// чтобы получить параметры из SQL
+					const { params } = await generateTableHTMLFromSql(
+						this.cachedCards || [],
+						updatedInnerContent,
+						this.plugin.settings,
+						this.plugin.app,
+						new Date(),
+					);
+					this.params = params;
+					// eslint-disable-next-line @typescript-eslint/no-unused-vars
+				} catch (_error) {
+					// Игнорируем ошибку парсинга, так как теперь будем использовать SQL напрямую
+					this.params = null;
+				}
 			}
 		} catch (error) {
 			console.error("Ошибка при обновлении исходного кода блока:", error);
@@ -483,6 +528,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	 * @returns Обновленное содержимое блока (без обратных кавычек)
 	 */
 	private generateUpdatedBlockContent(currentContent: string): string {
+		if (!this.params) return currentContent;
 		const lines = currentContent.split("\n");
 		const updatedLines: string[] = [];
 
@@ -497,14 +543,14 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 				continue;
 			}
 
-			// Проверяем, является ли строка параметром sort
-			if (trimmed.startsWith("sort:")) {
+			// Проверяем, является ли строка параметром ORDER BY
+			if (trimmed.startsWith("ORDER BY")) {
 				sortProcessed = true;
 				// Если есть параметр sort, добавляем или заменяем его
 				if (this.params.sort) {
 					const indent = line.match(/^(\s*)/)?.[1] || "";
 					updatedLines.push(
-						`${indent}sort: ${this.params.sort.field} ${this.params.sort.direction}`,
+						`${indent}ORDER BY ${this.params.sort.field} ${this.params.sort.direction}`,
 					);
 				}
 				// Если this.params.sort === undefined, строка удаляется (не добавляется)
@@ -524,7 +570,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 				updatedLines.splice(
 					insertIndex,
 					0,
-					`${indent}sort: ${this.params.sort.field} ${this.params.sort.direction}`,
+					`${indent}ORDER BY ${this.params.sort.field} ${this.params.sort.direction}`,
 				);
 			}
 		}
@@ -538,28 +584,28 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	 * @returns Индекс для вставки или -1 если не найдено подходящее место
 	 */
 	private findSortInsertPosition(lines: string[]): number {
-		// Ищем строку с mode, затем ищем подходящее место после нее
-		let modeIndex = -1;
-		let columnsIndex = -1;
+		// Ищем строки с SELECT, затем LIMIT
+		let selectIndex = -1;
+		let limitIndex = -1;
 
 		for (let i = 0; i < lines.length; i++) {
 			const line = lines[i];
-			if (line && line.trim().startsWith("mode:")) {
-				modeIndex = i;
-			} else if (line && line.trim().startsWith("columns:")) {
-				columnsIndex = i;
+			if (line && line.trim().toUpperCase().startsWith("SELECT")) {
+				selectIndex = i;
+			} else if (line && line.trim().toUpperCase().startsWith("LIMIT")) {
+				limitIndex = i;
 				break;
 			}
 		}
 
-		// Если нашли columns, вставляем перед ними
-		if (columnsIndex !== -1) {
-			return columnsIndex;
+		// Если нашли LIMIT, вставляем перед ним
+		if (limitIndex !== -1) {
+			return limitIndex;
 		}
 
-		// Если нашли mode, вставляем после него
-		if (modeIndex !== -1) {
-			return modeIndex + 1;
+		// Если нашли SELECT, вставляем после него
+		if (selectIndex !== -1) {
+			return selectIndex + 1;
 		}
 
 		// Вставляем после первой непустой строки

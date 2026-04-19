@@ -23,6 +23,7 @@ export interface ModernFSRSCard {
 // Вычисляемое текущее состояние карточки (не хранится, вычисляется)
 export interface ComputedCardState {
 	due: string; // ISO 8601 строка (следующая дата повторения)
+	overdue?: number; // количество часов просрочки (положительное - просрочка)
 	stability: number;
 	difficulty: number;
 	state: FSRSState;
@@ -102,18 +103,4 @@ export interface ParseResult {
 	success: boolean;
 	card: ModernFSRSCard | null;
 	error?: string;
-}
-
-// Интерфейс для миграции (если понадобится в будущем)
-export interface LegacyFSRSCard {
-	due: string;
-	stability: number;
-	difficulty: number;
-	elapsed_days: number;
-	scheduled_days: number;
-	reps: number;
-	lapses: number;
-	state: FSRSState;
-	last_review: string;
-	filePath: string;
 }

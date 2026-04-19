@@ -7,6 +7,7 @@ mod json_parsing;
 mod review_functions;
 mod sort_functions;
 mod state_functions;
+mod table_processing;
 mod types;
 mod yaml_parsing;
 
@@ -160,39 +161,30 @@ pub fn extract_fsrs_from_frontmatter_wrapped(frontmatter: String) -> String {
     use crate::json_parsing::card_to_json;
     use crate::yaml_parsing::extract_fsrs_from_frontmatter;
 
-    use web_sys::console;
+    use log;
 
-    console::debug_1(
-        &format!(
-            "extract_fsrs_from_frontmatter_wrapped called with frontmatter length: {}",
-            frontmatter.len()
-        )
-        .into(),
+    log::debug!(
+        "extract_fsrs_from_frontmatter_wrapped called with frontmatter length: {}",
+        frontmatter.len()
     );
 
     let result = match extract_fsrs_from_frontmatter(&frontmatter) {
         Some(card) => {
-            console::debug_1(
-                &format!(
-                    "extract_fsrs_from_frontmatter found card with {} reviews",
-                    card.reviews.len()
-                )
-                .into(),
+            log::debug!(
+                "extract_fsrs_from_frontmatter found card with {} reviews",
+                card.reviews.len()
             );
             card_to_json(&card)
         }
         None => {
-            console::debug_1(&"extract_fsrs_from_frontmatter returned None, returning null".into());
+            log::debug!("extract_fsrs_from_frontmatter returned None, returning null");
             "null".to_string()
         }
     };
 
-    console::debug_1(
-        &format!(
-            "extract_fsrs_from_frontmatter_wrapped returning JSON length: {}",
-            result.len()
-        )
-        .into(),
+    log::debug!(
+        "extract_fsrs_from_frontmatter_wrapped returning JSON length: {}",
+        result.len()
     );
     result
 }
@@ -271,6 +263,103 @@ pub fn is_card_overdue(due_iso: String, now_iso: String) -> String {
 #[wasm_bindgen]
 pub fn get_card_age_days(card_json: String, now_iso: String) -> String {
     sort_functions::get_card_age_days(card_json, now_iso)
+}
+
+// Парсинг SQL-подобного синтаксиса для блоков fsrs-table
+#[wasm_bindgen]
+pub fn parse_fsrs_table_block(source: &str) -> String {
+    use crate::table_processing::parsing::parse_fsrs_table_block as parse_block;
+    match parse_block(source) {
+        Ok(parse_result) => {
+            // Возвращаем JSON с параметрами таблицы и предупреждениями
+            serde_json::to_string(&serde_json::json!({
+                "params": parse_result.value,
+                "warnings": parse_result.warnings
+            }))
+            .unwrap_or_else(|_| "{\"error\":\"Failed to serialize params\"}".to_string())
+        }
+        Err(err) => {
+            // Возвращаем JSON с ошибкой
+            serde_json::to_string(&serde_json::json!({
+                "error": err.to_string(),
+                "params": null,
+                "warnings": []
+            }))
+            .unwrap_or_else(|_| "{\"error\":\"Failed to serialize error\"}".to_string())
+        }
+    }
+}
+
+// Фильтрация и сортировка карточек для таблицы
+#[wasm_bindgen]
+pub fn filter_and_sort_cards(
+    cards_json: &str,
+    params_json: &str,
+    settings_json: &str,
+    now_iso: &str,
+) -> String {
+    crate::table_processing::filtering::filter_and_sort_cards_json(
+        cards_json,
+        params_json,
+        settings_json,
+        now_iso,
+    )
+}
+
+// Фильтрация и сортировка карточек с SQL строкой напрямую
+#[wasm_bindgen]
+pub fn filter_and_sort_cards_with_sql(
+    cards_json: &str,
+    sql_source: &str,
+    settings_json: &str,
+    now_iso: &str,
+) -> String {
+    use crate::table_processing::parsing::parse_fsrs_table_block as parse_block;
+    match parse_block(sql_source) {
+        Ok(parse_result) => {
+            // Преобразуем параметры в JSON для существующей функции
+            let params_json = serde_json::to_string(&parse_result.value)
+                .unwrap_or_else(|_| "{\"error\":\"Failed to serialize params\"}".to_string());
+            // Вызываем существующую функцию фильтрации
+            let filter_result = crate::table_processing::filtering::filter_and_sort_cards_json(
+                cards_json,
+                &params_json,
+                settings_json,
+                now_iso,
+            );
+
+            // Возвращаем объединённый результат с параметрами и отфильтрованными карточками
+            serde_json::to_string(&serde_json::json!({
+                "params": parse_result.value,
+                "cards": serde_json::from_str::<serde_json::Value>(&filter_result)
+                    .unwrap_or_else(|_| serde_json::json!({
+                        "cards": [],
+                        "total_count": 0,
+                        "errors": []
+                    })),
+            }))
+            .unwrap_or_else(|_| "{\"error\":\"Failed to serialize combined result\"}".to_string())
+        }
+        Err(err) => {
+            // Возвращаем JSON с ошибкой
+            serde_json::to_string(&serde_json::json!({
+                "error": err.to_string(),
+                "params": crate::table_processing::types::TableParams::default(),
+                "cards": {
+                    "cards": [],
+                    "total_count": 0,
+                    "errors": []
+                }
+            }))
+            .unwrap_or_else(|_| "{\"error\":\"Failed to serialize error\"}".to_string())
+        }
+    }
+}
+
+// Проверка валидности поля таблицы
+#[wasm_bindgen]
+pub fn is_valid_table_field(field: &str) -> bool {
+    crate::table_processing::types::is_valid_table_field(field)
 }
 
 // Оригинальная функция для обратной совместимости

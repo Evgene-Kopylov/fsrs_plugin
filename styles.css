@@ -150,25 +150,6 @@
 	background: var(--interactive-accent-hover);
 }
 
-.fsrs-delete-button {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 28px;
-	height: 28px;
-	background: var(--background-modifier-border);
-	color: var(--text-muted);
-	border-radius: 4px;
-	border: none;
-	cursor: pointer;
-	transition: all 0.2s ease;
-}
-
-.fsrs-delete-button:hover {
-	background: var(--background-modifier-border-hover);
-	color: var(--text-normal);
-}
-
 .fsrs-table-header {
 	display: flex;
 	justify-content: space-between;
@@ -271,4 +252,146 @@
 
 .fsrs-help-content-container li {
 	margin-bottom: 0.5em;
+}
+
+/* Стили для кнопки истории повторений */
+.fsrs-history-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	background: var(--background-secondary);
+	color: var(--text-muted);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 14px;
+	transition: all 0.2s ease;
+}
+
+.fsrs-history-button:hover {
+	background: var(--background-modifier-hover);
+	color: var(--text-normal);
+	border-color: var(--interactive-accent);
+}
+
+/* Стили для модального окна истории повторений */
+.fsrs-history-title {
+	font-size: 1.5em;
+	font-weight: 600;
+	margin-bottom: 0.5em;
+	color: var(--text-normal);
+}
+
+.fsrs-history-file-info {
+	font-size: 0.9em;
+	color: var(--text-muted);
+	margin-bottom: 1.5em;
+	border-bottom: 1px solid var(--background-modifier-border);
+	padding-bottom: 1em;
+}
+
+.fsrs-history-empty {
+	text-align: center;
+	color: var(--text-muted);
+	font-style: italic;
+	padding: 2em 0;
+}
+
+.fsrs-history-table-container {
+	max-height: 300px;
+	overflow-y: auto;
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 6px;
+	margin-bottom: 1.5em;
+}
+
+.fsrs-history-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.9em;
+}
+
+.fsrs-history-table th {
+	background-color: var(--background-secondary);
+	font-weight: 600;
+	padding: 8px 12px;
+	text-align: left;
+	border-bottom: 2px solid var(--background-modifier-border);
+	position: sticky;
+	top: 0;
+	z-index: 1;
+}
+
+.fsrs-history-table td {
+	padding: 8px 12px;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.fsrs-history-table tr:last-child td {
+	border-bottom: none;
+}
+
+.fsrs-history-table tr:nth-child(even) {
+	background-color: var(--background-secondary);
+}
+
+.fsrs-history-table tr:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+/* Выравнивание для разных колонок */
+.fsrs-history-table th:nth-child(1),
+.fsrs-history-table td:nth-child(1) {
+	width: 40px;
+	text-align: center;
+}
+
+.fsrs-history-table th:nth-child(2),
+.fsrs-history-table td:nth-child(2) {
+	min-width: 160px;
+}
+
+.fsrs-history-table th:nth-child(3),
+.fsrs-history-table td:nth-child(3) {
+	min-width: 100px;
+}
+
+.fsrs-history-table th:nth-child(4),
+.fsrs-history-table th:nth-child(5),
+.fsrs-history-table th:nth-child(6),
+.fsrs-history-table td:nth-child(4),
+.fsrs-history-table td:nth-child(5),
+.fsrs-history-table td:nth-child(6) {
+	width: 100px;
+	text-align: center;
+}
+
+.fsrs-history-statistics {
+	margin-top: 1.5em;
+	padding-top: 1.5em;
+	border-top: 1px solid var(--background-modifier-border);
+}
+
+.fsrs-history-statistics h3 {
+	font-size: 1.2em;
+	font-weight: 600;
+	margin-bottom: 0.8em;
+	color: var(--text-normal);
+}
+
+.fsrs-history-stats-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.fsrs-history-stats-list li {
+	padding: 6px 0;
+	border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.fsrs-history-stats-list li:last-child {
+	border-bottom: none;
 }
