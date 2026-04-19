@@ -2,15 +2,15 @@
 //! Поддерживает синтаксис: SELECT, ORDER BY, LIMIT, псевдонимы через AS
 
 // Подмодули
+mod expression;
 mod lexer;
 mod parser;
 mod validator;
-mod expression;
 
 // Реэкспорт публичных типов и функций
+pub use expression::{ComparisonOp, Expression, LogicalOp, Value};
 pub use parser::parse_sql_block;
-pub use validator::{validate_table_params, ParseWarning};
-pub use expression::{Expression, ComparisonOp, LogicalOp, Value};
+pub use validator::{ParseWarning, validate_table_params};
 
 use std::fmt;
 
@@ -79,7 +79,9 @@ impl<T> ParseResult<T> {
 ///     }
 /// }
 /// ```
-pub fn parse_fsrs_table_block(source: &str) -> Result<ParseResult<crate::table_processing::types::TableParams>, ParseError> {
+pub fn parse_fsrs_table_block(
+    source: &str,
+) -> Result<ParseResult<crate::table_processing::types::TableParams>, ParseError> {
     use log::{debug, info};
 
     debug!("Начало парсинга fsrs-table блока: {}", source);

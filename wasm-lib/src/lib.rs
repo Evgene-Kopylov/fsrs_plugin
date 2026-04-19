@@ -7,9 +7,9 @@ mod json_parsing;
 mod review_functions;
 mod sort_functions;
 mod state_functions;
+mod table_processing;
 mod types;
 mod yaml_parsing;
-mod table_processing;
 
 // Функция для получения YAML строки для новой карточки
 #[wasm_bindgen]
@@ -275,7 +275,8 @@ pub fn parse_fsrs_table_block(source: &str) -> String {
             serde_json::to_string(&serde_json::json!({
                 "params": parse_result.value,
                 "warnings": parse_result.warnings
-            })).unwrap_or_else(|_| "{\"error\":\"Failed to serialize params\"}".to_string())
+            }))
+            .unwrap_or_else(|_| "{\"error\":\"Failed to serialize params\"}".to_string())
         }
         Err(err) => {
             // Возвращаем JSON с ошибкой
@@ -283,7 +284,8 @@ pub fn parse_fsrs_table_block(source: &str) -> String {
                 "error": err.to_string(),
                 "params": null,
                 "warnings": []
-            })).unwrap_or_else(|_| "{\"error\":\"Failed to serialize error\"}".to_string())
+            }))
+            .unwrap_or_else(|_| "{\"error\":\"Failed to serialize error\"}".to_string())
         }
     }
 }
@@ -335,7 +337,8 @@ pub fn filter_and_sort_cards_with_sql(
                         "total_count": 0,
                         "errors": []
                     })),
-            })).unwrap_or_else(|_| "{\"error\":\"Failed to serialize combined result\"}".to_string())
+            }))
+            .unwrap_or_else(|_| "{\"error\":\"Failed to serialize combined result\"}".to_string())
         }
         Err(err) => {
             // Возвращаем JSON с ошибкой
@@ -347,7 +350,8 @@ pub fn filter_and_sort_cards_with_sql(
                     "total_count": 0,
                     "errors": []
                 }
-            })).unwrap_or_else(|_| "{\"error\":\"Failed to serialize error\"}".to_string())
+            }))
+            .unwrap_or_else(|_| "{\"error\":\"Failed to serialize error\"}".to_string())
         }
     }
 }
@@ -357,8 +361,6 @@ pub fn filter_and_sort_cards_with_sql(
 pub fn is_valid_table_field(field: &str) -> bool {
     crate::table_processing::types::is_valid_table_field(field)
 }
-
-
 
 // Оригинальная функция для обратной совместимости
 #[wasm_bindgen]

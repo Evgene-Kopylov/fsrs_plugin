@@ -3,9 +3,9 @@
 //! Использует существующие WASM функции для вычислений
 
 use chrono::{DateTime, Utc};
+use log;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use log;
 
 use crate::json_parsing::parse_datetime_flexible;
 
@@ -57,10 +57,16 @@ impl std::fmt::Display for CalculationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CalculationError::JsonParseError(msg) => write!(f, "Ошибка парсинга JSON: {}", msg),
-            CalculationError::InvalidDateFormat(msg) => write!(f, "Некорректный формат даты: {}", msg),
-            CalculationError::MissingField(field) => write!(f, "Отсутствует обязательное поле: {}", field),
+            CalculationError::InvalidDateFormat(msg) => {
+                write!(f, "Некорректный формат даты: {}", msg)
+            }
+            CalculationError::MissingField(field) => {
+                write!(f, "Отсутствует обязательное поле: {}", field)
+            }
             CalculationError::CalculationFailed(msg) => write!(f, "Ошибка вычисления: {}", msg),
-            CalculationError::WasmResultParseError(msg) => write!(f, "Ошибка парсинга результата WASM: {}", msg),
+            CalculationError::WasmResultParseError(msg) => {
+                write!(f, "Ошибка парсинга результата WASM: {}", msg)
+            }
             CalculationError::NotImplemented => write!(f, "Функция не реализована"),
         }
     }
@@ -73,7 +79,11 @@ pub fn obsidian_to_iso(date_str: &str) -> Option<String> {
     // Формат Obsidian: "2024-01-10_10:30"
     // Преобразуем в ISO 8601: "2024-01-10T10:30:00Z"
 
-    log::debug!("obsidian_to_iso вызвана с date_str: '{}' (длина: {})", date_str, date_str.len());
+    log::debug!(
+        "obsidian_to_iso вызвана с date_str: '{}' (длина: {})",
+        date_str,
+        date_str.len()
+    );
 
     if date_str.is_empty() {
         log::debug!("date_str пустой, возвращаем None");
@@ -96,11 +106,18 @@ pub fn obsidian_to_iso(date_str: &str) -> Option<String> {
         match parse_datetime_flexible(date_str) {
             Some(dt) => {
                 let result = dt.to_rfc3339();
-                log::debug!("Успешно распарсено как ISO 8601: '{}' -> '{}'", date_str, result);
+                log::debug!(
+                    "Успешно распарсено как ISO 8601: '{}' -> '{}'",
+                    date_str,
+                    result
+                );
                 Some(result)
             }
             None => {
-                log::debug!("Не удалось распарсить ни как Obsidian, ни как ISO 8601 формат: '{}'", date_str);
+                log::debug!(
+                    "Не удалось распарсить ни как Obsidian, ни как ISO 8601 формат: '{}'",
+                    date_str
+                );
                 None
             }
         }
@@ -132,18 +149,28 @@ fn extract_field(card_json: &str, field: &str) -> Result<serde_json::Value, Calc
     let parsed: serde_json::Value = serde_json::from_str(card_json)
         .map_err(|e| CalculationError::JsonParseError(e.to_string()))?;
 
-    parsed.get(field)
+    parsed
+        .get(field)
         .cloned()
         .ok_or_else(|| CalculationError::MissingField(field.to_string()))
 }
 
-
-
-pub fn calculate_overdue_from_due_str(due_str: Option<&str>, now_iso: &str) -> Result<f64, CalculationError> {
+pub fn calculate_overdue_from_due_str(
+    due_str: Option<&str>,
+    now_iso: &str,
+) -> Result<f64, CalculationError> {
     use crate::sort_functions::get_overdue_hours;
 
-    log::debug!("calculate_overdue_from_due_str вызвана: due_str={:?}, now_iso={}", due_str, now_iso);
-    log::debug!("Вычисление просрочки из due_str: {:?}, now_iso: {}", due_str, now_iso);
+    log::debug!(
+        "calculate_overdue_from_due_str вызвана: due_str={:?}, now_iso={}",
+        due_str,
+        now_iso
+    );
+    log::debug!(
+        "Вычисление просрочки из due_str: {:?}, now_iso: {}",
+        due_str,
+        now_iso
+    );
 
     // Если due_str отсутствует, значит карточка не имеет даты просрочки
     let due_str = match due_str {
@@ -159,54 +186,90 @@ pub fn calculate_overdue_from_due_str(due_str: Option<&str>, now_iso: &str) -> R
     log::debug!("Значение due_str: '{}' (длина: {})", due_str, due_str.len());
 
     // Преобразуем дату due из Obsidian формата в ISO 8601, если нужно
-    let due_iso = obsidian_to_iso(due_str)
-        .ok_or_else(|| {
-            log::warn!("Некорректный формат даты due: '{}'", due_str);
-            log::debug!("Некорректный формат даты due: '{}'", due_str);
-            log::debug!("Пытаемся проверить формат Obsidian (YYYY-MM-DD_HH:MM): {}", due_str);
+    let due_iso = obsidian_to_iso(due_str).ok_or_else(|| {
+        log::warn!("Некорректный формат даты due: '{}'", due_str);
+        log::debug!("Некорректный формат даты due: '{}'", due_str);
+        log::debug!(
+            "Пытаемся проверить формат Obsidian (YYYY-MM-DD_HH:MM): {}",
+            due_str
+        );
 
-            // Проверяем, является ли это уже ISO форматом
-            if due_str.contains('T') {
-                log::debug!("Строка содержит 'T', возможно это уже ISO формат");
-                log::debug!("Строка содержит 'T', возможно это уже ISO формат");
-            } else {
-                log::debug!("Строка не содержит 'T', формат Obsidian ожидается");
-                log::debug!("Строка не содержит 'T', формат Obsidian ожидается");
-            }
+        // Проверяем, является ли это уже ISO форматом
+        if due_str.contains('T') {
+            log::debug!("Строка содержит 'T', возможно это уже ISO формат");
+            log::debug!("Строка содержит 'T', возможно это уже ISO формат");
+        } else {
+            log::debug!("Строка не содержит 'T', формат Obsidian ожидается");
+            log::debug!("Строка не содержит 'T', формат Obsidian ожидается");
+        }
 
-            CalculationError::InvalidDateFormat(format!("Некорректный формат даты due: {}", due_str))
-        })?;
+        CalculationError::InvalidDateFormat(format!("Некорректный формат даты due: {}", due_str))
+    })?;
 
     log::debug!("Преобразованная due_iso: '{}'", due_iso);
     log::debug!("Преобразованная due_iso: '{}'", due_iso);
 
     // Вызываем существующую WASM функцию для вычисления просрочки
-    log::debug!("Вызов get_overdue_hours с due_iso='{}', now_iso='{}'", due_iso, now_iso);
-    log::debug!("Вызов get_overdue_hours с due_iso='{}', now_iso='{}'", due_iso, now_iso);
+    log::debug!(
+        "Вызов get_overdue_hours с due_iso='{}', now_iso='{}'",
+        due_iso,
+        now_iso
+    );
+    log::debug!(
+        "Вызов get_overdue_hours с due_iso='{}', now_iso='{}'",
+        due_iso,
+        now_iso
+    );
     let overdue_json = get_overdue_hours(due_iso.clone(), now_iso.to_string());
 
     log::debug!("Результат get_overdue_hours: '{}'", overdue_json);
-    log::debug!("Результат get_overdue_hours (первые 100 символов): '{}'", &overdue_json[..overdue_json.len().min(100)]);
+    log::debug!(
+        "Результат get_overdue_hours (первые 100 символов): '{}'",
+        &overdue_json[..overdue_json.len().min(100)]
+    );
     log::debug!("Результат get_overdue_hours полный: '{}'", overdue_json);
 
     // Парсим результат
-    let overdue: f64 = serde_json::from_str(&overdue_json)
-        .map_err(|e| {
-            log::warn!("Ошибка парсинга результата overdue: {}, json: '{}'", e, overdue_json);
-            log::debug!("Ошибка парсинга результата overdue: {}, json: '{}'", e, overdue_json);
-            CalculationError::WasmResultParseError(e.to_string())
-        })?;
+    let overdue: f64 = serde_json::from_str(&overdue_json).map_err(|e| {
+        log::warn!(
+            "Ошибка парсинга результата overdue: {}, json: '{}'",
+            e,
+            overdue_json
+        );
+        log::debug!(
+            "Ошибка парсинга результата overdue: {}, json: '{}'",
+            e,
+            overdue_json
+        );
+        CalculationError::WasmResultParseError(e.to_string())
+    })?;
 
-    log::debug!("Просрочка вычислена: {} часов ({} дней)", overdue, overdue / 24.0);
-    log::debug!("Просрочка вычислена: {} часов ({} дней)", overdue, overdue / 24.0);
+    log::debug!(
+        "Просрочка вычислена: {} часов ({} дней)",
+        overdue,
+        overdue / 24.0
+    );
+    log::debug!(
+        "Просрочка вычислена: {} часов ({} дней)",
+        overdue,
+        overdue / 24.0
+    );
 
     // Логируем дополнительную информацию для отладки
     if overdue == 0.0 {
         log::warn!("ВНИМАНИЕ: overdue = 0.0, это может указывать на проблему");
         log::debug!("ВНИМАНИЕ: overdue = 0.0, это может указывать на проблему");
-        log::debug!("due_str: '{}', due_iso: '{}', now_iso: '{}'", due_str, due_iso, now_iso);
+        log::debug!(
+            "due_str: '{}', due_iso: '{}', now_iso: '{}'",
+            due_str,
+            due_iso,
+            now_iso
+        );
     } else {
-        log::debug!("overdue успешно вычислен: {} (возвращаем это значение)", overdue);
+        log::debug!(
+            "overdue успешно вычислен: {} (возвращаем это значение)",
+            overdue
+        );
     }
 
     Ok(overdue)
@@ -287,9 +350,14 @@ pub fn calculate_card_state(
         .map_err(|e| CalculationError::WasmResultParseError(e.to_string()))?;
 
     // Извлекаем поле state
-    let state = parsed.get("state")
+    let state = parsed
+        .get("state")
         .and_then(|s| s.as_str())
-        .ok_or_else(|| CalculationError::WasmResultParseError("Поле 'state' отсутствует в результате".to_string()))?
+        .ok_or_else(|| {
+            CalculationError::WasmResultParseError(
+                "Поле 'state' отсутствует в результате".to_string(),
+            )
+        })?
         .to_string();
 
     log::debug!("Состояние карточки: {}", state);
@@ -316,7 +384,10 @@ pub fn compute_all_fields(
 ) -> Result<CardWithComputedFields, CalculationError> {
     use crate::state_functions::compute_current_state;
 
-    log::debug!("Вычисление всех полей для карточки: длина JSON={}", card_json.len());
+    log::debug!(
+        "Вычисление всех полей для карточки: длина JSON={}",
+        card_json.len()
+    );
 
     let mut result = CardWithComputedFields {
         file: None,
@@ -334,31 +405,36 @@ pub fn compute_all_fields(
 
     // Пытаемся извлечь базовые поля из JSON
     if let Ok(file_value) = extract_field(card_json, "file")
-        && let Some(file_str) = file_value.as_str() {
-            result.file = Some(file_str.to_string());
-        }
+        && let Some(file_str) = file_value.as_str()
+    {
+        result.file = Some(file_str.to_string());
+    }
 
     // Используем поле filePath как альтернативу file
     if result.file.is_none()
         && let Ok(file_path_value) = extract_field(card_json, "filePath")
-            && let Some(file_path_str) = file_path_value.as_str() {
-                result.file = Some(file_path_str.to_string());
-            }
+        && let Some(file_path_str) = file_path_value.as_str()
+    {
+        result.file = Some(file_path_str.to_string());
+    }
 
     // Извлекаем reps из истории reviews
     if let Ok(reviews_value) = extract_field(card_json, "reviews")
-        && let Some(reviews_array) = reviews_value.as_array() {
-            // Подсчитываем количество успешных повторений (не "Again")
-            let successful_reps = reviews_array.iter()
-                .filter(|review| {
-                    review.get("rating")
-                        .and_then(|r| r.as_str())
-                        .map(|r| r != "Again")
-                        .unwrap_or(false)
-                })
-                .count();
-            result.reps = Some(successful_reps as u32);
-        }
+        && let Some(reviews_array) = reviews_value.as_array()
+    {
+        // Подсчитываем количество успешных повторений (не "Again")
+        let successful_reps = reviews_array
+            .iter()
+            .filter(|review| {
+                review
+                    .get("rating")
+                    .and_then(|r| r.as_str())
+                    .map(|r| r != "Again")
+                    .unwrap_or(false)
+            })
+            .count();
+        result.reps = Some(successful_reps as u32);
+    }
 
     // Вычисляем полное состояние карточки через WASM функцию
     let state_json = compute_current_state(
@@ -406,15 +482,22 @@ pub fn compute_all_fields(
     }
 
     if let Some(lapses_value) = parsed_state.get("lapses").and_then(|l| l.as_u64()) {
-        result.additional_fields.insert("lapses".to_string(), serde_json::Value::Number(lapses_value.into()));
+        result.additional_fields.insert(
+            "lapses".to_string(),
+            serde_json::Value::Number(lapses_value.into()),
+        );
     }
 
     // Вычисляем сложные поля через соответствующие функции, с обработкой ошибок
     result.overdue = match calculate_overdue_from_due_str(result.due.as_deref(), now_iso) {
         Ok(value) => {
-            log::debug!("Установлено overdue для карточки: {} часов (файл: {:?})", value, result.file);
+            log::debug!(
+                "Установлено overdue для карточки: {} часов (файл: {:?})",
+                value,
+                result.file
+            );
             Some(value)
-        },
+        }
         Err(e) => {
             log::warn!("Ошибка вычисления overdue: {}", e);
             log::warn!("Ошибка вычисления просрочки: {}", e);
@@ -454,7 +537,12 @@ pub fn compute_all_fields(
     }
 
     log::debug!("Вычисление полей завершено успешно");
-    log::debug!("Итоговое значение overdue: {:?} (файл: {:?}, due: {:?})", result.overdue, result.file, result.due);
+    log::debug!(
+        "Итоговое значение overdue: {:?} (файл: {:?}, due: {:?})",
+        result.overdue,
+        result.file,
+        result.due
+    );
     Ok(result)
 }
 

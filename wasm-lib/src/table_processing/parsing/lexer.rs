@@ -1,8 +1,8 @@
 //! Лексический анализатор для SQL-подобного синтаксиса блоков `fsrs-table`
 //! Разбивает входную строку на токены: ключевые слова, идентификаторы, числа, строки, операторы
 
-use std::fmt;
 use log::debug;
+use std::fmt;
 
 /// Типы токенов
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -49,7 +49,11 @@ pub struct Token {
 
 impl fmt::Display for Token {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}('{}') @ {}-{}", self.token_type, self.value, self.start, self.end)
+        write!(
+            f,
+            "{}('{}') @ {}-{}",
+            self.token_type, self.value, self.start, self.end
+        )
     }
 }
 
@@ -93,7 +97,10 @@ impl SqlLexer {
         let chars: Vec<char> = normalized_input.chars().collect();
         let length = chars.len();
 
-        debug!("Создание лексера для строки (длина {}): '{}'", length, normalized_input);
+        debug!(
+            "Создание лексера для строки (длина {}): '{}'",
+            length, normalized_input
+        );
 
         Self {
             chars,
@@ -107,7 +114,12 @@ impl SqlLexer {
         self.skip_whitespace();
 
         if self.position >= self.length {
-            return Ok(Token::new(TokenType::Eof, "".to_string(), self.position, self.position));
+            return Ok(Token::new(
+                TokenType::Eof,
+                "".to_string(),
+                self.position,
+                self.position,
+            ));
         }
 
         let start = self.position;
@@ -123,13 +135,14 @@ impl SqlLexer {
         } else if Self::is_operator_char(current_char) {
             self.read_operator(start)?
         } else {
-            return Err(format!("Нераспознанный символ '{}' в позиции {}", current_char, start));
+            return Err(format!(
+                "Нераспознанный символ '{}' в позиции {}",
+                current_char, start
+            ));
         };
 
         Ok(token)
     }
-
-
 
     /// Пропускает пробельные символы
     fn skip_whitespace(&mut self) {
@@ -156,7 +169,9 @@ impl SqlLexer {
 
         // Проверяем, является ли это ключевым словом
         let upper_value = value.to_uppercase();
-        let keywords = ["SELECT", "ORDER", "BY", "ASC", "DESC", "LIMIT", "AS", "WHERE", "AND", "OR"];
+        let keywords = [
+            "SELECT", "ORDER", "BY", "ASC", "DESC", "LIMIT", "AS", "WHERE", "AND", "OR",
+        ];
 
         let token_type = if keywords.contains(&upper_value.as_str()) {
             TokenType::Keyword

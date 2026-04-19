@@ -2,6 +2,6 @@
 //! Включает SQL-подобный синтаксис для блоков `fsrs-table`
 
 // Публичные модули
-pub mod types;
-pub mod parsing;
 pub mod filtering;
+pub mod parsing;
+pub mod types;

@@ -232,11 +232,7 @@ mod tests {
 
     #[test]
     fn test_expression_comparison() {
-        let expr = Expression::comparison(
-            "overdue",
-            ComparisonOp::Greater,
-            Value::Number(0.0),
-        );
+        let expr = Expression::comparison("overdue", ComparisonOp::Greater, Value::Number(0.0));
 
         assert!(expr.is_comparison());
         assert_eq!(expr.get_comparison_field(), Some("overdue"));
@@ -258,7 +254,8 @@ mod tests {
     #[test]
     fn test_expression_or() {
         let left = Expression::comparison("overdue", ComparisonOp::Greater, Value::Number(24.0));
-        let right = Expression::comparison("retrievability", ComparisonOp::Less, Value::Number(0.2));
+        let right =
+            Expression::comparison("retrievability", ComparisonOp::Less, Value::Number(0.2));
         let expr = Expression::or(left, right);
 
         assert_eq!(expr.to_string(), "(overdue > 24 OR retrievability < 0.2)");
@@ -266,11 +263,7 @@ mod tests {
 
     #[test]
     fn test_expression_serialization() {
-        let expr = Expression::comparison(
-            "overdue",
-            ComparisonOp::Greater,
-            Value::Number(24.5),
-        );
+        let expr = Expression::comparison("overdue", ComparisonOp::Greater, Value::Number(24.5));
 
         let json = serde_json::to_string(&expr).unwrap();
         let parsed: Expression = serde_json::from_str(&json).unwrap();

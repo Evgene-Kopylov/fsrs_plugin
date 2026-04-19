@@ -1,9 +1,9 @@
 //! Типы данных для обработки таблиц FSRS
 //! Структуры для парсинга SQL-подобного синтаксиса блоков `fsrs-table`
 
-use std::collections::HashSet;
-use serde::{Deserialize, Serialize};
 use super::parsing::Expression;
+use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 
 /// Колонка таблицы с полем и заголовком
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -80,13 +80,11 @@ pub static AVAILABLE_FIELDS: [&str; 10] = [
 /// Колонки по умолчанию при отсутствии SELECT в запросе
 /// Возвращает одну колонку с полем file
 pub fn default_columns() -> Vec<TableColumn> {
-    vec![
-        TableColumn {
-            field: "file".to_string(),
-            title: "file".to_string(),
-            width: None,
-        },
-    ]
+    vec![TableColumn {
+        field: "file".to_string(),
+        title: "file".to_string(),
+        width: None,
+    }]
 }
 
 /// Проверяет, является ли поле допустимым для использования в таблице

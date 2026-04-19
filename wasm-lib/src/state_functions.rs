@@ -462,7 +462,8 @@ mod tests {
                     "difficulty": 3.00000001
                 }
             ]
-        }"#.to_string();
+        }"#
+        .to_string();
 
         let card2_json = r#"{
             "reviews": [
@@ -473,16 +474,21 @@ mod tests {
                     "difficulty": 3.00000002
                 }
             ]
-        }"#.to_string();
+        }"#
+        .to_string();
 
         let now = "2025-01-02T10:00:00Z".to_string();
         let default_stability = 2.5;
         let default_difficulty = 5.0;
 
         // Параметры с включенным fuzz
-        let params_fuzz_true = r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": true}"#.to_string();
+        let params_fuzz_true =
+            r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": true}"#
+                .to_string();
         // Параметры с выключенным fuzz
-        let params_fuzz_false = r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": false}"#.to_string();
+        let params_fuzz_false =
+            r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": false}"#
+                .to_string();
 
         // Вычисляем следующие даты повторения для карточки 1 с fuzz=true и fuzz=false
         let result1_fuzz_true = get_next_review_dates(
@@ -501,7 +507,8 @@ mod tests {
             default_stability,
             default_difficulty,
         );
-        let dates1_fuzz_false: serde_json::Value = serde_json::from_str(&result1_fuzz_false).unwrap();
+        let dates1_fuzz_false: serde_json::Value =
+            serde_json::from_str(&result1_fuzz_false).unwrap();
 
         // Вычисляем следующие даты повторения для карточки 2 с fuzz=true и fuzz=false
         let result2_fuzz_true = get_next_review_dates(
@@ -520,13 +527,26 @@ mod tests {
             default_stability,
             default_difficulty,
         );
-        let dates2_fuzz_false: serde_json::Value = serde_json::from_str(&result2_fuzz_false).unwrap();
+        let dates2_fuzz_false: serde_json::Value =
+            serde_json::from_str(&result2_fuzz_false).unwrap();
 
         // Извлекаем даты для оценки "Good"
-        let date1_fuzz_true = dates1_fuzz_true.get("good").and_then(|v| v.as_str()).unwrap();
-        let date1_fuzz_false = dates1_fuzz_false.get("good").and_then(|v| v.as_str()).unwrap();
-        let date2_fuzz_true = dates2_fuzz_true.get("good").and_then(|v| v.as_str()).unwrap();
-        let date2_fuzz_false = dates2_fuzz_false.get("good").and_then(|v| v.as_str()).unwrap();
+        let date1_fuzz_true = dates1_fuzz_true
+            .get("good")
+            .and_then(|v| v.as_str())
+            .unwrap();
+        let date1_fuzz_false = dates1_fuzz_false
+            .get("good")
+            .and_then(|v| v.as_str())
+            .unwrap();
+        let date2_fuzz_true = dates2_fuzz_true
+            .get("good")
+            .and_then(|v| v.as_str())
+            .unwrap();
+        let date2_fuzz_false = dates2_fuzz_false
+            .get("good")
+            .and_then(|v| v.as_str())
+            .unwrap();
 
         // Парсим даты
         let date1_fuzz_true: chrono::DateTime<chrono::Utc> = date1_fuzz_true.parse().unwrap();
@@ -535,10 +555,19 @@ mod tests {
         let date2_fuzz_false: chrono::DateTime<chrono::Utc> = date2_fuzz_false.parse().unwrap();
 
         // Основная проверка: fuzz влияет на интервалы
-        assert_ne!(date1_fuzz_true, date1_fuzz_false, "Fuzz should affect intervals for card1");
-        assert_ne!(date2_fuzz_true, date2_fuzz_false, "Fuzz should affect intervals for card2");
+        assert_ne!(
+            date1_fuzz_true, date1_fuzz_false,
+            "Fuzz should affect intervals for card1"
+        );
+        assert_ne!(
+            date2_fuzz_true, date2_fuzz_false,
+            "Fuzz should affect intervals for card2"
+        );
 
         // Дополнительная проверка: разные карточки с fuzz=true дают разные интервалы
-        assert_ne!(date1_fuzz_true, date2_fuzz_true, "Different review times should produce different intervals with fuzz enabled");
+        assert_ne!(
+            date1_fuzz_true, date2_fuzz_true,
+            "Different review times should produce different intervals with fuzz enabled"
+        );
     }
 }

@@ -10,11 +10,10 @@ mod sorter;
 pub use calculator::CardWithComputedFields;
 pub use sorter::FilterError;
 
+use crate::table_processing::types::{SortDirection, TableParams};
 use serde::{Deserialize, Serialize};
-use crate::table_processing::types::{TableParams, SortDirection};
 
-use log::{debug, warn, info};
-
+use log::{debug, info, warn};
 
 /// Карточка с вычисленными полями для сортировки
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -52,35 +51,45 @@ pub fn filter_and_sort_cards(
     settings_json: &str,
     now_iso: &str,
 ) -> Result<FilterSortResult, FilterError> {
-    debug!("Начало фильтрации и сортировки карточек: {} карточек", cards_json.len());
+    debug!(
+        "Начало фильтрации и сортировки карточек: {} карточек",
+        cards_json.len()
+    );
 
     // Парсим массив карточек
-    let cards_array: Vec<serde_json::Value> = serde_json::from_str(cards_json)
-        .map_err(|e| FilterError::JsonParseError(e.to_string()))?;
+    let cards_array: Vec<serde_json::Value> =
+        serde_json::from_str(cards_json).map_err(|e| FilterError::JsonParseError(e.to_string()))?;
 
     // Парсим настройки для извлечения дефолтных значений
     let settings: serde_json::Value = serde_json::from_str(settings_json)
         .map_err(|e| FilterError::JsonParseError(format!("Ошибка парсинга настроек: {}", e)))?;
 
-    let default_stability = settings.get("default_initial_stability")
+    let default_stability = settings
+        .get("default_initial_stability")
         .and_then(|v| v.as_f64())
         .unwrap_or(2.0);
-    let default_difficulty = settings.get("default_initial_difficulty")
+    let default_difficulty = settings
+        .get("default_initial_difficulty")
         .and_then(|v| v.as_f64())
         .unwrap_or(5.0);
 
     // Извлекаем параметры FSRS из настроек
-    let parameters_json = settings.get("parameters")
+    let parameters_json = settings
+        .get("parameters")
         .map(|p| p.to_string())
-        .unwrap_or_else(|| r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": true}"#.to_string());
+        .unwrap_or_else(|| {
+            r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": true}"#
+                .to_string()
+        });
 
     let mut computed_cards = Vec::new();
     let mut errors = Vec::new();
 
     // Вычисляем поля для каждой карточки
     for (index, card_value) in cards_array.iter().enumerate() {
-        let card_json = serde_json::to_string(card_value)
-            .map_err(|e| FilterError::JsonParseError(format!("Ошибка сериализации карточки {}: {}", index, e)))?;
+        let card_json = serde_json::to_string(card_value).map_err(|e| {
+            FilterError::JsonParseError(format!("Ошибка сериализации карточки {}: {}", index, e))
+        })?;
 
         match calculator::compute_all_fields(
             &card_json,
@@ -103,14 +112,21 @@ pub fn filter_and_sort_cards(
         }
     }
 
-    debug!("Вычислены поля для {} карточек, ошибок: {}", computed_cards.len(), errors.len());
+    debug!(
+        "Вычислены поля для {} карточек, ошибок: {}",
+        computed_cards.len(),
+        errors.len()
+    );
 
     // Применяем фильтрацию WHERE если указана
     if let Some(condition) = &params.where_condition {
         info!("Применение фильтрации WHERE");
         info!("Условие WHERE для фильтрации: {:?}", condition);
         computed_cards.retain(|card| {
-            match crate::table_processing::filtering::evaluator::evaluate_condition(condition, &card.computed_fields) {
+            match crate::table_processing::filtering::evaluator::evaluate_condition(
+                condition,
+                &card.computed_fields,
+            ) {
                 Ok(result) => result,
                 Err(e) => {
                     warn!("Ошибка оценки условия WHERE для карточки: {}", e);
@@ -118,14 +134,22 @@ pub fn filter_and_sort_cards(
                 }
             }
         });
-        info!("После фильтрации WHERE осталось {} карточек", computed_cards.len());
+        info!(
+            "После фильтрации WHERE осталось {} карточек",
+            computed_cards.len()
+        );
     }
 
     // Применяем сортировку если указана
     if let Some(sort) = &params.sort {
         debug!("Применение сортировки по полю '{}'", sort.field);
         computed_cards.sort_by(|a, b| {
-            compare_computed_fields(&a.computed_fields, &b.computed_fields, &sort.field, sort.direction)
+            compare_computed_fields(
+                &a.computed_fields,
+                &b.computed_fields,
+                &sort.field,
+                sort.direction,
+            )
         });
     }
 
@@ -138,20 +162,28 @@ pub fn filter_and_sort_cards(
         computed_cards
     };
 
-    debug!("Фильтрация и сортировка завершена: {} карточек (лимит {}), всего {}",
-           limited_cards.len(), params.limit, total_count);
+    debug!(
+        "Фильтрация и сортировка завершена: {} карточек (лимит {}), всего {}",
+        limited_cards.len(),
+        params.limit,
+        total_count
+    );
 
     // Логируем overdue для первых карточек
     for (i, card) in limited_cards.iter().enumerate().take(3) {
         let overdue_val = card.computed_fields.overdue.unwrap_or(0.0);
-        debug!("Фильтрация: карточка {} overdue: {} часов (файл: {:?})",
-                               i, overdue_val, card.computed_fields.file);
+        debug!(
+            "Фильтрация: карточка {} overdue: {} часов (файл: {:?})",
+            i, overdue_val, card.computed_fields.file
+        );
 
         // Логируем полные computed_fields в JSON для отладки
         match serde_json::to_string(&card.computed_fields) {
             Ok(json_str) => {
-                debug!("computed_fields JSON (первые 500 символов): {}",
-                    &json_str[..json_str.len().min(500)]);
+                debug!(
+                    "computed_fields JSON (первые 500 символов): {}",
+                    &json_str[..json_str.len().min(500)]
+                );
             }
             Err(e) => {
                 warn!("Ошибка сериализации computed_fields: {}", e);
@@ -244,28 +276,26 @@ pub fn filter_and_sort_cards_json(
     now_iso: &str,
 ) -> String {
     match serde_json::from_str(params_json) {
-        Ok(params) => {
-            match filter_and_sort_cards(cards_json, &params, settings_json, now_iso) {
-                Ok(result) => serde_json::to_string(&result).unwrap_or_else(|_| "{}".to_string()),
-                Err(err) => serde_json::to_string(&serde_json::json!({
-                    "error": err.to_string(),
-                    "cards": []
-                })).unwrap_or_else(|_| "{}".to_string()),
-            }
-        }
-        Err(err) => {
-            serde_json::to_string(&serde_json::json!({
-                "error": format!("Ошибка парсинга параметров: {}", err),
+        Ok(params) => match filter_and_sort_cards(cards_json, &params, settings_json, now_iso) {
+            Ok(result) => serde_json::to_string(&result).unwrap_or_else(|_| "{}".to_string()),
+            Err(err) => serde_json::to_string(&serde_json::json!({
+                "error": err.to_string(),
                 "cards": []
-            })).unwrap_or_else(|_| "{}".to_string())
-        }
+            }))
+            .unwrap_or_else(|_| "{}".to_string()),
+        },
+        Err(err) => serde_json::to_string(&serde_json::json!({
+            "error": format!("Ошибка парсинга параметров: {}", err),
+            "cards": []
+        }))
+        .unwrap_or_else(|_| "{}".to_string()),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::table_processing::types::{SortDirection, SortParam, TableParams, TableColumn};
+    use crate::table_processing::types::{SortDirection, SortParam, TableColumn, TableParams};
     use std::collections::HashMap;
 
     /// Создает тестовую структуру CardWithComputedFields
@@ -323,10 +353,7 @@ mod tests {
         );
 
         // Оба значения отсутствуют
-        assert_eq!(
-            compare_string_fields(None, None),
-            std::cmp::Ordering::Equal
-        );
+        assert_eq!(compare_string_fields(None, None), std::cmp::Ordering::Equal);
     }
 
     #[test]
@@ -346,20 +373,14 @@ mod tests {
         );
 
         // Одно значение отсутствует
-        assert_eq!(
-            compare_u32_fields(Some(5), None),
-            std::cmp::Ordering::Less
-        );
+        assert_eq!(compare_u32_fields(Some(5), None), std::cmp::Ordering::Less);
         assert_eq!(
             compare_u32_fields(None, Some(5)),
             std::cmp::Ordering::Greater
         );
 
         // Оба значения отсутствуют
-        assert_eq!(
-            compare_u32_fields(None, None),
-            std::cmp::Ordering::Equal
-        );
+        assert_eq!(compare_u32_fields(None, None), std::cmp::Ordering::Equal);
     }
 
     #[test]
@@ -389,16 +410,35 @@ mod tests {
         );
 
         // Оба значения отсутствуют
-        assert_eq!(
-            compare_f64_fields(None, None),
-            std::cmp::Ordering::Equal
-        );
+        assert_eq!(compare_f64_fields(None, None), std::cmp::Ordering::Equal);
     }
 
     #[test]
     fn test_compare_computed_fields_file() {
-        let a = create_test_fields(Some("apple.md"), None, None, None, None, None, None, None, None, None);
-        let b = create_test_fields(Some("banana.md"), None, None, None, None, None, None, None, None, None);
+        let a = create_test_fields(
+            Some("apple.md"),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
+        let b = create_test_fields(
+            Some("banana.md"),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
         let c = create_test_fields(None, None, None, None, None, None, None, None, None, None);
 
         // ASC: apple < banana
@@ -420,8 +460,30 @@ mod tests {
 
     #[test]
     fn test_compare_computed_fields_reps() {
-        let a = create_test_fields(None, Some(5), None, None, None, None, None, None, None, None);
-        let b = create_test_fields(None, Some(10), None, None, None, None, None, None, None, None);
+        let a = create_test_fields(
+            None,
+            Some(5),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
+        let b = create_test_fields(
+            None,
+            Some(10),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
         let c = create_test_fields(None, None, None, None, None, None, None, None, None, None);
 
         // ASC: 5 < 10
@@ -443,9 +505,30 @@ mod tests {
 
     #[test]
     fn test_compare_computed_fields_overdue() {
-        let a = create_test_fields(None, None, Some(1.5), None, None, None, None, None, None, None);
-        let b = create_test_fields(None, None, Some(2.5), None, None, None, None, None, None, None);
-
+        let a = create_test_fields(
+            None,
+            None,
+            Some(1.5),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
+        let b = create_test_fields(
+            None,
+            None,
+            Some(2.5),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
 
         // ASC: 1.5 < 2.5
         assert_eq!(
@@ -461,8 +544,30 @@ mod tests {
 
     #[test]
     fn test_compare_computed_fields_state() {
-        let a = create_test_fields(None, None, None, None, None, None, None, Some("new"), None, None);
-        let b = create_test_fields(None, None, None, None, None, None, None, Some("review"), None, None);
+        let a = create_test_fields(
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            Some("new"),
+            None,
+            None,
+        );
+        let b = create_test_fields(
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            Some("review"),
+            None,
+            None,
+        );
 
         // ASC: "new" < "review"
         assert_eq!(
@@ -478,8 +583,30 @@ mod tests {
 
     #[test]
     fn test_compare_computed_fields_unknown_field() {
-        let a = create_test_fields(Some("file.md"), None, None, None, None, None, None, None, None, None);
-        let b = create_test_fields(Some("file2.md"), None, None, None, None, None, None, None, None, None);
+        let a = create_test_fields(
+            Some("file.md"),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
+        let b = create_test_fields(
+            Some("file2.md"),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        );
 
         // Неизвестное поле должно вернуть Equal
         assert_eq!(
@@ -492,7 +619,8 @@ mod tests {
     fn test_filter_and_sort_cards_json_empty() {
         let cards_json = r#"[]"#;
         let params_json = r#"{"columns": [{"field": "file", "title": "file"}], "limit": 0}"#;
-        let settings_json = r#"{"default_initial_stability": 2.0, "default_initial_difficulty": 5.0}"#;
+        let settings_json =
+            r#"{"default_initial_stability": 2.0, "default_initial_difficulty": 5.0}"#;
         let now_iso = "2024-01-01T10:00:00Z";
 
         let result = filter_and_sort_cards_json(cards_json, params_json, settings_json, now_iso);
@@ -514,7 +642,12 @@ mod tests {
 
         // Должна быть ошибка парсинга параметров
         assert!(parsed["error"].as_str().is_some());
-        assert!(parsed["error"].as_str().unwrap().contains("Ошибка парсинга параметров"));
+        assert!(
+            parsed["error"]
+                .as_str()
+                .unwrap()
+                .contains("Ошибка парсинга параметров")
+        );
         assert_eq!(parsed["cards"].as_array().unwrap().len(), 0);
     }
 
@@ -550,7 +683,10 @@ mod tests {
     }
 
     /// Создает тестовые параметры таблицы
-    fn create_test_params(sort_field: Option<&str>, sort_direction: Option<SortDirection>) -> TableParams {
+    fn create_test_params(
+        sort_field: Option<&str>,
+        sort_direction: Option<SortDirection>,
+    ) -> TableParams {
         TableParams {
             columns: vec![TableColumn {
                 field: "file".to_string(),
@@ -604,14 +740,21 @@ mod tests {
         // (compute_all_fields может вернуть ошибки, но для простых карточек должен работать)
         if filter_result.cards.len() >= 2 {
             // Можно проверить порядок, если получили достаточное количество карточек
-            let files: Vec<Option<String>> = filter_result.cards.iter()
+            let files: Vec<Option<String>> = filter_result
+                .cards
+                .iter()
                 .map(|c| c.computed_fields.file.clone())
                 .collect();
 
             // Проверяем что файлы есть и они в правильном порядке (для тех что есть)
-            for i in 0..files.len()-1 {
-                if let (Some(a), Some(b)) = (&files[i], &files[i+1]) {
-                    assert!(a <= b, "Файлы должны быть отсортированы по возрастанию: {} <= {}", a, b);
+            for i in 0..files.len() - 1 {
+                if let (Some(a), Some(b)) = (&files[i], &files[i + 1]) {
+                    assert!(
+                        a <= b,
+                        "Файлы должны быть отсортированы по возрастанию: {} <= {}",
+                        a,
+                        b
+                    );
                 }
             }
         }
@@ -638,14 +781,21 @@ mod tests {
         assert_eq!(filter_result.errors.len(), 0);
 
         if filter_result.cards.len() >= 2 {
-            let files: Vec<Option<String>> = filter_result.cards.iter()
+            let files: Vec<Option<String>> = filter_result
+                .cards
+                .iter()
                 .map(|c| c.computed_fields.file.clone())
                 .collect();
 
             // Проверяем что файлы есть и они в правильном порядке (убывание)
-            for i in 0..files.len()-1 {
-                if let (Some(a), Some(b)) = (&files[i], &files[i+1]) {
-                    assert!(a >= b, "Файлы должны быть отсортированы по убыванию: {} >= {}", a, b);
+            for i in 0..files.len() - 1 {
+                if let (Some(a), Some(b)) = (&files[i], &files[i + 1]) {
+                    assert!(
+                        a >= b,
+                        "Файлы должны быть отсортированы по убыванию: {} >= {}",
+                        a,
+                        b
+                    );
                 }
             }
         }
@@ -702,12 +852,13 @@ mod tests {
 
         // Проверяем что ошибки (если есть) содержат информацию
         if !filter_result.errors.is_empty() {
-            let error_messages: Vec<String> = filter_result.errors.iter()
+            let error_messages: Vec<String> = filter_result
+                .errors
+                .iter()
                 .map(|e| e.to_lowercase())
                 .collect();
             // Хотя бы одна ошибка должна быть информативной
-            let has_informative_error = error_messages.iter()
-                .any(|e| !e.trim().is_empty());
+            let has_informative_error = error_messages.iter().any(|e| !e.trim().is_empty());
             assert!(has_informative_error, "Ошибки должны содержать информацию");
         }
     }
@@ -748,7 +899,7 @@ mod tests {
     /// Тест для фильтрации WHERE с условием overdue < 0
     #[test]
     fn test_filter_and_sort_cards_with_where_overdue() {
-        use crate::table_processing::parsing::{Expression, Value, ComparisonOp};
+        use crate::table_processing::parsing::{ComparisonOp, Expression, Value};
 
         // Создаем JSON карточек с разными значениями overdue
         let cards_json = r#"[
@@ -783,7 +934,7 @@ mod tests {
                     width: None,
                 },
             ],
-            limit: 0, // Без лимита
+            limit: 0,   // Без лимита
             sort: None, // Без сортировки
             where_condition: Some(Expression::comparison(
                 "overdue",
@@ -803,14 +954,13 @@ mod tests {
         let now_iso = "2024-01-02T00:00:00.000Z"; // На 1 день после создания карточек
 
         // Вызываем фильтрацию
-        let result = filter_and_sort_cards(
-            cards_json,
-            &params,
-            settings_json,
-            now_iso,
-        );
+        let result = filter_and_sort_cards(cards_json, &params, settings_json, now_iso);
 
-        assert!(result.is_ok(), "Фильтрация должна завершиться успешно: {:?}", result);
+        assert!(
+            result.is_ok(),
+            "Фильтрация должна завершиться успешно: {:?}",
+            result
+        );
         let filter_result = result.unwrap();
 
         // Проверяем, что все отфильтрованные карточки имеют overdue < 0
@@ -846,7 +996,8 @@ mod tests {
         ]"#;
 
         // SQL запрос из примера пользователя
-        let sql_source = r#"SELECT file as "file", overdue as "oDue", reps LIMIT 10 WHERE overdue < 0"#;
+        let sql_source =
+            r#"SELECT file as "file", overdue as "oDue", reps LIMIT 10 WHERE overdue < 0"#;
 
         // Парсим SQL для получения параметров
         let parse_result = parse_fsrs_table_block(sql_source).unwrap();
@@ -863,14 +1014,13 @@ mod tests {
         let now_iso = "2024-01-02T00:00:00.000Z"; // На 1 день после создания карточек
 
         // Вызываем фильтрацию через существующую функцию
-        let result = filter_and_sort_cards(
-            cards_json,
-            &params,
-            settings_json,
-            now_iso,
-        );
+        let result = filter_and_sort_cards(cards_json, &params, settings_json, now_iso);
 
-        assert!(result.is_ok(), "Фильтрация должна завершиться успешно: {:?}", result);
+        assert!(
+            result.is_ok(),
+            "Фильтрация должна завершиться успешно: {:?}",
+            result
+        );
         let filter_result = result.unwrap();
 
         // Проверяем, что все карточки отфильтрованы (overdue < 0)
@@ -920,14 +1070,13 @@ mod tests {
         let now_iso = "2024-01-02T00:00:00.000Z"; // На 1 день после создания карточек
 
         // Вызываем фильтрацию
-        let result = filter_and_sort_cards(
-            cards_json,
-            &params,
-            settings_json,
-            now_iso,
-        );
+        let result = filter_and_sort_cards(cards_json, &params, settings_json, now_iso);
 
-        assert!(result.is_ok(), "Фильтрация должна завершиться успешно: {:?}", result);
+        assert!(
+            result.is_ok(),
+            "Фильтрация должна завершиться успешно: {:?}",
+            result
+        );
         let filter_result = result.unwrap();
 
         // Обе карточки должны пройти фильтр: overdue < 0 (т.к. due в будущем) AND stability > 0.5 (stability = 5.0)
@@ -967,27 +1116,29 @@ mod tests {
         let now_iso = "2024-01-02T00:00:00.000Z"; // На 1 день после создания карточек
 
         // Вызываем WASM функцию напрямую
-        let result_json = crate::filter_and_sort_cards_with_sql(
-            cards_json,
-            sql_source,
-            settings_json,
-            now_iso,
-        );
+        let result_json =
+            crate::filter_and_sort_cards_with_sql(cards_json, sql_source, settings_json, now_iso);
 
         // Парсим результат
-        let result: serde_json::Value = serde_json::from_str(&result_json)
-            .expect("Failed to parse result JSON");
+        let result: serde_json::Value =
+            serde_json::from_str(&result_json).expect("Failed to parse result JSON");
 
         // Проверяем, что нет ошибок
-        assert!(!result.get("error").is_some(), "Result contains error: {:?}", result.get("error"));
+        assert!(
+            !result.get("error").is_some(),
+            "Result contains error: {:?}",
+            result.get("error")
+        );
 
         // Извлекаем объект cards
-        let cards_obj = result.get("cards")
+        let cards_obj = result
+            .get("cards")
             .and_then(|c| c.as_object())
             .expect("No cards object in result");
 
         // Извлекаем массив карточек
-        let cards = cards_obj.get("cards")
+        let cards = cards_obj
+            .get("cards")
             .and_then(|c| c.as_array())
             .expect("No cards array in result");
 
@@ -995,13 +1146,15 @@ mod tests {
         assert_eq!(cards.len(), 2);
 
         // Проверяем общее количество
-        let total_count = cards_obj.get("total_count")
+        let total_count = cards_obj
+            .get("total_count")
             .and_then(|tc| tc.as_u64())
             .expect("No total_count in result");
         assert_eq!(total_count, 2);
 
         // Проверяем ошибки (должны быть пустыми)
-        let errors = cards_obj.get("errors")
+        let errors = cards_obj
+            .get("errors")
             .and_then(|e| e.as_array())
             .expect("No errors array in result");
         assert_eq!(errors.len(), 0);

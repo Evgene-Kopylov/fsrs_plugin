@@ -1,11 +1,13 @@
 //! Синтаксический анализатор для SQL-подобного синтаксиса блоков `fsrs-table`
 //! Преобразует последовательность токенов в структуру TableParams
 
-use log::{debug, warn, info};
+use log::{debug, info, warn};
 
 use super::lexer::{SqlLexer, Token, TokenType};
-use super::{ParseError, ParseResult, ParseWarning, Expression, Value, ComparisonOp};
-use crate::table_processing::types::{SortDirection, SortParam, TableColumn, TableParams, AVAILABLE_FIELDS};
+use super::{ComparisonOp, Expression, ParseError, ParseResult, ParseWarning, Value};
+use crate::table_processing::types::{
+    AVAILABLE_FIELDS, SortDirection, SortParam, TableColumn, TableParams,
+};
 
 /// Промежуточная структура для хранения результата парсинга
 /// перед валидацией и преобразованием в TableParams
@@ -54,8 +56,7 @@ struct ParserState<'a> {
 impl<'a> ParserState<'a> {
     /// Создает новое состояние парсера
     fn new(lexer: &'a mut SqlLexer) -> Result<Self, ParseError> {
-        let current_token = lexer.next_token()
-            .map_err(|e| ParseError::Lexical(e))?;
+        let current_token = lexer.next_token().map_err(ParseError::Lexical)?;
 
         Ok(Self {
             lexer,
@@ -67,13 +68,17 @@ impl<'a> ParserState<'a> {
     /// Переходит к следующему токену
     fn advance(&mut self) -> Result<(), ParseError> {
         let old_token = self.current_token.clone();
-        self.current_token = self.lexer.next_token().map_err(|e| ParseError::Lexical(e))?;
+        self.current_token = self.lexer.next_token().map_err(ParseError::Lexical)?;
         debug!("advance: {} -> {}", old_token, self.current_token);
         Ok(())
     }
 
     /// Потребляет токен определенного типа и значения
-    fn consume(&mut self, expected_type: TokenType, expected_value: Option<&str>) -> Result<(), ParseError> {
+    fn consume(
+        &mut self,
+        expected_type: TokenType,
+        expected_value: Option<&str>,
+    ) -> Result<(), ParseError> {
         if self.current_token.token_type == TokenType::Eof {
             return Err(ParseError::UnexpectedEof);
         }
@@ -86,12 +91,13 @@ impl<'a> ParserState<'a> {
         }
 
         if let Some(expected) = expected_value
-            && self.current_token.value != expected {
-                return Err(ParseError::Syntax(format!(
-                    "Ожидается '{}', получено '{}'",
-                    expected, self.current_token.value
-                )));
-            }
+            && self.current_token.value != expected
+        {
+            return Err(ParseError::Syntax(format!(
+                "Ожидается '{}', получено '{}'",
+                expected, self.current_token.value
+            )));
+        }
 
         self.advance()
     }
@@ -107,7 +113,10 @@ impl<'a> ParserState<'a> {
 
         // Парсим SELECT clause
         self.parse_select_clause()?;
-        debug!("parse_query: after select clause, current token = {:?}", self.current_token);
+        debug!(
+            "parse_query: after select clause, current token = {:?}",
+            self.current_token
+        );
 
         // Парсим дополнительные части в любом порядке
         while self.current_token.token_type != TokenType::Eof {
@@ -124,8 +133,13 @@ impl<'a> ParserState<'a> {
             } else {
                 // Неожиданный токен, но пытаемся восстановиться
                 let unexpected = self.current_token.value.clone();
-                warn!("Неожиданный токен '{}' (type: {:?}), пропускаем", unexpected, self.current_token.token_type);
-                self.result.warnings.push(ParseWarning::UnexpectedToken(unexpected));
+                warn!(
+                    "Неожиданный токен '{}' (type: {:?}), пропускаем",
+                    unexpected, self.current_token.token_type
+                );
+                self.result
+                    .warnings
+                    .push(ParseWarning::UnexpectedToken(unexpected));
                 self.advance()?;
             }
         }
@@ -138,26 +152,35 @@ impl<'a> ParserState<'a> {
     fn parse_select_clause(&mut self) -> Result<(), ParseError> {
         self.consume_keyword("SELECT")?;
 
-        debug!("parse_select_clause: current token = {:?}", self.current_token);
+        debug!(
+            "parse_select_clause: current token = {:?}",
+            self.current_token
+        );
 
         // Проверяем, является ли первая колонка звездочкой
         if self.current_token.is_operator('*') {
             debug!("Found * operator, parsing star column");
             // Обрабатываем SELECT *
             self.parse_star_column()?;
-            debug!("After parse_star_column: current token = {:?}", self.current_token);
+            debug!(
+                "After parse_star_column: current token = {:?}",
+                self.current_token
+            );
 
             // После звездочки не должно быть других колонок
             if self.current_token.is_operator(',') {
                 return Err(ParseError::Syntax(
-                    "Нельзя использовать запятую после SELECT *".to_string()
+                    "Нельзя использовать запятую после SELECT *".to_string(),
                 ));
             }
         } else {
             debug!("Parsing regular column definition");
             // Парсим первую колонку
             self.parse_column_definition()?;
-            debug!("After first column: current token = {:?}", self.current_token);
+            debug!(
+                "After first column: current token = {:?}",
+                self.current_token
+            );
 
             // Парсим остальные колонки, разделенные запятыми
             while self.current_token.is_operator(',') {
@@ -166,24 +189,33 @@ impl<'a> ParserState<'a> {
             }
         }
 
-        debug!("parse_select_clause completed, current token = {:?}", self.current_token);
+        debug!(
+            "parse_select_clause completed, current token = {:?}",
+            self.current_token
+        );
         Ok(())
     }
 
     /// Обрабатывает звездочку (*) для выбора всех полей
     fn parse_star_column(&mut self) -> Result<(), ParseError> {
-        debug!("parse_star_column: current token = {:?}", self.current_token);
+        debug!(
+            "parse_star_column: current token = {:?}",
+            self.current_token
+        );
 
         // Проверяем, что текущий токен - звездочка
         if !self.current_token.is_operator('*') {
             return Err(ParseError::Syntax(
-                "Ожидается оператор '*' для выбора всех полей".to_string()
+                "Ожидается оператор '*' для выбора всех полей".to_string(),
             ));
         }
 
         // Пропускаем звездочку
         self.advance()?;
-        debug!("parse_star_column: star processed, adding all available fields, next token = {:?}", self.current_token);
+        debug!(
+            "parse_star_column: star processed, adding all available fields, next token = {:?}",
+            self.current_token
+        );
 
         // Добавляем все доступные поля
         for &field in AVAILABLE_FIELDS.iter() {
@@ -227,7 +259,7 @@ impl<'a> ParserState<'a> {
             TokenType::Operator if self.current_token.value == "*" => {
                 // Звездочка должна обрабатываться в parse_select_clause
                 Err(ParseError::Syntax(
-                    "Звездочка (*) должна быть единственным элементом в SELECT".to_string()
+                    "Звездочка (*) должна быть единственным элементом в SELECT".to_string(),
                 ))
             }
             _ => Err(ParseError::Syntax(format!(
@@ -244,7 +276,9 @@ impl<'a> ParserState<'a> {
         // Проверяем, не было ли уже условия WHERE
         if self.result.where_condition.is_some() {
             warn!("Обнаружено дублирующееся условие WHERE");
-            self.result.warnings.push(ParseWarning::DuplicateWhere("WHERE".to_string()));
+            self.result
+                .warnings
+                .push(ParseWarning::DuplicateWhere("WHERE".to_string()));
         }
 
         let condition = self.parse_expression()?;
@@ -310,15 +344,15 @@ impl<'a> ParserState<'a> {
             }
             Ok(_) => {
                 warn!("Отрицательный LIMIT, будет проигнорирован");
-                self.result.warnings.push(ParseWarning::InvalidLimit(limit_str.parse().unwrap_or(0)));
+                self.result
+                    .warnings
+                    .push(ParseWarning::InvalidLimit(limit_str.parse().unwrap_or(0)));
                 Ok(())
             }
-            Err(_) => {
-                Err(ParseError::Syntax(format!(
-                    "Некорректное число для LIMIT: '{}'",
-                    limit_str
-                )))
-            }
+            Err(_) => Err(ParseError::Syntax(format!(
+                "Некорректное число для LIMIT: '{}'",
+                limit_str
+            ))),
         }
     }
 
@@ -385,10 +419,12 @@ impl<'a> ParserState<'a> {
             "<=" => ComparisonOp::LessOrEqual,
             "=" => ComparisonOp::Equal,
             "!=" => ComparisonOp::NotEqual,
-            _ => return Err(ParseError::Syntax(format!(
-                "Неподдерживаемый оператор сравнения: '{}'",
-                op_str
-            ))),
+            _ => {
+                return Err(ParseError::Syntax(format!(
+                    "Неподдерживаемый оператор сравнения: '{}'",
+                    op_str
+                )));
+            }
         };
         self.advance()?;
         Ok(operator)
@@ -404,11 +440,9 @@ impl<'a> ParserState<'a> {
         }
 
         let num_str = self.current_token.value.clone();
-        let number = num_str.parse::<f64>()
-            .map_err(|_| ParseError::Syntax(format!(
-                "Некорректное число: '{}'",
-                num_str
-            )))?;
+        let number = num_str
+            .parse::<f64>()
+            .map_err(|_| ParseError::Syntax(format!("Некорректное число: '{}'", num_str)))?;
 
         self.advance()?;
         Ok(Value::number(number))
@@ -461,7 +495,10 @@ pub fn parse_sql_block(source: &str) -> Result<ParseResult<TableParams>, ParseEr
         Ok(_) => Ok(parser_state.into_table_params()),
         Err(err) => {
             // Даже при ошибке можем вернуть частичный результат с предупреждениями
-            warn!("Ошибка парсинга SQL: {}, возвращаем значения по умолчанию", err);
+            warn!(
+                "Ошибка парсинга SQL: {}, возвращаем значения по умолчанию",
+                err
+            );
             Err(err)
         }
     }
@@ -502,7 +539,8 @@ mod tests {
 
     #[test]
     fn test_parse_mixed_aliases() {
-        let result = parse_sql_block(r#"SELECT file as "Имя файла", reps, overdue as "Задержка""#).unwrap();
+        let result =
+            parse_sql_block(r#"SELECT file as "Имя файла", reps, overdue as "Задержка""#).unwrap();
         let params = result.value;
 
         assert_eq!(params.columns.len(), 3);
@@ -554,7 +592,8 @@ mod tests {
 
     #[test]
     fn test_parse_full_query() {
-        let result = parse_sql_block(r#"SELECT file as "Файл", reps ORDER BY due DESC LIMIT 10"#).unwrap();
+        let result =
+            parse_sql_block(r#"SELECT file as "Файл", reps ORDER BY due DESC LIMIT 10"#).unwrap();
         let params = result.value;
 
         assert_eq!(params.columns.len(), 2);
@@ -640,7 +679,8 @@ mod tests {
 
     #[test]
     fn test_parse_whitespace() {
-        let result = parse_sql_block("  SELECT  file  ,  reps  ORDER  BY  due  DESC  LIMIT  10  ").unwrap();
+        let result =
+            parse_sql_block("  SELECT  file  ,  reps  ORDER  BY  due  DESC  LIMIT  10  ").unwrap();
         let params = result.value;
 
         assert_eq!(params.columns.len(), 2);
@@ -675,7 +715,10 @@ mod tests {
         let condition = params.where_condition.unwrap();
         assert!(condition.is_comparison());
         assert_eq!(condition.get_comparison_field(), Some("overdue"));
-        assert_eq!(condition.get_comparison_operator(), Some(ComparisonOp::Greater));
+        assert_eq!(
+            condition.get_comparison_operator(),
+            Some(ComparisonOp::Greater)
+        );
     }
 
     #[test]
@@ -688,7 +731,12 @@ mod tests {
         assert!(condition.is_logical());
 
         // Проверяем структуру AND
-        if let Expression::Logical { left, operator, right } = condition {
+        if let Expression::Logical {
+            left,
+            operator,
+            right,
+        } = condition
+        {
             assert_eq!(operator, LogicalOp::And);
             assert!(left.is_comparison());
             assert!(right.is_comparison());
@@ -699,14 +747,20 @@ mod tests {
 
     #[test]
     fn test_parse_where_or() {
-        let result = parse_sql_block("SELECT file WHERE overdue > 24 OR retrievability < 0.2").unwrap();
+        let result =
+            parse_sql_block("SELECT file WHERE overdue > 24 OR retrievability < 0.2").unwrap();
         let params = result.value;
 
         assert!(params.where_condition.is_some());
         let condition = params.where_condition.unwrap();
         assert!(condition.is_logical());
 
-        if let Expression::Logical { left, operator, right } = condition {
+        if let Expression::Logical {
+            left,
+            operator,
+            right,
+        } = condition
+        {
             assert_eq!(operator, LogicalOp::Or);
             assert!(left.is_comparison());
             assert!(right.is_comparison());
@@ -718,14 +772,21 @@ mod tests {
     #[test]
     fn test_parse_where_complex_priority() {
         // Проверяем приоритет AND перед OR
-        let result = parse_sql_block("SELECT file WHERE overdue > 0 AND reps < 10 OR retrievability < 0.3").unwrap();
+        let result =
+            parse_sql_block("SELECT file WHERE overdue > 0 AND reps < 10 OR retrievability < 0.3")
+                .unwrap();
         let params = result.value;
 
         assert!(params.where_condition.is_some());
         let condition = params.where_condition.unwrap();
 
         // Должно быть: ((overdue > 0 AND reps < 10) OR retrievability < 0.3)
-        if let Expression::Logical { left, operator, right } = condition {
+        if let Expression::Logical {
+            left,
+            operator,
+            right,
+        } = condition
+        {
             assert_eq!(operator, LogicalOp::Or);
             // Левая часть должна быть AND
             assert!(left.is_logical());
@@ -739,7 +800,9 @@ mod tests {
     #[test]
     fn test_parse_where_with_order_and_limit() {
         // Комбинация WHERE, ORDER BY и LIMIT
-        let result = parse_sql_block("SELECT file, reps WHERE overdue > 0 ORDER BY due DESC LIMIT 10").unwrap();
+        let result =
+            parse_sql_block("SELECT file, reps WHERE overdue > 0 ORDER BY due DESC LIMIT 10")
+                .unwrap();
         let params = result.value;
 
         assert_eq!(params.columns.len(), 2);
@@ -774,36 +837,43 @@ mod tests {
     }
 }
 
-    #[test]
-    fn test_parse_where_after_limit() {
-        // WHERE после LIMIT (порядок не должен иметь значения)
-        let result = parse_sql_block("SELECT file as \"Файл\", overdue as \"oDue\", reps LIMIT 10 WHERE overdue < 0").unwrap();
-        let params = result.value;
+#[test]
+fn test_parse_where_after_limit() {
+    // WHERE после LIMIT (порядок не должен иметь значения)
+    let result = parse_sql_block(
+        "SELECT file as \"Файл\", overdue as \"oDue\", reps LIMIT 10 WHERE overdue < 0",
+    )
+    .unwrap();
+    let params = result.value;
 
-        // Проверяем колонки
-        assert_eq!(params.columns.len(), 3);
-        assert_eq!(params.columns[0].field, "file");
-        assert_eq!(params.columns[0].title, "Файл");
-        assert_eq!(params.columns[1].field, "overdue");
-        assert_eq!(params.columns[1].title, "oDue");
-        assert_eq!(params.columns[2].field, "reps");
+    // Проверяем колонки
+    assert_eq!(params.columns.len(), 3);
+    assert_eq!(params.columns[0].field, "file");
+    assert_eq!(params.columns[0].title, "Файл");
+    assert_eq!(params.columns[1].field, "overdue");
+    assert_eq!(params.columns[1].title, "oDue");
+    assert_eq!(params.columns[2].field, "reps");
 
-        // Проверяем LIMIT
-        assert_eq!(params.limit, 10);
+    // Проверяем LIMIT
+    assert_eq!(params.limit, 10);
 
-        // Проверяем WHERE условие
-        assert!(params.where_condition.is_some());
-        let condition = params.where_condition.unwrap();
+    // Проверяем WHERE условие
+    assert!(params.where_condition.is_some());
+    let condition = params.where_condition.unwrap();
 
-        // Убедимся, что это сравнение
-        match condition {
-            Expression::Comparison { field, operator, value } => {
-                assert_eq!(field, "overdue");
-                assert_eq!(operator, ComparisonOp::Less);
-                match value {
-                    Value::Number(n) => assert_eq!(n, 0.0),
-                }
+    // Убедимся, что это сравнение
+    match condition {
+        Expression::Comparison {
+            field,
+            operator,
+            value,
+        } => {
+            assert_eq!(field, "overdue");
+            assert_eq!(operator, ComparisonOp::Less);
+            match value {
+                Value::Number(n) => assert_eq!(n, 0.0),
             }
-            _ => panic!("Expected comparison expression"),
         }
+        _ => panic!("Expected comparison expression"),
     }
+}

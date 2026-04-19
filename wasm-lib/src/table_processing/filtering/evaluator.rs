@@ -1,9 +1,8 @@
 //! Модуль для оценки WHERE-условий в SQL-подобном синтаксисе
 //! Поддерживает операторы сравнения и логические операторы AND/OR
 
-
-use crate::table_processing::parsing::{Expression, ComparisonOp, LogicalOp, Value};
 use crate::table_processing::filtering::calculator::CardWithComputedFields;
+use crate::table_processing::parsing::{ComparisonOp, Expression, LogicalOp, Value};
 use log;
 
 /// Ошибка оценки выражения
@@ -27,14 +26,23 @@ impl std::fmt::Display for EvaluationError {
 impl std::error::Error for EvaluationError {}
 
 /// Оценивает выражение WHERE для заданной карточки
-pub fn evaluate_condition(condition: &Expression, card: &CardWithComputedFields) -> Result<bool, EvaluationError> {
+pub fn evaluate_condition(
+    condition: &Expression,
+    card: &CardWithComputedFields,
+) -> Result<bool, EvaluationError> {
     log::debug!("evaluate_condition called: {:?}", condition);
 
     let result = match condition {
-        Expression::Comparison { field, operator, value } => {
-            evaluate_comparison(field, *operator, value, card)
-        }
-        Expression::Logical { left, operator, right } => {
+        Expression::Comparison {
+            field,
+            operator,
+            value,
+        } => evaluate_comparison(field, *operator, value, card),
+        Expression::Logical {
+            left,
+            operator,
+            right,
+        } => {
             let left_result = evaluate_condition(left, card)?;
             let right_result = evaluate_condition(right, card)?;
 
@@ -58,9 +66,13 @@ fn evaluate_comparison(
     field: &str,
     operator: ComparisonOp,
     value: &Value,
-    card: &CardWithComputedFields
+    card: &CardWithComputedFields,
 ) -> Result<bool, EvaluationError> {
-    log::debug!("evaluate_comparison: field={}, operator={:?}", field, operator);
+    log::debug!(
+        "evaluate_comparison: field={}, operator={:?}",
+        field,
+        operator
+    );
 
     // Извлекаем числовое значение из Value (для Фазы 1 всегда число)
     let target_value = match value {
@@ -84,7 +96,13 @@ fn evaluate_comparison(
         ComparisonOp::NotEqual => (field_value - target_value).abs() >= f64::EPSILON,
     };
 
-    log::debug!("comparison result: {} {} {} = {}", field_value, operator, target_value, result);
+    log::debug!(
+        "comparison result: {} {} {} = {}",
+        field_value,
+        operator,
+        target_value,
+        result
+    );
 
     Ok(result)
 }
@@ -96,7 +114,8 @@ fn get_field_value(field: &str, card: &CardWithComputedFields) -> Result<f64, Ev
     let result = match field {
         "overdue" => {
             log::debug!("overdue value: {:?}", card.overdue);
-            card.overdue.ok_or_else(|| EvaluationError::MissingField("overdue".to_string()))
+            card.overdue
+                .ok_or_else(|| EvaluationError::MissingField("overdue".to_string()))
         }
         "reps" => {
             // reps хранится как Option<u32>, преобразуем в f64
@@ -107,23 +126,28 @@ fn get_field_value(field: &str, card: &CardWithComputedFields) -> Result<f64, Ev
         }
         "stability" => {
             log::debug!("stability value: {:?}", card.stability);
-            card.stability.ok_or_else(|| EvaluationError::MissingField("stability".to_string()))
+            card.stability
+                .ok_or_else(|| EvaluationError::MissingField("stability".to_string()))
         }
         "difficulty" => {
             log::debug!("difficulty value: {:?}", card.difficulty);
-            card.difficulty.ok_or_else(|| EvaluationError::MissingField("difficulty".to_string()))
+            card.difficulty
+                .ok_or_else(|| EvaluationError::MissingField("difficulty".to_string()))
         }
         "retrievability" => {
             log::debug!("retrievability value: {:?}", card.retrievability);
-            card.retrievability.ok_or_else(|| EvaluationError::MissingField("retrievability".to_string()))
+            card.retrievability
+                .ok_or_else(|| EvaluationError::MissingField("retrievability".to_string()))
         }
         "elapsed" => {
             log::debug!("elapsed value: {:?}", card.elapsed);
-            card.elapsed.ok_or_else(|| EvaluationError::MissingField("elapsed".to_string()))
+            card.elapsed
+                .ok_or_else(|| EvaluationError::MissingField("elapsed".to_string()))
         }
         "scheduled" => {
             log::debug!("scheduled value: {:?}", card.scheduled);
-            card.scheduled.ok_or_else(|| EvaluationError::MissingField("scheduled".to_string()))
+            card.scheduled
+                .ok_or_else(|| EvaluationError::MissingField("scheduled".to_string()))
         }
         _ => {
             log::warn!("Unknown field: {}", field);
@@ -142,7 +166,7 @@ fn get_field_value(field: &str, card: &CardWithComputedFields) -> Result<f64, Ev
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::table_processing::parsing::{Expression, Value, ComparisonOp};
+    use crate::table_processing::parsing::{ComparisonOp, Expression, Value};
 
     fn create_test_card() -> CardWithComputedFields {
         CardWithComputedFields {
@@ -163,11 +187,7 @@ mod tests {
     #[test]
     fn test_evaluate_comparison_greater() {
         let card = create_test_card();
-        let expr = Expression::comparison(
-            "overdue",
-            ComparisonOp::Greater,
-            Value::Number(20.0),
-        );
+        let expr = Expression::comparison("overdue", ComparisonOp::Greater, Value::Number(20.0));
 
         let result = evaluate_condition(&expr, &card).unwrap();
         assert!(result); // 24.5 > 20.0
@@ -176,11 +196,7 @@ mod tests {
     #[test]
     fn test_evaluate_comparison_less() {
         let card = create_test_card();
-        let expr = Expression::comparison(
-            "reps",
-            ComparisonOp::Less,
-            Value::Number(10.0),
-        );
+        let expr = Expression::comparison("reps", ComparisonOp::Less, Value::Number(10.0));
 
         let result = evaluate_condition(&expr, &card).unwrap();
         assert!(result); // 5 < 10
@@ -189,11 +205,7 @@ mod tests {
     #[test]
     fn test_evaluate_comparison_equal() {
         let card = create_test_card();
-        let expr = Expression::comparison(
-            "stability",
-            ComparisonOp::Equal,
-            Value::Number(0.7),
-        );
+        let expr = Expression::comparison("stability", ComparisonOp::Equal, Value::Number(0.7));
 
         let result = evaluate_condition(&expr, &card).unwrap();
         assert!(result); // 0.7 == 0.7
@@ -202,11 +214,7 @@ mod tests {
     #[test]
     fn test_evaluate_comparison_not_equal() {
         let card = create_test_card();
-        let expr = Expression::comparison(
-            "difficulty",
-            ComparisonOp::NotEqual,
-            Value::Number(0.5),
-        );
+        let expr = Expression::comparison("difficulty", ComparisonOp::NotEqual, Value::Number(0.5));
 
         let result = evaluate_condition(&expr, &card).unwrap();
         assert!(result); // 0.3 != 0.5
@@ -254,11 +262,8 @@ mod tests {
     #[test]
     fn test_evaluate_unknown_field() {
         let card = create_test_card();
-        let expr = Expression::comparison(
-            "unknown_field",
-            ComparisonOp::Greater,
-            Value::Number(0.0),
-        );
+        let expr =
+            Expression::comparison("unknown_field", ComparisonOp::Greater, Value::Number(0.0));
 
         let result = evaluate_condition(&expr, &card);
         assert!(matches!(result, Err(EvaluationError::UnknownField(_))));
@@ -269,11 +274,7 @@ mod tests {
         let mut card = create_test_card();
         card.overdue = None; // Удаляем значение
 
-        let expr = Expression::comparison(
-            "overdue",
-            ComparisonOp::Greater,
-            Value::Number(0.0),
-        );
+        let expr = Expression::comparison("overdue", ComparisonOp::Greater, Value::Number(0.0));
 
         let result = evaluate_condition(&expr, &card);
         assert!(matches!(result, Err(EvaluationError::MissingField(_))));

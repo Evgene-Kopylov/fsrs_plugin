@@ -2,11 +2,10 @@
 //! Проверяет корректность параметров, полученных из парсинга SQL-подобного синтаксиса
 
 use log::{debug, warn};
-use serde::{Deserialize, Serialize, ser::{SerializeStruct}};
+use serde::{Deserialize, Serialize, ser::SerializeStruct};
 
-
-use crate::table_processing::types::{TableParams, is_valid_table_field};
 use super::Expression;
+use crate::table_processing::types::{TableParams, is_valid_table_field};
 
 /// Типы предупреждений, обнаруженных при валидации
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -33,12 +32,26 @@ impl serde::Serialize for ParseWarning {
         S: serde::Serializer,
     {
         let (type_str, message) = match self {
-            ParseWarning::UnknownField(field) => ("UnknownField", format!("Неизвестное поле: '{}'", field)),
-            ParseWarning::DuplicateField(field) => ("DuplicateField", format!("Дублирующееся поле: '{}'", field)),
-            ParseWarning::InvalidLimit(limit) => ("InvalidLimit", format!("Некорректный LIMIT: {}", limit)),
-            ParseWarning::UnknownSortField(field) => ("UnknownSortField", format!("Неизвестное поле для сортировки: '{}'", field)),
-            ParseWarning::UnexpectedToken(token) => ("UnexpectedToken", format!("Неожиданный токен: '{}'", token)),
-            ParseWarning::DuplicateWhere(field) => ("DuplicateWhere", format!("Дублирующееся условие WHERE: '{}'", field)),
+            ParseWarning::UnknownField(field) => {
+                ("UnknownField", format!("Неизвестное поле: '{}'", field))
+            }
+            ParseWarning::DuplicateField(field) => {
+                ("DuplicateField", format!("Дублирующееся поле: '{}'", field))
+            }
+            ParseWarning::InvalidLimit(limit) => {
+                ("InvalidLimit", format!("Некорректный LIMIT: {}", limit))
+            }
+            ParseWarning::UnknownSortField(field) => (
+                "UnknownSortField",
+                format!("Неизвестное поле для сортировки: '{}'", field),
+            ),
+            ParseWarning::UnexpectedToken(token) => {
+                ("UnexpectedToken", format!("Неожиданный токен: '{}'", token))
+            }
+            ParseWarning::DuplicateWhere(field) => (
+                "DuplicateWhere",
+                format!("Дублирующееся условие WHERE: '{}'", field),
+            ),
             ParseWarning::Other(msg) => ("Other", msg.clone()),
         };
 
@@ -56,7 +69,9 @@ impl<'de> serde::Deserialize<'de> for ParseWarning {
     {
         // Для обратной совместимости - не используется в текущей реализации
         // так как предупреждения только отправляются в TypeScript
-        Err(serde::de::Error::custom("Deserialization of ParseWarning is not supported"))
+        Err(serde::de::Error::custom(
+            "Deserialization of ParseWarning is not supported",
+        ))
     }
 }
 
@@ -66,9 +81,13 @@ impl std::fmt::Display for ParseWarning {
             ParseWarning::UnknownField(field) => write!(f, "Неизвестное поле: '{}'", field),
             ParseWarning::DuplicateField(field) => write!(f, "Дублирующееся поле: '{}'", field),
             ParseWarning::InvalidLimit(limit) => write!(f, "Некорректный LIMIT: {}", limit),
-            ParseWarning::UnknownSortField(field) => write!(f, "Неизвестное поле для сортировки: '{}'", field),
+            ParseWarning::UnknownSortField(field) => {
+                write!(f, "Неизвестное поле для сортировки: '{}'", field)
+            }
             ParseWarning::UnexpectedToken(token) => write!(f, "Неожиданный токен: '{}'", token),
-            ParseWarning::DuplicateWhere(field) => write!(f, "Дублирующееся условие WHERE: '{}'", field),
+            ParseWarning::DuplicateWhere(field) => {
+                write!(f, "Дублирующееся условие WHERE: '{}'", field)
+            }
             ParseWarning::Other(msg) => write!(f, "{}", msg),
         }
     }
@@ -89,7 +108,9 @@ impl ValidationResult {
 
     /// Создает пустой результат валидации
     pub fn empty() -> Self {
-        Self { warnings: Vec::new() }
+        Self {
+            warnings: Vec::new(),
+        }
     }
 }
 
@@ -132,14 +153,16 @@ pub fn validate_table_params(params: &TableParams) -> ValidationResult {
 
     // Проверяем, что есть хотя бы одна колонка
     if params.columns.is_empty() {
-        warnings.push(ParseWarning::Other("В SELECT должно быть указано хотя бы одно поле".to_string()));
+        warnings.push(ParseWarning::Other(
+            "В SELECT должно быть указано хотя бы одно поле".to_string(),
+        ));
     }
 
     // Проверяем поле сортировки, если указано
-    if let Some(sort) = &params.sort {
-        if !is_valid_table_field(&sort.field) {
-            warnings.push(ParseWarning::UnknownSortField(sort.field.clone()));
-        }
+    if let Some(sort) = &params.sort
+        && !is_valid_table_field(&sort.field)
+    {
+        warnings.push(ParseWarning::UnknownSortField(sort.field.clone()));
     }
 
     // Проверяем LIMIT (больше 1000 может быть проблемой производительности)
@@ -168,7 +191,7 @@ pub fn validate_table_params(params: &TableParams) -> ValidationResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::table_processing::types::{TableColumn, SortParam, SortDirection};
+    use crate::table_processing::types::{SortDirection, SortParam, TableColumn};
 
     #[test]
     fn test_validate_duplicate_field() {
@@ -201,13 +224,11 @@ mod tests {
     #[test]
     fn test_validate_unknown_field() {
         let params = TableParams {
-            columns: vec![
-                TableColumn {
-                    field: "unknown".to_string(),
-                    title: "unknown".to_string(),
-                    width: None,
-                },
-            ],
+            columns: vec![TableColumn {
+                field: "unknown".to_string(),
+                title: "unknown".to_string(),
+                width: None,
+            }],
             limit: 0,
             sort: None,
             where_condition: None,
@@ -224,13 +245,11 @@ mod tests {
     #[test]
     fn test_validate_unknown_sort_field() {
         let params = TableParams {
-            columns: vec![
-                TableColumn {
-                    field: "file".to_string(),
-                    title: "file".to_string(),
-                    width: None,
-                },
-            ],
+            columns: vec![TableColumn {
+                field: "file".to_string(),
+                title: "file".to_string(),
+                width: None,
+            }],
             limit: 0,
             sort: Some(SortParam {
                 field: "unknown".to_string(),
@@ -250,13 +269,11 @@ mod tests {
     #[test]
     fn test_validate_large_limit() {
         let params = TableParams {
-            columns: vec![
-                TableColumn {
-                    field: "file".to_string(),
-                    title: "file".to_string(),
-                    width: None,
-                },
-            ],
+            columns: vec![TableColumn {
+                field: "file".to_string(),
+                title: "file".to_string(),
+                width: None,
+            }],
             limit: 2000,
             sort: None,
             where_condition: None,
@@ -299,7 +316,10 @@ mod tests {
         assert_eq!(warning.to_string(), "Некорректный LIMIT: 5000");
 
         let warning = ParseWarning::UnknownSortField("test".to_string());
-        assert_eq!(warning.to_string(), "Неизвестное поле для сортировки: 'test'");
+        assert_eq!(
+            warning.to_string(),
+            "Неизвестное поле для сортировки: 'test'"
+        );
 
         let warning = ParseWarning::UnexpectedToken("@".to_string());
         assert_eq!(warning.to_string(), "Неожиданный токен: '@'");
