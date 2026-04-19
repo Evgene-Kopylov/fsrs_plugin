@@ -5,7 +5,6 @@ import type { TableParams } from "../utils/fsrs-table-helpers";
 import {
 	generateTableHTMLFromCards,
 	generateTableHTMLFromSql,
-	generateEmptyTableHTML,
 } from "../utils/fsrs-table-helpers";
 import { FsrsHelpModal } from "./fsrs-help-modal";
 
@@ -230,10 +229,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 		}
 		this.container.empty();
 
-		const emptyHTML = generateEmptyTableHTML();
-		// eslint-disable-next-line @microsoft/sdl/no-inner-html
-		this.container.insertAdjacentHTML("afterbegin", emptyHTML);
-
+		// Просто очищаем контейнер без вставки сообщения
 		if (!this.isFirstLoad) {
 			this.container.style.opacity = "1"; // eslint-disable-line obsidianmd/no-static-styles-assignment
 		}

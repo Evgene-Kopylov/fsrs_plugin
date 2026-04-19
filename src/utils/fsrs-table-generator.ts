@@ -182,16 +182,3 @@ export async function generateTableHTMLFromSql(
 	const html = generateTableHTML(cardsWithState, params, settings, app, now);
 	return { html, params };
 }
-
-/**
- * Создает HTML для пустого состояния таблицы
- * @returns HTML строка для пустого состояния
- */
-export function generateEmptyTableHTML(): string {
-	return `<div class="fsrs-table-container">
-
-		<div class="fsrs-table-empty">
-			<p>Нет карточек FSRS. Используйте команду 'Добавить FSRS поля' для создания карточек.</p>
-		</div>
-	</div>`;
-}

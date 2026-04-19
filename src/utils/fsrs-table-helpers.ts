@@ -37,7 +37,6 @@ export {
 	generateTableHTML,
 	generateTableHTMLFromCards,
 	generateTableHTMLFromSql,
-	generateEmptyTableHTML,
 } from "./fsrs-table-generator";
 
 // Экспорт типов для удобства
