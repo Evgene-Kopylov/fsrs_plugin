@@ -4,6 +4,7 @@
 
 use crate::table_processing::parsing::{Expression, ComparisonOp, LogicalOp, Value};
 use crate::table_processing::filtering::calculator::CardWithComputedFields;
+use web_sys::console;
 
 /// Ошибка оценки выражения
 #[derive(Debug, Clone, PartialEq)]

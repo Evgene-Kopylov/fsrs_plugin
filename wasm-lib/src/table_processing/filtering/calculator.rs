@@ -138,30 +138,7 @@ fn extract_field(card_json: &str, field: &str) -> Result<serde_json::Value, Calc
         .ok_or_else(|| CalculationError::MissingField(field.to_string()))
 }
 
-/// Вычисляет просрочку карточки в часах
-///
-/// # Аргументы
-/// * `card_json` - JSON карточки
-/// * `now_iso` - текущее время в формате ISO 8601
-///
-/// # Возвращает
-/// Количество часов просрочки или ошибку вычисления
-pub fn calculate_overdue(card_json: &str, now_iso: &str) -> Result<f64, CalculationError> {
-    // Для обратной совместимости: извлекаем due из JSON
-    let due_value = match extract_field(card_json, "due") {
-        Ok(value) => value,
-        Err(CalculationError::MissingField(_)) => {
-            // Если поле due отсутствует, значит карточка не имеет даты просрочки
-            return Ok(0.0);
-        }
-        Err(e) => return Err(e),
-    };
 
-    let due_str = due_value.as_str()
-        .ok_or_else(|| CalculationError::MissingField("due".to_string()))?;
-
-    calculate_overdue_from_due_str(Some(due_str), now_iso)
-}
 
 pub fn calculate_overdue_from_due_str(due_str: Option<&str>, now_iso: &str) -> Result<f64, CalculationError> {
     use crate::sort_functions::get_overdue_hours;
@@ -478,6 +455,7 @@ pub fn compute_all_fields(
     }
 
     log::debug!("Вычисление полей завершено успешно");
+    console::log_1(&format!("Итоговое значение overdue: {:?} (файл: {:?}, due: {:?})", result.overdue, result.file, result.due).into());
     Ok(result)
 }
 

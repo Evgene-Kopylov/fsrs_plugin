@@ -14,6 +14,7 @@ use serde::{Deserialize, Serialize};
 use crate::table_processing::types::{TableParams, SortDirection};
 
 use log::{debug, warn};
+use web_sys::console;
 
 /// Карточка с вычисленными полями для сортировки
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -138,6 +139,24 @@ pub fn filter_and_sort_cards(
 
     debug!("Фильтрация и сортировка завершена: {} карточек (лимит {}), всего {}",
            limited_cards.len(), params.limit, total_count);
+
+    // Логируем overdue для первых карточек
+    for (i, card) in limited_cards.iter().enumerate().take(3) {
+        let overdue_val = card.computed_fields.overdue.unwrap_or(0.0);
+        console::log_1(&format!("Фильтрация: карточка {} overdue: {} часов (файл: {:?})",
+                               i, overdue_val, card.computed_fields.file).into());
+
+        // Логируем полные computed_fields в JSON для отладки
+        match serde_json::to_string(&card.computed_fields) {
+            Ok(json_str) => {
+                console::log_1(&format!("computed_fields JSON (первые 500 символов): {}",
+                    &json_str[..json_str.len().min(500)]).into());
+            }
+            Err(e) => {
+                console::log_1(&format!("Ошибка сериализации computed_fields: {}", e).into());
+            }
+        }
+    }
 
     Ok(FilterSortResult {
         cards: limited_cards,
