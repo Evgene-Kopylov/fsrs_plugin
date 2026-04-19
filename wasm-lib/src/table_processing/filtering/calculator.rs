@@ -143,71 +143,71 @@ fn extract_field(card_json: &str, field: &str) -> Result<serde_json::Value, Calc
 pub fn calculate_overdue_from_due_str(due_str: Option<&str>, now_iso: &str) -> Result<f64, CalculationError> {
     use crate::sort_functions::get_overdue_hours;
 
-    console::log_1(&format!("calculate_overdue_from_due_str вызвана: due_str={:?}, now_iso={}", due_str, now_iso).into());
+    console::debug_1(&format!("calculate_overdue_from_due_str вызвана: due_str={:?}, now_iso={}", due_str, now_iso).into());
     log::debug!("Вычисление просрочки из due_str: {:?}, now_iso: {}", due_str, now_iso);
 
     // Если due_str отсутствует, значит карточка не имеет даты просрочки
     let due_str = match due_str {
         Some(s) => s,
         None => {
-            console::log_1(&"due_str отсутствует, просрочка = 0".into());
+            console::debug_1(&"due_str отсутствует, просрочка = 0".into());
             log::debug!("due_str отсутствует, просрочка = 0");
             return Ok(0.0);
         }
     };
 
-    console::log_1(&format!("due_str значение: '{}' (длина: {})", due_str, due_str.len()).into());
+    console::debug_1(&format!("due_str значение: '{}' (длина: {})", due_str, due_str.len()).into());
     log::debug!("Значение due_str: '{}' (длина: {})", due_str, due_str.len());
 
     // Преобразуем дату due из Obsidian формата в ISO 8601, если нужно
     let due_iso = obsidian_to_iso(due_str)
         .ok_or_else(|| {
-            console::log_1(&format!("Некорректный формат даты due: '{}'", due_str).into());
+            console::warn_1(&format!("Некорректный формат даты due: '{}'", due_str).into());
             log::debug!("Некорректный формат даты due: '{}'", due_str);
             log::debug!("Пытаемся проверить формат Obsidian (YYYY-MM-DD_HH:MM): {}", due_str);
 
             // Проверяем, является ли это уже ISO форматом
             if due_str.contains('T') {
-                console::log_1(&"Строка содержит 'T', возможно это уже ISO формат".into());
+                console::debug_1(&"Строка содержит 'T', возможно это уже ISO формат".into());
                 log::debug!("Строка содержит 'T', возможно это уже ISO формат");
             } else {
-                console::log_1(&"Строка не содержит 'T', формат Obsidian ожидается".into());
+                console::debug_1(&"Строка не содержит 'T', формат Obsidian ожидается".into());
                 log::debug!("Строка не содержит 'T', формат Obsidian ожидается");
             }
 
             CalculationError::InvalidDateFormat(format!("Некорректный формат даты due: {}", due_str))
         })?;
 
-    console::log_1(&format!("Преобразованная due_iso: '{}'", due_iso).into());
+    console::debug_1(&format!("Преобразованная due_iso: '{}'", due_iso).into());
     log::debug!("Преобразованная due_iso: '{}'", due_iso);
 
     // Вызываем существующую WASM функцию для вычисления просрочки
-    console::log_1(&format!("Вызов get_overdue_hours с due_iso='{}', now_iso='{}'", due_iso, now_iso).into());
+    console::debug_1(&format!("Вызов get_overdue_hours с due_iso='{}', now_iso='{}'", due_iso, now_iso).into());
     log::debug!("Вызов get_overdue_hours с due_iso='{}', now_iso='{}'", due_iso, now_iso);
     let overdue_json = get_overdue_hours(due_iso.clone(), now_iso.to_string());
 
-    console::log_1(&format!("Результат get_overdue_hours: '{}'", overdue_json).into());
+    console::debug_1(&format!("Результат get_overdue_hours: '{}'", overdue_json).into());
     log::debug!("Результат get_overdue_hours (первые 100 символов): '{}'", &overdue_json[..overdue_json.len().min(100)]);
     log::debug!("Результат get_overdue_hours полный: '{}'", overdue_json);
 
     // Парсим результат
     let overdue: f64 = serde_json::from_str(&overdue_json)
         .map_err(|e| {
-            console::log_1(&format!("Ошибка парсинга результата overdue: {}, json: '{}'", e, overdue_json).into());
+            console::warn_1(&format!("Ошибка парсинга результата overdue: {}, json: '{}'", e, overdue_json).into());
             log::debug!("Ошибка парсинга результата overdue: {}, json: '{}'", e, overdue_json);
             CalculationError::WasmResultParseError(e.to_string())
         })?;
 
-    console::log_1(&format!("Просрочка вычислена: {} часов ({} дней)", overdue, overdue / 24.0).into());
+    console::debug_1(&format!("Просрочка вычислена: {} часов ({} дней)", overdue, overdue / 24.0).into());
     log::debug!("Просрочка вычислена: {} часов ({} дней)", overdue, overdue / 24.0);
 
     // Логируем дополнительную информацию для отладки
     if overdue == 0.0 {
-        console::log_1(&"ВНИМАНИЕ: overdue = 0.0, это может указывать на проблему".into());
+        console::warn_1(&"ВНИМАНИЕ: overdue = 0.0, это может указывать на проблему".into());
         log::debug!("ВНИМАНИЕ: overdue = 0.0, это может указывать на проблему");
         log::debug!("due_str: '{}', due_iso: '{}', now_iso: '{}'", due_str, due_iso, now_iso);
     } else {
-        console::log_1(&format!("overdue успешно вычислен: {} (возвращаем это значение)", overdue).into());
+        console::debug_1(&format!("overdue успешно вычислен: {} (возвращаем это значение)", overdue).into());
     }
 
     Ok(overdue)
@@ -413,11 +413,11 @@ pub fn compute_all_fields(
     // Вычисляем сложные поля через соответствующие функции, с обработкой ошибок
     result.overdue = match calculate_overdue_from_due_str(result.due.as_deref(), now_iso) {
         Ok(value) => {
-            console::log_1(&format!("Установлено overdue для карточки: {} часов (файл: {:?})", value, result.file).into());
+            console::debug_1(&format!("Установлено overdue для карточки: {} часов (файл: {:?})", value, result.file).into());
             Some(value)
         },
         Err(e) => {
-            console::log_1(&format!("Ошибка вычисления overdue: {}", e).into());
+            console::warn_1(&format!("Ошибка вычисления overdue: {}", e).into());
             log::warn!("Ошибка вычисления просрочки: {}", e);
             None
         }
@@ -455,7 +455,7 @@ pub fn compute_all_fields(
     }
 
     log::debug!("Вычисление полей завершено успешно");
-    console::log_1(&format!("Итоговое значение overdue: {:?} (файл: {:?}, due: {:?})", result.overdue, result.file, result.due).into());
+    console::debug_1(&format!("Итоговое значение overdue: {:?} (файл: {:?}, due: {:?})", result.overdue, result.file, result.due).into());
     Ok(result)
 }
 

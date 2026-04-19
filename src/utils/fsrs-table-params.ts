@@ -19,6 +19,7 @@ export type SortDirection = "ASC" | "DESC";
 /**
  * Условие фильтрации WHERE
  */
+// Тип для WHERE условий (используется только в TypeScript, в WASM передается как есть)
 export interface WhereCondition {
 	field: string;
 	operator: string;
@@ -44,7 +45,7 @@ export interface TableParams {
 	columns: TableColumn[];
 	limit: number; // 0 означает "использовать значение из настроек"
 	sort?: SortParam; // параметры сортировки (опционально)
-	where?: WhereCondition; // условие фильтрации WHERE (опционально)
+	where?: any; // условие фильтрации WHERE (опционально) - передается как есть из WASM
 }
 
 /**
@@ -177,22 +178,8 @@ function convertToTableParams(value: unknown): TableParams | null {
 		}
 	}
 
-	// Преобразуем условие WHERE, если есть
-	let where: WhereCondition | undefined = undefined;
-	if (obj.where && typeof obj.where === "object") {
-		const whereObj = obj.where as unknown as Record<string, unknown>;
-		if (
-			typeof whereObj.field === "string" &&
-			typeof whereObj.operator === "string" &&
-			whereObj.value !== undefined
-		) {
-			where = {
-				field: whereObj.field,
-				operator: whereObj.operator,
-				value: whereObj.value,
-			};
-		}
-	}
+	// Условие WHERE (передаётся как есть из WASM, тип any)
+	const where = obj.where as any;
 
 	return {
 		columns,
@@ -245,6 +232,20 @@ export function parseSqlBlock(source: string): TableParams {
 				),
 			);
 		}
+
+		// Логируем параметры для отладки
+		console.debug("parseSqlBlock - параметры парсинга:", {
+			source,
+			hasParams: !!parsedResult.params,
+			warningsCount: parsedResult.warnings?.length || 0,
+			tableParams: {
+				columns: tableParams.columns,
+				limit: tableParams.limit,
+				hasSort: !!tableParams.sort,
+				hasWhere: !!tableParams.where,
+				where: tableParams.where,
+			},
+		});
 
 		// Обрабатываем предупреждения, если есть
 		if (parsedResult.warnings && parsedResult.warnings.length > 0) {
