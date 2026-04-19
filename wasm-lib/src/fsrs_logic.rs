@@ -69,14 +69,6 @@ pub fn create_card_from_last_session(
         // Применяем максимальный интервал
         interval_days = interval_days.min(parameters.maximum_interval);
 
-        // Применяем случайное изменение интервала (fuzz) если включено
-        if parameters.enable_fuzz {
-            // Простая детерминированная вариация на основе timestamp
-            let timestamp = last_review.timestamp() as u32;
-            let variation = (timestamp % 100) as f64 / 1000.0; // 0.00 до 0.10
-            interval_days *= 0.95 + variation; // ±5% вариация
-        }
-
         // Вычисляем дату следующего повторения
         let due_date = last_review + chrono::Duration::days(interval_days as i64);
 
