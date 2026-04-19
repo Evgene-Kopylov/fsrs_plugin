@@ -280,16 +280,18 @@ pub fn parse_fsrs_table_block(source: &str) -> String {
     use crate::table_processing::parsing::parse_fsrs_table_block as parse_block;
     match parse_block(source) {
         Ok(parse_result) => {
-            // Возвращаем JSON с параметрами таблицы в едином формате
+            // Возвращаем JSON с параметрами таблицы и предупреждениями
             serde_json::to_string(&serde_json::json!({
-                "params": parse_result.value
+                "params": parse_result.value,
+                "warnings": parse_result.warnings
             })).unwrap_or_else(|_| "{\"error\":\"Failed to serialize params\"}".to_string())
         }
         Err(err) => {
             // Возвращаем JSON с ошибкой
             serde_json::to_string(&serde_json::json!({
                 "error": err.to_string(),
-                "params": crate::table_processing::types::TableParams::default()
+                "params": null,
+                "warnings": []
             })).unwrap_or_else(|_| "{\"error\":\"Failed to serialize error\"}".to_string())
         }
     }
@@ -365,11 +367,7 @@ pub fn is_valid_table_field(field: &str) -> bool {
     crate::table_processing::types::is_valid_table_field(field)
 }
 
-// Получение заголовка по умолчанию для поля
-#[wasm_bindgen]
-pub fn get_default_column_title(field: &str) -> String {
-    crate::table_processing::types::get_default_title(field)
-}
+
 
 // Оригинальная функция для обратной совместимости
 #[wasm_bindgen]

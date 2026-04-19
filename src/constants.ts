@@ -1,5 +1,4 @@
 import type { FSRSParameters, FSRSSettings } from "./interfaces/fsrs";
-import type { TableColumn } from "./utils/fsrs-table-params";
 
 // Параметры алгоритма FSRS по умолчанию (совместимые с rs-fsrs)
 export const DEFAULT_PARAMETERS: FSRSParameters = {
@@ -43,10 +42,3 @@ export const DEFAULT_IGNORE_PATTERNS = [
 
 // Время жизни кэша карточек в миллисекундах
 export const CARD_CACHE_TTL_MS = 5000;
-
-// Колонки таблицы по умолчанию
-export const DEFAULT_COLUMNS: TableColumn[] = [
-	{ field: "file", title: "Файл" },
-	{ field: "reps", title: "Повторений" },
-	{ field: "overdue", title: "Просрочка" },
-];

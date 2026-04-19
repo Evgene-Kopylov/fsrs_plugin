@@ -9,7 +9,7 @@ import type { TableParams } from "./fsrs-table-params";
 import type { CardWithState } from "./fsrs-table-filter";
 
 import { formatFieldValue } from "./fsrs-table-format";
-import { parseSqlBlock, DEFAULT_COLUMNS } from "./fsrs-table-params";
+import { parseSqlBlock } from "./fsrs-table-params";
 
 /**
  * Генерирует HTML таблицы для блока fsrs-table
@@ -169,48 +169,28 @@ export async function generateTableHTMLFromSql(
 	app: App,
 	now: Date = new Date(),
 ): Promise<{ html: string; params: TableParams }> {
-	try {
-		// Парсим SQL для получения параметров таблицы
-		const params = parseSqlBlock(sqlSource);
-		console.debug("generateTableHTMLFromSql:", {
-			cardCount: cards.length,
-			sqlSource,
-			params,
-			hasWhere: !!params.where,
-			hasSort: !!params.sort,
-		});
+	// Парсим SQL для получения параметров таблицы
+	const params = parseSqlBlock(sqlSource);
+	console.debug("generateTableHTMLFromSql:", {
+		cardCount: cards.length,
+		sqlSource,
+		params,
+		hasWhere: !!params.where,
+		hasSort: !!params.sort,
+	});
 
-		// Импортируем функцию фильтрации динамически для избежания циклических зависимостей
-		const { filterAndSortCards } = await import("./fsrs-table-filter");
+	// Импортируем функцию фильтрации динамически для избежания циклических зависимостей
+	const { filterAndSortCards } = await import("./fsrs-table-filter");
 
-		const cardsWithState = await filterAndSortCards(
-			cards,
-			settings,
-			params,
-			now,
-		);
+	const cardsWithState = await filterAndSortCards(
+		cards,
+		settings,
+		params,
+		now,
+	);
 
-		const html = generateTableHTML(
-			cardsWithState,
-			params,
-			settings,
-			app,
-			now,
-		);
-		return { html, params };
-	} catch (error) {
-		console.error(
-			`Ошибка парсинга SQL запроса или фильтрации карточек: ${String(error)}. Возвращаем пустой массив.`,
-		);
-
-		// В случае ошибки, возвращаем пустой массив с дефолтными параметрами
-		const defaultParams: TableParams = {
-			columns: DEFAULT_COLUMNS,
-			limit: 0,
-		};
-		const html = generateTableHTML([], defaultParams, settings, app, now);
-		return { html, params: defaultParams };
-	}
+	const html = generateTableHTML(cardsWithState, params, settings, app, now);
+	return { html, params };
 }
 
 /**

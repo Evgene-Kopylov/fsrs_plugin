@@ -360,9 +360,7 @@ impl<'a> ParserState<'a> {
 
         // Преобразуем ColumnDefinition в TableColumn
         for col_def in self.result.columns {
-            let title = col_def.alias.unwrap_or_else(|| {
-                crate::table_processing::types::get_default_title(&col_def.field)
-            });
+            let title = col_def.alias.unwrap_or(col_def.field.clone());
 
             columns.push(TableColumn {
                 field: col_def.field,
@@ -421,11 +419,11 @@ mod tests {
 
         assert_eq!(params.columns.len(), 3);
         assert_eq!(params.columns[0].field, "file");
-        assert_eq!(params.columns[0].title, "Файл");
+        assert_eq!(params.columns[0].title, "file");
         assert_eq!(params.columns[1].field, "reps");
-        assert_eq!(params.columns[1].title, "Повторений");
+        assert_eq!(params.columns[1].title, "reps");
         assert_eq!(params.columns[2].field, "overdue");
-        assert_eq!(params.columns[2].title, "Просрочка");
+        assert_eq!(params.columns[2].title, "overdue");
         assert_eq!(params.limit, 0);
         assert!(params.sort.is_none());
     }
@@ -451,7 +449,7 @@ mod tests {
         assert_eq!(params.columns[0].field, "file");
         assert_eq!(params.columns[0].title, "Имя файла");
         assert_eq!(params.columns[1].field, "reps");
-        assert_eq!(params.columns[1].title, "Повторений"); // заголовок по умолчанию
+        assert_eq!(params.columns[1].title, "reps"); // заголовок по умолчанию
         assert_eq!(params.columns[2].field, "overdue");
         assert_eq!(params.columns[2].title, "Задержка");
     }
@@ -501,7 +499,7 @@ mod tests {
 
         assert_eq!(params.columns.len(), 2);
         assert_eq!(params.columns[0].title, "Файл");
-        assert_eq!(params.columns[1].title, "Повторений");
+        assert_eq!(params.columns[1].title, "reps");
 
         let sort = params.sort.unwrap();
         assert_eq!(sort.field, "due");

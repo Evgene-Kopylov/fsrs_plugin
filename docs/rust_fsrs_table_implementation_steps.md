@@ -70,7 +70,6 @@
   ```
 - [x] Определить константы:
   - `AVAILABLE_FIELDS: HashSet<&str>` - доступные поля для SELECT ✅
-  - `DEFAULT_COLUMNS: Vec<TableColumn>` - колонки по умолчанию ✅
 
 ### 1.4. Сериализация/десериализация
 - [x] Реализовать `Serialize`/`Deserialize` для всех структур ✅
@@ -197,7 +196,6 @@
   ```
 - [x] Добавить вспомогательные функции:
   - `is_valid_table_field(field: &str) -> bool` ✅
-  - `get_default_column_title(field: &str) -> String` ✅
 
 ### 4.2. Компиляция WebAssembly ✅ ВЫПОЛНЕНО
 - [x] Скомпилировать WASM: `wasm-pack build --target web` ✅
@@ -367,7 +365,6 @@ import * as wasm from "../wasm-lib/pkg/wasm_lib_bg.wasm";
 ### ✅ WebAssembly интерфейс:
 - `parse_fsrs_table_block(source: &str) -> String` ✅
 - `is_valid_table_field(field: &str) -> bool` ✅
-- `get_default_column_title(field: &str) -> String` ✅
 - `filter_and_sort_cards(cards_json: &str, params_json: &str, settings_json: &str, now_iso: &str) -> String` ✅
 
 ### ✅ Тестирование:

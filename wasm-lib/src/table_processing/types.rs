@@ -52,6 +52,17 @@ pub struct TableParams {
     pub where_condition: Option<Expression>,
 }
 
+impl Default for TableParams {
+    fn default() -> Self {
+        Self {
+            columns: default_columns(),
+            limit: 0,
+            sort: None,
+            where_condition: None,
+        }
+    }
+}
+
 /// Доступные поля для отображения в таблице
 pub static AVAILABLE_FIELDS: [&str; 10] = [
     "file",
@@ -67,69 +78,20 @@ pub static AVAILABLE_FIELDS: [&str; 10] = [
 ];
 
 /// Колонки по умолчанию при отсутствии SELECT в запросе
+/// Возвращает одну колонку с полем file
 pub fn default_columns() -> Vec<TableColumn> {
     vec![
         TableColumn {
             field: "file".to_string(),
-            title: "Файл".to_string(),
-            width: None,
-        },
-        TableColumn {
-            field: "reps".to_string(),
-            title: "Повторений".to_string(),
-            width: None,
-        },
-        TableColumn {
-            field: "overdue".to_string(),
-            title: "Просрочка".to_string(),
-            width: None,
-        },
-        TableColumn {
-            field: "state".to_string(),
-            title: "Состояние".to_string(),
-            width: None,
-        },
-        TableColumn {
-            field: "due".to_string(),
-            title: "Следующее повторение".to_string(),
+            title: "file".to_string(),
             width: None,
         },
     ]
 }
 
-/// Заголовок по умолчанию для поля
-pub fn get_default_title(field: &str) -> String {
-    match field {
-        "file" => "Файл",
-        "reps" => "Повторений",
-        "overdue" => "Просрочка",
-        "stability" => "Стабильность",
-        "difficulty" => "Сложность",
-        "retrievability" => "Извлекаемость",
-        "due" => "Следующее повторение",
-        "state" => "Состояние",
-        "elapsed" => "Прошло дней",
-        "scheduled" => "Запланировано дней",
-        _ => field,
-    }
-    .to_string()
-}
-
 /// Проверяет, является ли поле допустимым для использования в таблице
 pub fn is_valid_table_field(field: &str) -> bool {
     HashSet::from(AVAILABLE_FIELDS).contains(field)
-}
-
-/// Параметры таблицы по умолчанию
-impl Default for TableParams {
-    fn default() -> Self {
-        Self {
-            columns: default_columns(),
-            limit: 0,
-            sort: None,
-            where_condition: None,
-        }
-    }
 }
 
 #[cfg(test)]
@@ -143,14 +105,6 @@ mod tests {
         assert!(is_valid_table_field("overdue"));
         assert!(is_valid_table_field("stability"));
         assert!(!is_valid_table_field("unknown_field"));
-    }
-
-    #[test]
-    fn test_get_default_title() {
-        assert_eq!(get_default_title("file"), "Файл");
-        assert_eq!(get_default_title("reps"), "Повторений");
-        assert_eq!(get_default_title("overdue"), "Просрочка");
-        assert_eq!(get_default_title("unknown"), "unknown");
     }
 
     #[test]
@@ -171,12 +125,12 @@ mod tests {
             columns: vec![
                 TableColumn {
                     field: "file".to_string(),
-                    title: "Файл".to_string(),
+                    title: "file".to_string(),
                     width: None,
                 },
                 TableColumn {
                     field: "reps".to_string(),
-                    title: "Повторений".to_string(),
+                    title: "reps".to_string(),
                     width: None,
                 },
             ],
@@ -194,13 +148,5 @@ mod tests {
         assert_eq!(parsed.columns.len(), 2);
         assert_eq!(parsed.limit, 10);
         assert_eq!(parsed.sort.unwrap().field, "due");
-    }
-
-    #[test]
-    fn test_default_columns() {
-        let columns = default_columns();
-        assert_eq!(columns.len(), 5);
-        assert_eq!(columns[0].field, "file");
-        assert_eq!(columns[0].title, "Файл");
     }
 }

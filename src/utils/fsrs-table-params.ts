@@ -1,81 +1,117 @@
-/**
- * Модуль для типов и парсинга SQL-подобного синтаксиса блока fsrs-table
- * Поддерживает отображение всех карточек
- * Синтаксис: SELECT, ORDER BY, LIMIT
- */
-
 import * as wasm from "../../wasm-lib/pkg/wasm_lib";
+import { formatError } from "./fsrs-table-format";
+
+// Типы данных для таблицы FSRS
 
 /**
- * Результат парсинга из WASM: всегда содержит params, может содержать error
+ * Параметры сортировки
+ */
+export interface SortParam {
+	field: string;
+	direction: SortDirection;
+}
+
+/**
+ * Направление сортировки
+ */
+export type SortDirection = "ASC" | "DESC";
+
+/**
+ * Условие фильтрации WHERE
+ */
+export interface WhereCondition {
+	field: string;
+	operator: string;
+	value: unknown;
+	left?: WhereCondition;
+	right?: WhereCondition;
+	operatorLogical?: "AND" | "OR";
+}
+
+/**
+ * Колонка таблицы
+ */
+export interface TableColumn {
+	field: string; // идентификатор поля
+	title: string; // заголовок колонки
+	width?: string; // ширина колонки (опционально)
+}
+
+/**
+ * Параметры таблицы
+ */
+export interface TableParams {
+	columns: TableColumn[];
+	limit: number; // 0 означает "использовать значение из настроек"
+	sort?: SortParam; // параметры сортировки (опционально)
+	where?: WhereCondition; // условие фильтрации WHERE (опционально)
+}
+
+/**
+ * Результат парсинга из WASM
  */
 interface WasmParseResult {
 	error?: string;
-	params: unknown;
+	params?: unknown;
+	warnings: Array<{ message: string }>;
 }
 
 /**
- * Максимальная длина сообщения об ошибке для отображения
+ * Доступные поля для таблицы
  */
-const MAX_ERROR_MESSAGE_LENGTH = 500;
+export const AVAILABLE_FIELDS = new Set([
+	"file",
+	"reps",
+	"overdue",
+	"stability",
+	"difficulty",
+	"retrievability",
+	"due",
+	"state",
+	"elapsed",
+	"scheduled",
+]);
 
 /**
- * Форматирует сообщение об ошибке в стиле Dataview
- * @param errorMessage Сообщение об ошибке
- * @returns Отформатированное сообщение об ошибке
- */
-function formatError(errorMessage: string): string {
-	// Ограничиваем длину сообщения об ошибке
-	const truncatedMessage =
-		errorMessage.length > MAX_ERROR_MESSAGE_LENGTH
-			? errorMessage.substring(0, MAX_ERROR_MESSAGE_LENGTH) +
-				"... [truncated]"
-			: errorMessage;
-
-	return `FSRS: Error:\n-- PARSING FAILED --------------------------------------------------\n\n${truncatedMessage}\n`;
-}
-
-/**
- * Проверяет, что значение является TableParams
+ * Проверяет, является ли объект параметрами таблицы
  */
 function isTableParams(value: unknown): value is TableParams {
 	if (!value || typeof value !== "object") {
 		return false;
 	}
-	const obj = value as unknown as Record<string, unknown>;
 
-	// Проверяем наличие обязательных полей
-	if (!("columns" in obj) || !("limit" in obj)) {
+	const obj = value as Record<string, unknown>;
+
+	// Проверяем обязательные поля
+	if (
+		!obj.columns ||
+		!Array.isArray(obj.columns) ||
+		obj.columns.length === 0
+	) {
 		return false;
 	}
 
-	// Проверяем типы
-	if (!Array.isArray(obj.columns)) {
-		return false;
-	}
-
-	// limit может быть number или string (после JSON сериализации)
-	const limit = obj.limit;
-	if (typeof limit !== "number" && typeof limit !== "string") {
-		return false;
-	}
-
-	// Проверяем структуру колонок (не строгая проверка)
-	for (const col of obj.columns) {
-		if (typeof col !== "object" || col === null) {
+	// Проверяем каждую колонку
+	for (const col of obj.columns as Array<unknown>) {
+		if (!col || typeof col !== "object") {
 			return false;
 		}
-		const colObj = col as unknown as Record<string, unknown>;
-		if (typeof colObj.field !== "string") {
+		const colObj = col as Record<string, unknown>;
+		if (typeof colObj.field !== "string" || colObj.field.trim() === "") {
 			return false;
 		}
+	}
+
+	// Проверяем limit
+	if (typeof obj.limit !== "number") {
+		return false;
 	}
 
 	return true;
 }
 
 /**
- * Преобразует unknown в TableParams, если возможно
+ * Преобразует результат парсинга WASM в TableParams
  */
 function convertToTableParams(value: unknown): TableParams | null {
 	if (!isTableParams(value)) {
@@ -94,8 +130,7 @@ function convertToTableParams(value: unknown): TableParams | null {
 	const columns: TableColumn[] = [];
 	for (const col of obj.columns as Array<Record<string, unknown>>) {
 		const field = String(col.field);
-		const title =
-			typeof col.title === "string" ? col.title : getDefaultTitle(field);
+		const title = typeof col.title === "string" ? col.title : field;
 		const width = typeof col.width === "string" ? col.width : undefined;
 
 		columns.push({ field, title, width });
@@ -118,190 +153,56 @@ function convertToTableParams(value: unknown): TableParams | null {
 					string,
 					unknown
 				>;
-				if (dirObj.Asc !== undefined || dirObj.ASC !== undefined) {
-					directionStr = "ASC";
-				} else if (
-					dirObj.Desc !== undefined ||
-					dirObj.DESC !== undefined
-				) {
-					directionStr = "DESC";
+				if (typeof dirObj.direction === "string") {
+					directionStr = dirObj.direction.toUpperCase();
+				} else if (typeof dirObj.value === "string") {
+					directionStr = dirObj.value.toUpperCase();
 				}
 			}
-			const direction =
-				directionStr === "ASC" || directionStr === "DESC"
-					? (directionStr as SortDirection)
-					: "ASC";
-			sort = {
-				field: sortObj.field,
-				direction,
-			};
+
+			if (directionStr === "ASC" || directionStr === "DESC") {
+				sort = {
+					field: sortObj.field,
+					direction: directionStr,
+				};
+			}
 		}
 	}
 
 	// Преобразуем условие WHERE, если есть
 	let where: WhereCondition | undefined = undefined;
-	if (obj.where_condition && typeof obj.where_condition === "object") {
-		where = obj.where_condition as unknown as WhereCondition;
+	if (obj.where && typeof obj.where === "object") {
+		const whereObj = obj.where as unknown as Record<string, unknown>;
+		if (
+			typeof whereObj.field === "string" &&
+			typeof whereObj.operator === "string" &&
+			whereObj.value !== undefined
+		) {
+			where = {
+				field: whereObj.field,
+				operator: whereObj.operator,
+				value: whereObj.value,
+			};
+		}
 	}
 
 	return {
 		columns,
-		limit: limit || 0,
+		limit,
 		sort,
 		where,
 	};
 }
 
-// Направление сортировки
-export type SortDirection = "ASC" | "DESC";
-
-// Определение колонки таблицы
-export interface TableColumn {
-	field: string; // идентификатор поля
-	title: string; // заголовок колонки
-	width?: string; // ширина колонки (опционально)
-}
-
-// Параметры сортировки
-export interface SortParam {
-	field: string; // поле для сортировки
-	direction: SortDirection; // направление сортировки
-}
-
-// Типы для WHERE условий (соответствуют Rust enum Expression с внешней маркировкой)
-
-/** Оператор сравнения */
-export type ComparisonOperator = ">" | "<" | ">=" | "<=" | "=" | "!=";
-
-/** Логический оператор */
-export type LogicalOperator = "AND" | "OR";
-
-/** Значение для сравнения (только числа для Фазы 1) */
-export interface ComparisonValue {
-	number: number;
-}
-
-/** Простое условие сравнения: поле оператор значение */
-export interface ComparisonCondition {
-	field: string;
-	operator: ComparisonOperator;
-	value: ComparisonValue;
-}
-
-/** Логическое выражение: условие оператор условие */
-export interface LogicalCondition {
-	left: WhereCondition;
-	operator: LogicalOperator;
-	right: WhereCondition;
-}
-
-/** Условие сравнения в формате внешней маркировки Rust enum */
-export interface ComparisonExpression {
-	Comparison: ComparisonCondition;
-}
-
-/** Логическое выражение в формате внешней маркировки Rust enum */
-export interface LogicalExpression {
-	Logical: LogicalCondition;
-}
-
-/** Условие WHERE: либо сравнение, либо логическое выражение (внешняя маркировка) */
-export type WhereCondition = ComparisonExpression | LogicalExpression;
-
-// Параметры таблицы
-export interface TableParams {
-	columns: TableColumn[];
-	limit: number; // 0 означает "использовать значение из настроек"
-	sort?: SortParam; // параметры сортировки (опционально)
-	where?: WhereCondition; // условие фильтрации WHERE (опционально)
-}
-
-// Доступные поля для отображения в таблице
-export const AVAILABLE_FIELDS = new Set([
-	"file",
-	"reps",
-	"overdue",
-	"stability",
-	"difficulty",
-	"retrievability",
-	"due",
-	"state",
-	"elapsed",
-	"scheduled",
-]);
-
-// Поля по умолчанию
-export const DEFAULT_COLUMNS: TableColumn[] = [
-	{ field: "file", title: "Файл" },
-	{ field: "reps", title: "Повторений" },
-	{ field: "overdue", title: "Просрочка" },
-	{ field: "state", title: "Состояние" },
-	{ field: "due", title: "Следующее повторение" },
-];
-
 /**
- * Проверяет валидность параметров таблицы
- * @param params Параметры таблицы для проверки
- * @throws Error при невалидных параметрах
- */
-function validateTableParams(params: TableParams): void {
-	if (!params.columns || params.columns.length === 0) {
-		throw new Error(
-			formatError("Таблица должна содержать хотя бы одну колонку"),
-		);
-	}
-
-	for (const column of params.columns) {
-		if (!column.field) {
-			throw new Error(formatError(`Колонка должна иметь поле (field)`));
-		}
-		if (!isValidTableField(column.field)) {
-			throw new Error(
-				formatError(`Недопустимое поле таблицы: "${column.field}"`),
-			);
-		}
-	}
-
-	if (params.limit < 0) {
-		throw new Error(
-			formatError(`Лимит не может быть отрицательным: ${params.limit}`),
-		);
-	}
-
-	if (params.sort) {
-		if (!params.sort.field) {
-			throw new Error(formatError("Поле сортировки должно быть указано"));
-		}
-		if (!isValidTableField(params.sort.field)) {
-			throw new Error(
-				formatError(
-					`Недопустимое поле для сортировки: "${params.sort.field}"`,
-				),
-			);
-		}
-		if (
-			params.sort.direction !== "ASC" &&
-			params.sort.direction !== "DESC"
-		) {
-			throw new Error(
-				formatError(
-					`Недопустимое направление сортировки: "${params.sort.direction}"`,
-				),
-			);
-		}
-	}
-}
-
-/**
- * Парсит SQL-подобный синтаксис блока fsrs-table
- * Использует WASM реализацию парсинга на Rust
- * @param source Исходный текст блока
- * @returns Объект с параметрами таблицы
+ * Парсит SQL-подобный блок fsrs-table
+ * @param source Исходный текст SQL-подобного запроса
+ * @returns Объект TableParams с параметрами таблицы
  * @throws Error при ошибке парсинга или некорректных данных
  */
 export function parseSqlBlock(source: string): TableParams {
-	if (!source || source.trim() === "") {
-		throw new Error(formatError("Пустой блок fsrs-table"));
+	if (!source.trim()) {
+		throw new Error(formatError("Пустой SQL запрос"));
 	}
 
 	try {
@@ -313,42 +214,40 @@ export function parseSqlBlock(source: string): TableParams {
 			resultJson,
 		) as WasmParseResult;
 
-		// Пытаемся преобразовать params в TableParams
-		const tableParams = convertToTableParams(parsedResult.params);
-
+		// Проверяем наличие ошибки от WASM
 		if (parsedResult.error) {
-			const errorMessage = `Ошибка парсинга SQL-подобного синтаксиса: ${parsedResult.error}`;
-			console.error(errorMessage);
-			throw new Error(formatError(errorMessage));
+			throw new Error(
+				formatError(`Ошибка парсинга SQL: ${parsedResult.error}`),
+			);
 		}
 
-		// Если нет ошибки, но params не валидны
+		// Пытаемся преобразовать params в TableParams
+		if (!parsedResult.params) {
+			throw new Error(
+				formatError("Ошибка парсинга SQL: отсутствуют параметры"),
+			);
+		}
+		const tableParams = convertToTableParams(parsedResult.params);
 		if (!tableParams) {
-			const errorMessage = "Некорректные параметры таблицы от WASM";
-			console.error(errorMessage, parsedResult.params);
-			throw new Error(formatError(errorMessage));
-		}
-
-		// Проверяем валидность полученных параметров
-		validateTableParams(tableParams);
-		return tableParams;
-	} catch (error) {
-		if (error instanceof Error) {
-			// Если это уже наша отформатированная ошибка, просто пробрасываем её
-			if (error.message.startsWith("FSRS: Error:")) {
-				throw error;
-			}
 			throw new Error(
 				formatError(
-					`Ошибка парсинга SQL-подобного синтаксиса: ${error.message}`,
+					`Не удалось преобразовать результат парсинга: ${JSON.stringify(
+						parsedResult.params,
+					)}`,
 				),
 			);
 		}
-		throw new Error(
-			formatError(
-				`Ошибка парсинга SQL-подобного синтаксиса: ${String(error)}`,
-			),
-		);
+
+		// Обрабатываем предупреждения, если есть
+		if (parsedResult.warnings && parsedResult.warnings.length > 0) {
+			for (const warning of parsedResult.warnings) {
+				console.warn(`Предупреждение парсинга: ${warning.message}`);
+			}
+		}
+
+		return tableParams;
+	} catch (error) {
+		throw new Error(formatError(`Ошибка парсинга SQL: ${String(error)}`));
 	}
 }
 
@@ -372,65 +271,34 @@ export function parseColumnsDefinition(columnsText: string): TableColumn[] {
 			resultJson,
 		) as WasmParseResult;
 
+		// Проверяем наличие ошибки от WASM
 		if (parsedResult.error) {
-			const errorMessage = `Ошибка парсинга колонок: ${parsedResult.error}`;
-			console.warn(errorMessage);
-			throw new Error(formatError(errorMessage));
+			throw new Error(
+				formatError(`Ошибка парсинга колонок: ${parsedResult.error}`),
+			);
 		}
 
+		if (!parsedResult.params) {
+			throw new Error(
+				formatError("Ошибка парсинга колонок: отсутствуют параметры"),
+			);
+		}
 		const tableParams = convertToTableParams(parsedResult.params);
 		if (!tableParams) {
-			const errorMessage =
-				"Некорректные параметры таблицы от WASM для колонок";
-			console.warn(errorMessage);
-			throw new Error(formatError(errorMessage));
+			throw new Error(
+				formatError(
+					`Не удалось преобразовать результат парсинга: ${JSON.stringify(
+						parsedResult.params,
+					)}`,
+				),
+			);
 		}
 
 		return tableParams.columns;
 	} catch (error) {
-		if (error instanceof Error) {
-			// Если это уже наша отформатированная ошибка, просто пробрасываем её
-			if (error.message.startsWith("FSRS: Error:")) {
-				throw error;
-			}
-			throw new Error(
-				formatError(`Ошибка парсинга колонок: ${error.message}`),
-			);
-		}
 		throw new Error(
 			formatError(`Ошибка парсинга колонок: ${String(error)}`),
 		);
-	}
-}
-
-/**
- * Возвращает заголовок по умолчанию для поля
- * Использует WASM реализацию для получения заголовков
- * @param field Идентификатор поля
- * @returns Заголовок по умолчанию
- */
-export function getDefaultTitle(field: string): string {
-	try {
-		// Используем WASM функцию для получения заголовка по умолчанию
-		return wasm.get_default_column_title(field);
-	} catch (error) {
-		console.warn(
-			`Ошибка получения заголовка для поля "${field}": ${String(error)}. Используется локальный заголовок.`,
-		);
-		// Fallback на локальные заголовки
-		const titles: Record<string, string> = {
-			file: "Файл",
-			reps: "Повторений",
-			overdue: "Просрочка",
-			stability: "Стабильность",
-			difficulty: "Сложность",
-			retrievability: "Извлекаемость",
-			due: "Следующее повторение",
-			state: "Состояние",
-			elapsed: "Прошло дней",
-			scheduled: "Запланировано дней",
-		};
-		return titles[field] || field;
 	}
 }
 

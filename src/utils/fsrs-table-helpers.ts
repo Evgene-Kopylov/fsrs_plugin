@@ -16,9 +16,7 @@ export type {
 export {
 	parseSqlBlock,
 	parseColumnsDefinition,
-	getDefaultTitle,
 	AVAILABLE_FIELDS,
-	DEFAULT_COLUMNS,
 } from "./fsrs-table-params";
 
 // Фильтрация и сортировка карточек

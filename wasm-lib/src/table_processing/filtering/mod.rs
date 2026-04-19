@@ -490,7 +490,7 @@ mod tests {
     #[test]
     fn test_filter_and_sort_cards_json_empty() {
         let cards_json = r#"[]"#;
-        let params_json = r#"{"columns": [{"field": "file", "title": "Файл"}], "limit": 0}"#;
+        let params_json = r#"{"columns": [{"field": "file", "title": "file"}], "limit": 0}"#;
         let settings_json = r#"{"default_initial_stability": 2.0, "default_initial_difficulty": 5.0}"#;
         let now_iso = "2024-01-01T10:00:00Z";
 
@@ -526,7 +526,7 @@ mod tests {
             {"filePath": "file2.md", "reviews": []},
             {"filePath": "file3.md", "reviews": []}
         ]"#;
-        let params_json = r#"{"columns": [{"field": "file", "title": "Файл"}], "limit": 2}"#;
+        let params_json = r#"{"columns": [{"field": "file", "title": "file"}], "limit": 2}"#;
         let settings_json = r#"{
             "default_initial_stability": 2.0,
             "default_initial_difficulty": 5.0,
@@ -553,7 +553,7 @@ mod tests {
         TableParams {
             columns: vec![TableColumn {
                 field: "file".to_string(),
-                title: "Файл".to_string(),
+                title: "file".to_string(),
                 width: None,
             }],
             limit: 0,
@@ -773,12 +773,12 @@ mod tests {
             columns: vec![
                 TableColumn {
                     field: "file".to_string(),
-                    title: "Файл".to_string(),
+                    title: "file".to_string(),
                     width: None,
                 },
                 TableColumn {
                     field: "overdue".to_string(),
-                    title: "Просрочка".to_string(),
+                    title: "overdue".to_string(),
                     width: None,
                 },
             ],
@@ -845,7 +845,7 @@ mod tests {
         ]"#;
 
         // SQL запрос из примера пользователя
-        let sql_source = r#"SELECT file as "Файл", overdue as "oDue", reps LIMIT 10 WHERE overdue < 0"#;
+        let sql_source = r#"SELECT file as "file", overdue as "oDue", reps LIMIT 10 WHERE overdue < 0"#;
 
         // Парсим SQL для получения параметров
         let parse_result = parse_fsrs_table_block(sql_source).unwrap();
