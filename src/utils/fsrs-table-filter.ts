@@ -9,8 +9,8 @@ import type {
 	FSRSSettings,
 	FSRSState,
 } from "../interfaces/fsrs";
-import type { SortParam, TableParams } from "./fsrs-table-params";
-import { DEFAULT_COLUMNS } from "./fsrs-table-params";
+import type { TableParams } from "./fsrs-table-params";
+
 import * as wasm from "../../wasm-lib/pkg/wasm_lib";
 
 /**
