@@ -192,6 +192,16 @@ export async function filterAndSortCards(
 		return [];
 	}
 
+	// Отладочный вывод параметров
+	console.debug("filterAndSortCards parameters:", {
+		cardCount: cards.length,
+		params: JSON.parse(JSON.stringify(params)),
+		hasWhere: !!params.where,
+		hasSort: !!params.sort,
+		limit: params.limit,
+		now: now.toISOString(),
+	});
+
 	try {
 		// Преобразуем параметры сортировки для WASM
 		const wasmParams = {
@@ -205,6 +215,12 @@ export async function filterAndSortCards(
 				: undefined,
 			where_condition: params.where,
 		};
+
+		// Отладочный вывод параметров для WASM
+		console.debug("WASM parameters for filter_and_sort_cards:", {
+			wasmParams: JSON.parse(JSON.stringify(wasmParams)),
+			hasWhereCondition: !!wasmParams.where_condition,
+		});
 
 		// Вызываем WASM функцию для фильтрации и сортировки
 		const resultJson = wasm.filter_and_sort_cards(

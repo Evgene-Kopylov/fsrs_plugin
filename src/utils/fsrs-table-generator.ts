@@ -172,6 +172,13 @@ export async function generateTableHTMLFromSql(
 	try {
 		// Парсим SQL для получения параметров таблицы
 		const params = parseSqlBlock(sqlSource);
+		console.debug("generateTableHTMLFromSql:", {
+			cardCount: cards.length,
+			sqlSource,
+			params,
+			hasWhere: !!params.where,
+			hasSort: !!params.sort,
+		});
 
 		// Импортируем функцию фильтрации динамически для избежания циклических зависимостей
 		const { filterAndSortCards } = await import("./fsrs-table-filter");

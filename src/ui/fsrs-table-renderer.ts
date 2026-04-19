@@ -120,6 +120,19 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			this.cachedCards = allCards;
 			const now = new Date();
 
+			// Отладочный вывод для отслеживания параметров
+			console.debug("FsrsTableRenderer.renderContent:", {
+				cardCount: allCards.length,
+				hasParams: !!this.params,
+				params: this.params
+					? JSON.parse(JSON.stringify(this.params))
+					: null,
+				sourceText: this.sourceText,
+				lastAction: this.lastAction,
+				hasWhere: this.params?.where ? true : false,
+				hasSort: this.params?.sort ? true : false,
+			});
+
 			if (allCards.length === 0) {
 				this.renderEmptyState();
 				return;
@@ -138,6 +151,10 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			// Генерируем HTML таблицы
 			if (this.params) {
 				// Если параметры уже есть (при сортировке), используем их
+				console.debug(
+					"Using existing params for table generation:",
+					this.params,
+				);
 				html = await generateTableHTMLFromCards(
 					allCards,
 					this.params,
@@ -147,6 +164,10 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 				);
 			} else {
 				// При первом рендере используем SQL напрямую
+				console.debug(
+					"Parsing SQL source for table generation:",
+					this.sourceText,
+				);
 				const result = await generateTableHTMLFromSql(
 					allCards,
 					this.sourceText,
@@ -156,6 +177,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 				);
 				html = result.html;
 				this.params = result.params;
+				console.debug("Parsed params from SQL:", this.params);
 			}
 
 			// Очищаем контейнер и вставляем новый HTML
@@ -359,6 +381,15 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 		}
 
 		this.lastAction = "sort";
+
+		console.debug("handleSortClick:", {
+			field,
+			nextDirection,
+			params: this.params
+				? JSON.parse(JSON.stringify(this.params))
+				: null,
+			hasWhere: this.params?.where ? true : false,
+		});
 
 		// Перерисовываем таблицу с новыми параметрами сортировки
 		await this.refresh();
