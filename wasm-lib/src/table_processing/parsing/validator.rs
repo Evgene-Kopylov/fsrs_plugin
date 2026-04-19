@@ -2,13 +2,14 @@
 //! Проверяет корректность параметров, полученных из парсинга SQL-подобного синтаксиса
 
 use log::{debug, warn};
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, ser::{SerializeStruct}};
+
 
 use crate::table_processing::types::{TableParams, is_valid_table_field};
 use super::Expression;
 
 /// Типы предупреждений, обнаруженных при валидации
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParseWarning {
     /// Неизвестное поле в SELECT
     UnknownField(String),
@@ -24,6 +25,39 @@ pub enum ParseWarning {
     DuplicateWhere(String),
     /// Прочие предупреждения
     Other(String),
+}
+
+impl serde::Serialize for ParseWarning {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let (type_str, message) = match self {
+            ParseWarning::UnknownField(field) => ("UnknownField", format!("Неизвестное поле: '{}'", field)),
+            ParseWarning::DuplicateField(field) => ("DuplicateField", format!("Дублирующееся поле: '{}'", field)),
+            ParseWarning::InvalidLimit(limit) => ("InvalidLimit", format!("Некорректный LIMIT: {}", limit)),
+            ParseWarning::UnknownSortField(field) => ("UnknownSortField", format!("Неизвестное поле для сортировки: '{}'", field)),
+            ParseWarning::UnexpectedToken(token) => ("UnexpectedToken", format!("Неожиданный токен: '{}'", token)),
+            ParseWarning::DuplicateWhere(field) => ("DuplicateWhere", format!("Дублирующееся условие WHERE: '{}'", field)),
+            ParseWarning::Other(msg) => ("Other", msg.clone()),
+        };
+
+        let mut state = serializer.serialize_struct("ParseWarning", 2)?;
+        state.serialize_field("type", type_str)?;
+        state.serialize_field("message", &message)?;
+        state.end()
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for ParseWarning {
+    fn deserialize<D>(_deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        // Для обратной совместимости - не используется в текущей реализации
+        // так как предупреждения только отправляются в TypeScript
+        Err(serde::de::Error::custom("Deserialization of ParseWarning is not supported"))
+    }
 }
 
 impl std::fmt::Display for ParseWarning {
@@ -59,11 +93,26 @@ impl ValidationResult {
     }
 }
 
+/// Рекурсивно собирает все поля из выражения WHERE
+fn collect_fields_from_expression(expr: &Expression) -> Vec<String> {
+    let mut fields = Vec::new();
+    match expr {
+        Expression::Comparison { field, .. } => {
+            fields.push(field.clone());
+        }
+        Expression::Logical { left, right, .. } => {
+            fields.extend(collect_fields_from_expression(left));
+            fields.extend(collect_fields_from_expression(right));
+        }
+    }
+    fields
+}
+
 /// Валидирует параметры таблицы, полученные из парсинга
 /// Возвращает предупреждения, но не ошибки (потому что парсер уже проверил синтаксис)
 pub fn validate_table_params(params: &TableParams) -> ValidationResult {
     let mut warnings = Vec::new();
-    debug!("Валидация параметров таблицы: {:?}", params);
+    debug!("Валидация параметры таблицы: {:?}", params);
 
     // Проверяем поля в SELECT
     let mut seen_fields = std::collections::HashSet::new();
@@ -100,9 +149,13 @@ pub fn validate_table_params(params: &TableParams) -> ValidationResult {
 
     // Проверяем условие WHERE, если есть
     if let Some(condition) = &params.where_condition {
-        // В текущей версии только базовые проверки
-        // Более сложная проверка выполняется в evaluator
-        debug!("Условие WHERE: {:?}", condition);
+        // Собираем все поля из выражения WHERE
+        let where_fields = collect_fields_from_expression(condition);
+        for field in where_fields {
+            if !is_valid_table_field(&field) {
+                warnings.push(ParseWarning::UnknownField(field));
+            }
+        }
     }
 
     if !warnings.is_empty() {
