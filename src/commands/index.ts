@@ -1,4 +1,5 @@
 import type FsrsPlugin from "../main";
+import { FsrsHelpModal } from "../ui/fsrs-help-modal";
 
 /**
  * Регистрирует все команды плагина FSRS
@@ -28,6 +29,16 @@ export function registerCommands(plugin: FsrsPlugin): void {
 		name: "Повторить текущую карточку",
 		callback: async () => {
 			await plugin.reviewCurrentCard();
+		},
+	});
+
+	// Команда для открытия справки по синтаксису fsrs-table
+	plugin.addCommand({
+		id: "show-fsrs-help",
+		name: "Показать справку по синтаксису fsrs-table",
+		callback: () => {
+			const modal = new FsrsHelpModal(plugin.app);
+			modal.show();
 		},
 	});
 }

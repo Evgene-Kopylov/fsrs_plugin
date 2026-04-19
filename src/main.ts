@@ -6,6 +6,7 @@ import { reviewCurrentCard, reviewCardByPath } from "./commands/review";
 
 import { ReviewButtonRenderer } from "./ui/review-button-renderer";
 import { FsrsTableRenderer } from "./ui/fsrs-table-renderer";
+
 import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings";
 import { FsrsSettingTab } from "./settings";
 import { CARD_CACHE_TTL_MS } from "./constants";
