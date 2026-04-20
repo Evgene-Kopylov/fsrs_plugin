@@ -2,6 +2,7 @@ stages:
     - build-wasm
     - encode-wasm
     - lint
+    - mirror
 
 variables:
     NODE_VERSION: "24-alpine"
