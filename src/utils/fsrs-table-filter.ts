@@ -212,7 +212,10 @@ export async function filterAndSortCards(
 						field: params.sort.field,
 						direction: params.sort.direction,
 					}
-				: undefined,
+				: {
+						field: "overdue",
+						direction: "DESC",
+					},
 			where_condition: params.where,
 		};
 
@@ -347,7 +350,10 @@ export async function filterAndSortCardsWithStates(
 						field: params.sort.field,
 						direction: params.sort.direction,
 					}
-				: undefined,
+				: {
+						field: "overdue",
+						direction: "DESC",
+					},
 			where_condition: params.where,
 		};
 
