@@ -45,7 +45,7 @@ export async function addFsrsFieldsToCurrentFile(
 			if (/^reviews\s*:/m.test(existingContent)) {
 				// Уже есть поля FSRS - обновляем их
 				new Notice(
-					"В файле уже есть поля FSRS. Используйте команду повторения для обновления.", // eslint-disable-line obsidianmd/ui/sentence-case
+					"В файле уже есть поля FSRS. Используйте команду повторения для обновления.",  
 				);
 				return;
 			}
@@ -91,7 +91,7 @@ export async function addFsrsFieldsToCurrentFile(
 
 		// Сохраняем изменения
 		await app.vault.modify(activeFile, newContent);
-		new Notice("Поля FSRS (новый формат) добавлены в файл"); // eslint-disable-line obsidianmd/ui/sentence-case
+		new Notice("Поля FSRS (новый формат) добавлены в файл");  
 		console.debug("Поля FSRS успешно добавлены в файл:", activeFile.name);
 
 		// Показываем информацию о формате

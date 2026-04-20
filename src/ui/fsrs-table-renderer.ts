@@ -212,7 +212,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			cls: "fsrs-table-loading",
 		});
 		loadingDiv.createEl("small", {
-			text: "Loading fsrs cards...",
+			text: "Loading FSRS cards...",
 		});
 	}
 

@@ -41,7 +41,7 @@ export async function deleteLastReview(
 		);
 
 		if (!parseResult.success || !parseResult.card) {
-			new Notice("Not an fsrs card. Nothing to delete.");
+			new Notice("Not an FSRS card. Nothing to delete.");
 			return false;
 		}
 

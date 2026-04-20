@@ -284,7 +284,7 @@ export default class FsrsPlugin extends Plugin {
         // Инвалидируем кэш при изменении настроек
         this.invalidateCache();
         // Обновляем статус-бар
-        this.statusBarManager?.updateStatusBar();
+        void this.statusBarManager?.updateStatusBar();
     }
 
     /**

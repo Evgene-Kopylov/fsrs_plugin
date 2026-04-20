@@ -52,7 +52,7 @@ export class StatusBarManager extends Component {
         this.statusBarItem.appendChild(this.iconSpan);
         this.statusBarItem.appendChild(this.textSpan);
         this.statusBarItem.title =
-            "FSRS Plugin - Left-click to review, right-click for menu";
+            "FSRS plugin - left-click to review, right-click for menu";
         this.statusBarItem.addEventListener("click", (event) => {
             event.preventDefault();
             void this.plugin.reviewCurrentCard();
@@ -124,7 +124,8 @@ export class StatusBarManager extends Component {
             if (this.iconSpan) this.iconSpan.textContent = icon;
             if (this.textSpan) this.textSpan.textContent = " FSRS: no file";
             this.statusBarItem.title = "FSRS plugin - no active file";
-            if (this.iconSpan) this.iconSpan.style.opacity = "0.3";
+            if (this.iconSpan)
+                this.iconSpan.classList.add("fsrs-status-bar-icon-dimmed");
             console.debug("Статус-бар: нет активного файла");
             return;
         }
@@ -140,7 +141,8 @@ export class StatusBarManager extends Component {
                     this.textSpan.textContent = " FSRS: not FSRS";
                 this.statusBarItem.title =
                     "FSRS plugin - current file is not a FSRS card";
-                if (this.iconSpan) this.iconSpan.style.opacity = "0.3";
+                if (this.iconSpan)
+                    this.iconSpan.classList.add("fsrs-status-bar-icon-dimmed");
                 console.debug("Статус-бар: файл не содержит frontmatter");
                 return;
             }
@@ -153,10 +155,11 @@ export class StatusBarManager extends Component {
                 const icon = this.settings.status_bar_icon || "🔄";
                 if (this.iconSpan) this.iconSpan.textContent = icon;
                 if (this.textSpan)
-                    this.textSpan.textContent = " FSRS: Not FSRS";
+                    this.textSpan.textContent = " FSRS: not FSRS";
                 this.statusBarItem.title =
                     "FSRS plugin - current file is not a FSRS card";
-                if (this.iconSpan) this.iconSpan.style.opacity = "0.3";
+                if (this.iconSpan)
+                    this.iconSpan.classList.add("fsrs-status-bar-icon-dimmed");
                 console.debug("Статус-бар: файл не является FSRS карточкой");
                 return;
             }
@@ -165,7 +168,8 @@ export class StatusBarManager extends Component {
             const isDue = await isCardDue(card, this.settings);
             const icon = this.settings.status_bar_icon || "🔄";
             if (this.iconSpan) this.iconSpan.textContent = icon;
-            if (this.iconSpan) this.iconSpan.style.opacity = "1";
+            if (this.iconSpan)
+                this.iconSpan.classList.remove("fsrs-status-bar-icon-dimmed");
 
             if (isDue) {
                 if (this.textSpan) this.textSpan.textContent = " FSRS: due!";
@@ -213,7 +217,8 @@ export class StatusBarManager extends Component {
             if (this.iconSpan) this.iconSpan.textContent = icon;
             if (this.textSpan) this.textSpan.textContent = " FSRS: error";
             this.statusBarItem.title = "FSRS plugin - prror updating status";
-            if (this.iconSpan) this.iconSpan.style.opacity = "1";
+            if (this.iconSpan)
+                this.iconSpan.classList.remove("fsrs-status-bar-icon-dimmed");
             console.debug("Статус-бар: ошибка при обновлении");
         }
     }
