@@ -24,6 +24,7 @@ export const DEFAULT_SETTINGS: FSRSSettings = {
 
 	// Паттерны игнорирования файлов и папок
 	ignore_patterns: [],
+	status_bar_icon: "🔄",
 };
 
 // Паттерны игнорирования файлов и папок по умолчанию

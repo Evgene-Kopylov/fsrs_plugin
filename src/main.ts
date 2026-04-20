@@ -42,7 +42,7 @@ export default class FsrsPlugin extends Plugin {
 	// Кэш с состояниями
 	private cachedCardsWithState: CachedCard[] | null = null;
 	private scanPromise: Promise<CachedCard[]> | null = null;
-	private statusBarManager: StatusBarManager | null = null;
+	public statusBarManager: StatusBarManager | null = null;
 	private fileModifyHandler?: (file: TAbstractFile) => void;
 
 	/**
@@ -283,6 +283,8 @@ export default class FsrsPlugin extends Plugin {
 		await this.saveData(this.settings);
 		// Инвалидируем кэш при изменении настроек
 		this.invalidateCache();
+		// Обновляем статус-бар
+		this.statusBarManager?.updateStatusBar();
 	}
 
 	/**

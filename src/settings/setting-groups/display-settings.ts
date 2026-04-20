@@ -26,4 +26,20 @@ export function renderDisplaySettings(
 					await plugin.saveSettings();
 				}),
 		);
+
+	// status_bar_icon
+	new Setting(containerEl)
+		.setName("Status bar icon")
+		.setDesc("Emoji or icon shown in status bar (e.g., 🔄, 📚, ⏰).")
+		.addText((text) =>
+			text
+				.setPlaceholder("🔄")
+				.setValue(plugin.settings.status_bar_icon)
+				.onChange(async (value) => {
+					plugin.settings.status_bar_icon = value.trim() || "🔄";
+					await plugin.saveSettings();
+					// Обновить статус-бар
+					plugin.statusBarManager?.updateStatusBar();
+				}),
+		);
 }

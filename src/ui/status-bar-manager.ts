@@ -1,4 +1,4 @@
-import { App, Component, TFile } from "obsidian";
+import { App, Component, TFile, Menu } from "obsidian";
 import type FsrsPlugin from "../main";
 import type { FsrsPluginSettings } from "../settings";
 import {
@@ -10,6 +10,8 @@ import {
 	getRussianNoun,
 	extractFrontmatter,
 } from "../utils/fsrs-helper";
+import { FsrsHelpModal } from "./fsrs-help-modal";
+import { showReviewHistoryForCurrentFile } from "./review-history-modal";
 
 /**
  * Менеджер статус-бара FSRS для управления отображением статуса текущей карточки
@@ -17,6 +19,8 @@ import {
  */
 export class StatusBarManager extends Component {
 	private statusBarItem: HTMLElement | null = null;
+	private iconSpan: HTMLSpanElement | null = null;
+	private textSpan: HTMLSpanElement | null = null;
 
 	/**
 	 * Создаёт новый менеджер статус-бара
@@ -39,10 +43,49 @@ export class StatusBarManager extends Component {
 		// Создание элемента статус-бара
 		this.statusBarItem = this.plugin.addStatusBarItem();
 		this.statusBarItem.classList.add("fsrs-status-bar-item");
-		this.statusBarItem.textContent = "FSRS: loading...";
-		this.statusBarItem.title = "FSRS Plugin - Click to review current card";
-		this.statusBarItem.addEventListener("click", () => {
+		this.statusBarItem.style.opacity = "1";
+		const icon = this.settings.status_bar_icon || "🔄";
+		this.iconSpan = document.createElement("span");
+		this.iconSpan.textContent = icon;
+		this.textSpan = document.createElement("span");
+		this.textSpan.textContent = " FSRS: loading...";
+		this.statusBarItem.appendChild(this.iconSpan);
+		this.statusBarItem.appendChild(this.textSpan);
+		this.statusBarItem.title =
+			"FSRS Plugin - Left-click to review, right-click for menu";
+		this.statusBarItem.addEventListener("click", (event) => {
+			event.preventDefault();
 			void this.plugin.reviewCurrentCard();
+		});
+		this.statusBarItem.addEventListener("contextmenu", (event) => {
+			event.preventDefault();
+			const menu = new Menu();
+
+			menu.addItem((item) => {
+				item.setTitle("Добавить поля FSRS в шапку файла")
+					.setIcon("plus")
+					.onClick(() => {
+						void this.plugin.addFsrsFieldsToCurrentFile();
+					});
+			});
+
+			menu.addItem((item) => {
+				item.setTitle("Показать историю повторений")
+					.setIcon("clock")
+					.onClick(() => {
+						void showReviewHistoryForCurrentFile(this.app);
+					});
+			});
+
+			menu.addItem((item) => {
+				item.setTitle("Показать справку по синтаксису fsrs-table")
+					.setIcon("help")
+					.onClick(() => {
+						new FsrsHelpModal(this.app).show();
+					});
+			});
+
+			menu.showAtMouseEvent(event);
 		});
 
 		// Подписка на события для обновления статус-бара
@@ -68,7 +111,7 @@ export class StatusBarManager extends Component {
 	/**
 	 * Обновляет статус-бар на основе текущей активной карточки
 	 */
-	private async updateStatusBar(): Promise<void> {
+	public async updateStatusBar(): Promise<void> {
 		if (!this.statusBarItem) return;
 
 		const file = this.app.workspace.getActiveFile();
@@ -77,8 +120,11 @@ export class StatusBarManager extends Component {
 			file?.path || "нет файла",
 		);
 		if (!file) {
-			this.statusBarItem.textContent = "FSRS: No file";
+			const icon = this.settings.status_bar_icon || "🔄";
+			if (this.iconSpan) this.iconSpan.textContent = icon;
+			if (this.textSpan) this.textSpan.textContent = " FSRS: No file";
 			this.statusBarItem.title = "FSRS Plugin - No active file";
+			if (this.iconSpan) this.iconSpan.style.opacity = "0.3";
 			console.debug("Статус-бар: нет активного файла");
 			return;
 		}
@@ -88,9 +134,13 @@ export class StatusBarManager extends Component {
 			const frontmatter = extractFrontmatter(content);
 
 			if (!frontmatter) {
-				this.statusBarItem.textContent = "FSRS: Not FSRS";
+				const icon = this.settings.status_bar_icon || "🔄";
+				if (this.iconSpan) this.iconSpan.textContent = icon;
+				if (this.textSpan)
+					this.textSpan.textContent = " FSRS: Not FSRS";
 				this.statusBarItem.title =
 					"FSRS Plugin - Current file is not a FSRS card";
+				if (this.iconSpan) this.iconSpan.style.opacity = "0.3";
 				console.debug("Статус-бар: файл не содержит frontmatter");
 				return;
 			}
@@ -100,18 +150,25 @@ export class StatusBarManager extends Component {
 				file.path,
 			);
 			if (!parseResult.success || !parseResult.card) {
-				this.statusBarItem.textContent = "FSRS: Not FSRS";
+				const icon = this.settings.status_bar_icon || "🔄";
+				if (this.iconSpan) this.iconSpan.textContent = icon;
+				if (this.textSpan)
+					this.textSpan.textContent = " FSRS: Not FSRS";
 				this.statusBarItem.title =
 					"FSRS Plugin - Current file is not a FSRS card";
+				if (this.iconSpan) this.iconSpan.style.opacity = "0.3";
 				console.debug("Статус-бар: файл не является FSRS карточкой");
 				return;
 			}
 
 			const card = parseResult.card;
 			const isDue = await isCardDue(card, this.settings);
+			const icon = this.settings.status_bar_icon || "🔄";
+			if (this.iconSpan) this.iconSpan.textContent = icon;
+			if (this.iconSpan) this.iconSpan.style.opacity = "1";
 
 			if (isDue) {
-				this.statusBarItem.textContent = "FSRS: Due!";
+				if (this.textSpan) this.textSpan.textContent = " FSRS: Due!";
 				this.statusBarItem.title =
 					"FSRS Plugin - Card is due for review. Click to review.";
 				console.debug("Статус-бар: карточка готова к повторению");
@@ -141,17 +198,22 @@ export class StatusBarManager extends Component {
 						"минуты",
 						"минут",
 					);
-					this.statusBarItem.textContent = `FSRS: Wait ${remainingMinutes} ${noun}`;
+					if (this.textSpan)
+						this.textSpan.textContent = ` FSRS: Wait ${remainingMinutes} ${noun}`;
 					this.statusBarItem.title = `FSRS Plugin - Early review available in ${remainingMinutes} ${noun}. Next scheduled review: ${formattedDate}`;
 				} else {
-					this.statusBarItem.textContent = `FSRS: ${formattedDate}`;
+					if (this.textSpan)
+						this.textSpan.textContent = ` FSRS: ${formattedDate}`;
 					this.statusBarItem.title = `FSRS Plugin - Next review: ${formattedDate}`;
 				}
 			}
 		} catch (error) {
 			console.error("Ошибка при обновлении статус-бара:", error);
-			this.statusBarItem.textContent = "FSRS: Error";
+			const icon = this.settings.status_bar_icon || "🔄";
+			if (this.iconSpan) this.iconSpan.textContent = icon;
+			if (this.textSpan) this.textSpan.textContent = " FSRS: Error";
 			this.statusBarItem.title = "FSRS Plugin - Error updating status";
+			if (this.iconSpan) this.iconSpan.style.opacity = "1";
 			console.debug("Статус-бар: ошибка при обновлении");
 		}
 	}
@@ -164,6 +226,8 @@ export class StatusBarManager extends Component {
 			this.statusBarItem.remove();
 			this.statusBarItem = null;
 		}
+		this.iconSpan = null;
+		this.textSpan = null;
 		super.onunload();
 	}
 }
