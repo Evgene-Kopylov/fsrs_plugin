@@ -43,7 +43,7 @@ export class StatusBarManager extends Component {
         // Создание элемента статус-бара
         this.statusBarItem = this.plugin.addStatusBarItem();
         this.statusBarItem.classList.add("fsrs-status-bar-item");
-        this.statusBarItem.style.opacity = "1";
+
         const icon = this.settings.status_bar_icon || "🔄";
         this.iconSpan = document.createElement("span");
         this.iconSpan.textContent = icon;
@@ -168,8 +168,7 @@ export class StatusBarManager extends Component {
             if (this.iconSpan) this.iconSpan.style.opacity = "1";
 
             if (isDue) {
-                // eslint-disable-next-line obsidianmd/ui/sentence-case
-                if (this.textSpan) this.textSpan.textContent = " FSRS: Due!";
+                if (this.textSpan) this.textSpan.textContent = " FSRS: due!";
                 this.statusBarItem.title =
                     "FSRS plugin - card is due for review. Click to review.";
                 console.debug("Статус-бар: карточка готова к повторению");
