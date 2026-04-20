@@ -103,7 +103,7 @@ eslint-check:
 
 push_to_github:
     stage: mirror
-    image: lpine:latest
+    image: alpine:latest
     variables:
         GIT_STRATEGY: clone
         REPO_OWNER: "Evgene-Kopylov"
