@@ -1,31 +1,33 @@
-import { Plugin, Notice } from "obsidian";
+import { Plugin, Notice, TAbstractFile } from "obsidian";
 import { registerCommands } from "./commands/index";
 import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from "./commands/add-fsrs-fields";
 import { findFsrsCards } from "./commands/find-fsrs-cards";
 import {
-	reviewCurrentCard,
-	reviewCardByPath,
-	deleteLastReview,
-	deleteLastReviewCurrentCard,
+    reviewCurrentCard,
+    reviewCardByPath,
+    deleteLastReview,
+    deleteLastReviewCurrentCard,
 } from "./commands/review";
 
 import { ReviewButtonRenderer } from "./ui/review-button-renderer";
 import { FsrsTableRenderer } from "./ui/fsrs-table-renderer";
+import { StatusBarManager } from "./ui/status-bar-manager";
 
 import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings";
 import { FsrsSettingTab } from "./settings";
-import { CARD_CACHE_TTL_MS } from "./constants";
+
 import { base64ToBytes } from "./utils/fsrs-helper";
 import {
-	parseModernFsrsFromFrontmatter,
-	shouldProcessFile,
-	extractFrontmatter,
+    parseModernFsrsFromFrontmatter,
+    shouldProcessFile,
+    extractFrontmatter,
+    computeCardState,
 } from "./utils/fsrs-helper";
 import { shouldIgnoreFileWithSettings } from "./utils/fsrs/fsrs-filter";
-import type { ModernFSRSCard, FSRSRating } from "./interfaces/fsrs";
+import type { ModernFSRSCard, FSRSRating, CachedCard } from "./interfaces/fsrs";
 
 // Импорт WASM функций
-import init, { my_wasm_function } from "../wasm-lib/pkg/wasm_lib";
+import init from "../wasm-lib/pkg/wasm_lib";
 import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
 
 /**
@@ -33,296 +35,307 @@ import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
  * Интегрирует алгоритм интервального повторения FSRS в Obsidian
  */
 export default class FsrsPlugin extends Plugin {
-	settings: FsrsPluginSettings;
-	private isWasmInitialized = false;
+    settings: FsrsPluginSettings;
+    private isWasmInitialized = false;
 
-	private fsrsTableRenderers = new Set<FsrsTableRenderer>();
-	// Кэш с TTL
-	private cachedCards: ModernFSRSCard[] | null = null;
-	private lastScanTime = 0;
+    private fsrsTableRenderers = new Set<FsrsTableRenderer>();
+    // Кэш с состояниями
+    private cachedCardsWithState: CachedCard[] | null = null;
+    private scanPromise: Promise<CachedCard[]> | null = null;
+    public statusBarManager: StatusBarManager | null = null;
+    private fileModifyHandler?: (file: TAbstractFile) => void;
 
-	private isScanning = false;
+    /**
+     * Загрузка плагина
+     */
+    async onload() {
+        await this.loadSettings();
+        this.addSettingTab(new FsrsSettingTab(this.app, this));
 
-	/**
-	 * Загрузка плагина
-	 */
-	async onload() {
-		await this.loadSettings();
-		this.addSettingTab(new FsrsSettingTab(this.app, this));
+        console.debug("=== Загрузка FSRS плагина с WASM ===");
 
-		console.debug("=== Загрузка FSRS плагина с WASM ===");
+        // Инициализация WASM модуля
+        await this.initializeWasm();
 
-		// Инициализация WASM модуля
-		await this.initializeWasm();
+        // Регистрация команд плагина
+        registerCommands(this);
 
-		// Регистрация команд плагина
-		registerCommands(this);
+        // Создание менеджера статус-бара
+        this.statusBarManager = new StatusBarManager(
+            this,
+            this.app,
+            this.settings,
+        );
+        this.statusBarManager.init();
 
-		// Регистрация процессора для кнопки повторения карточки
-		this.registerMarkdownCodeBlockProcessor(
-			"fsrs-review-button",
-			async (source, el, ctx) => {
-				// Создаем контейнер для кнопки
-				const buttonContainer = document.createElement("div");
-				buttonContainer.className = "fsrs-review-button-container";
-				el.appendChild(buttonContainer);
+        // Регистрация процессора для кнопки повторения карточки
+        this.registerMarkdownCodeBlockProcessor(
+            "fsrs-review-button",
+            async (source, el, ctx) => {
+                // Создаем контейнер для кнопки
+                const buttonContainer = document.createElement("div");
+                buttonContainer.className = "fsrs-review-button-container";
+                el.appendChild(buttonContainer);
 
-				// Создаем рендерер кнопки
-				const renderer = new ReviewButtonRenderer(
-					this,
-					buttonContainer,
-					ctx.sourcePath,
-				);
-				ctx.addChild(renderer);
-			},
-		);
+                // Создаем рендерер кнопки
+                const renderer = new ReviewButtonRenderer(
+                    this,
+                    buttonContainer,
+                    ctx.sourcePath,
+                );
+                ctx.addChild(renderer);
+            },
+        );
 
-		// Регистрация MarkdownCodeBlockProcessor для блоков fsrs-table
-		this.registerMarkdownCodeBlockProcessor(
-			"fsrs-table",
-			async (source, el, ctx) => {
-				// Создаем контейнер для рендеринга
-				const renderContainer = document.createElement("div");
-				renderContainer.className = "fsrs-table-render-container";
-				el.appendChild(renderContainer);
+        // Регистрация MarkdownCodeBlockProcessor для блоков fsrs-table
+        this.registerMarkdownCodeBlockProcessor(
+            "fsrs-table",
+            async (source, el, ctx) => {
+                // Создаем контейнер для рендеринга
+                const renderContainer = document.createElement("div");
+                renderContainer.className = "fsrs-table-render-container";
+                el.appendChild(renderContainer);
 
-				// Получаем позиции блока для обновления исходного кода
-				const sectionInfo = ctx.getSectionInfo(el);
-				const sourceStart = sectionInfo?.lineStart ?? 0;
-				const sourceEnd = sectionInfo?.lineEnd ?? 0;
+                // Получаем позиции блока для обновления исходного кода
+                const sectionInfo = ctx.getSectionInfo(el);
+                const sourceStart = sectionInfo?.lineStart ?? 0;
+                const sourceEnd = sectionInfo?.lineEnd ?? 0;
 
-				// Создаем и добавляем рендерер
-				const renderer = new FsrsTableRenderer(
-					this,
-					renderContainer,
-					ctx.sourcePath,
-					source,
-					sourceStart,
-					sourceEnd,
-				);
-				ctx.addChild(renderer);
-			},
-		);
+                // Создаем и добавляем рендерер
+                const renderer = new FsrsTableRenderer(
+                    this,
+                    renderContainer,
+                    ctx.sourcePath,
+                    source,
+                    sourceStart,
+                    sourceEnd,
+                );
+                ctx.addChild(renderer);
+            },
+        );
 
-		console.debug("FSRS плагин успешно загружен");
-	}
+        // Регистрация обработчика изменений файлов для инвалидации кэша
+        this.fileModifyHandler = () => this.invalidateCache();
+        this.app.vault.on("modify", this.fileModifyHandler);
 
-	/**
-	 * Инициализация WASM модуля
-	 */
-	private async initializeWasm(): Promise<void> {
-		try {
-			console.debug("1. Конвертируем base64 в байты...");
-			const wasmBytes = base64ToBytes(WASM_BASE64);
-			console.debug("2. Длина WASM байтов:", wasmBytes.length);
+        console.debug("FSRS плагин успешно загружен");
+    }
 
-			console.debug("3. Вызываем init...");
-			await init({ module_or_path: wasmBytes });
-			console.debug("4. WASM инициализирован");
+    /**
+     * Инициализация WASM модуля
+     */
+    private async initializeWasm(): Promise<void> {
+        try {
+            console.debug("1. Конвертируем base64 в байты...");
+            const wasmBytes = base64ToBytes(WASM_BASE64);
+            console.debug("2. Длина WASM байтов:", wasmBytes.length);
 
-			// Тестовая функция для проверки работы WASM
-			console.debug("5. Вызываем тестовую функцию...");
-			const result = my_wasm_function("тестовые данные из FSRS плагина");
-			console.debug("6. Результат из Rust:", result);
+            console.debug("3. Вызываем init...");
+            await init({ module_or_path: wasmBytes });
+            console.debug("4. WASM инициализирован");
+            this.isWasmInitialized = true;
+        } catch (error) {
+            console.error("Ошибка загрузки WASM модуля:", error);
+            new Notice("Ошибка загрузки WASM компонента FSRS"); // eslint-disable-line obsidianmd/ui/sentence-case
+            this.isWasmInitialized = false;
+        }
+    }
 
-			console.debug("7. Показываем Notice...");
-			new Notice(result);
-			console.debug("8. Notice показано");
+    /**
+     * Получает карточки с кэшированными состояниями.
+     * Кэш инвалидируется при изменении файлов или настроек.
+     */
+    async getCachedCardsWithState(): Promise<CachedCard[]> {
+        if (this.cachedCardsWithState) return this.cachedCardsWithState;
+        if (this.scanPromise) return this.scanPromise;
+        this.scanPromise = this.performFullScan();
+        try {
+            this.cachedCardsWithState = await this.scanPromise;
+            return this.cachedCardsWithState;
+        } finally {
+            this.scanPromise = null;
+        }
+    }
 
-			this.isWasmInitialized = true;
-		} catch (error) {
-			console.error("Ошибка загрузки WASM модуля:", error);
-			new Notice("Ошибка загрузки WASM компонента FSRS"); // eslint-disable-line obsidianmd/ui/sentence-case
-			this.isWasmInitialized = false;
-		}
-	}
+    /**
+     * Получает карточки для обратной совместимости (только карточки без состояний).
+     * @deprecated Используйте getCachedCardsWithState()
+     */
+    async getCardsForReview(): Promise<ModernFSRSCard[]> {
+        const cached = await this.getCachedCardsWithState();
+        return cached.map((c) => c.card);
+    }
 
-	/**
-	 * Получает карточки с кэшированием по TTL.
-	 * Никакой ручной инвалидации — кэш устаревает сам через 5 секунд.
-	 */
-	async getCardsForReview(): Promise<ModernFSRSCard[]> {
-		const now = Date.now();
-		const cacheValid =
-			this.cachedCards !== null &&
-			now - this.lastScanTime < CARD_CACHE_TTL_MS;
+    private async performFullScan(): Promise<CachedCard[]> {
+        const start = performance.now();
+        const files = this.app.vault.getMarkdownFiles();
+        const cards: CachedCard[] = [];
 
-		if (cacheValid) {
-			// Возвращаем ссылку на кэш (без копирования)
-			return this.cachedCards!;
-		}
+        for (const file of files) {
+            if (shouldIgnoreFileWithSettings(file.path, this.settings))
+                continue;
+            try {
+                const content = await this.app.vault.read(file);
+                if (!shouldProcessFile(content)) continue;
+                const frontmatter = extractFrontmatter(content);
+                if (!frontmatter) continue;
+                const parseResult = parseModernFsrsFromFrontmatter(
+                    frontmatter,
+                    file.path,
+                );
+                if (parseResult.success && parseResult.card) {
+                    const state = await computeCardState(
+                        parseResult.card,
+                        this.settings,
+                    );
+                    cards.push({ card: parseResult.card, state });
+                }
+            } catch (error) {
+                console.warn(`Ошибка при чтении файла ${file.path}:`, error);
+            }
+        }
 
-		if (this.isScanning) {
-			await this.waitForScanCompletion();
-			return this.cachedCards ?? [];
-		}
+        console.debug(`✅ Найдено карточек FSRS: ${cards.length}`);
+        const elapsed = (performance.now() - start) / 1000;
+        console.debug(
+            `⏱️ Сканирование всего хранилища: ${elapsed.toFixed(2)} с`,
+        );
+        return cards;
+    }
 
-		this.isScanning = true;
-		try {
-			const cards = await this.performFullScan();
-			this.cachedCards = cards;
-			this.lastScanTime = Date.now();
-			return cards;
-		} finally {
-			this.isScanning = false;
-		}
-	}
+    /**
+     * Инвалидирует кэш карточек.
+     * Вызывается при изменении файлов или настроек.
+     */
+    private invalidateCache(): void {
+        this.cachedCardsWithState = null;
+        this.scanPromise = null;
+    }
 
-	private async performFullScan(): Promise<ModernFSRSCard[]> {
-		const start = performance.now();
-		const files = this.app.vault.getMarkdownFiles();
-		const cards: ModernFSRSCard[] = [];
+    // Метод shouldIgnoreFile был вынесен в модуль fsrs-filter.ts
+    // Используйте функцию shouldIgnoreFileWithSettings из импорта
 
-		for (const file of files) {
-			if (shouldIgnoreFileWithSettings(file.path, this.settings))
-				continue;
-			try {
-				const content = await this.app.vault.read(file);
-				if (!shouldProcessFile(content)) continue;
-				const frontmatter = extractFrontmatter(content);
-				if (!frontmatter) continue;
-				const parseResult = parseModernFsrsFromFrontmatter(
-					frontmatter,
-					file.path,
-				);
-				if (parseResult.success && parseResult.card)
-					cards.push(parseResult.card);
-			} catch (error) {
-				console.warn(`Ошибка при чтении файла ${file.path}:`, error);
-			}
-		}
+    /**
+     * Добавляет поля FSRS в текущий файл
+     * Реализация для команды плагина
+     */
+    async addFsrsFieldsToCurrentFile(): Promise<void> {
+        await addFsrsFieldsToCurrentFileFunction(this.app, this.settings);
+        this.notifyFsrsTableRenderers();
+    }
 
-		console.debug(`✅ Найдено карточек FSRS: ${cards.length}`);
-		const elapsed = (performance.now() - start) / 1000;
-		console.debug(
-			`⏱️ Сканирование всего хранилища: ${elapsed.toFixed(2)} с`,
-		);
-		return cards;
-	}
+    /**
+     * Находит карточки для повторения
+     * Реализация для команды плагина
+     */
+    async findCardsForReview(): Promise<void> {
+        await findFsrsCards(this);
+    }
 
-	private async waitForScanCompletion(): Promise<void> {
-		const start = Date.now();
-		while (this.isScanning && Date.now() - start < 30000) {
-			await new Promise((r) => setTimeout(r, 50));
-		}
-		if (this.isScanning) {
-			console.warn("⚠️ Таймаут ожидания сканирования");
-			this.isScanning = false;
-		}
-	}
+    /**
+     * Повторяет текущую карточку
+     * Реализация для команды плагина
+     */
+    async reviewCurrentCard(): Promise<void> {
+        await reviewCurrentCard(this.app, this);
+    }
 
-	// Метод shouldIgnoreFile был вынесен в модуль fsrs-filter.ts
-	// Используйте функцию shouldIgnoreFileWithSettings из импорта
+    /**
+     * Повторяет карточку по указанному пути файла
+     * Можно вызывать из frontmatter через кнопку
+     */
+    async reviewCardByPath(filePath: string): Promise<FSRSRating | null> {
+        return await reviewCardByPath(this.app, this, filePath);
+    }
 
-	/**
-	 * Добавляет поля FSRS в текущий файл
-	 * Реализация для команды плагина
-	 */
-	async addFsrsFieldsToCurrentFile(): Promise<void> {
-		await addFsrsFieldsToCurrentFileFunction(this.app, this.settings);
-		this.notifyFsrsTableRenderers();
-	}
+    /**
+     * Удаляет последнее повторение карточки по указанному пути файла
+     * Можно вызывать из команды плагина
+     */
+    async deleteLastReview(filePath: string): Promise<boolean> {
+        return await deleteLastReview(this.app, this, filePath);
+    }
 
-	/**
-	 * Находит карточки для повторения
-	 * Реализация для команды плагина
-	 */
-	async findCardsForReview(): Promise<void> {
-		await findFsrsCards(this);
-	}
+    /**
+     * Удаляет последнее повторение текущей карточки
+     * Можно вызывать из команды плагина
+     */
+    async deleteLastReviewForCurrentFile(): Promise<boolean> {
+        return await deleteLastReviewCurrentCard(this.app, this);
+    }
 
-	/**
-	 * Повторяет текущую карточку
-	 * Реализация для команды плагина
-	 */
-	async reviewCurrentCard(): Promise<void> {
-		await reviewCurrentCard(this.app, this);
-	}
+    /**
+     * Загружает настройки плагина
+     */
+    async loadSettings() {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        this.settings = Object.assign(
+            {},
+            DEFAULT_SETTINGS,
+            await this.loadData(),
+        );
+    }
 
-	/**
-	 * Повторяет карточку по указанному пути файла
-	 * Можно вызывать из frontmatter через кнопку
-	 */
-	async reviewCardByPath(filePath: string): Promise<FSRSRating | null> {
-		return await reviewCardByPath(this.app, this, filePath);
-	}
+    /**
+     * Сохраняет настройки плагина
+     */
+    async saveSettings() {
+        await this.saveData(this.settings);
+        // Инвалидируем кэш при изменении настроек
+        this.invalidateCache();
+        // Обновляем статус-бар
+        void this.statusBarManager?.updateStatusBar();
+    }
 
-	/**
-	 * Удаляет последнее повторение карточки по указанному пути файла
-	 * Можно вызывать из команды плагина
-	 */
-	async deleteLastReview(filePath: string): Promise<boolean> {
-		return await deleteLastReview(this.app, this, filePath);
-	}
+    /**
+     * Проверяет, инициализирован ли WASM модуль
+     */
+    isWasmReady(): boolean {
+        return this.isWasmInitialized;
+    }
 
-	/**
-	 * Удаляет последнее повторение текущей карточки
-	 * Можно вызывать из команды плагина
-	 */
-	async deleteLastReviewForCurrentFile(): Promise<boolean> {
-		return await deleteLastReviewCurrentCard(this.app, this);
-	}
+    /**
+     * Выгрузка плагина
+     */
+    onunload() {
+        console.debug("Выгрузка FSRS плагина");
+        this.isWasmInitialized = false;
+        this.fsrsTableRenderers.clear();
+        if (this.fileModifyHandler) {
+            this.app.vault.off("modify", this.fileModifyHandler);
+            this.fileModifyHandler = undefined;
+        }
+        if (this.statusBarManager) {
+            this.statusBarManager.unload();
+            this.statusBarManager = null;
+        }
+    }
 
-	/**
-	 * Загружает настройки плагина
-	 */
-	async loadSettings() {
-		// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-		this.settings = Object.assign(
-			{},
-			DEFAULT_SETTINGS,
-			await this.loadData(),
-		);
-	}
+    /**
+     * Регистрирует активный рендерер fsrs-table для уведомлений об обновлениях
+     */
+    registerFsrsTableRenderer(renderer: FsrsTableRenderer): void {
+        this.fsrsTableRenderers.add(renderer);
+    }
 
-	/**
-	 * Сохраняет настройки плагина
-	 */
-	async saveSettings() {
-		await this.saveData(this.settings);
-	}
+    /**
+     * Удаляет рендерер fsrs-table из списка активных
+     */
+    unregisterFsrsTableRenderer(renderer: FsrsTableRenderer): void {
+        this.fsrsTableRenderers.delete(renderer);
+    }
 
-	/**
-	 * Проверяет, инициализирован ли WASM модуль
-	 */
-	isWasmReady(): boolean {
-		return this.isWasmInitialized;
-	}
-
-	/**
-	 * Выгрузка плагина
-	 */
-	onunload() {
-		console.debug("Выгрузка FSRS плагина");
-		this.isWasmInitialized = false;
-		this.fsrsTableRenderers.clear();
-	}
-
-	/**
-	 * Регистрирует активный рендерер fsrs-table для уведомлений об обновлениях
-	 */
-	registerFsrsTableRenderer(renderer: FsrsTableRenderer): void {
-		this.fsrsTableRenderers.add(renderer);
-	}
-
-	/**
-	 * Удаляет рендерер fsrs-table из списка активных
-	 */
-	unregisterFsrsTableRenderer(renderer: FsrsTableRenderer): void {
-		this.fsrsTableRenderers.delete(renderer);
-	}
-
-	/**
-	 * Уведомляет все активные рендереры fsrs-table об обновлении данных
-	 */
-	notifyFsrsTableRenderers(): void {
-		for (const renderer of this.fsrsTableRenderers) {
-			renderer.refresh().catch((error) => {
-				console.error(
-					"Ошибка при обновлении рендерера fsrs-table:",
-					error,
-				);
-			});
-		}
-	}
+    /**
+     * Уведомляет все активные рендереры fsrs-table об обновлении данных
+     */
+    notifyFsrsTableRenderers(): void {
+        for (const renderer of this.fsrsTableRenderers) {
+            renderer.refresh().catch((error) => {
+                console.error(
+                    "Ошибка при обновлении рендерера fsrs-table:",
+                    error,
+                );
+            });
+        }
+    }
 }

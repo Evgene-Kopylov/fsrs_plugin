@@ -34,6 +34,12 @@ export interface ComputedCardState {
 	retrievability: number; // извлекаемость (0.0-1.0)
 }
 
+// Карточка с кэшированным состоянием
+export interface CachedCard {
+	card: ModernFSRSCard;
+	state: ComputedCardState;
+}
+
 // Полная карточка для внутреннего использования
 export interface FSRSCard {
 	// Хранимые данные
@@ -67,6 +73,9 @@ export interface FSRSSettings {
 
 	// Паттерны игнорирования файлов и папок
 	ignore_patterns: string[];
+
+	// Значок статус-бара
+	status_bar_icon: string;
 }
 
 // Интерфейс для результатов повторения карточки

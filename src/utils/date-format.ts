@@ -11,20 +11,19 @@ import type { App } from "obsidian";
  * @returns строка в формате, заданном пользователем (по умолчанию "YYYY-MM-DD HH:mm")
  */
 export function formatDateTime(app: App, date: Date): string {
-	try {
-		const dateFormat =
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-			((app.vault as any).getConfig("dateFormat") as string) ||
-			"YYYY-MM-DD";
-		const timeFormat =
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-			((app.vault as any).getConfig("timeFormat") as string) || "HH:mm";
-		return window.moment(date).format(`${dateFormat} ${timeFormat}`);
-	} catch (error) {
-		console.error("Ошибка форматирования даты и времени:", error);
-		// Fallback на стандартный формат
-		return window.moment(date).format("YYYY-MM-DD HH:mm");
-	}
+    try {
+        const dateFormat =
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            ((app.vault as any).getConfig("dateFormat") as string) ||
+            "YYYY-MM-DD";
+        const timeFormat =
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            ((app.vault as any).getConfig("timeFormat") as string) || "HH:mm";
+        return window.moment(date).format(`${dateFormat} ${timeFormat}`);
+    } catch (error) {
+        console.error("Ошибка форматирования даты и времени:", error);
+        return window.moment(date).format("YYYY-MM-DD HH:mm");
+    }
 }
 
 /**
@@ -34,16 +33,16 @@ export function formatDateTime(app: App, date: Date): string {
  * @returns строка с датой в формате, заданном пользователем (по умолчанию "YYYY-MM-DD")
  */
 export function formatDate(app: App, date: Date): string {
-	try {
-		const dateFormat =
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-			((app.vault as any).getConfig("dateFormat") as string) ||
-			"YYYY-MM-DD";
-		return window.moment(date).format(dateFormat);
-	} catch (error) {
-		console.error("Ошибка форматирования даты:", error);
-		return window.moment(date).format("YYYY-MM-DD");
-	}
+    try {
+        const dateFormat =
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            ((app.vault as any).getConfig("dateFormat") as string) ||
+            "YYYY-MM-DD";
+        return window.moment(date).format(dateFormat);
+    } catch (error) {
+        console.error("Ошибка форматирования даты:", error);
+        return window.moment(date).format("YYYY-MM-DD");
+    }
 }
 
 /**
@@ -53,15 +52,15 @@ export function formatDate(app: App, date: Date): string {
  * @returns строка со временем в формате, заданном пользователем (по умолчанию "HH:mm")
  */
 export function formatTime(app: App, date: Date): string {
-	try {
-		const timeFormat =
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-			((app.vault as any).getConfig("timeFormat") as string) || "HH:mm";
-		return window.moment(date).format(timeFormat);
-	} catch (error) {
-		console.error("Ошибка форматирования времени:", error);
-		return window.moment(date).format("HH:mm");
-	}
+    try {
+        const timeFormat =
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            ((app.vault as any).getConfig("timeFormat") as string) || "HH:mm";
+        return window.moment(date).format(timeFormat);
+    } catch (error) {
+        console.error("Ошибка форматирования времени:", error);
+        return window.moment(date).format("HH:mm");
+    }
 }
 
 /**
@@ -70,7 +69,7 @@ export function formatTime(app: App, date: Date): string {
  * @returns строка с текущей датой и временем
  */
 export function getCurrentDateTimeFormatted(app: App): string {
-	return formatDateTime(app, new Date());
+    return formatDateTime(app, new Date());
 }
 
 /**
@@ -80,40 +79,40 @@ export function getCurrentDateTimeFormatted(app: App): string {
  * @returns объект Date или null в случае ошибки
  */
 export function parseFormattedDate(app: App, dateString: string): Date | null {
-	try {
-		const dateFormat =
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-			((app.vault as any).getConfig("dateFormat") as string) ||
-			"YYYY-MM-DD";
-		const timeFormat =
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-			((app.vault as any).getConfig("timeFormat") as string) || "HH:mm";
+    try {
+        const dateFormat =
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            ((app.vault as any).getConfig("dateFormat") as string) ||
+            "YYYY-MM-DD";
+        const timeFormat =
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+            ((app.vault as any).getConfig("timeFormat") as string) || "HH:mm";
 
-		// Пробуем парсить с форматом даты + времени
-		let momentDate = window.moment(
-			dateString,
-			`${dateFormat} ${timeFormat}`,
-			true,
-		);
-		if (momentDate.isValid()) {
-			return momentDate.toDate();
-		}
+        // Пробуем парсить с форматом даты + времени
+        let momentDate = window.moment(
+            dateString,
+            `${dateFormat} ${timeFormat}`,
+            true,
+        );
+        if (momentDate.isValid()) {
+            return momentDate.toDate();
+        }
 
-		// Пробуем парсить только с форматом даты
-		momentDate = window.moment(dateString, dateFormat, true);
-		if (momentDate.isValid()) {
-			return momentDate.toDate();
-		}
+        // Пробуем парсить только с форматом даты
+        momentDate = window.moment(dateString, dateFormat, true);
+        if (momentDate.isValid()) {
+            return momentDate.toDate();
+        }
 
-		// Если не получилось, пробуем стандартный парсинг
-		momentDate = window.moment(dateString);
-		if (momentDate.isValid()) {
-			return momentDate.toDate();
-		}
+        // Если не получилось, пробуем стандартный парсинг
+        momentDate = window.moment(dateString);
+        if (momentDate.isValid()) {
+            return momentDate.toDate();
+        }
 
-		return null;
-	} catch (error) {
-		console.error("Ошибка парсинга даты:", error);
-		return null;
-	}
+        return null;
+    } catch (error) {
+        console.error("Ошибка парсинга даты:", error);
+        return null;
+    }
 }

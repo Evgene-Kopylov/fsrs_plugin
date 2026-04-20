@@ -1,6 +1,6 @@
 import { MarkdownRenderChild, Notice, EventRef, Editor } from "obsidian";
 import type FsrsPlugin from "../main";
-import type { ModernFSRSCard } from "../interfaces/fsrs";
+import type { CachedCard } from "../interfaces/fsrs";
 import type { TableParams } from "../utils/fsrs-table-helpers";
 import {
 	generateTableHTMLFromCards,
@@ -18,7 +18,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 	private activeLeafCallback?: () => void;
 	private lastVisibilityUpdate = 0;
 	private lastAction: "sort" | "refresh" | null = null;
-	private cachedCards: ModernFSRSCard[] | null = null;
+	private cachedCards: CachedCard[] | null = null;
 	private sourceText: string;
 	private sourceStart: number;
 	private sourceEnd: number;
@@ -113,7 +113,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			const allCards =
 				this.lastAction === "sort" && this.cachedCards
 					? this.cachedCards
-					: await this.plugin.getCardsForReview();
+					: await this.plugin.getCachedCardsWithState();
 			// Сохраняем карточки в кеш для будущих сортировок
 			this.cachedCards = allCards;
 			const now = new Date();
@@ -166,7 +166,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 					this.sourceText,
 				);
 				const result = await generateTableHTMLFromSql(
-					allCards,
+					allCards.map((c) => c.card),
 					this.sourceText,
 					this.plugin.settings,
 					this.plugin.app,
@@ -212,7 +212,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 			cls: "fsrs-table-loading",
 		});
 		loadingDiv.createEl("small", {
-			text: "Loading fsrs cards...",
+			text: "Loading FSRS cards...",
 		});
 	}
 
@@ -450,7 +450,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 					// При обновлении кода блока используем новую функцию generateTableHTMLFromSql
 					// чтобы получить параметры из SQL
 					const { params } = await generateTableHTMLFromSql(
-						this.cachedCards || [],
+						(this.cachedCards || []).map((c) => c.card),
 						updatedInnerContent,
 						this.plugin.settings,
 						this.plugin.app,

@@ -2,12 +2,12 @@
 //! Включает вычисление overdue, retrievability, state и других полей
 //! Использует существующие WASM функции для вычислений
 
-use chrono::{DateTime, Utc};
 use log;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::json_parsing::parse_datetime_flexible;
+use crate::types::{ComputedState, ModernFsrsCard};
 
 /// Вычисленные поля карточки для сортировки
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -74,76 +74,6 @@ impl std::fmt::Display for CalculationError {
 
 impl std::error::Error for CalculationError {}
 
-/// Преобразует дату из формата Obsidian (ГГГГ-ММ-ДД_чч:мм) в ISO 8601
-pub fn obsidian_to_iso(date_str: &str) -> Option<String> {
-    // Формат Obsidian: "2024-01-10_10:30"
-    // Преобразуем в ISO 8601: "2024-01-10T10:30:00Z"
-
-    log::debug!(
-        "obsidian_to_iso вызвана с date_str: '{}' (длина: {})",
-        date_str,
-        date_str.len()
-    );
-
-    if date_str.is_empty() {
-        log::debug!("date_str пустой, возвращаем None");
-        return None;
-    }
-
-    // Пытаемся распарсить как Obsidian формат
-    log::debug!("Попытка парсинга Obsidian формата: '{}'", date_str);
-    if let Ok(dt) = chrono::NaiveDateTime::parse_from_str(date_str, "%Y-%m-%d_%H:%M") {
-        log::debug!("Успешно распарсено как Obsidian формат: {:?}", dt);
-        // Преобразуем в DateTime<Utc> и затем в ISO 8601
-        let dt_utc: DateTime<Utc> = DateTime::from_naive_utc_and_offset(dt, Utc);
-        let result = dt_utc.to_rfc3339();
-        log::debug!("Преобразовано в ISO: '{}'", result);
-        Some(result)
-    } else {
-        log::debug!("Не удалось распарсить как Obsidian формат, пробуем как ISO 8601");
-        // Если не удалось, пробуем как ISO 8601 (возможно уже в правильном формате)
-        // Пытаемся распарсить как ISO 8601 используя нашу гибкую функцию
-        match parse_datetime_flexible(date_str) {
-            Some(dt) => {
-                let result = dt.to_rfc3339();
-                log::debug!(
-                    "Успешно распарсено как ISO 8601: '{}' -> '{}'",
-                    date_str,
-                    result
-                );
-                Some(result)
-            }
-            None => {
-                log::debug!(
-                    "Не удалось распарсить ни как Obsidian, ни как ISO 8601 формат: '{}'",
-                    date_str
-                );
-                None
-            }
-        }
-    }
-}
-
-/// Преобразует дату из ISO 8601 в формат Obsidian (ГГГГ-ММ-ДД_чч:мм)
-pub fn iso_to_obsidian(iso_str: &str) -> Option<String> {
-    if iso_str.is_empty() {
-        return None;
-    }
-
-    // Пытаемся распарсить как ISO 8601 используя нашу гибкую функцию
-    if let Some(dt) = parse_datetime_flexible(iso_str) {
-        // Форматируем в Obsidian формат
-        Some(dt.format("%Y-%m-%d_%H:%M").to_string())
-    } else {
-        // Если уже в Obsidian формате, возвращаем как есть
-        if iso_str.contains('_') && iso_str.contains('-') && iso_str.contains(':') {
-            Some(iso_str.to_string())
-        } else {
-            None
-        }
-    }
-}
-
 /// Извлекает поле из JSON карточки
 fn extract_field(card_json: &str, field: &str) -> Result<serde_json::Value, CalculationError> {
     let parsed: serde_json::Value = serde_json::from_str(card_json)
@@ -185,8 +115,8 @@ pub fn calculate_overdue_from_due_str(
     log::debug!("due_str значение: '{}' (длина: {})", due_str, due_str.len());
     log::debug!("Значение due_str: '{}' (длина: {})", due_str, due_str.len());
 
-    // Преобразуем дату due из Obsidian формата в ISO 8601, если нужно
-    let due_iso = obsidian_to_iso(due_str).ok_or_else(|| {
+    // Пытаемся распарсить дату using гибкой функции парсинга
+    let due_dt = parse_datetime_flexible(due_str).ok_or_else(|| {
         log::warn!("Некорректный формат даты due: '{}'", due_str);
         log::debug!("Некорректный формат даты due: '{}'", due_str);
         log::debug!(
@@ -205,6 +135,8 @@ pub fn calculate_overdue_from_due_str(
 
         CalculationError::InvalidDateFormat(format!("Некорректный формат даты due: {}", due_str))
     })?;
+
+    let due_iso = due_dt.to_rfc3339();
 
     log::debug!("Преобразованная due_iso: '{}'", due_iso);
     log::debug!("Преобразованная due_iso: '{}'", due_iso);
@@ -458,8 +390,8 @@ pub fn compute_all_fields(
 
     if let Some(due_iso) = parsed_state.get("due").and_then(|d| d.as_str()) {
         // Преобразуем ISO дату в формат Obsidian для отображения
-        if let Some(due_obsidian) = iso_to_obsidian(due_iso) {
-            result.due = Some(due_obsidian);
+        if let Some(due_dt) = parse_datetime_flexible(due_iso) {
+            result.due = Some(due_dt.format("%Y-%m-%d_%H:%M").to_string());
         } else {
             result.due = Some(due_iso.to_string());
         }
@@ -546,6 +478,52 @@ pub fn compute_all_fields(
     Ok(result)
 }
 
+/// Вычисляет поля карточки из готового состояния (без вызова compute_current_state)
+pub fn compute_fields_from_state(
+    card: &ModernFsrsCard,
+    state: &ComputedState,
+    now_iso: &str,
+) -> CardWithComputedFields {
+    let mut result = CardWithComputedFields {
+        file: card.file_path.clone(),
+        reps: Some(state.reps as u32),
+        overdue: None,
+        stability: Some(state.stability),
+        difficulty: Some(state.difficulty),
+        retrievability: Some(state.retrievability),
+        due: None,
+        state: Some(state.state.clone()),
+        elapsed: Some(state.elapsed_days as f64),
+        scheduled: Some(state.scheduled_days as f64),
+        additional_fields: HashMap::new(),
+    };
+
+    // Добавляем lapses в дополнительные поля
+    result.additional_fields.insert(
+        "lapses".to_string(),
+        serde_json::Value::Number(state.lapses.into()),
+    );
+
+    // Преобразуем due из ISO в формат Obsidian
+    if let Some(due_dt) = parse_datetime_flexible(&state.due) {
+        result.due = Some(due_dt.format("%Y-%m-%d_%H:%M").to_string());
+    } else {
+        result.due = Some(state.due.clone());
+    }
+
+    // Вычисляем overdue
+    match calculate_overdue_from_due_str(Some(&state.due), now_iso) {
+        Ok(overdue) => result.overdue = Some(overdue),
+        Err(e) => {
+            log::warn!("Ошибка вычисления overdue из состояния: {}", e);
+            result.overdue = None;
+        }
+    }
+
+    result
+}
+
+#[cfg(test)]
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -569,51 +547,6 @@ mod tests {
         assert!(displays[3].contains("Ошибка вычисления"));
         assert!(displays[4].contains("Ошибка парсинга результата WASM"));
         assert!(displays[5].contains("Функция не реализована"));
-    }
-
-    #[test]
-    fn test_obsidian_to_iso() {
-        // Тест преобразования Obsidian формата в ISO
-        let obsidian_date = "2024-01-10_10:30";
-        let iso_date = obsidian_to_iso(obsidian_date);
-        assert!(iso_date.is_some());
-        let iso = iso_date.unwrap();
-        assert!(iso.contains("2024-01-10T10:30:"));
-
-        // Тест с уже ISO датой
-        let iso_input = "2024-01-10T10:30:00Z";
-        let iso_output = obsidian_to_iso(iso_input);
-        assert!(iso_output.is_some());
-        let output = iso_output.unwrap();
-        // Проверяем что дата корректная, формат может быть с Z или +00:00
-        assert!(output.contains("2024-01-10T10:30:00"));
-
-        // Тест с пустой строкой
-        assert!(obsidian_to_iso("").is_none());
-
-        // Тест с некорректным форматом
-        assert!(obsidian_to_iso("invalid date").is_none());
-    }
-
-    #[test]
-    fn test_iso_to_obsidian() {
-        // Тест преобразования ISO в Obsidian формат
-        let iso_date = "2024-01-10T10:30:00Z";
-        let obsidian_date = iso_to_obsidian(iso_date);
-        assert!(obsidian_date.is_some());
-        assert_eq!(obsidian_date.unwrap(), "2024-01-10_10:30");
-
-        // Тест с уже Obsidian датой
-        let obsidian_input = "2024-01-10_10:30";
-        let obsidian_output = iso_to_obsidian(obsidian_input);
-        assert!(obsidian_output.is_some());
-        assert_eq!(obsidian_output.unwrap(), obsidian_input);
-
-        // Тест с пустой строкой
-        assert!(iso_to_obsidian("").is_none());
-
-        // Тест с некорректным форматом
-        assert!(iso_to_obsidian("invalid date").is_none());
     }
 
     #[test]

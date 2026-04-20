@@ -78,7 +78,12 @@ pub fn parse_datetime_flexible(date_str: &str) -> Option<DateTime<Utc>> {
         return Some(DateTime::from_naive_utc_and_offset(naive_dt, Utc));
     }
 
-    // 5. Последняя попытка: стандартный парсер
+    // 5. Пробуем формат Obsidian: "ГГГГ-ММ-ДД_чч:мм"
+    if let Ok(naive_dt) = chrono::NaiveDateTime::parse_from_str(date_str, "%Y-%m-%d_%H:%M") {
+        return Some(DateTime::from_naive_utc_and_offset(naive_dt, Utc));
+    }
+
+    // 6. Последняя попытка: стандартный парсер
     date_str.parse::<DateTime<Utc>>().ok()
 }
 

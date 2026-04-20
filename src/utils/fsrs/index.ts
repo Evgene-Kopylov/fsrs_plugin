@@ -1,11 +1,7 @@
 // Файл-индекс для реэкспорта всех модулей FSRS
 
 // Экспорт парсеров
-export {
-	parseModernFsrsFromFrontmatter,
-	parseYaml,
-	parseYamlValue,
-} from "./fsrs-parser";
+export { parseModernFsrsFromFrontmatter } from "./fsrs-parser";
 
 // Экспорт функций работы с WASM
 export {

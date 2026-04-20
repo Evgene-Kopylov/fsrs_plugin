@@ -1,93 +1,93 @@
 .markdown-rendered .block-language-fsrs-table,
 .cm-preview-code-block.block-language-fsrs-table,
 .cm-embed-block.block-language-fsrs-table {
-	border: none !important;
-	background: transparent !important;
-	padding: 0 !important;
-	margin: 0 !important;
-	box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
 }
 
 .fsrs-table-container {
-	width: 100%;
-	font-family: var(--font-text);
-	overflow-x: auto;
+    width: 100%;
+    font-family: var(--font-text);
+    overflow-x: auto;
 }
 
 .fsrs-table {
-	width: 100% !important;
-	border-collapse: collapse !important;
-	table-layout: auto !important;
-	font-size: 0.85em !important;
-	line-height: 1.4 !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: auto !important;
+    font-size: 0.85em !important;
+    line-height: 1.4 !important;
 }
 
 .fsrs-table th,
 .fsrs-table td {
-	border: 1px solid var(--background-modifier-border) !important;
-	padding: 6px 10px !important;
-	vertical-align: middle !important;
-	box-sizing: border-box;
+    border: 1px solid var(--background-modifier-border) !important;
+    padding: 6px 10px !important;
+    vertical-align: middle !important;
+    box-sizing: border-box;
 }
 
 .fsrs-sortable-header {
-	padding: 0 !important;
+    padding: 0 !important;
 }
 
 .fsrs-sort-header {
-	display: flex;
-	align-items: center;
-	gap: 4px;
-	width: 100%;
-	height: 100%;
-	padding: 6px 10px;
-	font: inherit;
-	font-weight: 600;
-	color: inherit;
-	cursor: pointer;
-	transition: background-color 0.2s ease;
-	text-align: inherit;
-	position: relative;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    height: 100%;
+    padding: 6px 10px;
+    font: inherit;
+    font-weight: 600;
+    color: inherit;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    text-align: inherit;
+    position: relative;
 }
 
 .fsrs-sort-header:hover {
-	background-color: var(--background-modifier-hover);
+    background-color: var(--background-modifier-hover);
 }
 
 /* Выравнивание кнопок сортировки для разных колонок */
 .fsrs-table th.fsrs-col-file .fsrs-sort-header {
-	justify-content: flex-start;
+    justify-content: flex-start;
 }
 
 .fsrs-table th:not(.fsrs-col-file) .fsrs-sort-header {
-	justify-content: center;
+    justify-content: center;
 }
 
 .fsrs-sort-indicator {
-	font-size: 0.8em;
-	opacity: 0.6;
-	position: absolute;
-	right: 2px;
-	top: 50%;
-	transform: translateY(-50%);
+    font-size: 0.8em;
+    opacity: 0.6;
+    position: absolute;
+    right: 2px;
+    top: 50%;
+    transform: translateY(-50%);
 }
 
 .fsrs-table td.fsrs-col-file {
-	text-align: left !important;
-	width: auto !important;
-	white-space: nowrap !important;
-	max-width: 300px;
-	overflow: hidden;
-	text-overflow: ellipsis;
+    text-align: left !important;
+    width: auto !important;
+    white-space: nowrap !important;
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .fsrs-table td.fsrs-col-file a.internal-link {
-	display: inline-block !important;
-	margin: 0 !important;
-	padding: 0 !important;
-	color: var(--text-accent);
-	vertical-align: top;
-	text-decoration: none !important;
+    display: inline-block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: var(--text-accent);
+    vertical-align: top;
+    text-decoration: none !important;
 }
 
 .fsrs-table .fsrs-col-reps,
@@ -102,260 +102,260 @@
 .fsrs-table .fsrs-col-next,
 .fsrs-table .fsrs-col-in,
 .fsrs-table .fsrs-col-interval {
-	width: 1% !important;
-	white-space: nowrap !important;
-	text-align: center !important;
-	padding: 4px 12px !important;
+    width: 1% !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    padding: 4px 12px !important;
 }
 
 .fsrs-table th {
-	background-color: var(--background-secondary);
-	font-weight: 600;
+    background-color: var(--background-secondary);
+    font-weight: 600;
 }
 
 .fsrs-table th:not(.fsrs-col-file) {
-	text-align: center !important;
+    text-align: center !important;
 }
 
 .fsrs-table th.fsrs-col-file {
-	text-align: left !important;
+    text-align: left !important;
 }
 
 .fsrs-table tr:hover {
-	background-color: var(--background-modifier-hover);
+    background-color: var(--background-modifier-hover);
 }
 
 .fsrs-buttons-container {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-	margin: 1em 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 1em 0;
 }
 
 .fsrs-review-button {
-	padding: 6px 16px;
-	background: var(--interactive-accent);
-	color: var(--text-on-accent);
-	border: none;
-	border-radius: 4px;
-	cursor: pointer;
-	font-size: 13px;
-	font-weight: 500;
-	min-width: 140px;
-	transition: background 0.2s ease;
+    padding: 6px 16px;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 140px;
+    transition: background 0.2s ease;
 }
 
 .fsrs-review-button:hover {
-	background: var(--interactive-accent-hover);
+    background: var(--interactive-accent-hover);
 }
 
 .fsrs-table-header {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
 }
 
 .fsrs-header-text {
-	font-size: 0.9em;
-	font-weight: 600;
-	color: var(--text-muted);
+    font-size: 0.9em;
+    font-weight: 600;
+    color: var(--text-muted);
 }
 
 .fsrs-help-toggle {
-	/* Отодвигаем от края на 2.5 ширины буквы 'M' текущего шрифта */
-	margin-right: 2.5em;
+    /* Отодвигаем от края на 2.5 ширины буквы 'M' текущего шрифта */
+    margin-right: 2.5em;
 
-	/* Делаем максимально бледным */
-	color: var(--text-faint) !important;
-	opacity: 0.5;
+    /* Делаем максимально бледным */
+    color: var(--text-faint) !important;
+    opacity: 0.5;
 
-	/* Уменьшаем размер относительно родительского текста */
-	font-size: 0.75em;
-	transition: opacity 0.3s ease;
+    /* Уменьшаем размер относительно родительского текста */
+    font-size: 0.75em;
+    transition: opacity 0.3s ease;
 }
 
 .fsrs-help-toggle:hover {
-	opacity: 0.7;
-	color: var(--text-muted) !important;
+    opacity: 0.7;
+    color: var(--text-muted) !important;
 }
 
 /* Стили для модального окна справки */
 .fsrs-help-title {
-	font-size: 1.5em;
-	font-weight: 600;
-	margin-bottom: 0.5em;
-	color: var(--text-normal);
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-bottom: 0.5em;
+    color: var(--text-normal);
 }
 
 .fsrs-help-info {
-	font-size: 0.9em;
-	color: var(--text-muted);
-	margin-bottom: 1.5em;
+    font-size: 0.9em;
+    color: var(--text-muted);
+    margin-bottom: 1.5em;
 }
 
 .fsrs-help-content-container {
-	font-size: 1.3em;
-	line-height: 1.7;
-	overflow-y: auto;
-	max-height: 60vh;
-	padding-right: 10px;
-	word-wrap: break-word;
+    font-size: 1.3em;
+    line-height: 1.7;
+    overflow-y: auto;
+    max-height: 60vh;
+    padding-right: 10px;
+    word-wrap: break-word;
 }
 
 .fsrs-help-content-container p {
-	margin-bottom: 1em;
+    margin-bottom: 1em;
 }
 
 .fsrs-help-content-container code {
-	font-size: 1.1em;
-	background-color: var(--background-secondary);
-	padding: 6px 10px;
-	border-radius: 4px;
+    font-size: 1.1em;
+    background-color: var(--background-secondary);
+    padding: 6px 10px;
+    border-radius: 4px;
 }
 
 .fsrs-help-content-container pre {
-	background-color: var(--background-secondary);
-	padding: 20px;
-	border-radius: 6px;
-	overflow-x: auto;
-	font-size: 1.1em;
-	line-height: 1.7;
+    background-color: var(--background-secondary);
+    padding: 20px;
+    border-radius: 6px;
+    overflow-x: auto;
+    font-size: 1.1em;
+    line-height: 1.7;
 }
 
 .fsrs-help-content-container h1,
 .fsrs-help-content-container h2,
 .fsrs-help-content-container h3 {
-	margin-top: 1.5em;
-	margin-bottom: 0.5em;
-	font-weight: 600;
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
 }
 
 .fsrs-help-content-container h1 {
-	font-size: 1.6em;
+    font-size: 1.6em;
 }
 
 .fsrs-help-content-container h2 {
-	font-size: 1.4em;
+    font-size: 1.4em;
 }
 
 .fsrs-help-content-container h3 {
-	font-size: 1.3em;
+    font-size: 1.3em;
 }
 
 .fsrs-help-content-container ul,
 .fsrs-help-content-container ol {
-	margin-left: 1.5em;
-	margin-bottom: 1em;
+    margin-left: 1.5em;
+    margin-bottom: 1em;
 }
 
 .fsrs-help-content-container li {
-	margin-bottom: 0.5em;
+    margin-bottom: 0.5em;
 }
 
 /* Стили для кнопки истории повторений */
 .fsrs-history-button {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 32px;
-	height: 32px;
-	background: var(--background-secondary);
-	color: var(--text-muted);
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 4px;
-	cursor: pointer;
-	font-size: 14px;
-	transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--background-secondary);
+    color: var(--text-muted);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s ease;
 }
 
 .fsrs-history-button:hover {
-	background: var(--background-modifier-hover);
-	color: var(--text-normal);
-	border-color: var(--interactive-accent);
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+    border-color: var(--interactive-accent);
 }
 
 /* Стили для модального окна истории повторений */
 .fsrs-history-title {
-	font-size: 1.5em;
-	font-weight: 600;
-	margin-bottom: 0.5em;
-	color: var(--text-normal);
+    font-size: 1.5em;
+    font-weight: 600;
+    margin-bottom: 0.5em;
+    color: var(--text-normal);
 }
 
 .fsrs-history-file-info {
-	font-size: 0.9em;
-	color: var(--text-muted);
-	margin-bottom: 1.5em;
-	border-bottom: 1px solid var(--background-modifier-border);
-	padding-bottom: 1em;
+    font-size: 0.9em;
+    color: var(--text-muted);
+    margin-bottom: 1.5em;
+    border-bottom: 1px solid var(--background-modifier-border);
+    padding-bottom: 1em;
 }
 
 .fsrs-history-empty {
-	text-align: center;
-	color: var(--text-muted);
-	font-style: italic;
-	padding: 2em 0;
+    text-align: center;
+    color: var(--text-muted);
+    font-style: italic;
+    padding: 2em 0;
 }
 
 .fsrs-history-table-container {
-	max-height: 300px;
-	overflow-y: auto;
-	border: 1px solid var(--background-modifier-border);
-	border-radius: 6px;
-	margin-bottom: 1.5em;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    margin-bottom: 1.5em;
 }
 
 .fsrs-history-table {
-	width: 100%;
-	border-collapse: collapse;
-	font-size: 0.9em;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
 }
 
 .fsrs-history-table th {
-	background-color: var(--background-secondary);
-	font-weight: 600;
-	padding: 8px 12px;
-	text-align: left;
-	border-bottom: 2px solid var(--background-modifier-border);
-	position: sticky;
-	top: 0;
-	z-index: 1;
+    background-color: var(--background-secondary);
+    font-weight: 600;
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 2px solid var(--background-modifier-border);
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }
 
 .fsrs-history-table td {
-	padding: 8px 12px;
-	border-bottom: 1px solid var(--background-modifier-border);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--background-modifier-border);
 }
 
 .fsrs-history-table tr:last-child td {
-	border-bottom: none;
+    border-bottom: none;
 }
 
 .fsrs-history-table tr:nth-child(even) {
-	background-color: var(--background-secondary);
+    background-color: var(--background-secondary);
 }
 
 .fsrs-history-table tr:hover {
-	background-color: var(--background-modifier-hover);
+    background-color: var(--background-modifier-hover);
 }
 
 /* Выравнивание для разных колонок */
 .fsrs-history-table th:nth-child(1),
 .fsrs-history-table td:nth-child(1) {
-	width: 40px;
-	text-align: center;
+    width: 40px;
+    text-align: center;
 }
 
 .fsrs-history-table th:nth-child(2),
 .fsrs-history-table td:nth-child(2) {
-	min-width: 160px;
+    min-width: 160px;
 }
 
 .fsrs-history-table th:nth-child(3),
 .fsrs-history-table td:nth-child(3) {
-	min-width: 100px;
+    min-width: 100px;
 }
 
 .fsrs-history-table th:nth-child(4),
@@ -364,34 +364,46 @@
 .fsrs-history-table td:nth-child(4),
 .fsrs-history-table td:nth-child(5),
 .fsrs-history-table td:nth-child(6) {
-	width: 100px;
-	text-align: center;
+    width: 100px;
+    text-align: center;
 }
 
 .fsrs-history-statistics {
-	margin-top: 1.5em;
-	padding-top: 1.5em;
-	border-top: 1px solid var(--background-modifier-border);
+    margin-top: 1.5em;
+    padding-top: 1.5em;
+    border-top: 1px solid var(--background-modifier-border);
 }
 
 .fsrs-history-statistics h3 {
-	font-size: 1.2em;
-	font-weight: 600;
-	margin-bottom: 0.8em;
-	color: var(--text-normal);
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 0.8em;
+    color: var(--text-normal);
 }
 
 .fsrs-history-stats-list {
-	list-style: none;
-	padding: 0;
-	margin: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .fsrs-history-stats-list li {
-	padding: 6px 0;
-	border-bottom: 1px solid var(--background-modifier-border);
+    padding: 6px 0;
+    border-bottom: 1px solid var(--background-modifier-border);
 }
 
 .fsrs-history-stats-list li:last-child {
-	border-bottom: none;
+    border-bottom: none;
+}
+
+/* Стили для статус-бара FSRS */
+.fsrs-status-bar-item {
+    padding: 0 6px;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.fsrs-status-bar-item:hover {
+    background-color: var(--background-modifier-hover);
 }

@@ -303,22 +303,3 @@ export function parseColumnsDefinition(columnsText: string): TableColumn[] {
 		);
 	}
 }
-
-/**
- * Проверяет, является ли поле валидным для использования в таблице
- * Использует WASM реализацию для проверки
- * @param field Идентификатор поля для проверки
- * @returns true если поле валидное, false если нет
- */
-export function isValidTableField(field: string): boolean {
-	try {
-		// Используем WASM функцию для проверки валидности поля
-		return wasm.is_valid_table_field(field);
-	} catch (error) {
-		console.warn(
-			`Ошибка проверки валидности поля "${field}": ${String(error)}. Используется локальная проверка.`,
-		);
-		// Fallback на локальную проверку
-		return AVAILABLE_FIELDS.has(field);
-	}
-}

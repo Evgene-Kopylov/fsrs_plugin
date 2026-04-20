@@ -1,0 +1,39 @@
+# Команда запуска
+# $ npx repogrok
+
+# Лицензии и документация
+LICENSE
+LICENSE.*
+AGENTS.md
+SKILLS.md
+CLAUDE.md
+README.md
+docs/
+
+# Сторонние инструменты и временные файлы
+caveman-compress/
+tmp/plan/
+*.original.md
+
+# Артефакты сборки и зависимости
+package-lock.json
+node_modules/
+main.js
+main.js.map
+*.js.map
+*.ts.map
+wasm-lib/pkg/
+wasm-lib/target/
+
+# Тесты и вспомогательные скрипты (оставляем только encode-wasm.js)
+tests/
+test_script/
+scripts/test-build.js
+
+# Файлы окружения и IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
