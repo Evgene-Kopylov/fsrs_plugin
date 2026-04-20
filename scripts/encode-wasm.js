@@ -2,12 +2,12 @@ import fs from "fs";
 import path from "path";
 
 const wasmFilePath = path.resolve(
-	process.cwd(),
-	"wasm-lib/pkg/wasm_lib_bg.wasm",
+    process.cwd(),
+    "wasm-lib/pkg/wasm_lib_bg.wasm",
 );
 const outputFilePath = path.resolve(
-	process.cwd(),
-	"wasm-lib/pkg/wasm_lib_base64.ts",
+    process.cwd(),
+    "wasm-lib/pkg/wasm_lib_base64.ts",
 );
 
 /**
@@ -17,11 +17,11 @@ const outputFilePath = path.resolve(
  * @returns {string[]} Массив чанков
  */
 function chunkString(str, chunkSize = 4096) {
-	const chunks = [];
-	for (let i = 0; i < str.length; i += chunkSize) {
-		chunks.push(str.slice(i, i + chunkSize));
-	}
-	return chunks;
+    const chunks = [];
+    for (let i = 0; i < str.length; i += chunkSize) {
+        chunks.push(str.slice(i, i + chunkSize));
+    }
+    return chunks;
 }
 
 /**
@@ -30,61 +30,61 @@ function chunkString(str, chunkSize = 4096) {
  * @returns {string} TypeScript код
  */
 function generateTsContent(base64String) {
-	const chunks = chunkString(base64String, 4096);
+    const chunks = chunkString(base64String, 4096);
 
-	if (chunks.length === 1) {
-		// Если строка короткая, используем шаблонный литерал
-		return `export const WASM_BASE64 = "${base64String}";`;
-	}
+    if (chunks.length === 1) {
+        // Если строка короткая, используем шаблонный литерал
+        return `export const WASM_BASE64 = "${base64String}";`;
+    }
 
-	// Для длинных строк используем конкатенацию чанков с шаблонными литералами
-	let tsContent = "export const WASM_BASE64 = ";
+    // Для длинных строк используем конкатенацию чанков с шаблонными литералами
+    let tsContent = "export const WASM_BASE64 = ";
 
-	for (let i = 0; i < chunks.length; i++) {
-		const chunk = chunks[i];
-		if (i === 0) {
-			tsContent += `"${chunk}"`;
-		} else {
-			tsContent += `\n  + "${chunk}"`;
-		}
-	}
+    for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        if (i === 0) {
+            tsContent += `"${chunk}"`;
+        } else {
+            tsContent += `\n  + "${chunk}"`;
+        }
+    }
 
-	tsContent += ";\n";
-	return tsContent;
+    tsContent += ";\n";
+    return tsContent;
 }
 
 try {
-	// Проверяем существование входного файла
-	if (!fs.existsSync(wasmFilePath)) {
-		console.error(`WASM файл не найден: ${wasmFilePath}`);
-		console.error("Сначала выполните сборку WASM: npm run build-wasm");
-		process.exit(1);
-	}
+    // Проверяем существование входного файла
+    if (!fs.existsSync(wasmFilePath)) {
+        console.error(`WASM файл не найден: ${wasmFilePath}`);
+        console.error("Сначала выполните сборку WASM: npm run build-wasm");
+        process.exit(1);
+    }
 
-	// Читаем WASM файл как бинарные данные
-	console.log(`Чтение WASM файла: ${wasmFilePath}`);
-	const wasmBuffer = fs.readFileSync(wasmFilePath);
+    // Читаем WASM файл как бинарные данные
+    console.log(`Чтение WASM файла: ${wasmFilePath}`);
+    const wasmBuffer = fs.readFileSync(wasmFilePath);
 
-	// Кодируем в base64
-	const base64String = wasmBuffer.toString("base64");
+    // Кодируем в base64
+    const base64String = wasmBuffer.toString("base64");
 
-	// Генерируем содержимое TypeScript файла
-	const tsContent = generateTsContent(base64String);
+    // Генерируем содержимое TypeScript файла
+    const tsContent = generateTsContent(base64String);
 
-	// Убеждаемся, что директория существует
-	const outputDir = path.dirname(outputFilePath);
-	if (!fs.existsSync(outputDir)) {
-		fs.mkdirSync(outputDir, { recursive: true });
-	}
+    // Убеждаемся, что директория существует
+    const outputDir = path.dirname(outputFilePath);
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+    }
 
-	// Записываем файл
-	fs.writeFileSync(outputFilePath, tsContent);
+    // Записываем файл
+    fs.writeFileSync(outputFilePath, tsContent);
 
-	console.log(`Файл создан: ${outputFilePath}`);
-	console.log(`Размер WASM: ${wasmBuffer.length} байт`);
-	console.log(`Размер base64: ${base64String.length} символов`);
-	console.log(`Чанков: ${Math.ceil(base64String.length / 4096)}`);
+    console.log(`Файл создан: ${outputFilePath}`);
+    console.log(`Размер WASM: ${wasmBuffer.length} байт`);
+    console.log(`Размер base64: ${base64String.length} символов`);
+    console.log(`Чанков: ${Math.ceil(base64String.length / 4096)}`);
 } catch (error) {
-	console.error("Ошибка при кодировании WASM:", error.message);
-	process.exit(1);
+    console.error("Ошибка при кодировании WASM:", error.message);
+    process.exit(1);
 }
