@@ -11,6 +11,7 @@ import {
 
 import { ReviewButtonRenderer } from "./ui/review-button-renderer";
 import { FsrsTableRenderer } from "./ui/fsrs-table-renderer";
+import { StatusBarManager } from "./ui/status-bar-manager";
 
 import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings";
 import { FsrsSettingTab } from "./settings";
@@ -42,6 +43,7 @@ export default class FsrsPlugin extends Plugin {
 	private lastScanTime = 0;
 
 	private isScanning = false;
+	private statusBarManager: StatusBarManager | null = null;
 
 	/**
 	 * Загрузка плагина
@@ -57,6 +59,14 @@ export default class FsrsPlugin extends Plugin {
 
 		// Регистрация команд плагина
 		registerCommands(this);
+
+		// Создание менеджера статус-бара
+		this.statusBarManager = new StatusBarManager(
+			this,
+			this.app,
+			this.settings,
+		);
+		this.statusBarManager.init();
 
 		// Регистрация процессора для кнопки повторения карточки
 		this.registerMarkdownCodeBlockProcessor(
@@ -286,6 +296,10 @@ export default class FsrsPlugin extends Plugin {
 		console.debug("Выгрузка FSRS плагина");
 		this.isWasmInitialized = false;
 		this.fsrsTableRenderers.clear();
+		if (this.statusBarManager) {
+			this.statusBarManager.unload();
+			this.statusBarManager = null;
+		}
 	}
 
 	/**

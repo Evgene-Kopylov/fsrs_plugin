@@ -395,3 +395,15 @@
 .fsrs-history-stats-list li:last-child {
 	border-bottom: none;
 }
+
+/* Стили для статус-бара FSRS */
+.fsrs-status-bar-item {
+	padding: 0 6px;
+	cursor: pointer;
+	border-radius: 4px;
+	transition: background-color 0.2s ease;
+}
+
+.fsrs-status-bar-item:hover {
+	background-color: var(--background-modifier-hover);
+}
