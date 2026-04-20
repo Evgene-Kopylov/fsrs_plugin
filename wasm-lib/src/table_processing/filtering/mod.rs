@@ -11,6 +11,7 @@ pub use calculator::CardWithComputedFields;
 pub use sorter::FilterError;
 
 use crate::table_processing::types::{SortDirection, TableParams};
+use crate::types::{ComputedState, ModernFsrsCard};
 use serde::{Deserialize, Serialize};
 
 use log::{debug, info, warn};
@@ -198,6 +199,153 @@ pub fn filter_and_sort_cards(
     })
 }
 
+/// Функция фильтрации и сортировки карточек с готовыми состояниями
+/// Принимает JSON массив объектов `{card_json, state_json}` вместо простых карточек
+pub fn filter_and_sort_cards_with_states(
+    cards_with_states_json: &str,
+    params: &TableParams,
+    _settings_json: &str,
+    now_iso: &str,
+) -> Result<FilterSortResult, FilterError> {
+    debug!(
+        "Начало фильтрации и сортировки карточек с готовыми состояниями: {} байт JSON",
+        cards_with_states_json.len()
+    );
+
+    // Парсим массив пар (карточка, состояние)
+    let pairs_array: Vec<serde_json::Value> = serde_json::from_str(cards_with_states_json)
+        .map_err(|e| FilterError::JsonParseError(e.to_string()))?;
+
+    let mut computed_cards = Vec::new();
+    let errors = Vec::new();
+
+    // Обрабатываем каждую пару
+    for (index, pair_value) in pairs_array.iter().enumerate() {
+        // Извлекаем карточку и состояние из JSON объекта
+        let card_json_value = pair_value.get("card_json").ok_or_else(|| {
+            FilterError::JsonParseError(format!("Отсутствует card_json в паре {}", index))
+        })?;
+        let state_json_value = pair_value.get("state_json").ok_or_else(|| {
+            FilterError::JsonParseError(format!("Отсутствует state_json в паре {}", index))
+        })?;
+
+        // Десериализуем карточку (поддерживаем как строку JSON, так и объект)
+        let card: ModernFsrsCard = if card_json_value.is_string() {
+            serde_json::from_str(card_json_value.as_str().unwrap()).map_err(|e| {
+                FilterError::JsonParseError(format!(
+                    "Ошибка парсинга карточки из строки {}: {}",
+                    index, e
+                ))
+            })?
+        } else {
+            serde_json::from_value(card_json_value.clone()).map_err(|e| {
+                FilterError::JsonParseError(format!("Ошибка парсинга карточки {}: {}", index, e))
+            })?
+        };
+
+        // Десериализуем состояние (поддерживаем как строку JSON, так и объект)
+        let state: ComputedState = if state_json_value.is_string() {
+            serde_json::from_str(state_json_value.as_str().unwrap()).map_err(|e| {
+                FilterError::JsonParseError(format!(
+                    "Ошибка парсинга состояния из строки {}: {}",
+                    index, e
+                ))
+            })?
+        } else {
+            serde_json::from_value(state_json_value.clone()).map_err(|e| {
+                FilterError::JsonParseError(format!("Ошибка парсинга состояния {}: {}", index, e))
+            })?
+        };
+
+        // Вычисляем поля из готового состояния
+        let computed_fields = calculator::compute_fields_from_state(&card, &state, now_iso);
+
+        // Сохраняем исходный JSON карточки как строку
+        let card_json_str = if card_json_value.is_string() {
+            card_json_value.as_str().unwrap().to_string()
+        } else {
+            serde_json::to_string(card_json_value).map_err(|e| {
+                FilterError::JsonParseError(format!(
+                    "Ошибка сериализации карточки {}: {}",
+                    index, e
+                ))
+            })?
+        };
+
+        computed_cards.push(ComputedCard {
+            card_json: card_json_str,
+            computed_fields,
+        });
+    }
+
+    debug!(
+        "Вычислены поля для {} карточек с готовыми состояниями",
+        computed_cards.len()
+    );
+
+    // Применяем фильтрацию WHERE если указана
+    if let Some(condition) = &params.where_condition {
+        info!("Применение фильтрации WHERE для карточек с готовыми состояниями");
+        computed_cards.retain(|card| {
+            match crate::table_processing::filtering::evaluator::evaluate_condition(
+                condition,
+                &card.computed_fields,
+            ) {
+                Ok(result) => result,
+                Err(e) => {
+                    warn!(
+                        "Ошибка оценки условия WHERE для карточки с готовым состоянием: {}",
+                        e
+                    );
+                    false // Исключаем карточку при ошибке
+                }
+            }
+        });
+        info!(
+            "После фильтрации WHERE осталось {} карточек",
+            computed_cards.len()
+        );
+    }
+
+    // Применяем сортировку если указана
+    if let Some(sort) = &params.sort {
+        debug!(
+            "Применение сортировки по полю '{}' для карточек с готовыми состояниями",
+            sort.field
+        );
+        computed_cards.sort_by(|a, b| {
+            compare_computed_fields(
+                &a.computed_fields,
+                &b.computed_fields,
+                &sort.field,
+                sort.direction,
+            )
+        });
+    }
+
+    let total_count = computed_cards.len();
+
+    // Применяем лимит если указан
+    let limited_cards = if params.limit > 0 && params.limit < computed_cards.len() {
+        computed_cards[0..params.limit].to_vec()
+    } else {
+        computed_cards
+    };
+
+    debug!(
+        "Фильтрация и сортировка карточек с готовыми состояниями завершена: {} карточек (лимит {}), всего {}",
+        limited_cards.len(),
+        params.limit,
+        total_count
+    );
+
+    Ok(FilterSortResult {
+        cards: limited_cards,
+        total_count,
+        errors,
+    })
+}
+
 /// Сравнивает два набора вычисленных полей по указанному полю и направлению
 fn compare_computed_fields(
     a: &CardWithComputedFields,
@@ -277,6 +425,35 @@ pub fn filter_and_sort_cards_json(
 ) -> String {
     match serde_json::from_str(params_json) {
         Ok(params) => match filter_and_sort_cards(cards_json, &params, settings_json, now_iso) {
+            Ok(result) => serde_json::to_string(&result).unwrap_or_else(|_| "{}".to_string()),
+            Err(err) => serde_json::to_string(&serde_json::json!({
+                "error": err.to_string(),
+                "cards": []
+            }))
+            .unwrap_or_else(|_| "{}".to_string()),
+        },
+        Err(err) => serde_json::to_string(&serde_json::json!({
+            "error": format!("Ошибка парсинга параметров: {}", err),
+            "cards": []
+        }))
+        .unwrap_or_else(|_| "{}".to_string()),
+    }
+}
+
+/// Вспомогательная функция для преобразования результата в JSON для карточек с готовыми состояниями
+pub fn filter_and_sort_cards_with_states_json(
+    cards_with_states_json: &str,
+    params_json: &str,
+    settings_json: &str,
+    now_iso: &str,
+) -> String {
+    match serde_json::from_str(params_json) {
+        Ok(params) => match filter_and_sort_cards_with_states(
+            cards_with_states_json,
+            &params,
+            settings_json,
+            now_iso,
+        ) {
             Ok(result) => serde_json::to_string(&result).unwrap_or_else(|_| "{}".to_string()),
             Err(err) => serde_json::to_string(&serde_json::json!({
                 "error": err.to_string(),

@@ -1,4 +1,4 @@
-import { Plugin, Notice } from "obsidian";
+import { Plugin, Notice, TAbstractFile } from "obsidian";
 import { registerCommands } from "./commands/index";
 import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from "./commands/add-fsrs-fields";
 import { findFsrsCards } from "./commands/find-fsrs-cards";
@@ -15,15 +15,16 @@ import { StatusBarManager } from "./ui/status-bar-manager";
 
 import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings";
 import { FsrsSettingTab } from "./settings";
-import { CARD_CACHE_TTL_MS } from "./constants";
+
 import { base64ToBytes } from "./utils/fsrs-helper";
 import {
 	parseModernFsrsFromFrontmatter,
 	shouldProcessFile,
 	extractFrontmatter,
+	computeCardState,
 } from "./utils/fsrs-helper";
 import { shouldIgnoreFileWithSettings } from "./utils/fsrs/fsrs-filter";
-import type { ModernFSRSCard, FSRSRating } from "./interfaces/fsrs";
+import type { ModernFSRSCard, FSRSRating, CachedCard } from "./interfaces/fsrs";
 
 // Импорт WASM функций
 import init from "../wasm-lib/pkg/wasm_lib";
@@ -38,12 +39,10 @@ export default class FsrsPlugin extends Plugin {
 	private isWasmInitialized = false;
 
 	private fsrsTableRenderers = new Set<FsrsTableRenderer>();
-	// Кэш с TTL
-	private cachedCards: ModernFSRSCard[] | null = null;
-	private lastScanTime = 0;
-
-	private isScanning = false;
+	// Кэш с состояниями
+	private cachedCardsWithState: CachedCard[] | null = null;
 	private statusBarManager: StatusBarManager | null = null;
+	private fileModifyHandler?: (file: TAbstractFile) => void;
 
 	/**
 	 * Загрузка плагина
@@ -114,6 +113,10 @@ export default class FsrsPlugin extends Plugin {
 			},
 		);
 
+		// Регистрация обработчика изменений файлов для инвалидации кэша
+		this.fileModifyHandler = () => this.invalidateCache();
+		this.app.vault.on("modify", this.fileModifyHandler);
+
 		console.debug("FSRS плагин успешно загружен");
 	}
 
@@ -138,40 +141,29 @@ export default class FsrsPlugin extends Plugin {
 	}
 
 	/**
-	 * Получает карточки с кэшированием по TTL.
-	 * Никакой ручной инвалидации — кэш устаревает сам через 5 секунд.
+	 * Получает карточки с кэшированными состояниями.
+	 * Кэш инвалидируется при изменении файлов или настроек.
 	 */
-	async getCardsForReview(): Promise<ModernFSRSCard[]> {
-		const now = Date.now();
-		const cacheValid =
-			this.cachedCards !== null &&
-			now - this.lastScanTime < CARD_CACHE_TTL_MS;
-
-		if (cacheValid) {
-			// Возвращаем ссылку на кэш (без копирования)
-			return this.cachedCards!;
+	async getCachedCardsWithState(): Promise<CachedCard[]> {
+		if (!this.cachedCardsWithState) {
+			this.cachedCardsWithState = await this.performFullScan();
 		}
-
-		if (this.isScanning) {
-			await this.waitForScanCompletion();
-			return this.cachedCards ?? [];
-		}
-
-		this.isScanning = true;
-		try {
-			const cards = await this.performFullScan();
-			this.cachedCards = cards;
-			this.lastScanTime = Date.now();
-			return cards;
-		} finally {
-			this.isScanning = false;
-		}
+		return this.cachedCardsWithState;
 	}
 
-	private async performFullScan(): Promise<ModernFSRSCard[]> {
+	/**
+	 * Получает карточки для обратной совместимости (только карточки без состояний).
+	 * @deprecated Используйте getCachedCardsWithState()
+	 */
+	async getCardsForReview(): Promise<ModernFSRSCard[]> {
+		const cached = await this.getCachedCardsWithState();
+		return cached.map((c) => c.card);
+	}
+
+	private async performFullScan(): Promise<CachedCard[]> {
 		const start = performance.now();
 		const files = this.app.vault.getMarkdownFiles();
-		const cards: ModernFSRSCard[] = [];
+		const cards: CachedCard[] = [];
 
 		for (const file of files) {
 			if (shouldIgnoreFileWithSettings(file.path, this.settings))
@@ -185,8 +177,13 @@ export default class FsrsPlugin extends Plugin {
 					frontmatter,
 					file.path,
 				);
-				if (parseResult.success && parseResult.card)
-					cards.push(parseResult.card);
+				if (parseResult.success && parseResult.card) {
+					const state = await computeCardState(
+						parseResult.card,
+						this.settings,
+					);
+					cards.push({ card: parseResult.card, state });
+				}
 			} catch (error) {
 				console.warn(`Ошибка при чтении файла ${file.path}:`, error);
 			}
@@ -200,15 +197,12 @@ export default class FsrsPlugin extends Plugin {
 		return cards;
 	}
 
-	private async waitForScanCompletion(): Promise<void> {
-		const start = Date.now();
-		while (this.isScanning && Date.now() - start < 30000) {
-			await new Promise((r) => setTimeout(r, 50));
-		}
-		if (this.isScanning) {
-			console.warn("⚠️ Таймаут ожидания сканирования");
-			this.isScanning = false;
-		}
+	/**
+	 * Инвалидирует кэш карточек.
+	 * Вызывается при изменении файлов или настроек.
+	 */
+	private invalidateCache(): void {
+		this.cachedCardsWithState = null;
 	}
 
 	// Метод shouldIgnoreFile был вынесен в модуль fsrs-filter.ts
@@ -280,6 +274,8 @@ export default class FsrsPlugin extends Plugin {
 	 */
 	async saveSettings() {
 		await this.saveData(this.settings);
+		// Инвалидируем кэш при изменении настроек
+		this.invalidateCache();
 	}
 
 	/**
@@ -296,6 +292,10 @@ export default class FsrsPlugin extends Plugin {
 		console.debug("Выгрузка FSRS плагина");
 		this.isWasmInitialized = false;
 		this.fsrsTableRenderers.clear();
+		if (this.fileModifyHandler) {
+			this.app.vault.off("modify", this.fileModifyHandler);
+			this.fileModifyHandler = undefined;
+		}
 		if (this.statusBarManager) {
 			this.statusBarManager.unload();
 			this.statusBarManager = null;

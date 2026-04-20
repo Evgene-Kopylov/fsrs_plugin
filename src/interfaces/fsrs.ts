@@ -34,6 +34,12 @@ export interface ComputedCardState {
 	retrievability: number; // извлекаемость (0.0-1.0)
 }
 
+// Карточка с кэшированным состоянием
+export interface CachedCard {
+	card: ModernFSRSCard;
+	state: ComputedCardState;
+}
+
 // Полная карточка для внутреннего использования
 export interface FSRSCard {
 	// Хранимые данные

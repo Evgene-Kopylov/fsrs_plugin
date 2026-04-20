@@ -39,6 +39,3 @@ export const DEFAULT_IGNORE_PATTERNS = [
 	"*.canvas",
 	"*.excalidraw.md",
 ];
-
-// Время жизни кэша карточек в миллисекундах
-export const CARD_CACHE_TTL_MS = 5000;

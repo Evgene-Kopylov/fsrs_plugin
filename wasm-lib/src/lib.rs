@@ -356,6 +356,22 @@ pub fn filter_and_sort_cards_with_sql(
     }
 }
 
+// Фильтрация и сортировка карточек с готовыми состояниями
+#[wasm_bindgen]
+pub fn filter_and_sort_cards_with_states(
+    cards_with_states_json: &str,
+    params_json: &str,
+    settings_json: &str,
+    now_iso: &str,
+) -> String {
+    crate::table_processing::filtering::filter_and_sort_cards_with_states_json(
+        cards_with_states_json,
+        params_json,
+        settings_json,
+        now_iso,
+    )
+}
+
 // Проверка валидности поля таблицы
 #[wasm_bindgen]
 pub fn is_valid_table_field(field: &str) -> bool {

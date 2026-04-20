@@ -6,6 +6,7 @@
 import type {
 	ModernFSRSCard,
 	ComputedCardState,
+	CachedCard,
 	FSRSSettings,
 	FSRSState,
 } from "../interfaces/fsrs";
@@ -306,6 +307,151 @@ export async function filterAndSortCards(
 
 		// В случае ошибки WASM, возвращаем пустой массив
 		// В будущих версиях можно добавить fallback на старую реализацию
+		return [];
+	}
+}
+
+/**
+ * Фильтрует и сортирует карточки с готовыми состояниями в соответствии с параметрами
+ * Использует WASM реализацию на Rust для максимальной производительности
+ * @param cachedCards Массив карточек с кэшированными состояниями
+ * @param settings Настройки плагина
+ * @param params Параметры таблицы (сортировка и лимит)
+ * @param now Текущее время
+ * @returns Отфильтрованный и отсортированный массив карточек с состояниями
+ */
+export async function filterAndSortCardsWithStates(
+	cachedCards: CachedCard[],
+	settings: FSRSSettings,
+	params: TableParams,
+	now: Date = new Date(),
+): Promise<CardWithState[]> {
+	if (!cachedCards || cachedCards.length === 0) {
+		return [];
+	}
+
+	// Отладочный вывод параметров
+	console.debug("filterAndSortCardsWithStates parameters:", {
+		cachedCardCount: cachedCards.length,
+		params: JSON.parse(JSON.stringify(params)) as unknown,
+		hasSort: !!params.sort,
+		limit: params.limit,
+		now: now.toISOString(),
+	});
+
+	try {
+		// Преобразуем параметры сортировки для WASM
+		const wasmParams = {
+			columns: params.columns,
+			limit: params.limit,
+			sort: params.sort
+				? {
+						field: params.sort.field,
+						direction: params.sort.direction,
+					}
+				: undefined,
+			where_condition: params.where,
+		};
+
+		// Отладочный вывод параметров для WASM
+		console.debug(
+			"WASM parameters for filter_and_sort_cards_with_states:",
+			{
+				wasmParams: JSON.parse(JSON.stringify(wasmParams)) as unknown,
+				whereCondition: wasmParams.where_condition,
+			},
+		);
+
+		// Формируем массив объектов {card_json, state_json} для WASM
+		const cardsWithStatesInput = cachedCards.map(({ card, state }) => ({
+			card_json: JSON.stringify(card),
+			state_json: JSON.stringify(state),
+		}));
+
+		// Вызываем WASM функцию для фильтрации и сортировки с готовыми состояниями
+		const resultJson = wasm.filter_and_sort_cards_with_states(
+			JSON.stringify(cardsWithStatesInput),
+			JSON.stringify(wasmParams),
+			JSON.stringify(settings),
+			now.toISOString(),
+		);
+
+		console.debug(
+			"WASM filter_and_sort_cards_with_states result JSON length:",
+			resultJson.length,
+		);
+
+		// Парсим результат с явным приведением типов
+		const wasmResult: WasmFilterResult = JSON.parse(
+			resultJson,
+		) as unknown as WasmFilterResult;
+
+		console.debug("WASM filter result with states:", {
+			totalCards: wasmResult.cards?.length || 0,
+			totalCount: wasmResult.total_count,
+			errorCount: wasmResult.errors?.length || 0,
+		});
+
+		// Обрабатываем ошибки, если есть
+		if (wasmResult.errors && wasmResult.errors.length > 0) {
+			console.warn(
+				`При фильтрации и сортировке карточек с состояниями возникли ошибки:`,
+				wasmResult.errors,
+			);
+		}
+
+		// Преобразуем результат WASM в формат TypeScript
+		const cardsWithState: CardWithState[] = [];
+
+		for (const wasmCard of wasmResult.cards) {
+			try {
+				// Парсим карточку из JSON с явным приведением типов
+				const card: ModernFSRSCard = JSON.parse(
+					wasmCard.card_json,
+				) as unknown as ModernFSRSCard;
+
+				// Отладочная информация о карточке
+				console.debug("Processing card with precomputed state:", {
+					file: card.filePath,
+					reviewsCount: card.reviews?.length || 0,
+					computedFields: wasmCard.computed_fields,
+				});
+
+				// Преобразуем вычисленные поля в состояние
+				const state = convertWasmFieldsToComputedState(
+					wasmCard.computed_fields,
+				);
+
+				// Определяем, является ли карточка просроченной
+				const isDue = isCardDue(
+					state.state,
+					wasmCard.computed_fields.state,
+					state.due,
+					now,
+				);
+
+				cardsWithState.push({
+					card,
+					state,
+					isDue,
+				});
+			} catch (error) {
+				console.warn(
+					`Ошибка преобразования карточки из WASM результата:`,
+					error,
+				);
+				// Пропускаем карточки с ошибками преобразования
+				continue;
+			}
+		}
+
+		return cardsWithState;
+	} catch (error) {
+		console.error(
+			`Ошибка фильтрации и сортировки карточек с состояниями через WASM: ${String(error)}. Возвращаем пустой массив.`,
+		);
+
+		// В случае ошибки WASM, возвращаем пустой массив
 		return [];
 	}
 }

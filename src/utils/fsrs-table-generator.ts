@@ -4,7 +4,11 @@
  */
 
 import type { App } from "obsidian";
-import type { ModernFSRSCard, FSRSSettings } from "../interfaces/fsrs";
+import type {
+	ModernFSRSCard,
+	FSRSSettings,
+	CachedCard,
+} from "../interfaces/fsrs";
 import type { TableParams } from "./fsrs-table-params";
 import type { CardWithState } from "./fsrs-table-filter";
 
@@ -113,9 +117,9 @@ export function generateTableHTML(
 }
 
 /**
- * Генерирует HTML таблицу из массива карточек и параметров таблицы
+ * Генерирует HTML таблицу из массива карточек с состояниями и параметров таблицы
  * Выполняет фильтрацию и сортировку перед генерацией HTML
- * @param cards Массив карточек FSRS
+ * @param cachedCards Массив карточек FSRS с кэшированными состояниями
  * @param params Параметры таблицы
  * @param settings Настройки плагина
  * @param app Экземпляр приложения Obsidian
@@ -123,17 +127,18 @@ export function generateTableHTML(
  * @returns Promise с HTML строкой таблицы
  */
 export async function generateTableHTMLFromCards(
-	cards: ModernFSRSCard[],
+	cachedCards: CachedCard[],
 	params: TableParams,
 	settings: FSRSSettings,
 	app: App,
 	now: Date = new Date(),
 ): Promise<string> {
 	// Импортируем функции динамически для избежания циклических зависимостей
-	const { filterAndSortCards } = await import("./fsrs-table-filter");
+	const { filterAndSortCardsWithStates } =
+		await import("./fsrs-table-filter");
 
-	const cardsWithState = await filterAndSortCards(
-		cards,
+	const cardsWithState = await filterAndSortCardsWithStates(
+		cachedCards,
 		settings,
 		params,
 		now,

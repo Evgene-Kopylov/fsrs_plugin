@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::json_parsing::parse_datetime_flexible;
+use crate::types::{ComputedState, ModernFsrsCard};
 
 /// Вычисленные поля карточки для сортировки
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -477,6 +478,52 @@ pub fn compute_all_fields(
     Ok(result)
 }
 
+/// Вычисляет поля карточки из готового состояния (без вызова compute_current_state)
+pub fn compute_fields_from_state(
+    card: &ModernFsrsCard,
+    state: &ComputedState,
+    now_iso: &str,
+) -> CardWithComputedFields {
+    let mut result = CardWithComputedFields {
+        file: card.file_path.clone(),
+        reps: Some(state.reps as u32),
+        overdue: None,
+        stability: Some(state.stability),
+        difficulty: Some(state.difficulty),
+        retrievability: Some(state.retrievability),
+        due: None,
+        state: Some(state.state.clone()),
+        elapsed: Some(state.elapsed_days as f64),
+        scheduled: Some(state.scheduled_days as f64),
+        additional_fields: HashMap::new(),
+    };
+
+    // Добавляем lapses в дополнительные поля
+    result.additional_fields.insert(
+        "lapses".to_string(),
+        serde_json::Value::Number(state.lapses.into()),
+    );
+
+    // Преобразуем due из ISO в формат Obsidian
+    if let Some(due_dt) = parse_datetime_flexible(&state.due) {
+        result.due = Some(due_dt.format("%Y-%m-%d_%H:%M").to_string());
+    } else {
+        result.due = Some(state.due.clone());
+    }
+
+    // Вычисляем overdue
+    match calculate_overdue_from_due_str(Some(&state.due), now_iso) {
+        Ok(overdue) => result.overdue = Some(overdue),
+        Err(e) => {
+            log::warn!("Ошибка вычисления overdue из состояния: {}", e);
+            result.overdue = None;
+        }
+    }
+
+    result
+}
+
+#[cfg(test)]
 #[cfg(test)]
 mod tests {
     use super::*;
