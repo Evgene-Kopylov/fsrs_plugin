@@ -1,4 +1,4 @@
-{
+.editorconfig{
 	"compilerOptions": {
 		"baseUrl": "src",
 		"inlineSourceMap": true,
