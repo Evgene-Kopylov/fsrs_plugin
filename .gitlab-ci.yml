@@ -99,3 +99,15 @@ eslint-check:
             - .npm/
         policy: pull-push
     timeout: 10m
+
+push_to_github:
+    stage: mirror
+    image: alpine/git:latest
+    # only:
+    #     - $CI_DEFAULT_BRANCH # запускать только для ветки по умолчанию (main/master)
+    script:
+        - git remote add github "https://oauth2:${GITHUB_TOKEN}@${GITHUB_REPO_URL#https://}"
+        - git push github ${CI_COMMIT_SHA}:main --force
+    variables:
+        GIT_STRATEGY: clone
+    timeout: 10m
