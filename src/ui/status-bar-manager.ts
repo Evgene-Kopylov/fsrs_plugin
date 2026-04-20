@@ -122,8 +122,8 @@ export class StatusBarManager extends Component {
         if (!file) {
             const icon = this.settings.status_bar_icon || "🔄";
             if (this.iconSpan) this.iconSpan.textContent = icon;
-            if (this.textSpan) this.textSpan.textContent = " FSRS: No file";
-            this.statusBarItem.title = "FSRS Plugin - No active file";
+            if (this.textSpan) this.textSpan.textContent = " FSRS: no file";
+            this.statusBarItem.title = "FSRS plugin - no active file";
             if (this.iconSpan) this.iconSpan.style.opacity = "0.3";
             console.debug("Статус-бар: нет активного файла");
             return;
@@ -137,9 +137,9 @@ export class StatusBarManager extends Component {
                 const icon = this.settings.status_bar_icon || "🔄";
                 if (this.iconSpan) this.iconSpan.textContent = icon;
                 if (this.textSpan)
-                    this.textSpan.textContent = " FSRS: Not FSRS";
+                    this.textSpan.textContent = " FSRS: not FSRS";
                 this.statusBarItem.title =
-                    "FSRS Plugin - Current file is not a FSRS card";
+                    "FSRS plugin - current file is not a FSRS card";
                 if (this.iconSpan) this.iconSpan.style.opacity = "0.3";
                 console.debug("Статус-бар: файл не содержит frontmatter");
                 return;
@@ -155,7 +155,7 @@ export class StatusBarManager extends Component {
                 if (this.textSpan)
                     this.textSpan.textContent = " FSRS: Not FSRS";
                 this.statusBarItem.title =
-                    "FSRS Plugin - Current file is not a FSRS card";
+                    "FSRS plugin - current file is not a FSRS card";
                 if (this.iconSpan) this.iconSpan.style.opacity = "0.3";
                 console.debug("Статус-бар: файл не является FSRS карточкой");
                 return;
@@ -168,9 +168,10 @@ export class StatusBarManager extends Component {
             if (this.iconSpan) this.iconSpan.style.opacity = "1";
 
             if (isDue) {
+                // eslint-disable-next-line obsidianmd/ui/sentence-case
                 if (this.textSpan) this.textSpan.textContent = " FSRS: Due!";
                 this.statusBarItem.title =
-                    "FSRS Plugin - Card is due for review. Click to review.";
+                    "FSRS plugin - card is due for review. Click to review.";
                 console.debug("Статус-бар: карточка готова к повторению");
             } else {
                 const state = await computeCardState(card, this.settings);
@@ -211,8 +212,8 @@ export class StatusBarManager extends Component {
             console.error("Ошибка при обновлении статус-бара:", error);
             const icon = this.settings.status_bar_icon || "🔄";
             if (this.iconSpan) this.iconSpan.textContent = icon;
-            if (this.textSpan) this.textSpan.textContent = " FSRS: Error";
-            this.statusBarItem.title = "FSRS Plugin - Error updating status";
+            if (this.textSpan) this.textSpan.textContent = " FSRS: error";
+            this.statusBarItem.title = "FSRS plugin - prror updating status";
             if (this.iconSpan) this.iconSpan.style.opacity = "1";
             console.debug("Статус-бар: ошибка при обновлении");
         }
