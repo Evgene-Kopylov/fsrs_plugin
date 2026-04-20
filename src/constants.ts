@@ -17,7 +17,7 @@ export const DEFAULT_SETTINGS: FSRSSettings = {
 	default_initial_difficulty: 0.0,
 
 	// Настройка для автоматического добавления кнопки повторения
-	auto_add_review_button: true,
+	auto_add_review_button: false,
 
 	// Минимальный интервал для досрочного повторения
 	minimum_review_interval_minutes: 40,
