@@ -22,7 +22,6 @@ export function formatDateTime(app: App, date: Date): string {
 		return window.moment(date).format(`${dateFormat} ${timeFormat}`);
 	} catch (error) {
 		console.error("Ошибка форматирования даты и времени:", error);
-		// Fallback на стандартный формат
 		return window.moment(date).format("YYYY-MM-DD HH:mm");
 	}
 }

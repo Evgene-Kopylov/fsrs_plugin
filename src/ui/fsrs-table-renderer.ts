@@ -1,6 +1,6 @@
 import { MarkdownRenderChild, Notice, EventRef, Editor } from "obsidian";
 import type FsrsPlugin from "../main";
-import type { ModernFSRSCard, CachedCard } from "../interfaces/fsrs";
+import type { CachedCard } from "../interfaces/fsrs";
 import type { TableParams } from "../utils/fsrs-table-helpers";
 import {
 	generateTableHTMLFromCards,
@@ -197,7 +197,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 		} finally {
 			const elapsedMs = performance.now() - start;
 			const elapsedSec = elapsedMs / 1000;
-			console.info(
+			console.debug(
 				`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`,
 			);
 		}
