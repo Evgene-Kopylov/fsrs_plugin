@@ -2,6 +2,7 @@ stages:
     - build-wasm
     - encode-wasm
     - lint
+    - mirror
 
 variables:
     NODE_VERSION: "24-alpine"
@@ -98,4 +99,21 @@ eslint-check:
             - node_modules/
             - .npm/
         policy: pull-push
+    timeout: 10m
+
+push_to_github:
+    stage: mirror
+    image: alpine:latest
+    rules:
+        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    variables:
+        GIT_STRATEGY: clone
+        REPO_OWNER: "Evgene-Kopylov"
+        REPO_NAME: "fsrs_plugin"
+    before_script:
+        - apk update
+        - apk add --no-cache git curl jq zip
+    script:
+        - git remote add github "https://oauth2:${GITHUB_TOKEN}@github.com/${REPO_OWNER}/${REPO_NAME}"
+        - git push github HEAD:refs/heads/main --force
     timeout: 10m
