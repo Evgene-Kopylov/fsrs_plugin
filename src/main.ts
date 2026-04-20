@@ -41,6 +41,7 @@ export default class FsrsPlugin extends Plugin {
 	private fsrsTableRenderers = new Set<FsrsTableRenderer>();
 	// Кэш с состояниями
 	private cachedCardsWithState: CachedCard[] | null = null;
+	private scanPromise: Promise<CachedCard[]> | null = null;
 	private statusBarManager: StatusBarManager | null = null;
 	private fileModifyHandler?: (file: TAbstractFile) => void;
 
@@ -145,10 +146,15 @@ export default class FsrsPlugin extends Plugin {
 	 * Кэш инвалидируется при изменении файлов или настроек.
 	 */
 	async getCachedCardsWithState(): Promise<CachedCard[]> {
-		if (!this.cachedCardsWithState) {
-			this.cachedCardsWithState = await this.performFullScan();
+		if (this.cachedCardsWithState) return this.cachedCardsWithState;
+		if (this.scanPromise) return this.scanPromise;
+		this.scanPromise = this.performFullScan();
+		try {
+			this.cachedCardsWithState = await this.scanPromise;
+			return this.cachedCardsWithState;
+		} finally {
+			this.scanPromise = null;
 		}
-		return this.cachedCardsWithState;
 	}
 
 	/**
@@ -203,6 +209,7 @@ export default class FsrsPlugin extends Plugin {
 	 */
 	private invalidateCache(): void {
 		this.cachedCardsWithState = null;
+		this.scanPromise = null;
 	}
 
 	// Метод shouldIgnoreFile был вынесен в модуль fsrs-filter.ts
