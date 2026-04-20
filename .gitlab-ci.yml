@@ -106,11 +106,11 @@ push_to_github:
     image:
         name: alpine/git:latest
         entrypoint: [""]
-    # only:
-    #     - $CI_DEFAULT_BRANCH # запускать только для ветки по умолчанию (main/master)
-    script:
-        - git remote add github "https://oauth2:${GITHUB_TOKEN}@${GITHUB_REPO_URL#https://}"
-        - git push github ${CI_COMMIT_SHA}:main --force
     variables:
         GIT_STRATEGY: clone
+        REPO_OWNER: "Evgene-Kopylov"
+        REPO_NAME: "fsrs_plugin"
+    script:
+        - git remote add github "https://oauth2:${GITHUB_TOKEN}@github.com/${REPO_OWNER}/${REPO_NAME}"
+        - git push github HEAD:main --force
     timeout: 10m
