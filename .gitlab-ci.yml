@@ -103,7 +103,9 @@ eslint-check:
 
 push_to_github:
     stage: mirror
-    image: alpine:latest
+    image:
+        name: alpine/git:latest
+        entrypoint: [""]
     # only:
     #     - $CI_DEFAULT_BRANCH # запускать только для ветки по умолчанию (main/master)
     script:
