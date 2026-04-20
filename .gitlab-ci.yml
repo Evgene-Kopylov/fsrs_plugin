@@ -103,14 +103,15 @@ eslint-check:
 
 push_to_github:
     stage: mirror
-    image:
-        name: alpine/git:latest
-        entrypoint: [""]
+    image: lpine:latest
     variables:
         GIT_STRATEGY: clone
         REPO_OWNER: "Evgene-Kopylov"
         REPO_NAME: "fsrs_plugin"
+    before_script:
+        - apk update
+        - apk add --no-cache git curl jq zip
     script:
         - git remote add github "https://oauth2:${GITHUB_TOKEN}@github.com/${REPO_OWNER}/${REPO_NAME}"
-        - git push github HEAD:main --force
+        - git push github HEAD:refs/heads/main --force
     timeout: 10m
