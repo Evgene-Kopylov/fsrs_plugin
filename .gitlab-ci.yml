@@ -104,8 +104,8 @@ eslint-check:
 push_to_github:
     stage: mirror
     image: alpine:latest
-    # rules:
-    #     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    rules:
+        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
     variables:
         GIT_STRATEGY: clone
         REPO_OWNER: "Evgene-Kopylov"
