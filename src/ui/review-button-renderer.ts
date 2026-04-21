@@ -1,12 +1,12 @@
 import { MarkdownRenderChild, Notice, TAbstractFile } from "obsidian";
 import {
-	parseModernFsrsFromFrontmatter,
-	extractFrontmatterWithMatch,
-	isCardDue,
-	computeCardState,
-	formatLocalDate,
-	getMinutesSinceLastReview,
-	getRussianNoun,
+    parseModernFsrsFromFrontmatter,
+    extractFrontmatterWithMatch,
+    isCardDue,
+    computeCardState,
+    formatLocalDate,
+    getMinutesSinceLastReview,
+    getRussianNoun,
 } from "../utils/fsrs-helper";
 import type FsrsPlugin from "../main";
 import { ReviewHistoryModal } from "./review-history-modal";
@@ -17,349 +17,342 @@ import { ReviewHistoryModal } from "./review-history-modal";
  * Интегрируется с Obsidian's Markdown render lifecycle через MarkdownRenderChild
  */
 export class ReviewButtonRenderer extends MarkdownRenderChild {
-	private mainButton: HTMLButtonElement;
-	private historyButton: HTMLButtonElement;
+    private mainButton: HTMLButtonElement;
+    private historyButton: HTMLButtonElement;
 
-	private buttonsContainer: HTMLDivElement;
-	private currentState:
-		| "not-fsrs"
-		| "reviewed"
-		| "due"
-		| "error"
-		| "loading" = "loading";
-	private fileChangeHandler?: (file: TAbstractFile) => void;
+    private buttonsContainer: HTMLDivElement;
 
-	/**
-	 * Создает новый рендерер кнопки
-	 * @param plugin - Экземпляр плагина FSRS
-	 * @param container - Контейнер для кнопки (div элемент)
-	 * @param sourcePath - Путь к файлу, в котором находится блок
-	 */
-	constructor(
-		private plugin: FsrsPlugin,
-		container: HTMLElement,
-		private sourcePath: string,
-	) {
-		super(container);
+    private fileChangeHandler?: (file: TAbstractFile) => void;
 
-		// Создаем контейнер для кнопок
-		this.buttonsContainer = document.createElement("div");
-		this.buttonsContainer.className = "fsrs-buttons-container";
-		container.appendChild(this.buttonsContainer);
+    /**
+     * Создает новый рендерер кнопки
+     * @param plugin - Экземпляр плагина FSRS
+     * @param container - Контейнер для кнопки (div элемент)
+     * @param sourcePath - Путь к файлу, в котором находится блок
+     */
+    constructor(
+        private plugin: FsrsPlugin,
+        container: HTMLElement,
+        private sourcePath: string,
+    ) {
+        super(container);
 
-		// Создаем основную кнопку с фиксированной шириной
-		this.mainButton = document.createElement("button");
-		this.mainButton.className = "fsrs-review-button";
+        // Создаем контейнер для кнопок
+        this.buttonsContainer = document.createElement("div");
+        this.buttonsContainer.className = "fsrs-buttons-container";
+        container.appendChild(this.buttonsContainer);
 
-		// Создаем кнопку истории повторений
-		this.historyButton = document.createElement("button");
-		this.historyButton.className = "fsrs-history-button";
-		this.historyButton.textContent = "📊";
-		this.historyButton.title = "История повторений";
+        // Создаем основную кнопку с фиксированной шириной
+        this.mainButton = document.createElement("button");
+        this.mainButton.className = "fsrs-review-button";
 
-		// Добавляем кнопки в контейнер
-		this.buttonsContainer.appendChild(this.mainButton);
-		this.buttonsContainer.appendChild(this.historyButton);
+        // Создаем кнопку истории повторений
+        this.historyButton = document.createElement("button");
+        this.historyButton.className = "fsrs-history-button";
+        this.historyButton.textContent = "📊";
+        this.historyButton.title = "История повторений";
 
-		// Устанавливаем фиксированный класс для контейнера
-		container.className = "fsrs-review-button-container";
-	}
+        // Добавляем кнопки в контейнер
+        this.buttonsContainer.appendChild(this.mainButton);
+        this.buttonsContainer.appendChild(this.historyButton);
 
-	/**
-	 * Вызывается Obsidian при загрузке компонента
-	 */
-	onload(): void {
-		void this.updateButtonState();
-		this.setupClickHandlers();
-		this.setupFileWatcher();
-	}
+        // Устанавливаем фиксированный класс для контейнера
+        container.className = "fsrs-review-button-container";
+    }
 
-	/**
-	 * Вызывается Obsidian при выгрузке компонента
-	 */
-	onunload(): void {
-		this.cleanup();
-		this.removeFileWatcher();
-	}
+    /**
+     * Вызывается Obsidian при загрузке компонента
+     */
+    onload(): void {
+        void this.updateButtonState();
+        this.setupClickHandlers();
+        this.setupFileWatcher();
+    }
 
-	/**
-	 * Обновляет состояние кнопки на основе текущего статуса карточки
-	 * Вызывается при инициализации и после повторения карточки
-	 */
-	private async updateButtonState(): Promise<void> {
-		try {
-			const file = this.plugin.app.vault.getFileByPath(this.sourcePath);
-			if (!file) {
-				this.mainButton.textContent = "Файл не найден";
-				this.mainButton.disabled = true;
-				this.updateButtonClass("error");
-				return;
-			}
+    /**
+     * Вызывается Obsidian при выгрузке компонента
+     */
+    onunload(): void {
+        this.cleanup();
+        this.removeFileWatcher();
+    }
 
-			const content = await this.plugin.app.vault.read(file);
-			const frontmatterMatch = extractFrontmatterWithMatch(content);
+    /**
+     * Обновляет состояние кнопки на основе текущего статуса карточки
+     * Вызывается при инициализации и после повторения карточки
+     */
+    private async updateButtonState(): Promise<void> {
+        try {
+            const file = this.plugin.app.vault.getFileByPath(this.sourcePath);
+            if (!file) {
+                this.mainButton.textContent = "Файл не найден";
+                this.mainButton.disabled = true;
+                this.updateButtonClass("error");
+                return;
+            }
 
-			if (!frontmatterMatch) {
-				this.mainButton.textContent = "Нет frontmatter";
-				this.mainButton.disabled = true;
-				this.updateButtonClass("error");
-				return;
-			}
+            const content = await this.plugin.app.vault.read(file);
+            const frontmatterMatch = extractFrontmatterWithMatch(content);
 
-			const frontmatter = frontmatterMatch.content;
-			const parseResult = parseModernFsrsFromFrontmatter(
-				frontmatter,
-				this.sourcePath,
-			);
+            if (!frontmatterMatch) {
+                this.mainButton.textContent = "Нет frontmatter";
+                this.mainButton.disabled = true;
+                this.updateButtonClass("error");
+                return;
+            }
 
-			if (!parseResult.success || !parseResult.card) {
-				// Карточка не является FSRS карточкой - кнопка активна, но затемнена
-				this.mainButton.textContent = "Not an FSRS card";
-				this.mainButton.disabled = false;
-				this.updateButtonClass("not-fsrs");
-				return;
-			}
+            const frontmatter = frontmatterMatch.content;
+            const parseResult = parseModernFsrsFromFrontmatter(
+                frontmatter,
+                this.sourcePath,
+            );
 
-			const card = parseResult.card;
-			const isDue = await isCardDue(card, this.plugin.settings);
+            if (!parseResult.success || !parseResult.card) {
+                // Карточка не является FSRS карточкой - кнопка активна, но затемнена
+                this.mainButton.textContent = "Not an FSRS card";
+                this.mainButton.disabled = false;
+                this.updateButtonClass("not-fsrs");
+                return;
+            }
 
-			if (!isDue) {
-				// Карточка уже повторена - показываем последнюю оценку
-				if (card.reviews.length > 0) {
-					const lastReview = card.reviews[card.reviews.length - 1];
-					if (lastReview) {
-						this.mainButton.textContent = `Повторено: ${lastReview.rating}`;
-					} else {
-						this.mainButton.textContent = "Повторено";
-					}
-				} else {
-					this.mainButton.textContent = "Повторено";
-				}
-				this.mainButton.disabled = false;
-				this.updateButtonClass("reviewed");
-			} else {
-				// Карточка готова к повторению
-				this.mainButton.textContent = "Повторить карточку";
-				this.mainButton.disabled = false;
-				this.updateButtonClass("due");
-			}
-		} catch (error) {
-			console.error("Ошибка при обновлении состояния кнопки:", error);
-			this.mainButton.textContent = "Ошибка загрузки";
-			this.mainButton.disabled = true;
-			this.updateButtonClass("error");
-		}
-	}
+            const card = parseResult.card;
+            const isDue = await isCardDue(card, this.plugin.settings);
 
-	/**
-	 * Обновляет CSS класс кнопки в зависимости от состояния
-	 */
-	private updateButtonClass(
-		state: "not-fsrs" | "reviewed" | "due" | "error" | "loading",
-	): void {
-		this.currentState = state;
+            if (!isDue) {
+                // Карточка уже повторена - показываем последнюю оценку
+                if (card.reviews.length > 0) {
+                    const lastReview = card.reviews[card.reviews.length - 1];
+                    if (lastReview) {
+                        this.mainButton.textContent = `Повторено: ${lastReview.rating}`;
+                    } else {
+                        this.mainButton.textContent = "Повторено";
+                    }
+                } else {
+                    this.mainButton.textContent = "Повторено";
+                }
+                this.mainButton.disabled = false;
+                this.updateButtonClass("reviewed");
+            } else {
+                // Карточка готова к повторению
+                this.mainButton.textContent = "Повторить карточку";
+                this.mainButton.disabled = false;
+                this.updateButtonClass("due");
+            }
+        } catch (error) {
+            console.error("Ошибка при обновлении состояния кнопки:", error);
+            this.mainButton.textContent = "Ошибка загрузки";
+            this.mainButton.disabled = true;
+            this.updateButtonClass("error");
+        }
+    }
 
-		// Удаляем все классы состояний
-		this.mainButton.classList.remove(
-			"fsrs-review-button--not-fsrs",
-			"fsrs-review-button--reviewed",
-			"fsrs-review-button--due",
-			"fsrs-review-button--error",
-			"fsrs-review-button--loading",
-		);
+    /**
+     * Обновляет CSS класс кнопки в зависимости от состояния
+     */
+    private updateButtonClass(
+        state: "not-fsrs" | "reviewed" | "due" | "error" | "loading",
+    ): void {
+        // Удаляем все классы состояний
+        this.mainButton.classList.remove(
+            "fsrs-review-button--not-fsrs",
+            "fsrs-review-button--reviewed",
+            "fsrs-review-button--due",
+            "fsrs-review-button--error",
+            "fsrs-review-button--loading",
+        );
 
-		// Добавляем текущий класс состояния
-		this.mainButton.classList.add(`fsrs-review-button--${state}`);
-	}
+        // Добавляем текущий класс состояния
+        this.mainButton.classList.add(`fsrs-review-button--${state}`);
+    }
 
-	/**
-	 * Настраивает обработчики клика на кнопках
-	 */
-	private setupClickHandlers(): void {
-		// Основная кнопка
-		const mainClickHandler = () => {
-			void this.handleMainButtonClick();
-		};
-		this.mainButton.addEventListener("click", mainClickHandler);
-		(
-			this.mainButton as HTMLElement & {
-				_clickHandler?: typeof mainClickHandler;
-			}
-		)._clickHandler = mainClickHandler;
+    /**
+     * Настраивает обработчики клика на кнопках
+     */
+    private setupClickHandlers(): void {
+        // Основная кнопка
+        const mainClickHandler = () => {
+            void this.handleMainButtonClick();
+        };
+        this.mainButton.addEventListener("click", mainClickHandler);
+        (
+            this.mainButton as HTMLElement & {
+                _clickHandler?: typeof mainClickHandler;
+            }
+        )._clickHandler = mainClickHandler;
 
-		// Кнопка истории повторений
-		const historyClickHandler = () => {
-			void this.handleHistoryButtonClick();
-		};
-		this.historyButton.addEventListener("click", historyClickHandler);
-		(
-			this.historyButton as HTMLElement & {
-				_clickHandler?: typeof historyClickHandler;
-			}
-		)._clickHandler = historyClickHandler;
-	}
+        // Кнопка истории повторений
+        const historyClickHandler = () => {
+            void this.handleHistoryButtonClick();
+        };
+        this.historyButton.addEventListener("click", historyClickHandler);
+        (
+            this.historyButton as HTMLElement & {
+                _clickHandler?: typeof historyClickHandler;
+            }
+        )._clickHandler = historyClickHandler;
+    }
 
-	/**
-	 * Очищает обработчики событий
-	 */
-	private cleanup(): void {
-		const mainButtonWithHandler = this.mainButton as HTMLElement & {
-			_clickHandler?: () => Promise<void>;
-		};
-		if (this.mainButton && mainButtonWithHandler._clickHandler) {
-			const handler = mainButtonWithHandler._clickHandler as (
-				ev: Event,
-			) => void;
-			this.mainButton.removeEventListener("click", handler);
-			delete mainButtonWithHandler._clickHandler;
-		}
+    /**
+     * Очищает обработчики событий
+     */
+    private cleanup(): void {
+        const mainButtonWithHandler = this.mainButton as HTMLElement & {
+            _clickHandler?: () => Promise<void>;
+        };
+        if (this.mainButton && mainButtonWithHandler._clickHandler) {
+            const handler = mainButtonWithHandler._clickHandler as (
+                ev: Event,
+            ) => void;
+            this.mainButton.removeEventListener("click", handler);
+            delete mainButtonWithHandler._clickHandler;
+        }
 
-		const historyButtonWithHandler = this.historyButton as HTMLElement & {
-			_clickHandler?: () => Promise<void>;
-		};
-		if (this.historyButton && historyButtonWithHandler._clickHandler) {
-			const handler = historyButtonWithHandler._clickHandler as (
-				ev: Event,
-			) => void;
-			this.historyButton.removeEventListener("click", handler);
-			delete historyButtonWithHandler._clickHandler;
-		}
-	}
+        const historyButtonWithHandler = this.historyButton as HTMLElement & {
+            _clickHandler?: () => Promise<void>;
+        };
+        if (this.historyButton && historyButtonWithHandler._clickHandler) {
+            const handler = historyButtonWithHandler._clickHandler as (
+                ev: Event,
+            ) => void;
+            this.historyButton.removeEventListener("click", handler);
+            delete historyButtonWithHandler._clickHandler;
+        }
+    }
 
-	/**
-	 * Обрабатывает клик на основной кнопке
-	 */
-	private async handleMainButtonClick(): Promise<void> {
-		try {
-			// Блокируем кнопки на время обработки
-			this.mainButton.disabled = true;
+    /**
+     * Обрабатывает клик на основной кнопке
+     */
+    private async handleMainButtonClick(): Promise<void> {
+        try {
+            // Блокируем кнопки на время обработки
+            this.mainButton.disabled = true;
 
-			// Проверяем статус карточки перед открытием модального окна
-			const file = this.plugin.app.vault.getFileByPath(this.sourcePath);
-			if (!file) {
-				new Notice("Файл не найден");
-				await this.updateButtonState();
-				return;
-			}
+            // Проверяем статус карточки перед открытием модального окна
+            const file = this.plugin.app.vault.getFileByPath(this.sourcePath);
+            if (!file) {
+                new Notice("Файл не найден");
+                await this.updateButtonState();
+                return;
+            }
 
-			const content = await this.plugin.app.vault.read(file);
-			const frontmatterMatch = extractFrontmatterWithMatch(content);
+            const content = await this.plugin.app.vault.read(file);
+            const frontmatterMatch = extractFrontmatterWithMatch(content);
 
-			if (!frontmatterMatch) {
-				new Notice("Файл не содержит frontmatter");
-				await this.updateButtonState();
-				return;
-			}
+            if (!frontmatterMatch) {
+                new Notice("Файл не содержит frontmatter");
+                await this.updateButtonState();
+                return;
+            }
 
-			const frontmatter = frontmatterMatch.content;
-			const parseResult = parseModernFsrsFromFrontmatter(
-				frontmatter,
-				this.sourcePath,
-			);
+            const frontmatter = frontmatterMatch.content;
+            const parseResult = parseModernFsrsFromFrontmatter(
+                frontmatter,
+                this.sourcePath,
+            );
 
-			if (!parseResult.success || !parseResult.card) {
-				// Карточка не является FSRS карточкой - показываем уведомление
-				new Notice("Not an FSRS card");
-				// Обновляем состояние кнопки (на случай, если статус изменился)
-				await this.updateButtonState();
-				return;
-			}
+            if (!parseResult.success || !parseResult.card) {
+                // Карточка не является FSRS карточкой - показываем уведомление
+                new Notice("Not an FSRS card");
+                // Обновляем состояние кнопки (на случай, если статус изменился)
+                await this.updateButtonState();
+                return;
+            }
 
-			const card = parseResult.card;
-			const isDue = await isCardDue(card, this.plugin.settings);
+            const card = parseResult.card;
+            const isDue = await isCardDue(card, this.plugin.settings);
 
-			if (!isDue) {
-				// Карточка не готова к повторению - проверяем возможность досрочного повторения
-				const minutesSinceLastReview = getMinutesSinceLastReview(card);
-				const minInterval =
-					this.plugin.settings.minimum_review_interval_minutes;
+            if (!isDue) {
+                // Карточка не готова к повторению - проверяем возможность досрочного повторения
+                const minutesSinceLastReview = getMinutesSinceLastReview(card);
+                const minInterval =
+                    this.plugin.settings.minimum_review_interval_minutes;
 
-				if (minutesSinceLastReview >= minInterval) {
-					// Достаточно времени прошло - разрешаем досрочное повторение
-					console.debug(
-						`Карточка не по графику, но разрешено досрочное повторение (прошло ${minutesSinceLastReview} минут, минимум ${minInterval})`,
-					);
-					// Продолжаем показ модального окна
-				} else {
-					// Недостаточно времени прошло - показываем информацию
-					const remainingMinutes =
-						minInterval - minutesSinceLastReview;
-					const state = await computeCardState(
-						card,
-						this.plugin.settings,
-					);
-					const nextDate = new Date(state.due);
+                if (minutesSinceLastReview >= minInterval) {
+                    // Достаточно времени прошло - разрешаем досрочное повторение
+                    console.debug(
+                        `Карточка не по графику, но разрешено досрочное повторение (прошло ${minutesSinceLastReview} минут, минимум ${minInterval})`,
+                    );
+                    // Продолжаем показ модального окна
+                } else {
+                    // Недостаточно времени прошло - показываем информацию
+                    const remainingMinutes =
+                        minInterval - minutesSinceLastReview;
+                    const state = await computeCardState(
+                        card,
+                        this.plugin.settings,
+                    );
+                    const nextDate = new Date(state.due);
 
-					let message = `Карточка уже повторена. `;
-					if (remainingMinutes > 0) {
-						message += `Досрочное повторение возможно через ${remainingMinutes} ${getRussianNoun(remainingMinutes, "минуту", "минуты", "минут")}. `;
-					}
-					message += `Следующее повторение по графику: ${formatLocalDate(nextDate, this.plugin.app)}`;
+                    let message = `Карточка уже повторена. `;
+                    if (remainingMinutes > 0) {
+                        message += `Досрочное повторение возможно через ${remainingMinutes} ${getRussianNoun(remainingMinutes, "минуту", "минуты", "минут")}. `;
+                    }
+                    message += `Следующее повторение по графику: ${formatLocalDate(nextDate, this.plugin.app)}`;
 
-					new Notice(message);
-					await this.updateButtonState();
-					return;
-				}
-			}
+                    new Notice(message);
+                    await this.updateButtonState();
+                    return;
+                }
+            }
 
-			// Карточка готова к повторению - вызываем стандартный ревью
-			const rating = await this.plugin.reviewCardByPath(this.sourcePath);
+            // Карточка готова к повторению - вызываем стандартный ревью
+            const rating = await this.plugin.reviewCardByPath(this.sourcePath);
 
-			if (rating) {
-				// После успешного ревью сразу обновляем состояние кнопки
-				await this.updateButtonState();
-			} else {
-				// Ревью отменено - восстанавливаем состояние
-				await this.updateButtonState();
-			}
-		} catch (error) {
-			console.error("Ошибка при обработке карточки:", error);
-			new Notice("Ошибка при обработке карточки");
-			// Восстанавливаем состояние при ошибке
-			await this.updateButtonState();
-		}
-	}
+            if (rating) {
+                // После успешного ревью сразу обновляем состояние кнопки
+                await this.updateButtonState();
+            } else {
+                // Ревью отменено - восстанавливаем состояние
+                await this.updateButtonState();
+            }
+        } catch (error) {
+            console.error("Ошибка при обработке карточки:", error);
+            new Notice("Ошибка при обработке карточки");
+            // Восстанавливаем состояние при ошибке
+            await this.updateButtonState();
+        }
+    }
 
-	/**
-	 * Настраивает отслеживание изменений файла
-	 */
-	private setupFileWatcher(): void {
-		this.fileChangeHandler = (file: TAbstractFile) => {
-			if (file.path === this.sourcePath) {
-				void this.refresh();
-			}
-		};
-		this.plugin.app.vault.on("modify", this.fileChangeHandler);
-	}
+    /**
+     * Настраивает отслеживание изменений файла
+     */
+    private setupFileWatcher(): void {
+        this.fileChangeHandler = (file: TAbstractFile) => {
+            if (file.path === this.sourcePath) {
+                void this.refresh();
+            }
+        };
+        this.plugin.app.vault.on("modify", this.fileChangeHandler);
+    }
 
-	private removeFileWatcher(): void {
-		if (this.fileChangeHandler) {
-			this.plugin.app.vault.off("modify", this.fileChangeHandler);
-			this.fileChangeHandler = undefined;
-		}
-	}
+    private removeFileWatcher(): void {
+        if (this.fileChangeHandler) {
+            this.plugin.app.vault.off("modify", this.fileChangeHandler);
+            this.fileChangeHandler = undefined;
+        }
+    }
 
-	/**
-	 * Обрабатывает клик на кнопке истории повторений
-	 */
-	private async handleHistoryButtonClick(): Promise<void> {
-		try {
-			const modal = new ReviewHistoryModal(
-				this.plugin.app,
-				this.sourcePath,
-			);
-			await modal.show();
-		} catch (error) {
-			console.error("Ошибка при открытии истории повторений:", error);
-			new Notice("Ошибка при открытии истории повторений");
-		}
-	}
+    /**
+     * Обрабатывает клик на кнопке истории повторений
+     */
+    private async handleHistoryButtonClick(): Promise<void> {
+        try {
+            const modal = new ReviewHistoryModal(
+                this.plugin.app,
+                this.sourcePath,
+            );
+            await modal.show();
+        } catch (error) {
+            console.error("Ошибка при открытии истории повторений:", error);
+            new Notice("Ошибка при открытии истории повторений");
+        }
+    }
 
-	/**
-	 * Обновляет рендерер (например, при изменении файла)
-	 * Может быть вызван извне для принудительного обновления
-	 */
-	private async refresh(): Promise<void> {
-		await this.updateButtonState();
-	}
+    /**
+     * Обновляет рендерер (например, при изменении файла)
+     * Может быть вызван извне для принудительного обновления
+     */
+    private async refresh(): Promise<void> {
+        await this.updateButtonState();
+    }
 }

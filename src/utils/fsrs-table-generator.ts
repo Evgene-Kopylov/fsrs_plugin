@@ -38,7 +38,7 @@ import { parseSqlBlock } from "./fsrs-table-params";
 export function generateTableDOM(
     cardsWithState: CardWithState[],
     params: TableParams,
-    settings: FSRSSettings,
+    _settings: FSRSSettings,
     app: App,
     now: Date = new Date(),
 ): HTMLDivElement {

@@ -7,3 +7,4 @@ export * from "./wasm-review";
 export * from "./wasm-filter";
 export * from "./wasm-date";
 export * from "./wasm-utils";
+export { cardToFsrsYaml, parseFsrsYaml } from "./wasm-utils";

@@ -1,22 +1,13 @@
-# Команда запуска
-# $ npx repogrok
+# Исключаем Rust и его артефакты
+wasm-lib/
+*.rs
+Cargo.toml
+Cargo.lock
 
-# Лицензии и документация
-LICENSE
-LICENSE.*
-AGENTS.md
-SKILLS.md
-CLAUDE.md
-README.md
-docs/
-
-# Сторонние инструменты и временные файлы
+# Исключаем сторонние инструменты, сборки и временные файлы
 caveman-compress/
 tmp/plan/
 *.original.md
-
-# Артефакты сборки и зависимости
-package-lock.json
 node_modules/
 main.js
 main.js.map
@@ -24,16 +15,23 @@ main.js.map
 *.ts.map
 wasm-lib/pkg/
 wasm-lib/target/
-
-# Тесты и вспомогательные скрипты (оставляем только encode-wasm.js)
 tests/
 test_script/
 scripts/test-build.js
-
-# Файлы окружения и IDE
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
 .DS_Store
+
+# НО: включаем TypeScript-тесты (не игнорируем их)
+!**/*.test.ts
+!**/__tests__/**/*.ts
+!**/*.spec.ts
+
+# Включаем package.json
+!package.json
+
+# Если нужно, можно также включить все TypeScript-исходники (они и так не исключены)
+# src/ уже не исключена, так что остаётся

@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Notice, EventRef, Editor } from "obsidian";
+import { MarkdownRenderChild, Notice } from "obsidian";
 import type FsrsPlugin from "../main";
 import type { CachedCard } from "../interfaces/fsrs";
 import type { TableParams } from "../utils/fsrs-table-helpers";
@@ -14,28 +14,21 @@ import {
 export class FsrsTableRenderer extends MarkdownRenderChild {
     private params: TableParams | null = null;
     private isFirstLoad = true;
-    private activeLeafHandler?: EventRef;
     private activeLeafCallback?: () => void;
     private lastVisibilityUpdate = 0;
     private lastAction: "sort" | "refresh" | null = null;
     private cachedCards: CachedCard[] | null = null;
     private sourceText: string;
-    private sourceStart: number;
-    private sourceEnd: number;
 
     constructor(
         private plugin: FsrsPlugin,
         private container: HTMLElement,
         private sourcePath: string,
         source: string,
-        sourceStart: number,
-        sourceEnd: number,
     ) {
         super(container);
         this.params = null;
         this.sourceText = source;
-        this.sourceStart = sourceStart;
-        this.sourceEnd = sourceEnd;
     }
 
     /**
@@ -55,7 +48,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 );
             });
         };
-        this.activeLeafHandler = this.plugin.app.workspace.on(
+        this.plugin.app.workspace.on(
             "active-leaf-change",
             this.activeLeafCallback,
         );
@@ -77,7 +70,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 this.activeLeafCallback,
             );
             this.activeLeafCallback = undefined;
-            this.activeLeafHandler = undefined;
         }
 
         // Удаляем рендерер из списка активных
@@ -196,9 +188,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         } finally {
             const elapsedMs = performance.now() - start;
             const elapsedSec = elapsedMs / 1000;
-            console.debug(
-                `⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`,
-            );
+            console.log(`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`);
         }
     }
 
@@ -390,232 +380,5 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             // DESC → снять сортировку
             return null;
         }
-    }
-
-    /**
-     * Обновляет исходный код блока с новыми параметрами сортировки
-     */
-    private async updateSourceCode(): Promise<void> {
-        if (!this.params) return;
-        try {
-            // Получаем активный редактор
-            const editor = this.plugin.app.workspace.activeEditor?.editor;
-            if (!editor) {
-                console.warn(
-                    "Не найден активный редактор для обновления кода блока",
-                );
-                return;
-            }
-
-            // Получаем текущее содержимое блока
-            const currentContent = this.getBlockContentFromEditor(editor);
-            if (!currentContent) {
-                console.warn("Не удалось получить содержимое блока");
-                return;
-            }
-
-            // Извлекаем внутреннее содержимое блока (без обратных кавычек)
-            const innerContent = this.extractInnerBlockContent(currentContent);
-            if (!innerContent) {
-                console.warn("Не удалось извлечь содержимое блока fsrs-table");
-                return;
-            }
-
-            // Генерируем обновленное внутреннее содержимое
-            const updatedInnerContent =
-                this.generateUpdatedBlockContent(innerContent);
-
-            // Создаем полный обновленный блок
-            const updatedContent = this.wrapBlockContent(updatedInnerContent);
-
-            // Если содержимое изменилось
-            if (updatedContent !== currentContent) {
-                // Вычисляем позиции для replaceRange
-                const startPos = { line: this.sourceStart, ch: 0 };
-                const endPos = {
-                    line: this.sourceEnd,
-                    ch: editor.getLine(this.sourceEnd)?.length || 0,
-                };
-
-                // Заменяем содержимое блока
-                editor.replaceRange(updatedContent, startPos, endPos);
-
-                // Вычисляем новые позиции блока
-                const newLineCount = updatedContent.split("\n").length - 1;
-                this.sourceEnd = this.sourceStart + newLineCount;
-                this.sourceText = updatedContent;
-                // Обновляем параметры из внутреннего содержимого
-                try {
-                    // При обновлении кода блока используем новую функцию generateTableHTMLFromSql
-                    // чтобы получить параметры из SQL
-                    const { params } = await generateTableDOMFromSql(
-                        (this.cachedCards || []).map((c) => c.card),
-                        updatedInnerContent,
-                        this.plugin.settings,
-                        this.plugin.app,
-                        new Date(),
-                    );
-                    this.params = params;
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                } catch (_error) {
-                    // Игнорируем ошибку парсинга, так как теперь будем использовать SQL напрямую
-                    this.params = null;
-                }
-            }
-        } catch (error) {
-            console.error("Ошибка при обновлении исходного кода блока:", error);
-        }
-    }
-
-    /**
-     * Получает содержимое блока из редактора по сохраненным позициям
-     */
-    private getBlockContentFromEditor(editor: Editor): string | null {
-        try {
-            const lines: string[] = [];
-            for (let i = this.sourceStart; i <= this.sourceEnd; i++) {
-                const line = editor.getLine(i);
-                if (line !== null) {
-                    lines.push(line);
-                }
-            }
-            return lines.join("\n");
-        } catch {
-            return null;
-        }
-    }
-
-    /**
-     * Извлекает внутреннее содержимое блока fsrs-table (без обратных кавычек)
-     * @param blockContent Полное содержимое блока с обратными кавычками
-     * @returns Внутреннее содержимое или null если формат некорректен
-     */
-    private extractInnerBlockContent(blockContent: string): string | null {
-        const lines = blockContent.split("\n");
-        const innerLines: string[] = [];
-        let inBlock = false;
-
-        for (const line of lines) {
-            const trimmed = line.trim();
-            if (trimmed.startsWith("```fsrs-table")) {
-                inBlock = true;
-                continue;
-            }
-            if (trimmed === "```") {
-                break;
-            }
-            if (inBlock) {
-                innerLines.push(line);
-            }
-        }
-
-        return innerLines.length > 0 ? innerLines.join("\n") : null;
-    }
-
-    /**
-     * Обертывает внутреннее содержимое в блок кода fsrs-table
-     * @param innerContent Внутреннее содержимое блока
-     * @returns Полное содержимое блока с обратными кавычками
-     */
-    private wrapBlockContent(innerContent: string): string {
-        return `\`\`\`fsrs-table\n${innerContent}\n\`\`\``;
-    }
-
-    /**
-     * Генерирует обновленное содержимое блока с учетом параметров сортировки
-     * @param currentContent Текущее содержимое блока (без обратных кавычек)
-     * @returns Обновленное содержимое блока (без обратных кавычек)
-     */
-    private generateUpdatedBlockContent(currentContent: string): string {
-        if (!this.params) return currentContent;
-        const lines = currentContent.split("\n");
-        const updatedLines: string[] = [];
-
-        // Флаг, указывающий, был ли найден и обработан параметр sort
-        let sortProcessed = false;
-
-        for (const line of lines) {
-            const trimmed = line.trim();
-            // Пропускаем пустые строки
-            if (trimmed === "") {
-                updatedLines.push(line);
-                continue;
-            }
-
-            // Проверяем, является ли строка параметром ORDER BY
-            if (trimmed.startsWith("ORDER BY")) {
-                sortProcessed = true;
-                // Если есть параметр sort, добавляем или заменяем его
-                if (this.params.sort) {
-                    const indent = line.match(/^(\s*)/)?.[1] || "";
-                    updatedLines.push(
-                        `${indent}ORDER BY ${this.params.sort.field} ${this.params.sort.direction}`,
-                    );
-                }
-                // Если this.params.sort === undefined, строка удаляется (не добавляется)
-            } else {
-                updatedLines.push(line);
-            }
-        }
-
-        // Если параметр sort не был найден, но его нужно добавить
-        if (!sortProcessed && this.params.sort) {
-            // Ищем подходящее место для вставки (после mode, перед columns)
-            const insertIndex = this.findSortInsertPosition(updatedLines);
-            if (insertIndex !== -1) {
-                // Определяем отступ на основе соседней строки
-                const neighborLine = updatedLines[insertIndex];
-                const indent = neighborLine?.match(/^(\s*)/)?.[1] || "";
-                updatedLines.splice(
-                    insertIndex,
-                    0,
-                    `${indent}ORDER BY ${this.params.sort.field} ${this.params.sort.direction}`,
-                );
-            }
-        }
-
-        return updatedLines.join("\n");
-    }
-
-    /**
-     * Находит позицию для вставки параметра sort в блок
-     * @param lines Строки блока (без обратных кавычек)
-     * @returns Индекс для вставки или -1 если не найдено подходящее место
-     */
-    private findSortInsertPosition(lines: string[]): number {
-        // Ищем строки с SELECT, затем LIMIT
-        let selectIndex = -1;
-        let limitIndex = -1;
-
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            if (line && line.trim().toUpperCase().startsWith("SELECT")) {
-                selectIndex = i;
-            } else if (line && line.trim().toUpperCase().startsWith("LIMIT")) {
-                limitIndex = i;
-                break;
-            }
-        }
-
-        // Если нашли LIMIT, вставляем перед ним
-        if (limitIndex !== -1) {
-            return limitIndex;
-        }
-
-        // Если нашли SELECT, вставляем после него
-        if (selectIndex !== -1) {
-            return selectIndex + 1;
-        }
-
-        // Вставляем после первой непустой строки
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            if (line?.trim() !== "") {
-                return i + 1;
-            }
-        }
-
-        // По умолчанию вставляем в конец
-        return lines.length > 0 ? lines.length : 0;
     }
 }

@@ -66,7 +66,7 @@ export function formatFieldValue(
     card: ModernFSRSCard,
     state: ComputedCardState,
     app: App,
-    now: Date = new Date(),
+    _now: Date = new Date(),
 ): string {
     switch (field) {
         case "file":

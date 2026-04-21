@@ -1,20 +1,17 @@
 import { Modal, App } from "obsidian";
 import type { ModernFSRSCard, FSRSRating } from "../../interfaces/fsrs";
-import type MyPlugin from "../../main";
 
 /**
  * Модальное окно для выбора оценки при повторении карточки
  * Использует стандартный API Obsidian Modal
  */
 export class ReviewModal extends Modal {
-    private plugin: MyPlugin;
     private card: ModernFSRSCard;
     private resolve: (rating: FSRSRating | null) => void;
     private ratingSelected: boolean = false;
 
-    constructor(app: App, plugin: MyPlugin, card: ModernFSRSCard) {
+    constructor(app: App, card: ModernFSRSCard) {
         super(app);
-        this.plugin = plugin;
         this.card = card;
     }
 
