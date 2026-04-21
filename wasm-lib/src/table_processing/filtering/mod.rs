@@ -1386,40 +1386,76 @@ mod tests {
         let parse_result1 = parse_fsrs_table_block(sql_source1).unwrap();
         let params1 = parse_result1.value;
         let result1 = filter_and_sort_cards(cards_json, &params1, settings_json, now_iso);
-        assert!(result1.is_ok(), "Фильтрация reps = 0 должна завершиться успешно");
+        assert!(
+            result1.is_ok(),
+            "Фильтрация reps = 0 должна завершиться успешно"
+        );
         let filter_result1 = result1.unwrap();
         // card0.md: пустые reviews -> reps = 0
         // card1_again.md: один Again -> reps = 1 (считается повторением)
         // Итого 1 карточка с reps = 0
-        assert_eq!(filter_result1.cards.len(), 1, "Должна быть 1 карточка с reps = 0");
-        assert!(filter_result1.cards.iter().any(|c| c.card_json.contains("card0.md")));
+        assert_eq!(
+            filter_result1.cards.len(),
+            1,
+            "Должна быть 1 карточка с reps = 0"
+        );
+        assert!(
+            filter_result1
+                .cards
+                .iter()
+                .any(|c| c.card_json.contains("card0.md"))
+        );
 
         // Тест 2: WHERE reps = 1 (одно успешное повторение)
         let sql_source2 = r#"SELECT file WHERE reps = 1"#;
         let parse_result2 = parse_fsrs_table_block(sql_source2).unwrap();
         let params2 = parse_result2.value;
         let result2 = filter_and_sort_cards(cards_json, &params2, settings_json, now_iso);
-        assert!(result2.is_ok(), "Фильтрация reps = 1 должна завершиться успешно");
+        assert!(
+            result2.is_ok(),
+            "Фильтрация reps = 1 должна завершиться успешно"
+        );
         let filter_result2 = result2.unwrap();
         // card1_good.md: один Good -> reps = 1
         // card1_again.md: один Again -> reps = 1 (считается повторением)
         // card_again_then_good.md: Again затем Good -> reps = 2
         // Итого 2 карточки с reps = 1
-        assert_eq!(filter_result2.cards.len(), 2, "Должны быть 2 карточки с reps = 1");
-        assert!(filter_result2.cards.iter().any(|c| c.card_json.contains("card1_good.md")));
-        assert!(filter_result2.cards.iter().any(|c| c.card_json.contains("card1_again.md")));
+        assert_eq!(
+            filter_result2.cards.len(),
+            2,
+            "Должны быть 2 карточки с reps = 1"
+        );
+        assert!(
+            filter_result2
+                .cards
+                .iter()
+                .any(|c| c.card_json.contains("card1_good.md"))
+        );
+        assert!(
+            filter_result2
+                .cards
+                .iter()
+                .any(|c| c.card_json.contains("card1_again.md"))
+        );
 
         // Тест 3: WHERE reps = 2 (два успешных повторения)
         let sql_source3 = r#"SELECT file WHERE reps = 2"#;
         let parse_result3 = parse_fsrs_table_block(sql_source3).unwrap();
         let params3 = parse_result3.value;
         let result3 = filter_and_sort_cards(cards_json, &params3, settings_json, now_iso);
-        assert!(result3.is_ok(), "Фильтрация reps = 2 должна завершиться успешно");
+        assert!(
+            result3.is_ok(),
+            "Фильтрация reps = 2 должна завершиться успешно"
+        );
         let filter_result3 = result3.unwrap();
         // card2.md: два Good -> reps = 2
         // card_again_then_good.md: Again затем Good -> reps = 2
         // Итого 2 карточки
-        assert_eq!(filter_result3.cards.len(), 2, "Должны быть 2 карточки с reps = 2");
+        assert_eq!(
+            filter_result3.cards.len(),
+            2,
+            "Должны быть 2 карточки с reps = 2"
+        );
         assert!(filter_result3.cards[0].card_json.contains("card2.md"));
 
         // Тест 4: WHERE reps > 0 (все карточки с успешными повторениями)
@@ -1427,19 +1463,33 @@ mod tests {
         let parse_result4 = parse_fsrs_table_block(sql_source4).unwrap();
         let params4 = parse_result4.value;
         let result4 = filter_and_sort_cards(cards_json, &params4, settings_json, now_iso);
-        assert!(result4.is_ok(), "Фильтрация reps > 0 должна завершиться успешно");
+        assert!(
+            result4.is_ok(),
+            "Фильтрация reps > 0 должна завершиться успешно"
+        );
         let filter_result4 = result4.unwrap();
         // card1_good.md (1), card1_again.md (1), card2.md (2), card_again_then_good.md (2) -> 4 карточки
-        assert_eq!(filter_result4.cards.len(), 4, "Должны быть 4 карточки с reps > 0");
+        assert_eq!(
+            filter_result4.cards.len(),
+            4,
+            "Должны быть 4 карточки с reps > 0"
+        );
 
         // Тест 5: WHERE reps < 2 (меньше двух успешных повторений)
         let sql_source5 = r#"SELECT file WHERE reps < 2"#;
         let parse_result5 = parse_fsrs_table_block(sql_source5).unwrap();
         let params5 = parse_result5.value;
         let result5 = filter_and_sort_cards(cards_json, &params5, settings_json, now_iso);
-        assert!(result5.is_ok(), "Фильтрация reps < 2 должна завершиться успешно");
+        assert!(
+            result5.is_ok(),
+            "Фильтрация reps < 2 должна завершиться успешно"
+        );
         let filter_result5 = result5.unwrap();
         // card0.md (0), card1_good.md (1), card1_again.md (1) -> 3 карточки
-        assert_eq!(filter_result5.cards.len(), 3, "Должны быть 3 карточки с reps < 2");
+        assert_eq!(
+            filter_result5.cards.len(),
+            3,
+            "Должны быть 3 карточки с reps < 2"
+        );
     }
 }

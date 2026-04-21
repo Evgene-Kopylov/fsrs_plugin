@@ -316,7 +316,6 @@ mod tests {
             "Неизвестное поле для сортировки: 'test'"
         );
 
-
         let warning = ParseWarning::DuplicateWhere("test".to_string());
         assert_eq!(warning.to_string(), "Дублирующееся условие WHERE: 'test'");
 
