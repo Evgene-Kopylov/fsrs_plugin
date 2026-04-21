@@ -1336,4 +1336,109 @@ mod tests {
             .expect("No errors array in result");
         assert_eq!(errors.len(), 0);
     }
+
+    /// Тест для фильтрации по полю reps
+    #[test]
+    fn test_filter_by_reps() {
+        use crate::table_processing::parsing::parse_fsrs_table_block;
+
+        // Создаем JSON карточек с разным количеством повторений
+        let cards_json = r#"[
+            {
+                "reviews": [],
+                "filePath": "card0.md"
+            },
+            {
+                "reviews": [{"date": "2024-01-01T10:00:00Z", "rating": "Again", "stability": 0.5, "difficulty": 8.0}],
+                "filePath": "card1_again.md"
+            },
+            {
+                "reviews": [{"date": "2024-01-01T10:00:00Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "filePath": "card1_good.md"
+            },
+            {
+                "reviews": [
+                    {"date": "2024-01-01T10:00:00Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0},
+                    {"date": "2024-01-02T10:00:00Z", "rating": "Good", "stability": 8.0, "difficulty": 2.5}
+                ],
+                "filePath": "card2.md"
+            },
+            {
+                "reviews": [
+                    {"date": "2024-01-01T10:00:00Z", "rating": "Again", "stability": 0.5, "difficulty": 8.0},
+                    {"date": "2024-01-02T10:00:00Z", "rating": "Good", "stability": 2.0, "difficulty": 5.0}
+                ],
+                "filePath": "card_again_then_good.md"
+            }
+        ]"#;
+
+        // Создаем настройки
+        let settings_json = r#"{
+            "default_initial_stability": 2.0,
+            "default_initial_difficulty": 5.0,
+            "parameters": "{\"request_retention\": 0.9, \"maximum_interval\": 36500.0, \"enable_fuzz\": true}"
+        }"#;
+
+        let now_iso = "2024-01-03T00:00:00.000Z";
+
+        // Тест 1: WHERE reps = 0 (должны быть карточки без успешных повторений)
+        let sql_source1 = r#"SELECT file WHERE reps = 0"#;
+        let parse_result1 = parse_fsrs_table_block(sql_source1).unwrap();
+        let params1 = parse_result1.value;
+        let result1 = filter_and_sort_cards(cards_json, &params1, settings_json, now_iso);
+        assert!(result1.is_ok(), "Фильтрация reps = 0 должна завершиться успешно");
+        let filter_result1 = result1.unwrap();
+        // card0.md: пустые reviews -> reps = 0
+        // card1_again.md: один Again -> reps = 0
+        // Итого 2 карточки
+        assert_eq!(filter_result1.cards.len(), 2, "Должны быть 2 карточки с reps = 0");
+        assert!(filter_result1.cards.iter().any(|c| c.card_json.contains("card0.md")));
+        assert!(filter_result1.cards.iter().any(|c| c.card_json.contains("card1_again.md")));
+
+        // Тест 2: WHERE reps = 1 (одно успешное повторение)
+        let sql_source2 = r#"SELECT file WHERE reps = 1"#;
+        let parse_result2 = parse_fsrs_table_block(sql_source2).unwrap();
+        let params2 = parse_result2.value;
+        let result2 = filter_and_sort_cards(cards_json, &params2, settings_json, now_iso);
+        assert!(result2.is_ok(), "Фильтрация reps = 1 должна завершиться успешно");
+        let filter_result2 = result2.unwrap();
+        // card1_good.md: один Good -> reps = 1
+        // card_again_then_good.md: Again затем Good -> reps = 1
+        // Итого 2 карточки
+        assert_eq!(filter_result2.cards.len(), 2, "Должны быть 2 карточки с reps = 1");
+        assert!(filter_result2.cards.iter().any(|c| c.card_json.contains("card1_good.md")));
+        assert!(filter_result2.cards.iter().any(|c| c.card_json.contains("card_again_then_good.md")));
+
+        // Тест 3: WHERE reps = 2 (два успешных повторения)
+        let sql_source3 = r#"SELECT file WHERE reps = 2"#;
+        let parse_result3 = parse_fsrs_table_block(sql_source3).unwrap();
+        let params3 = parse_result3.value;
+        let result3 = filter_and_sort_cards(cards_json, &params3, settings_json, now_iso);
+        assert!(result3.is_ok(), "Фильтрация reps = 2 должна завершиться успешно");
+        let filter_result3 = result3.unwrap();
+        // card2.md: два Good -> reps = 2
+        // Итого 1 карточка
+        assert_eq!(filter_result3.cards.len(), 1, "Должна быть 1 карточка с reps = 2");
+        assert!(filter_result3.cards[0].card_json.contains("card2.md"));
+
+        // Тест 4: WHERE reps > 0 (все карточки с успешными повторениями)
+        let sql_source4 = r#"SELECT file WHERE reps > 0"#;
+        let parse_result4 = parse_fsrs_table_block(sql_source4).unwrap();
+        let params4 = parse_result4.value;
+        let result4 = filter_and_sort_cards(cards_json, &params4, settings_json, now_iso);
+        assert!(result4.is_ok(), "Фильтрация reps > 0 должна завершиться успешно");
+        let filter_result4 = result4.unwrap();
+        // card1_good.md, card2.md, card_again_then_good.md -> 3 карточки
+        assert_eq!(filter_result4.cards.len(), 3, "Должны быть 3 карточки с reps > 0");
+
+        // Тест 5: WHERE reps < 2 (меньше двух успешных повторений)
+        let sql_source5 = r#"SELECT file WHERE reps < 2"#;
+        let parse_result5 = parse_fsrs_table_block(sql_source5).unwrap();
+        let params5 = parse_result5.value;
+        let result5 = filter_and_sort_cards(cards_json, &params5, settings_json, now_iso);
+        assert!(result5.is_ok(), "Фильтрация reps < 2 должна завершиться успешно");
+        let filter_result5 = result5.unwrap();
+        // Все кроме card2.md -> 4 карточки
+        assert_eq!(filter_result5.cards.len(), 4, "Должны быть 4 карточки с reps < 2");
+    }
 }

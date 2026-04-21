@@ -589,4 +589,87 @@ mod tests {
             panic!("Expected JsonParseError");
         }
     }
+
+    // Helper функции для тестов reps
+    fn create_test_card_json(reviews: &[(&str, &str, f64, f64)]) -> String {
+        if reviews.is_empty() {
+            return r#"{"reviews": []}"#.to_string();
+        }
+
+        let review_objects: Vec<String> = reviews
+            .iter()
+            .map(|(date, rating, stability, difficulty)| {
+                format!(
+                    r#"{{"date": "{}", "rating": "{}", "stability": {}, "difficulty": {}}}"#,
+                    date, rating, stability, difficulty
+                )
+            })
+            .collect();
+
+        format!(r#"{{"reviews": [{}]}}"#, review_objects.join(", "))
+    }
+
+    #[test]
+    fn test_compute_all_fields_reps_calculation() {
+        let now_iso = "2025-01-10T12:00:00Z";
+        let params_json = r#"{"request_retention": 0.9, "maximum_interval": 365.0, "enable_fuzz": false}"#;
+        let default_stability = 2.5;
+        let default_difficulty = 5.0;
+
+        // Тест 1: пустые reviews -> reps = 0
+        let empty_card = create_test_card_json(&[]);
+        let result1 = compute_all_fields(&empty_card, now_iso, params_json, default_stability, default_difficulty)
+            .expect("Should compute fields for empty card");
+        assert_eq!(result1.reps, Some(0), "Empty card should have reps=0");
+
+        // Тест 2: одна сессия "Good" -> reps = 1
+        let good_card = create_test_card_json(&[("2025-01-01T10:00:00Z", "Good", 5.0, 3.0)]);
+        let result2 = compute_all_fields(&good_card, now_iso, params_json, default_stability, default_difficulty)
+            .expect("Should compute fields for card with Good review");
+        assert_eq!(result2.reps, Some(1), "Card with one Good review should have reps=1");
+
+        // Тест 3: одна сессия "Again" -> reps = 0 (Again не считается успешным повторением)
+        let again_card = create_test_card_json(&[("2025-01-01T10:00:00Z", "Again", 0.5, 8.0)]);
+        let result3 = compute_all_fields(&again_card, now_iso, params_json, default_stability, default_difficulty)
+            .expect("Should compute fields for card with Again review");
+        assert_eq!(result3.reps, Some(0), "Card with one Again review should have reps=0");
+
+        // Тест 4: "Again" затем "Good" -> reps = 1
+        let again_good_card = create_test_card_json(&[
+            ("2025-01-01T10:00:00Z", "Again", 0.5, 8.0),
+            ("2025-01-02T10:00:00Z", "Good", 2.0, 5.0),
+        ]);
+        let result4 = compute_all_fields(&again_good_card, now_iso, params_json, default_stability, default_difficulty)
+            .expect("Should compute fields for card with Again then Good");
+        assert_eq!(result4.reps, Some(1), "Card with Again then Good should have reps=1");
+
+        // Тест 5: "Good" затем "Again" -> reps = 1 (Again после успешного повторения)
+        let good_again_card = create_test_card_json(&[
+            ("2025-01-01T10:00:00Z", "Good", 5.0, 3.0),
+            ("2025-01-02T10:00:00Z", "Again", 0.8, 7.0),
+        ]);
+        let result5 = compute_all_fields(&good_again_card, now_iso, params_json, default_stability, default_difficulty)
+            .expect("Should compute fields for card with Good then Again");
+        assert_eq!(result5.reps, Some(1), "Card with Good then Again should have reps=1");
+
+        // Тест 6: "Good", "Good", "Again" -> reps = 2
+        let two_good_then_again = create_test_card_json(&[
+            ("2025-01-01T10:00:00Z", "Good", 5.0, 3.0),
+            ("2025-01-02T10:00:00Z", "Good", 8.0, 2.5),
+            ("2025-01-03T10:00:00Z", "Again", 0.8, 7.0),
+        ]);
+        let result6 = compute_all_fields(&two_good_then_again, now_iso, params_json, default_stability, default_difficulty)
+            .expect("Should compute fields for card with two Good then Again");
+        assert_eq!(result6.reps, Some(2), "Card with two Good then Again should have reps=2");
+
+        // Тест 7: "Again", "Again", "Good" -> reps = 1 (первые два Again не считаются, так как не было успешных повторений)
+        let two_again_then_good = create_test_card_json(&[
+            ("2025-01-01T10:00:00Z", "Again", 0.5, 8.0),
+            ("2025-01-02T10:00:00Z", "Again", 0.3, 9.0),
+            ("2025-01-03T10:00:00Z", "Good", 2.0, 5.0),
+        ]);
+        let result7 = compute_all_fields(&two_again_then_good, now_iso, params_json, default_stability, default_difficulty)
+            .expect("Should compute fields for card with two Again then Good");
+        assert_eq!(result7.reps, Some(1), "Card with two Again then Good should have reps=1");
+    }
 }
