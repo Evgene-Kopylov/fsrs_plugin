@@ -19,3 +19,13 @@ npx eslint src/ --fix
 npm version patch
 git push --tags
 ```
+
+## Regrok
+
+Собирает репозиторий в один агент-френдли файл
+
+Проверить .regrokignore
+
+```bash
+npx repogrok
+```
