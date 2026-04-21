@@ -169,9 +169,23 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 console.debug("Parsed params from SQL:", this.params);
             }
 
+            // Сохраняем позицию прокрутки перед обновлением
+            const scrollContainer = this.container.querySelector(
+                ".fsrs-table-container",
+            ) as HTMLElement | null;
+            const savedScrollLeft = scrollContainer?.scrollLeft ?? 0;
+
             // Очищаем контейнер и вставляем DOM элементы
             this.container.empty();
             this.container.appendChild(container);
+
+            // Восстанавливаем позицию прокрутки
+            const newScrollContainer = this.container.querySelector(
+                ".fsrs-table-container",
+            ) as HTMLElement | null;
+            if (newScrollContainer && savedScrollLeft > 0) {
+                newScrollContainer.scrollLeft = savedScrollLeft;
+            }
 
             // Добавляем обработчики событий для кликабельных ссылок
             this.addEventListeners();
