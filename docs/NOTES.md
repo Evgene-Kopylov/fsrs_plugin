@@ -12,3 +12,10 @@ npm run lint
 ```bash
 npx eslint src/ --fix 
 ```
+
+## Version bump
+
+```bash
+npm version patch
+git push --tags
+```
