@@ -1,0 +1,24 @@
+{
+    "review": {
+        "title": "Card Review",
+        "file_label": "File:",
+        "sessions_label": "Reviews:",
+        "last_review_label": "Last review:",
+        "no_reviews": "none",
+        "buttons": {
+            "again": "Again (1)",
+            "hard": "Hard (2)",
+            "good": "Good (3)",
+            "easy": "Easy (4)",
+            "cancel": "Cancel"
+        },
+        "notices": {
+            "no_active_file": "No active file",
+            "no_frontmatter": "File has no frontmatter",
+            "not_fsrs_card": "Not an FSRS card",
+            "review_cancelled": "Review cancelled",
+            "card_reviewed": "Card reviewed: {rating}",
+            "next_review": "Next review: {date}"
+        }
+    }
+}
