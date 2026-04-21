@@ -54,6 +54,9 @@ export {
     hasAnyFieldInFrontmatter,
 } from "./fsrs-frontmatter";
 
+// Экспорт инкрементального кэша
+export { IncrementalCache } from "./incremental-cache";
+
 // Реэкспорт типов для удобства
 export type {
     ModernFSRSCard,
