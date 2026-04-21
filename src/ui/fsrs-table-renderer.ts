@@ -188,7 +188,9 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         } finally {
             const elapsedMs = performance.now() - start;
             const elapsedSec = elapsedMs / 1000;
-            console.log(`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`);
+            console.debug(
+                `⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`,
+            );
         }
     }
 

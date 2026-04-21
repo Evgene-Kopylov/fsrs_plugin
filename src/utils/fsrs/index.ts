@@ -16,7 +16,6 @@ export {
     getCurrentISOTime,
     base64ToBytes,
     cardToFsrsYaml,
-    parseFsrsYaml,
 } from "./fsrs-wasm";
 
 // Экспорт функций работы со временем
@@ -29,7 +28,6 @@ export {
     getHoursUntilDue,
     formatTimeUntilDue,
     describeCardState,
-    getCardAgeInDays,
     getMinutesSinceLastReview,
 } from "./fsrs-time";
 

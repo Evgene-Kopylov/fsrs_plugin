@@ -1,6 +1,6 @@
 // Вспомогательные функции для WASM модуля FSRS
 
-import type { ModernFSRSCard, ReviewSession } from "../../interfaces/fsrs";
+import type { ModernFSRSCard } from "../../interfaces/fsrs";
 import * as wasm from "../../../wasm-lib/pkg/wasm_lib";
 
 /** Получает текущее время в ISO формате через WASM */
@@ -28,20 +28,5 @@ export function cardToFsrsYaml(card: ModernFSRSCard): string {
     } catch (error) {
         console.error("Ошибка при преобразовании карточки в YAML:", error);
         return "reviews: []";
-    }
-}
-
-/** Парсит YAML строку в карточку FSRS через WASM */
-export function parseFsrsYaml(yaml: string): ModernFSRSCard | null {
-    try {
-        const cardJson = wasm.parse_fsrs_yaml(yaml);
-        if (cardJson === "null") {
-            return null;
-        }
-        const parsed = JSON.parse(cardJson) as { reviews: ReviewSession[] };
-        return { reviews: parsed.reviews, filePath: "" };
-    } catch (error) {
-        console.error("Ошибка при парсинге YAML:", error);
-        return null;
     }
 }
