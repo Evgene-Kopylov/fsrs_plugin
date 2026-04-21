@@ -1,4 +1,4 @@
-import { Plugin, Notice, TAbstractFile } from "obsidian";
+import { Plugin, TAbstractFile } from "obsidian";
 import { registerCommands } from "./commands/index";
 import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from "./commands/add-fsrs-fields";
 import { findFsrsCards } from "./commands/find-fsrs-cards";
@@ -25,7 +25,7 @@ import {
 } from "./utils/fsrs-helper";
 import { shouldIgnoreFileWithSettings } from "./utils/fsrs/fsrs-filter";
 import type { ModernFSRSCard, FSRSRating, CachedCard } from "./interfaces/fsrs";
-import { showNotice } from "../utils/i18n";
+import { showNotice } from "./utils/i18n";
 
 // Импорт WASM функций
 import init from "../wasm-lib/pkg/wasm_lib";

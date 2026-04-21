@@ -7,9 +7,9 @@ import {
     computeCardState,
     formatLocalDate,
     getMinutesSinceLastReview,
-    getRussianNoun,
     extractFrontmatter,
 } from "../utils/fsrs-helper";
+import { i18n, getLocalizedNoun } from "../utils/i18n";
 import { FsrsHelpModal } from "./fsrs-help-modal";
 import { showReviewHistoryForCurrentFile } from "./review-history-modal";
 
@@ -48,11 +48,10 @@ export class StatusBarManager extends Component {
         this.iconSpan = document.createElement("span");
         this.iconSpan.textContent = icon;
         this.textSpan = document.createElement("span");
-        this.textSpan.textContent = " FSRS: loading...";
+        this.textSpan.textContent = ` FSRS: ${i18n.t("statusBar.loading")}`;
         this.statusBarItem.appendChild(this.iconSpan);
         this.statusBarItem.appendChild(this.textSpan);
-        this.statusBarItem.title =
-            "FSRS plugin - left-click to review, right-click for menu";
+        this.statusBarItem.title = i18n.t("statusBar.tooltip.default");
         this.statusBarItem.addEventListener("click", (event) => {
             event.preventDefault();
             void this.plugin.reviewCurrentCard();
@@ -62,7 +61,7 @@ export class StatusBarManager extends Component {
             const menu = new Menu();
 
             menu.addItem((item) => {
-                item.setTitle("Добавить поля FSRS в шапку файла")
+                item.setTitle(i18n.t("statusBar.menu.add_fields"))
                     .setIcon("plus")
                     .onClick(() => {
                         void this.plugin.addFsrsFieldsToCurrentFile();
@@ -70,7 +69,7 @@ export class StatusBarManager extends Component {
             });
 
             menu.addItem((item) => {
-                item.setTitle("Показать историю повторений")
+                item.setTitle(i18n.t("statusBar.menu.show_history"))
                     .setIcon("clock")
                     .onClick(() => {
                         void showReviewHistoryForCurrentFile(this.app);
@@ -78,7 +77,7 @@ export class StatusBarManager extends Component {
             });
 
             menu.addItem((item) => {
-                item.setTitle("Показать справку по синтаксису fsrs-table")
+                item.setTitle(i18n.t("statusBar.menu.show_help"))
                     .setIcon("help")
                     .onClick(() => {
                         new FsrsHelpModal(this.app).show();
@@ -115,18 +114,16 @@ export class StatusBarManager extends Component {
         if (!this.statusBarItem) return;
 
         const file = this.app.workspace.getActiveFile();
-        console.debug(
-            "Обновление статус-бара для файла:",
-            file?.path || "нет файла",
-        );
+        console.debug("Updating status bar for file:", file?.path || "no file");
         if (!file) {
             const icon = this.settings.status_bar_icon || "🔄";
             if (this.iconSpan) this.iconSpan.textContent = icon;
-            if (this.textSpan) this.textSpan.textContent = " FSRS: no file";
-            this.statusBarItem.title = "FSRS plugin - no active file";
+            if (this.textSpan)
+                this.textSpan.textContent = ` FSRS: ${i18n.t("statusBar.no_file")}`;
+            this.statusBarItem.title = i18n.t("statusBar.tooltip.no_file");
             if (this.iconSpan)
                 this.iconSpan.classList.add("fsrs-status-bar-icon-dimmed");
-            console.debug("Статус-бар: нет активного файла");
+            console.debug("Status bar: no active file");
             return;
         }
 
@@ -138,12 +135,11 @@ export class StatusBarManager extends Component {
                 const icon = this.settings.status_bar_icon || "🔄";
                 if (this.iconSpan) this.iconSpan.textContent = icon;
                 if (this.textSpan)
-                    this.textSpan.textContent = " FSRS: not FSRS";
-                this.statusBarItem.title =
-                    "FSRS plugin - current file is not a FSRS card";
+                    this.textSpan.textContent = ` FSRS: ${i18n.t("statusBar.not_fsrs")}`;
+                this.statusBarItem.title = i18n.t("statusBar.tooltip.not_fsrs");
                 if (this.iconSpan)
                     this.iconSpan.classList.add("fsrs-status-bar-icon-dimmed");
-                console.debug("Статус-бар: файл не содержит frontmatter");
+                console.debug("Status bar: file has no frontmatter");
                 return;
             }
 
@@ -155,12 +151,11 @@ export class StatusBarManager extends Component {
                 const icon = this.settings.status_bar_icon || "🔄";
                 if (this.iconSpan) this.iconSpan.textContent = icon;
                 if (this.textSpan)
-                    this.textSpan.textContent = " FSRS: not FSRS";
-                this.statusBarItem.title =
-                    "FSRS plugin - current file is not a FSRS card";
+                    this.textSpan.textContent = ` FSRS: ${i18n.t("statusBar.not_fsrs")}`;
+                this.statusBarItem.title = i18n.t("statusBar.tooltip.not_fsrs");
                 if (this.iconSpan)
                     this.iconSpan.classList.add("fsrs-status-bar-icon-dimmed");
-                console.debug("Статус-бар: файл не является FSRS карточкой");
+                console.debug("Status bar: file is not an FSRS card");
                 return;
             }
 
@@ -172,14 +167,14 @@ export class StatusBarManager extends Component {
                 this.iconSpan.classList.remove("fsrs-status-bar-icon-dimmed");
 
             if (isDue) {
-                if (this.textSpan) this.textSpan.textContent = " FSRS: due!";
-                this.statusBarItem.title =
-                    "FSRS plugin - card is due for review. Click to review.";
-                console.debug("Статус-бар: карточка готова к повторению");
+                if (this.textSpan)
+                    this.textSpan.textContent = ` FSRS: ${i18n.t("statusBar.due")}`;
+                this.statusBarItem.title = i18n.t("statusBar.tooltip.due");
+                console.debug("Status bar: card is ready for review");
             } else {
                 const state = await computeCardState(card, this.settings);
                 console.debug(
-                    "Статус-бар: карточка уже повторена, следующее повторение:",
+                    "Status bar: card already reviewed, next review:",
                     state.due,
                 );
                 const nextDate = new Date(state.due);
@@ -196,30 +191,51 @@ export class StatusBarManager extends Component {
                 ) {
                     const remainingMinutes =
                         minInterval - minutesSinceLastReview;
-                    const noun = getRussianNoun(
-                        remainingMinutes,
-                        "минуту",
-                        "минуты",
-                        "минут",
-                    );
+                    const locale = i18n.getLocale();
+                    let noun;
+                    if (locale === "ru") {
+                        noun = getLocalizedNoun(
+                            remainingMinutes,
+                            "минуту",
+                            "минуты",
+                            "минут",
+                        );
+                    } else {
+                        noun = getLocalizedNoun(
+                            remainingMinutes,
+                            "minute",
+                            "minutes",
+                        );
+                    }
                     if (this.textSpan)
-                        this.textSpan.textContent = ` FSRS: Wait ${remainingMinutes} ${noun}`;
-                    this.statusBarItem.title = `FSRS Plugin - Early review available in ${remainingMinutes} ${noun}. Next scheduled review: ${formattedDate}`;
+                        this.textSpan.textContent = ` FSRS: ${i18n.t("statusBar.wait_early", { minutes: remainingMinutes, noun })}`;
+                    this.statusBarItem.title = i18n.t(
+                        "statusBar.tooltip.early_available",
+                        {
+                            minutes: remainingMinutes,
+                            noun,
+                            date: formattedDate,
+                        },
+                    );
                 } else {
                     if (this.textSpan)
-                        this.textSpan.textContent = ` FSRS: ${formattedDate}`;
-                    this.statusBarItem.title = `FSRS Plugin - Next review: ${formattedDate}`;
+                        this.textSpan.textContent = ` FSRS: ${i18n.t("statusBar.next_review", { date: formattedDate })}`;
+                    this.statusBarItem.title = i18n.t(
+                        "statusBar.tooltip.next_scheduled",
+                        { date: formattedDate },
+                    );
                 }
             }
         } catch (error) {
-            console.error("Ошибка при обновлении статус-бара:", error);
+            console.error("Error updating status bar:", error);
             const icon = this.settings.status_bar_icon || "🔄";
             if (this.iconSpan) this.iconSpan.textContent = icon;
-            if (this.textSpan) this.textSpan.textContent = " FSRS: error";
-            this.statusBarItem.title = "FSRS plugin - prror updating status";
+            if (this.textSpan)
+                this.textSpan.textContent = ` FSRS: ${i18n.t("statusBar.error")}`;
+            this.statusBarItem.title = i18n.t("statusBar.tooltip.error");
             if (this.iconSpan)
                 this.iconSpan.classList.remove("fsrs-status-bar-icon-dimmed");
-            console.debug("Статус-бар: ошибка при обновлении");
+            console.debug("Status bar: error updating");
         }
     }
 

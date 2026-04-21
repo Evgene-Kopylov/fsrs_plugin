@@ -17,7 +17,7 @@
         "no_active_file": "Нет активного файла",
         "no_frontmatter": "Файл не содержит frontmatter",
         "frontmatter_empty": "Frontmatter пуст",
-        "not_fsrs_card": "Not an FSRS card",
+        "not_fsrs_card": "Не является карточкой FSRS",
         "review_cancelled": "Повторение отменено",
         "card_reviewed": "Карточка повторена: {rating}",
         "next_review": "Следующее повторение: {date}",
@@ -45,5 +45,28 @@
         "delete_last_review": "Удалить последнее повторение карточки",
         "show_fsrs_help": "Показать справку по синтаксису fsrs-table",
         "show_review_history": "Показать историю повторений"
+    },
+    "statusBar": {
+        "loading": "загрузка...",
+        "no_file": "нет файла",
+        "not_fsrs": "не FSRS",
+        "due": "готово!",
+        "error": "ошибка",
+        "wait_early": "Ждать {minutes} {noun}",
+        "next_review": "{date}",
+        "tooltip": {
+            "no_file": "Плагин FSRS - нет активного файла",
+            "not_fsrs": "Плагин FSRS - текущий файл не является карточкой FSRS",
+            "due": "Плагин FSRS - карточка готова к повторению. Нажмите для повторения.",
+            "error": "Плагин FSRS - ошибка обновления статуса",
+            "default": "Плагин FSRS - левый клик для повторения, правый клик для меню",
+            "next_scheduled": "Плагин FSRS - Следующее повторение: {date}",
+            "early_available": "Плагин FSRS - Досрочное повторение возможно через {minutes} {noun}. Следующее повторение: {date}"
+        },
+        "menu": {
+            "add_fields": "Добавить поля FSRS в шапку файла",
+            "show_history": "Показать историю повторений",
+            "show_help": "Показать справку по синтаксису fsrs-table"
+        }
     }
 }

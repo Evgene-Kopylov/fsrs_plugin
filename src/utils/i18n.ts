@@ -77,7 +77,7 @@ export function getLocalizedNoun(
     plural: string,
     genitive?: string,
 ): string {
-    if (i18n.currentLocale === "ru") {
+    if (i18n.getLocale() === "ru") {
         // Russian pluralization rules
         const n = Math.abs(number) % 100;
         const n1 = n % 10;

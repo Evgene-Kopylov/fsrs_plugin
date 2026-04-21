@@ -151,11 +151,6 @@ export async function reviewCurrentCard(
         );
 
         // Показываем уведомление с информацией
-        let message = `Карточка повторена: ${rating}`;
-        if (nextDates[rating]) {
-            const nextDate = new Date(nextDates[rating]);
-            message += `\nСледующее повторение: ${nextDate.toLocaleDateString()}`;
-        }
 
         if (nextDates[rating]) {
             const nextDate = new Date(nextDates[rating]);
@@ -322,11 +317,6 @@ export async function reviewCardByPath(
         );
 
         // Показываем уведомление с информацией
-        let message = `Карточка повторена: ${rating}`;
-        if (nextDates[rating]) {
-            const nextDate = new Date(nextDates[rating]);
-            message += `\nСледующее повторение: ${nextDate.toLocaleDateString()}`;
-        }
 
         if (nextDates[rating]) {
             const nextDate = new Date(nextDates[rating]);

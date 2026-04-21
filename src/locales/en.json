@@ -45,5 +45,28 @@
         "delete_last_review": "Delete last review",
         "show_fsrs_help": "Show fsrs-table syntax help",
         "show_review_history": "Show review history"
+    },
+    "statusBar": {
+        "loading": "loading...",
+        "no_file": "no file",
+        "not_fsrs": "not FSRS",
+        "due": "due!",
+        "error": "error",
+        "wait_early": "Wait {minutes} {noun}",
+        "next_review": "{date}",
+        "tooltip": {
+            "no_file": "FSRS plugin - no active file",
+            "not_fsrs": "FSRS plugin - current file is not a FSRS card",
+            "due": "FSRS plugin - card is due for review. Click to review.",
+            "error": "FSRS plugin - error updating status",
+            "default": "FSRS plugin - left-click to review, right-click for menu",
+            "next_scheduled": "FSRS Plugin - Next review: {date}",
+            "early_available": "FSRS Plugin - Early review available in {minutes} {noun}. Next scheduled review: {date}"
+        },
+        "menu": {
+            "add_fields": "Add FSRS fields to frontmatter",
+            "show_history": "Show review history",
+            "show_help": "Show fsrs-table syntax help"
+        }
     }
 }
