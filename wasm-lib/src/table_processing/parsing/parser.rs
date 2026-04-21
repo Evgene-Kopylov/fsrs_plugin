@@ -131,16 +131,11 @@ impl<'a> ParserState<'a> {
                 debug!("Found LIMIT keyword");
                 self.parse_limit_clause()?;
             } else {
-                // Неожиданный токен, но пытаемся восстановиться
-                let unexpected = self.current_token.value.clone();
-                warn!(
-                    "Неожиданный токен '{}' (type: {:?}), пропускаем",
-                    unexpected, self.current_token.token_type
-                );
-                self.result
-                    .warnings
-                    .push(ParseWarning::UnexpectedToken(unexpected));
-                self.advance()?;
+                // Любой неожиданный токен — это ошибка
+                return Err(ParseError::Syntax(format!(
+                    "Неожиданный токен: '{}' (ожидалось WHERE, ORDER BY или LIMIT)",
+                    self.current_token.value
+                )));
             }
         }
 

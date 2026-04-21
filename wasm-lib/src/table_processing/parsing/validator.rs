@@ -18,8 +18,6 @@ pub enum ParseWarning {
     InvalidLimit(usize),
     /// Неизвестное поле для сортировки
     UnknownSortField(String),
-    /// Неожиданный токен (для восстановления после ошибок)
-    UnexpectedToken(String),
     /// Дублирующееся условие WHERE (в текущей версии поддерживается только одно)
     DuplicateWhere(String),
     /// Прочие предупреждения
@@ -45,9 +43,6 @@ impl serde::Serialize for ParseWarning {
                 "UnknownSortField",
                 format!("Неизвестное поле для сортировки: '{}'", field),
             ),
-            ParseWarning::UnexpectedToken(token) => {
-                ("UnexpectedToken", format!("Неожиданный токен: '{}'", token))
-            }
             ParseWarning::DuplicateWhere(field) => (
                 "DuplicateWhere",
                 format!("Дублирующееся условие WHERE: '{}'", field),
@@ -84,7 +79,6 @@ impl std::fmt::Display for ParseWarning {
             ParseWarning::UnknownSortField(field) => {
                 write!(f, "Неизвестное поле для сортировки: '{}'", field)
             }
-            ParseWarning::UnexpectedToken(token) => write!(f, "Неожиданный токен: '{}'", token),
             ParseWarning::DuplicateWhere(field) => {
                 write!(f, "Дублирующееся условие WHERE: '{}'", field)
             }
@@ -322,8 +316,6 @@ mod tests {
             "Неизвестное поле для сортировки: 'test'"
         );
 
-        let warning = ParseWarning::UnexpectedToken("@".to_string());
-        assert_eq!(warning.to_string(), "Неожиданный токен: '@'");
 
         let warning = ParseWarning::DuplicateWhere("test".to_string());
         assert_eq!(warning.to_string(), "Дублирующееся условие WHERE: 'test'");
