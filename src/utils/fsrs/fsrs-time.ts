@@ -25,15 +25,19 @@ export function formatOverdueTime(hours: number): string {
     if (hours <= 0) return "по графику";
 
     const days = Math.floor(hours / 24);
-    const remainingHours = hours % 24;
+    const remainingHours = parseFloat((hours % 24).toFixed(10));
 
     const parts: string[] = [];
     if (days > 0) {
         parts.push(`${days} ${getRussianNoun(days, "день", "дня", "дней")}`);
     }
     if (remainingHours > 0) {
+        const hoursStr =
+            remainingHours % 1 === 0
+                ? remainingHours.toString()
+                : remainingHours.toFixed(1);
         parts.push(
-            `${remainingHours} ${getRussianNoun(remainingHours, "час", "часа", "часов")}`,
+            `${hoursStr} ${getRussianNoun(remainingHours, "час", "часа", "часов")}`,
         );
     }
 
