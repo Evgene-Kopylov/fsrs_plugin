@@ -2,7 +2,7 @@
 //! Включает вычисление overdue, retrievability, state и других полей
 //! Использует существующие WASM функции для вычислений
 
-use log;
+use log::{self, debug};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -354,18 +354,22 @@ pub fn compute_all_fields(
     if let Ok(reviews_value) = extract_field(card_json, "reviews")
         && let Some(reviews_array) = reviews_value.as_array()
     {
-        // Подсчитываем количество успешных повторений (не "Again")
-        let successful_reps = reviews_array
-            .iter()
-            .filter(|review| {
-                review
-                    .get("rating")
-                    .and_then(|r| r.as_str())
-                    .map(|r| r != "Again")
-                    .unwrap_or(false)
-            })
-            .count();
-        result.reps = Some(successful_reps as u32);
+        debug!("Извлечены reviews: {}", reviews_array.len());
+
+        // Подсчитываем общее количество повторений (включая "Again")
+        let total_reps = reviews_array.len();
+
+        // Логируем рейтинги для отладки
+        for (i, review) in reviews_array.iter().enumerate() {
+            let rating = review
+                .get("rating")
+                .and_then(|r| r.as_str())
+                .unwrap_or("Unknown");
+            debug!("Review {}: rating = {}", i, rating);
+        }
+
+        debug!("Всего total_reps: {}", total_reps);
+        result.reps = Some(total_reps as u32);
     }
 
     // Вычисляем полное состояние карточки через WASM функцию
@@ -409,8 +413,10 @@ pub fn compute_all_fields(
         result.scheduled = Some(scheduled_days as f64);
     }
 
-    if let Some(reps_value) = parsed_state.get("reps").and_then(|r| r.as_u64()) {
-        result.reps = Some(reps_value as u32);
+    if result.reps.is_none() {
+        if let Some(reps_value) = parsed_state.get("reps").and_then(|r| r.as_u64()) {
+            result.reps = Some(reps_value as u32);
+        }
     }
 
     if let Some(lapses_value) = parsed_state.get("lapses").and_then(|l| l.as_u64()) {
@@ -628,31 +634,31 @@ mod tests {
             .expect("Should compute fields for card with Good review");
         assert_eq!(result2.reps, Some(1), "Card with one Good review should have reps=1");
 
-        // Тест 3: одна сессия "Again" -> reps = 0 (Again не считается успешным повторением)
+        // Тест 3: одна сессия "Again" -> reps = 1 (Again считается повторением)
         let again_card = create_test_card_json(&[("2025-01-01T10:00:00Z", "Again", 0.5, 8.0)]);
         let result3 = compute_all_fields(&again_card, now_iso, params_json, default_stability, default_difficulty)
             .expect("Should compute fields for card with Again review");
-        assert_eq!(result3.reps, Some(0), "Card with one Again review should have reps=0");
+        assert_eq!(result3.reps, Some(1), "Card with one Again review should have reps=1");
 
-        // Тест 4: "Again" затем "Good" -> reps = 1
+        // Тест 4: "Again" затем "Good" -> reps = 2
         let again_good_card = create_test_card_json(&[
             ("2025-01-01T10:00:00Z", "Again", 0.5, 8.0),
             ("2025-01-02T10:00:00Z", "Good", 2.0, 5.0),
         ]);
         let result4 = compute_all_fields(&again_good_card, now_iso, params_json, default_stability, default_difficulty)
             .expect("Should compute fields for card with Again then Good");
-        assert_eq!(result4.reps, Some(1), "Card with Again then Good should have reps=1");
+        assert_eq!(result4.reps, Some(2), "Card with Again then Good should have reps=2");
 
-        // Тест 5: "Good" затем "Again" -> reps = 1 (Again после успешного повторения)
+        // Тест 5: "Good" затем "Again" -> reps = 2 (Again считается повторением)
         let good_again_card = create_test_card_json(&[
             ("2025-01-01T10:00:00Z", "Good", 5.0, 3.0),
             ("2025-01-02T10:00:00Z", "Again", 0.8, 7.0),
         ]);
         let result5 = compute_all_fields(&good_again_card, now_iso, params_json, default_stability, default_difficulty)
             .expect("Should compute fields for card with Good then Again");
-        assert_eq!(result5.reps, Some(1), "Card with Good then Again should have reps=1");
+        assert_eq!(result5.reps, Some(2), "Card with Good then Again should have reps=2");
 
-        // Тест 6: "Good", "Good", "Again" -> reps = 2
+        // Тест 6: "Good", "Good", "Again" -> reps = 3
         let two_good_then_again = create_test_card_json(&[
             ("2025-01-01T10:00:00Z", "Good", 5.0, 3.0),
             ("2025-01-02T10:00:00Z", "Good", 8.0, 2.5),
@@ -660,9 +666,9 @@ mod tests {
         ]);
         let result6 = compute_all_fields(&two_good_then_again, now_iso, params_json, default_stability, default_difficulty)
             .expect("Should compute fields for card with two Good then Again");
-        assert_eq!(result6.reps, Some(2), "Card with two Good then Again should have reps=2");
+        assert_eq!(result6.reps, Some(3), "Card with two Good then Again should have reps=3");
 
-        // Тест 7: "Again", "Again", "Good" -> reps = 1 (первые два Again не считаются, так как не было успешных повторений)
+        // Тест 7: "Again", "Again", "Good" -> reps = 3 (все повторения считаются)
         let two_again_then_good = create_test_card_json(&[
             ("2025-01-01T10:00:00Z", "Again", 0.5, 8.0),
             ("2025-01-02T10:00:00Z", "Again", 0.3, 9.0),
@@ -670,6 +676,6 @@ mod tests {
         ]);
         let result7 = compute_all_fields(&two_again_then_good, now_iso, params_json, default_stability, default_difficulty)
             .expect("Should compute fields for card with two Again then Good");
-        assert_eq!(result7.reps, Some(1), "Card with two Again then Good should have reps=1");
+        assert_eq!(result7.reps, Some(3), "Card with two Again then Good should have reps=3");
     }
 }
