@@ -11,14 +11,39 @@
             "good": "Нормально (3)",
             "easy": "Легко (4)",
             "cancel": "Отмена"
-        },
-        "notices": {
-            "no_active_file": "Нет активного файла",
-            "no_frontmatter": "Файл не содержит frontmatter",
-            "not_fsrs_card": "Not an FSRS card",
-            "review_cancelled": "Повторение отменено",
-            "card_reviewed": "Карточка повторена: {rating}",
-            "next_review": "Следующее повторение: {date}"
         }
+    },
+    "notices": {
+        "no_active_file": "Нет активного файла",
+        "no_frontmatter": "Файл не содержит frontmatter",
+        "frontmatter_empty": "Frontmatter пуст",
+        "not_fsrs_card": "Not an FSRS card",
+        "review_cancelled": "Повторение отменено",
+        "card_reviewed": "Карточка повторена: {rating}",
+        "next_review": "Следующее повторение: {date}",
+        "card_reviewed_with_next": "Карточка повторена: {rating}\nСледующее повторение: {date}",
+        "fsrs_fields_added": "Поля FSRS добавлены в файл",
+        "fsrs_fields_exists": "В файле уже есть поля FSRS. Используйте команду повторения для обновления.",
+        "no_cards_for_review": "Нет карточек для повторения",
+        "cards_found": "Найдено {count} карточек для повторения",
+        "fsrs_table_inserted": "Добавлен блок fsrs-table с {count} карточками для повторения",
+        "review_deleted": "Последнее повторение удалено",
+        "no_reviews_to_delete": "Нет повторений для удаления",
+        "error_parsing_card": "Ошибка при парсинге карточки FSRS: {error}",
+        "card_processing_error": "Ошибка при обработке карточки",
+        "review_history_error": "Ошибка при открытии истории повторений",
+        "card_load_error": "Ошибка при загрузке данных карточки",
+        "wasm_not_ready": "WASM компонент FSRS не загружен. Перезапустите Obsidian.",
+        "file_not_found": "Файл не найден: {path}",
+        "card_not_due": "Карточка уже повторена. Следующее повторение по графику: {date}",
+        "early_review_blocked": "Досрочное повторение возможно через {minutes} {noun}. Следующее: {date}"
+    },
+    "commands": {
+        "add_fsrs_fields": "Добавить поля FSRS в шапку файла",
+        "find_fsrs_cards": "Найти карточки для повторения",
+        "review_current_card": "Повторить текущую карточку",
+        "delete_last_review": "Удалить последнее повторение карточки",
+        "show_fsrs_help": "Показать справку по синтаксису fsrs-table",
+        "show_review_history": "Показать историю повторений"
     }
 }

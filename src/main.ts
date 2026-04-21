@@ -25,6 +25,7 @@ import {
 } from "./utils/fsrs-helper";
 import { shouldIgnoreFileWithSettings } from "./utils/fsrs/fsrs-filter";
 import type { ModernFSRSCard, FSRSRating, CachedCard } from "./interfaces/fsrs";
+import { showNotice } from "../utils/i18n";
 
 // Импорт WASM функций
 import init from "../wasm-lib/pkg/wasm_lib";
@@ -136,7 +137,7 @@ export default class FsrsPlugin extends Plugin {
             this.isWasmInitialized = true;
         } catch (error) {
             console.error("Ошибка загрузки WASM модуля:", error);
-            new Notice("Ошибка загрузки WASM компонента FSRS"); // eslint-disable-line obsidianmd/ui/sentence-case
+            showNotice("notices.wasm_not_ready");
             this.isWasmInitialized = false;
         }
     }

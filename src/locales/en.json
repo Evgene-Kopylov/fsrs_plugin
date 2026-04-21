@@ -11,14 +11,39 @@
             "good": "Good (3)",
             "easy": "Easy (4)",
             "cancel": "Cancel"
-        },
-        "notices": {
-            "no_active_file": "No active file",
-            "no_frontmatter": "File has no frontmatter",
-            "not_fsrs_card": "Not an FSRS card",
-            "review_cancelled": "Review cancelled",
-            "card_reviewed": "Card reviewed: {rating}",
-            "next_review": "Next review: {date}"
         }
+    },
+    "notices": {
+        "no_active_file": "No active file",
+        "no_frontmatter": "File has no frontmatter",
+        "frontmatter_empty": "Frontmatter is empty",
+        "not_fsrs_card": "Not an FSRS card",
+        "review_cancelled": "Review cancelled",
+        "card_reviewed": "Card reviewed: {rating}",
+        "next_review": "Next review: {date}",
+        "card_reviewed_with_next": "Card reviewed: {rating}\nNext review: {date}",
+        "fsrs_fields_added": "FSRS fields added to file",
+        "fsrs_fields_exists": "File already has FSRS fields. Use review command to update.",
+        "no_cards_for_review": "No cards due for review",
+        "cards_found": "Found {count} cards due for review",
+        "fsrs_table_inserted": "Added fsrs-table block with {count} cards due for review",
+        "review_deleted": "Last review deleted",
+        "no_reviews_to_delete": "No reviews to delete",
+        "error_parsing_card": "Failed to parse FSRS card: {error}",
+        "card_processing_error": "Error processing card",
+        "review_history_error": "Error opening review history",
+        "card_load_error": "Failed to load card data",
+        "wasm_not_ready": "FSRS component not ready. Please restart Obsidian.",
+        "file_not_found": "File not found: {path}",
+        "card_not_due": "Card already reviewed. Next scheduled review: {date}",
+        "early_review_blocked": "Early review available in {minutes} {noun}. Next scheduled: {date}"
+    },
+    "commands": {
+        "add_fsrs_fields": "Add FSRS fields to frontmatter",
+        "find_fsrs_cards": "Find cards due for review",
+        "review_current_card": "Review current card",
+        "delete_last_review": "Delete last review",
+        "show_fsrs_help": "Show fsrs-table syntax help",
+        "show_review_history": "Show review history"
     }
 }

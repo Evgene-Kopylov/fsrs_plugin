@@ -1,9 +1,9 @@
-
-import { Notice, App } from "obsidian";
+import { App } from "obsidian";
+import { showNotice } from "../../utils/i18n";
 import {
-	parseModernFsrsFromFrontmatter,
-	extractFrontmatterWithMatch,
-	updateReviewsInYaml,
+    parseModernFsrsFromFrontmatter,
+    extractFrontmatterWithMatch,
+    updateReviewsInYaml,
 } from "../../utils/fsrs-helper";
 import type MyPlugin from "../../main";
 
@@ -15,82 +15,84 @@ import type MyPlugin from "../../main";
  * @returns Promise<boolean> - true, если удаление успешно, false в противном случае
  */
 export async function deleteLastReview(
-	app: App,
-	plugin: MyPlugin,
-	filePath: string,
+    app: App,
+    plugin: MyPlugin,
+    filePath: string,
 ): Promise<boolean> {
-	try {
-		const file = app.vault.getFileByPath(filePath);
-		if (!file) {
-			new Notice("Файл не найден");
-			return false;
-		}
+    try {
+        const file = app.vault.getFileByPath(filePath);
+        if (!file) {
+            showNotice("notices.file_not_found", { path: filePath });
+            return false;
+        }
 
-		const content = await app.vault.read(file);
-		const frontmatterMatch = extractFrontmatterWithMatch(content);
+        const content = await app.vault.read(file);
+        const frontmatterMatch = extractFrontmatterWithMatch(content);
 
-		if (!frontmatterMatch) {
-			new Notice("Файл не содержит frontmatter");
-			return false;
-		}
+        if (!frontmatterMatch) {
+            showNotice("notices.no_frontmatter");
+            return false;
+        }
 
-		const frontmatter = frontmatterMatch.content;
-		const parseResult = parseModernFsrsFromFrontmatter(
-			frontmatter,
-			filePath,
-		);
+        const frontmatter = frontmatterMatch.content;
+        const parseResult = parseModernFsrsFromFrontmatter(
+            frontmatter,
+            filePath,
+        );
 
-		if (!parseResult.success || !parseResult.card) {
-			new Notice("Not an FSRS card. Nothing to delete.");
-			return false;
-		}
+        if (!parseResult.success || !parseResult.card) {
+            showNotice("notices.not_fsrs_card");
+            return false;
+        }
 
-		const card = parseResult.card;
+        const card = parseResult.card;
 
-		// Проверяем, есть ли что удалять
-		if (card.reviews.length === 0) {
-			new Notice("Нет повторений для удаления");
-			return false;
-		}
+        // Проверяем, есть ли что удалять
+        if (card.reviews.length === 0) {
+            showNotice("notices.no_reviews_to_delete");
+            return false;
+        }
 
-		// Удаляем последнее повторение
-		const updatedReviews = [...card.reviews];
-		updatedReviews.pop();
+        // Удаляем последнее повторение
+        const updatedReviews = [...card.reviews];
+        updatedReviews.pop();
 
-		// Обновляем frontmatter
-		const updatedFrontmatter = updateReviewsInYaml(
-			frontmatter,
-			updatedReviews,
-		);
+        // Обновляем frontmatter
+        const updatedFrontmatter = updateReviewsInYaml(
+            frontmatter,
+            updatedReviews,
+        );
 
-		// Собираем обновленное содержимое файла
-		const beforeFrontmatter = content.substring(
-			0,
-			frontmatterMatch.match.index,
-		);
-		const afterFrontmatter = content.substring(
-			frontmatterMatch.match.index + frontmatterMatch.match[0].length,
-		);
-		const newContent =
-			beforeFrontmatter +
-			"---\n" +
-			updatedFrontmatter +
-			"\n---" +
-			afterFrontmatter;
+        // Собираем обновленное содержимое файла
+        const beforeFrontmatter = content.substring(
+            0,
+            frontmatterMatch.match.index,
+        );
+        const afterFrontmatter = content.substring(
+            frontmatterMatch.match.index + frontmatterMatch.match[0].length,
+        );
+        const newContent =
+            beforeFrontmatter +
+            "---\n" +
+            updatedFrontmatter +
+            "\n---" +
+            afterFrontmatter;
 
-		// Сохраняем изменения
-		await app.vault.modify(file, newContent);
+        // Сохраняем изменения
+        await app.vault.modify(file, newContent);
 
-		new Notice("Последнее повторение удалено");
+        showNotice("notices.review_deleted");
 
-		// Уведомляем рендереры таблиц об обновлении данных
-		plugin.notifyFsrsTableRenderers();
-		return true;
-	} catch (error) {
-		console.error("Ошибка при удалении повторения:", error);
-		new Notice("Ошибка при удалении повторения");
-		return false;
-	}
+        // Уведомляем рендереры таблиц об обновлении данных
+        plugin.notifyFsrsTableRenderers();
+        return true;
+    } catch (error) {
+        console.error("Ошибка при удалении повторения:", error);
+        const errorMessage =
+            error instanceof Error ? error.message : String(error);
+        showNotice("notices.error_parsing_card", { error: errorMessage });
+        return false;
+    }
 }
 
 /**
@@ -100,20 +102,25 @@ export async function deleteLastReview(
  * @returns Promise<boolean> - true, если удаление успешно, false в противном случае
  */
 export async function deleteLastReviewCurrentCard(
-	app: App,
-	plugin: MyPlugin,
+    app: App,
+    plugin: MyPlugin,
 ): Promise<boolean> {
-	try {
-		const activeFile = app.workspace.getActiveFile();
-		if (!activeFile) {
-			new Notice("Нет активного файла");
-			return false;
-		}
+    try {
+        const activeFile = app.workspace.getActiveFile();
+        if (!activeFile) {
+            showNotice("notices.no_active_file");
+            return false;
+        }
 
-		return await deleteLastReview(app, plugin, activeFile.path);
-	} catch (error) {
-		console.error("Ошибка при удалении повторения текущей карточки:", error);
-		new Notice("Ошибка при удалении повторения");
-		return false;
-	}
+        return await deleteLastReview(app, plugin, activeFile.path);
+    } catch (error) {
+        console.error(
+            "Ошибка при удалении повторения текущей карточки:",
+            error,
+        );
+        const errorMessage =
+            error instanceof Error ? error.message : String(error);
+        showNotice("notices.error_parsing_card", { error: errorMessage });
+        return false;
+    }
 }
