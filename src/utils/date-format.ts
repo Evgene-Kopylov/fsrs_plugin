@@ -44,21 +44,3 @@ export function formatDate(app: App, date: Date): string {
         return window.moment(date).format("YYYY-MM-DD");
     }
 }
-
-/**
- * Форматирует только время с учётом глобальных настроек Obsidian
- * @param app - экземпляр приложения Obsidian
- * @param date - дата для форматирования
- * @returns строка со временем в формате, заданном пользователем (по умолчанию "HH:mm")
- */
-export function formatTime(app: App, date: Date): string {
-    try {
-        const timeFormat =
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            ((app.vault as any).getConfig("timeFormat") as string) || "HH:mm";
-        return window.moment(date).format(timeFormat);
-    } catch (error) {
-        console.error("Ошибка форматирования времени:", error);
-        return window.moment(date).format("HH:mm");
-    }
-}

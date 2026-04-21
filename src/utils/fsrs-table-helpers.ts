@@ -13,11 +13,7 @@ export type {
     SortDirection,
     SortParam,
 } from "./fsrs-table-params";
-export {
-    parseSqlBlock,
-    parseColumnsDefinition,
-    AVAILABLE_FIELDS,
-} from "./fsrs-table-params";
+export { parseSqlBlock, AVAILABLE_FIELDS } from "./fsrs-table-params";
 
 // Фильтрация и сортировка карточек
 export type { CardWithState } from "./fsrs-table-filter";

@@ -24,7 +24,7 @@ import {
     computeCardState,
 } from "./utils/fsrs-helper";
 import { shouldIgnoreFileWithSettings } from "./utils/fsrs/fsrs-filter";
-import type { ModernFSRSCard, FSRSRating, CachedCard } from "./interfaces/fsrs";
+import type { FSRSRating, CachedCard } from "./interfaces/fsrs";
 
 // Импорт WASM функций
 import init from "../wasm-lib/pkg/wasm_lib";
@@ -148,15 +148,6 @@ export default class FsrsPlugin extends Plugin {
         } finally {
             this.scanPromise = null;
         }
-    }
-
-    /**
-     * Получает карточки для обратной совместимости (только карточки без состояний).
-     * @deprecated Используйте getCachedCardsWithState()
-     */
-    async getCardsForReview(): Promise<ModernFSRSCard[]> {
-        const cached = await this.getCachedCardsWithState();
-        return cached.map((c) => c.card);
     }
 
     private async performFullScan(): Promise<CachedCard[]> {

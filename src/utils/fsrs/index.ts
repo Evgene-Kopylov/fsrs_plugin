@@ -13,7 +13,6 @@ export {
     getNewCardYaml,
     getCardYamlAfterReview,
     getNextReviewDates,
-    getCurrentISOTime,
     base64ToBytes,
     cardToFsrsYaml,
 } from "./fsrs-wasm";
