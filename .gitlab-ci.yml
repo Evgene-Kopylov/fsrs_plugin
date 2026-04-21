@@ -5,6 +5,7 @@ stages:
     - lint
     - build
     - mirror
+    - release
 
 variables:
     NODE_VERSION: "24-alpine"
@@ -164,4 +165,20 @@ push_to_github:
     script:
         - git remote add github "https://oauth2:${GITHUB_TOKEN}@github.com/${REPO_OWNER}/${REPO_NAME}"
         - git push github HEAD:refs/heads/main --force
+    timeout: 10m
+
+release_to_github:
+    stage: release
+    image: alpine:latest
+    rules:
+        - if: $CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/
+    variables:
+        GITHUB_OWNER: "Evgene-Kopylov"
+        GITHUB_REPO: "fsrs_plugin"
+    before_script:
+        - apk update
+        - apk add --no-cache curl jq file bash # если используете bash
+    script:
+        - chmod +x scripts/release-to-github.sh
+        - ./scripts/release-to-github.sh
     timeout: 10m
