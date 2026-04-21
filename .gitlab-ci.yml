@@ -22,6 +22,7 @@ cache:
 .rules: &rules
     rules:
         - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
+        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
 
 build_wasm:
     stage: build-wasm
@@ -171,14 +172,22 @@ release_to_github:
     stage: release
     image: alpine:latest
     rules:
-        - if: $CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/
+        # Запускаем только при прямом пуше в ветку main (например, после мержа MR)
+        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
     variables:
         GITHUB_OWNER: "Evgene-Kopylov"
         GITHUB_REPO: "fsrs_plugin"
+        GIT_DEPTH: 0 # Чтобы git fetch --tags видел все теги
+    needs:
+        - plugin-build
     before_script:
         - apk update
-        - apk add --no-cache curl jq file bash # если используете bash
-    script:
-        - chmod +x scripts/release-to-github.sh
-        - ./scripts/release-to-github.sh
+        - apk add --no-cache git curl jq file bash
+    script: |
+        git fetch --tags
+        LATEST_TAG=$(git tag --sort=-v:refname | head -n1)
+        echo "Последний тег: $LATEST_TAG"
+        export VERSION="$LATEST_TAG"
+        chmod +x scripts/release-to-github.sh
+        ./scripts/release-to-github.sh
     timeout: 10m
