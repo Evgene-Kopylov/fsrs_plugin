@@ -1,113 +1,97 @@
 #!/bin/sh
 set -e
 
-# Переменные окружения, которые должны быть заданы:
-# CI_COMMIT_TAG   — тег релиза, например 1.2.3 или v1.2.3
-# GITHUB_TOKEN    — персональный токен GitHub с правами на запись
-# GITHUB_OWNER    — владелец репозитория (Evgene-Kopylov)
-# GITHUB_REPO     — имя репозитория (fsrs_plugin)
+# ------------------------------------------------------------
+# СТРОГАЯ ВЕРСИЯ: если релиз для тега уже существует — падаем.
+# Переменные окружения:
+#   VERSION         – тег релиза (например, v1.2.3 или 1.2.3)
+#   GITHUB_TOKEN    – персональный токен GitHub с правами на запись
+#   GITHUB_OWNER    – владелец репозитория (Evgene-Kopylov)
+#   GITHUB_REPO     – имя репозитория (fsrs_plugin)
+# ------------------------------------------------------------
 
-VERSION="${CI_COMMIT_TAG#v}"   # убираем префикс v, если есть
+if [ -z "$VERSION" ]; then
+    echo "❌ ОШИБКА: переменная окружения VERSION не задана."
+    exit 1
+fi
+
+# Нормализуем тег: убираем префикс 'v' для отображения имени, но в API используем исходный VERSION
+TAG_NAME="$VERSION"
+DISPLAY_VERSION="${VERSION#v}"
+
 RELEASE_FILES="main.js manifest.json styles.css"
 
-echo "Preparing release ${CI_COMMIT_TAG} (version ${VERSION})"
-echo "Release files: ${RELEASE_FILES}"
+echo "📦 Подготовка релиза для тега: ${TAG_NAME} (версия ${DISPLAY_VERSION})"
+echo "📎 Файлы для загрузки: ${RELEASE_FILES}"
 
-# 1. Проверяем, что все необходимые файлы существуют и не пусты
+# 1. Проверяем наличие и непустоту файлов
 for file in $RELEASE_FILES; do
     if [ ! -f "$file" ]; then
-        echo "ERROR: Required file $file not found. Aborting release."
+        echo "❌ ОШИБКА: обязательный файл '$file' не найден."
         exit 1
     fi
     if [ ! -s "$file" ]; then
-        echo "ERROR: File $file is empty (size 0). Aborting release."
+        echo "❌ ОШИБКА: файл '$file' пуст (размер 0)."
         exit 1
     fi
-    echo "File $file exists and is not empty."
+    echo "   ✅ Файл '$file' существует и не пуст."
 done
 
-# 2. Проверяем, существует ли уже релиз с таким тегом
-echo "Checking if release ${CI_COMMIT_TAG} already exists..."
+# 2. СТРОГАЯ ПРОВЕРКА: релиз с таким тегом НЕ должен существовать
+echo "🔍 Проверяем, существует ли релиз для тега ${TAG_NAME}..."
 RESPONSE=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
     -H "Accept: application/vnd.github.v3+json" \
-    "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/${CI_COMMIT_TAG}")
+    "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/tags/${TAG_NAME}")
 
-RELEASE_ID=$(echo "$RESPONSE" | jq -r '.id')
+RELEASE_ID=$(echo "$RESPONSE" | jq -r '.id // empty')
 
-if [ "$RELEASE_ID" != "null" ] && [ -n "$RELEASE_ID" ]; then
-    echo "Release already exists with ID: ${RELEASE_ID}. Updating..."
-    RESPONSE=$(curl -s -X PATCH \
-        -H "Authorization: token ${GITHUB_TOKEN}" \
-        -H "Accept: application/vnd.github.v3+json" \
-        "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/${RELEASE_ID}" \
-        -d "{
-            \"tag_name\": \"${CI_COMMIT_TAG}\",
-            \"name\": \"Version ${VERSION}\",
-            \"body\": \"Release ${CI_COMMIT_TAG} (updated)\",
-            \"draft\": false,
-            \"prerelease\": false
-        }")
-else
-    echo "Creating new release..."
-    RESPONSE=$(curl -s -X POST \
-        -H "Authorization: token ${GITHUB_TOKEN}" \
-        -H "Accept: application/vnd.github.v3+json" \
-        "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases" \
-        -d "{
-            \"tag_name\": \"${CI_COMMIT_TAG}\",
-            \"name\": \"Version ${VERSION}\",
-            \"body\": \"Release ${CI_COMMIT_TAG}\",
-            \"draft\": false,
-            \"prerelease\": false
-        }")
-    RELEASE_ID=$(echo "$RESPONSE" | jq -r '.id')
-fi
-
-if [ "$RELEASE_ID" = "null" ] || [ -z "$RELEASE_ID" ]; then
-    echo "Failed to create or update release. Response:"
-    echo "$RESPONSE" | jq .
+if [ -n "$RELEASE_ID" ] && [ "$RELEASE_ID" != "null" ]; then
+    echo "❌ ОШИБКА: Релиз для тега '${TAG_NAME}' уже существует в репозитории ${GITHUB_OWNER}/${GITHUB_REPO}."
+    echo "   Политика проекта запрещает повторную публикацию одного и того же тега."
+    echo "   Для выпуска новой версии необходимо создать новый тег (например, с инкрементом версии)."
     exit 1
 fi
 
-echo "Release ID: ${RELEASE_ID}"
+echo "✅ Релиз для тега '${TAG_NAME}' ещё не существует. Продолжаем создание..."
 
-# 3. Получаем upload_url
-UPLOAD_URL=$(echo "$RESPONSE" | jq -r '.upload_url' | sed 's/{.*}//')
-echo "Upload URL: ${UPLOAD_URL}"
+# 3. Создаём новый релиз
+echo "📤 Создаём новый релиз..."
+CREATE_RESPONSE=$(curl -s -X POST \
+    -H "Authorization: token ${GITHUB_TOKEN}" \
+    -H "Accept: application/vnd.github.v3+json" \
+    "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases" \
+    -d "{
+        \"tag_name\": \"${TAG_NAME}\",
+        \"name\": \"${DISPLAY_VERSION}\",
+        \"body\": \"Автоматически созданный релиз версии ${DISPLAY_VERSION}\",
+        \"draft\": false,
+        \"prerelease\": false
+    }")
 
-if [ "$UPLOAD_URL" = "null" ] || [ -z "$UPLOAD_URL" ]; then
-    echo "Failed to get upload URL"
+RELEASE_ID=$(echo "$CREATE_RESPONSE" | jq -r '.id')
+UPLOAD_URL=$(echo "$CREATE_RESPONSE" | jq -r '.upload_url' | sed 's/{.*}//')
+
+if [ -z "$RELEASE_ID" ] || [ "$RELEASE_ID" = "null" ]; then
+    echo "❌ Не удалось создать релиз. Ответ API:"
+    echo "$CREATE_RESPONSE" | jq .
     exit 1
 fi
+
+echo "✅ Релиз создан. ID: ${RELEASE_ID}"
+echo "   URL для загрузки: ${UPLOAD_URL}"
 
 # 4. Загружаем файлы
 for file in $RELEASE_FILES; do
-    echo "Uploading $file..."
+    echo "⬆️  Загружаем '$file'..."
 
     # Определяем Content-Type
     CONTENT_TYPE="application/octet-stream"
     case "$file" in
-        *.js) CONTENT_TYPE="application/javascript" ;;
+        *.js)   CONTENT_TYPE="application/javascript" ;;
         *.json) CONTENT_TYPE="application/json" ;;
-        *.css) CONTENT_TYPE="text/css" ;;
+        *.css)  CONTENT_TYPE="text/css" ;;
     esac
 
-    # Удаляем старый asset, если существует
-    echo "Checking for existing $file asset..."
-    ASSET_ID=$(curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
-        -H "Accept: application/vnd.github.v3+json" \
-        "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/${RELEASE_ID}/assets" \
-        | jq -r ".[] | select(.name == \"$file\") | .id")
-
-    if [ "$ASSET_ID" != "null" ] && [ -n "$ASSET_ID" ]; then
-        echo "Deleting existing asset ID: ${ASSET_ID}"
-        curl -s -X DELETE \
-            -H "Authorization: token ${GITHUB_TOKEN}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            "https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/assets/${ASSET_ID}"
-    fi
-
-    # Загружаем новый asset
     UPLOAD_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
         -H "Authorization: token ${GITHUB_TOKEN}" \
         -H "Content-Type: ${CONTENT_TYPE}" \
@@ -119,12 +103,12 @@ for file in $RELEASE_FILES; do
     BODY=$(echo "$UPLOAD_RESPONSE" | head -n -1)
 
     if [ "$HTTP_CODE" = "201" ]; then
-        echo "Successfully uploaded $file"
+        echo "   ✅ Файл '$file' успешно загружен."
     else
-        echo "Failed to upload $file. HTTP code: ${HTTP_CODE}"
-        echo "Response: $BODY" | jq . 2>/dev/null || echo "$BODY"
+        echo "   ❌ Ошибка загрузки '$file'. HTTP-код: ${HTTP_CODE}"
+        echo "$BODY" | jq . 2>/dev/null || echo "$BODY"
         exit 1
     fi
 done
 
-echo "Release process completed for ${CI_COMMIT_TAG}"
+echo "🎉 Релиз ${TAG_NAME} успешно опубликован и готов к использованию."
