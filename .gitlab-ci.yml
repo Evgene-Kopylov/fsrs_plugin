@@ -3,6 +3,7 @@ stages:
     - encode-wasm
     - test
     - lint
+    - build
     - mirror
 
 variables:
@@ -114,6 +115,32 @@ eslint-check:
         - npm ci --prefer-offline
         - npm run lint
     <<: *rules
+    cache:
+        key: "${CI_COMMIT_REF_SLUG}"
+        paths:
+            - node_modules/
+            - .npm/
+        policy: pull-push
+    timeout: 10m
+
+plugin-build:
+    stage: build
+    image: node:${NODE_VERSION}
+    <<: *rules
+    needs:
+        - encode_wasm
+        - unit-tests
+        - typescript-check
+        - eslint-check
+    script:
+        - npm ci --prefer-offline
+        - npm run build:skip-wasm
+    artifacts:
+        paths:
+            - main.js
+            - styles.css
+            - manifest.json
+        expire_in: 1 hour
     cache:
         key: "${CI_COMMIT_REF_SLUG}"
         paths:

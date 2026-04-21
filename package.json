@@ -10,6 +10,7 @@
         "predev": "npm run build-wasm && npm run encode-wasm",
         "dev": "nodemon --watch wasm-lib/src --ext rs --exec \"npm run predev && node esbuild.config.mjs\"",
         "build": "tsc -noEmit -skipLibCheck && npm run predev && node esbuild.config.mjs production",
+        "build:skip-wasm": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
         "version": "node version-bump.mjs && git add manifest.json versions.json",
         "lint": "eslint .",
         "test": "vitest --run",
