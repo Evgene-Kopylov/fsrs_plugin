@@ -413,11 +413,10 @@ pub fn compute_all_fields(
         result.scheduled = Some(scheduled_days as f64);
     }
 
-    if result.reps.is_none() {
-        if let Some(reps_value) = parsed_state.get("reps").and_then(|r| r.as_u64()) {
+    if result.reps.is_none()
+        && let Some(reps_value) = parsed_state.get("reps").and_then(|r| r.as_u64()) {
             result.reps = Some(reps_value as u32);
         }
-    }
 
     if let Some(lapses_value) = parsed_state.get("lapses").and_then(|l| l.as_u64()) {
         result.additional_fields.insert(
