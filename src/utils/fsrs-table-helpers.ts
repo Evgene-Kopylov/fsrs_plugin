@@ -8,16 +8,12 @@
 
 // Типы и парсинг параметров
 export type {
-	TableColumn,
-	TableParams,
-	SortDirection,
-	SortParam,
+    TableColumn,
+    TableParams,
+    SortDirection,
+    SortParam,
 } from "./fsrs-table-params";
-export {
-	parseSqlBlock,
-	parseColumnsDefinition,
-	AVAILABLE_FIELDS,
-} from "./fsrs-table-params";
+export { parseSqlBlock, AVAILABLE_FIELDS } from "./fsrs-table-params";
 
 // Фильтрация и сортировка карточек
 export type { CardWithState } from "./fsrs-table-filter";
@@ -25,24 +21,24 @@ export { filterAndSortCards } from "./fsrs-table-filter";
 
 // Форматирование значений
 export {
-	formatOverdue,
-	extractDisplayName,
-	translateState,
-	formatFieldValue,
-	createDefaultTableBlock,
+    formatOverdue,
+    extractDisplayName,
+    translateState,
+    formatFieldValue,
+    createDefaultTableBlock,
 } from "./fsrs-table-format";
 
-// Генерация HTML таблицы
+// Генерация DOM таблицы
 export {
-	generateTableHTML,
-	generateTableHTMLFromCards,
-	generateTableHTMLFromSql,
+    generateTableDOM,
+    generateTableDOMFromCards,
+    generateTableDOMFromSql,
 } from "./fsrs-table-generator";
 
 // Экспорт типов для удобства
 export type {
-	ModernFSRSCard,
-	ComputedCardState,
-	FSRSSettings,
-	FSRSState,
+    ModernFSRSCard,
+    ComputedCardState,
+    FSRSSettings,
+    FSRSState,
 } from "../interfaces/fsrs";

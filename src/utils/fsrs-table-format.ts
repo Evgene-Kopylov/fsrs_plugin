@@ -33,7 +33,8 @@ export function extractDisplayName(filePath: string): string {
     const withoutExt = filePath.replace(/\.md$/, "");
     // Берем только имя файла (последнюю часть пути)
     const parts = withoutExt.split(/[\\/]/);
-    return parts[parts.length - 1] || filePath;
+    const lastName = parts[parts.length - 1] || "";
+    return lastName;
 }
 
 /**
@@ -66,7 +67,7 @@ export function formatFieldValue(
     card: ModernFSRSCard,
     state: ComputedCardState,
     app: App,
-    now: Date = new Date(),
+    _now: Date = new Date(),
 ): string {
     switch (field) {
         case "file":

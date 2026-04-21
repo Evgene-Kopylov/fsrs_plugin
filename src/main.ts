@@ -24,7 +24,7 @@ import {
     computeCardState,
 } from "./utils/fsrs-helper";
 import { shouldIgnoreFileWithSettings } from "./utils/fsrs/fsrs-filter";
-import type { ModernFSRSCard, FSRSRating, CachedCard } from "./interfaces/fsrs";
+import type { FSRSRating, CachedCard } from "./interfaces/fsrs";
 
 // Импорт WASM функций
 import init from "../wasm-lib/pkg/wasm_lib";
@@ -71,7 +71,7 @@ export default class FsrsPlugin extends Plugin {
         // Регистрация процессора для кнопки повторения карточки
         this.registerMarkdownCodeBlockProcessor(
             "fsrs-review-button",
-            async (source, el, ctx) => {
+            async (_source, el, ctx) => {
                 // Создаем контейнер для кнопки
                 const buttonContainer = document.createElement("div");
                 buttonContainer.className = "fsrs-review-button-container";
@@ -96,19 +96,12 @@ export default class FsrsPlugin extends Plugin {
                 renderContainer.className = "fsrs-table-render-container";
                 el.appendChild(renderContainer);
 
-                // Получаем позиции блока для обновления исходного кода
-                const sectionInfo = ctx.getSectionInfo(el);
-                const sourceStart = sectionInfo?.lineStart ?? 0;
-                const sourceEnd = sectionInfo?.lineEnd ?? 0;
-
                 // Создаем и добавляем рендерер
                 const renderer = new FsrsTableRenderer(
                     this,
                     renderContainer,
                     ctx.sourcePath,
                     source,
-                    sourceStart,
-                    sourceEnd,
                 );
                 ctx.addChild(renderer);
             },
@@ -155,15 +148,6 @@ export default class FsrsPlugin extends Plugin {
         } finally {
             this.scanPromise = null;
         }
-    }
-
-    /**
-     * Получает карточки для обратной совместимости (только карточки без состояний).
-     * @deprecated Используйте getCachedCardsWithState()
-     */
-    async getCardsForReview(): Promise<ModernFSRSCard[]> {
-        const cached = await this.getCachedCardsWithState();
-        return cached.map((c) => c.card);
     }
 
     private async performFullScan(): Promise<CachedCard[]> {

@@ -1,6 +1,7 @@
 stages:
     - build-wasm
     - encode-wasm
+    - test
     - lint
     - mirror
 
@@ -59,6 +60,26 @@ encode_wasm:
         paths:
             - wasm-lib/pkg/
         expire_in: 1 hour
+    cache:
+        key: "${CI_COMMIT_REF_SLUG}"
+        paths:
+            - node_modules/
+            - .npm/
+        policy: pull-push
+    timeout: 10m
+
+unit-tests:
+    stage: test
+    <<: *rules
+    image: node:${NODE_VERSION}
+    needs:
+        - encode_wasm
+    before_script:
+        - node --version
+        - npm --version
+    script:
+        - npm ci --prefer-offline
+        - npm test
     cache:
         key: "${CI_COMMIT_REF_SLUG}"
         paths:
