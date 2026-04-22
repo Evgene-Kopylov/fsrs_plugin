@@ -36,7 +36,8 @@
         "wasm_not_ready": "WASM компонент FSRS не загружен. Перезапустите Obsidian.",
         "file_not_found": "Файл не найден: {path}",
         "card_not_due": "Карточка уже повторена. Следующее повторение по графику: {date}",
-        "early_review_blocked": "Досрочное повторение возможно через {minutes} {noun}. Следующее: {date}"
+        "early_review_blocked": "Досрочное повторение возможно через {minutes} {noun}. Следующее: {date}",
+        "review_button_exists": "Блок кнопки повторения уже существует в этом файле"
     },
     "commands": {
         "add_fsrs_fields": "Добавить поля FSRS в шапку файла",
@@ -44,7 +45,8 @@
         "review_current_card": "Повторить текущую карточку",
         "delete_last_review": "Удалить последнее повторение карточки",
         "show_fsrs_help": "Показать справку по синтаксису fsrs-table",
-        "show_review_history": "Показать историю повторений"
+        "show_review_history": "Показать историю повторений",
+        "insert_review_button": "Вставить блок кнопки повторения"
     },
     "statusBar": {
         "loading": "загрузка...",
