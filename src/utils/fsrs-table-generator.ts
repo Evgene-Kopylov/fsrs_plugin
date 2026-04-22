@@ -38,14 +38,14 @@ import { parseSqlBlock } from "./fsrs-table-params";
  */
 export function generateTableDOM(
     cardsWithState: CardWithState[],
+    totalCount: number,
     params: TableParams,
     _settings: FSRSSettings,
     app: App,
     now: Date = new Date(),
 ): HTMLDivElement {
-    const limit = params.limit > 0 ? params.limit : 30;
-    const cardsToShow = cardsWithState.slice(0, limit);
-    const totalCards = cardsWithState.length;
+    const cardsToShow = cardsWithState; // WASM уже применил лимит
+    const totalCards = totalCount;
 
     // Отладочный вывод для проверки колонок
     console.debug(
@@ -144,13 +144,13 @@ export function generateTableDOM(
     }
 
     // Информация о лимите
-    if (totalCards > limit) {
-        const hiddenCount = totalCards - limit;
+    if (totalCards > cardsWithState.length) {
+        const hiddenCount = totalCards - cardsWithState.length;
         const infoDiv = document.createElement("div");
         infoDiv.className = "fsrs-table-info";
         const small = document.createElement("small");
         small.textContent = i18n.t("table.showing_limit", {
-            shown: limit,
+            shown: cardsWithState.length,
             total: totalCards,
             hidden: hiddenCount,
         });
@@ -182,14 +182,14 @@ export async function generateTableDOMFromCards(
     const { filterAndSortCardsWithStates } =
         await import("./fsrs-table-filter");
 
-    const cardsWithState = await filterAndSortCardsWithStates(
+    const { cards, totalCount } = await filterAndSortCardsWithStates(
         cachedCards,
         settings,
         params,
         now,
     );
 
-    return generateTableDOM(cardsWithState, params, settings, app, now);
+    return generateTableDOM(cards, totalCount, params, settings, app, now);
 }
 
 export async function generateTableDOMFromSql(
@@ -209,7 +209,7 @@ export async function generateTableDOMFromSql(
 
     const { filterAndSortCards } = await import("./fsrs-table-filter");
 
-    const cardsWithState = await filterAndSortCards(
+    const { cards: cardsWithState, totalCount } = await filterAndSortCards(
         cards,
         settings,
         params,
@@ -218,6 +218,7 @@ export async function generateTableDOMFromSql(
 
     const container = generateTableDOM(
         cardsWithState,
+        totalCount,
         params,
         settings,
         app,
