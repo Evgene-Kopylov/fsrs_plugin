@@ -32,3 +32,9 @@ git push --tags
 ```bash
 npx repogrok
 ```
+
+## Git
+
+```bash
+git checkout -b dev/$(date +%Y-%m-%d_%H-%M-%S)
+```
