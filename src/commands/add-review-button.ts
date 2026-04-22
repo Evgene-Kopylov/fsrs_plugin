@@ -52,7 +52,7 @@ export async function insertReviewButton(
 
         // Позиция после закрывающего ---
         const afterFrontmatterIndex =
-            frontmatterMatch.match.index! + frontmatterMatch.match[0].length;
+            frontmatterMatch.match.index + frontmatterMatch.match[0].length;
         const afterFrontmatter = fileContent.slice(afterFrontmatterIndex);
 
         // Определяем, сколько новых строк нужно добавить перед блоком
