@@ -221,7 +221,11 @@ export default class FsrsPlugin extends Plugin {
             DEFAULT_SETTINGS,
             await this.loadData(),
         );
-        i18n.setLocale(this.settings.language || "en");
+        const lang =
+            this.settings.language === "system"
+                ? i18n.resolveLocale("system")
+                : this.settings.language || "en";
+        i18n.setLocale(lang);
     }
 
     /**

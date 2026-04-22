@@ -149,6 +149,7 @@
         "language": {
             "heading": "Language",
             "desc": "Select interface language",
+            "system": "System (Obsidian language)",
             "en": "English",
             "ru": "Russian"
         },

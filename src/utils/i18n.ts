@@ -10,26 +10,59 @@ class I18n {
     private translations: TranslationObject;
 
     constructor() {
-        // Пока язык по умолчанию – английский (позже добавим настройку)
-        this.currentLocale = "en";
+        this.currentLocale = I18n.detectSystemLocale();
         this.loadTranslations();
     }
 
+    /**
+     * Определяет язык из настроек Obsidian (moment.locale).
+     * Если язык не поддерживается плагином, возвращает "en".
+     */
+    static detectSystemLocale(): string {
+        try {
+            const locale = window.moment.locale();
+            if (locale === "ru") return "ru";
+            return "en";
+        } catch {
+            return "en";
+        }
+    }
+
     private loadTranslations() {
-        if (this.currentLocale === "ru") {
+        const resolved = this.resolveLocale(this.currentLocale);
+        if (resolved === "ru") {
             this.translations = ru;
         } else {
             this.translations = en;
         }
     }
 
-    public setLocale(locale: "en" | "ru") {
+    /**
+     * Преобразует "system" в реальный код языка.
+     * Остальные коды возвращает как есть.
+     */
+    resolveLocale(locale: string): string {
+        if (locale === "system") {
+            return I18n.detectSystemLocale();
+        }
+        return locale;
+    }
+
+    public setLocale(locale: string) {
         this.currentLocale = locale;
         this.loadTranslations();
     }
 
     public getLocale(): string {
         return this.currentLocale;
+    }
+
+    /**
+     * Возвращает массив доступных языков.
+     * Первый элемент — "system" (автоопределение из Obsidian).
+     */
+    static getAvailableLocales(): string[] {
+        return ["system", "en", "ru"];
     }
 
     public t(

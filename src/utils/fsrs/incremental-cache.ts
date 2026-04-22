@@ -1,9 +1,6 @@
 import { App, TFile, TAbstractFile } from "obsidian";
-import type {
-    CachedCard,
-    FSRSSettings,
-    ModernFSRSCard,
-} from "../../interfaces/fsrs";
+import type { CachedCard, ModernFSRSCard } from "../../interfaces/fsrs";
+import type { FsrsPluginSettings } from "../../settings";
 import { shouldIgnoreFileWithSettings } from "./fsrs-filter";
 import { shouldProcessFile, extractFrontmatter } from "./fsrs-frontmatter";
 import { parseModernFsrsFromFrontmatter } from "./fsrs-parser";
@@ -21,7 +18,7 @@ export class IncrementalCache {
 
     constructor(
         private app: App,
-        private settings: FSRSSettings,
+        private settings: FsrsPluginSettings,
         private onCacheUpdated: () => void,
     ) {}
 

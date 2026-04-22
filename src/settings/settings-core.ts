@@ -34,13 +34,18 @@ export class FsrsSettingTab extends PluginSettingTab {
             .setDesc(i18n.t("settings.language.desc"))
             .addDropdown((dropdown) => {
                 dropdown
+                    .addOption("system", i18n.t("settings.language.system"))
                     .addOption("en", i18n.t("settings.language.en"))
                     .addOption("ru", i18n.t("settings.language.ru"))
-                    .setValue(this.plugin.settings.language || "en")
-                    .onChange(async (value: "en" | "ru") => {
+                    .setValue(this.plugin.settings.language || "system")
+                    .onChange(async (value: "system" | "en" | "ru") => {
                         this.plugin.settings.language = value;
                         await this.plugin.saveSettings();
-                        i18n.setLocale(value);
+                        if (value === "system") {
+                            i18n.setLocale(i18n.resolveLocale("system"));
+                        } else {
+                            i18n.setLocale(value);
+                        }
                         // Перерисовать вкладку настроек для применения нового языка
                         this.display();
                     });
