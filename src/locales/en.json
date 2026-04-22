@@ -184,8 +184,8 @@
         "display": {
             "heading": "Display",
             "auto_add_button": {
-                "name": "Auto add review button",
-                "desc": "Automatically insert review button block after frontmatter when adding FSRS fields."
+                "name": "Auto add review button block under frontmatter",
+                "desc": "Automatically insert review button block after frontmatter when adding FSRS fields. Example: ```fsrs-review-button```"
             },
             "status_bar_icon": {
                 "name": "Status bar icon",
