@@ -113,6 +113,16 @@ npm run build
 
 - Reload Obsidian, enable plugin in **Settings → Community plugins**.
 
+## TS Unit testing
+
+- Используйте Vitest (конфиг `vitest.config.ts`).
+- **Запрещены моки** внешних зависимостей (Obsidian API, файловая система, WASM). Вместо моков — тестируйте изолированные чистые функции (утилиты, парсеры, преобразования).
+    Причины: 
+    - агент не различает внешние зависимости и собственный WASM проекта.
+    - Снжено доверие таким тестам.
+    - До сих пор обходились без моков.
+- Пример: тесты для `fsrs-table-format.ts`, `date-format.ts`, `i18n.ts` и других pure-модулей.
+
 ## Commands & settings
 
 - User-facing commands via `this.addCommand(...)`.
