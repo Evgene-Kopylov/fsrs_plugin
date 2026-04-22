@@ -178,7 +178,11 @@ export async function generateTableDOMFromCards(
     settings: FSRSSettings,
     app: App,
     now: Date = new Date(),
-): Promise<HTMLDivElement> {
+): Promise<{
+    container: HTMLDivElement;
+    cards: CardWithState[];
+    totalCount: number;
+}> {
     const { filterAndSortCardsWithStates } =
         await import("./fsrs-table-filter");
 
@@ -189,7 +193,15 @@ export async function generateTableDOMFromCards(
         now,
     );
 
-    return generateTableDOM(cards, totalCount, params, settings, app, now);
+    const container = generateTableDOM(
+        cards,
+        totalCount,
+        params,
+        settings,
+        app,
+        now,
+    );
+    return { container, cards, totalCount };
 }
 
 export async function generateTableDOMFromSql(
@@ -198,7 +210,12 @@ export async function generateTableDOMFromSql(
     settings: FSRSSettings,
     app: App,
     now: Date = new Date(),
-): Promise<{ container: HTMLDivElement; params: TableParams }> {
+): Promise<{
+    container: HTMLDivElement;
+    params: TableParams;
+    cards: CardWithState[];
+    totalCount: number;
+}> {
     const params = parseSqlBlock(sqlSource);
     console.debug("generateTableDOMFromSql:", {
         cardCount: cards.length,
@@ -224,7 +241,7 @@ export async function generateTableDOMFromSql(
         app,
         now,
     );
-    return { container, params };
+    return { container, params, cards: cardsWithState, totalCount };
 }
 
 /**
