@@ -40,6 +40,7 @@ export function isVerboseLoggingEnabled(): boolean {
  */
 export function verboseLog(...args: unknown[]): void {
     if (isVerboseLoggingEnabled()) {
+        // eslint-disable-next-line no-console
         console.log(...args);
     }
 }
@@ -66,12 +67,4 @@ export function error(...args: unknown[]): void {
  */
 export function warn(...args: unknown[]): void {
     console.warn(...args);
-}
-
-/**
- * Устаревшая функция для обратной совместимости
- * @deprecated Используйте verboseLog для логов с эмодзи или debug для отладки
- */
-export function log(...args: unknown[]): void {
-    console.log(...args);
 }
