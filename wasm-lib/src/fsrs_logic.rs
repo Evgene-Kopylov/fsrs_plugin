@@ -227,9 +227,12 @@ mod tests {
         let params = create_test_parameters();
 
         // Test 1: Again before any successful review -> lapses = 0
-        let reviews1 = vec![
-            create_test_review_session("2025-01-01T10:00:00Z", "Again", 0.5, 8.0),
-        ];
+        let reviews1 = vec![create_test_review_session(
+            "2025-01-01T10:00:00Z",
+            "Again",
+            0.5,
+            8.0,
+        )];
         let card1 = create_card_from_last_session(&reviews1, 2.5, 5.0, &params);
         assert_eq!(card1.lapses, 0);
         assert_eq!(card1.reps, 1);
