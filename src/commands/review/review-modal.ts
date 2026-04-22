@@ -1,5 +1,6 @@
 import { Modal, App } from "obsidian";
 import type { ModernFSRSCard, FSRSRating } from "../../interfaces/fsrs";
+import { i18n } from "../../utils/i18n";
 
 /**
  * Модальное окно для выбора оценки при повторении карточки
@@ -33,29 +34,32 @@ export class ReviewModal extends Modal {
         contentEl.empty();
 
         // Заголовок
-        contentEl.createEl("h3", { text: "Повторение карточки" });
+        contentEl.createEl("h3", { text: i18n.t("review.title") });
 
         // Информация о карточке
         const info = contentEl.createEl("div");
         const small = info.createEl("small");
-        const fileLine = small.createEl("span");
-        fileLine.createEl("strong", { text: "Файл: " });
-        fileLine.appendText(this.card.filePath);
+
+        // Файл
+        small.createEl("strong", { text: i18n.t("review.file_label") });
+        small.appendText(" " + this.card.filePath);
         small.createEl("br");
-        const sessionsLine = small.createEl("span");
-        sessionsLine.createEl("strong", { text: "Сессий: " });
-        sessionsLine.appendText(String(this.card.reviews.length));
+
+        // Сессии
+        small.createEl("strong", { text: i18n.t("review.sessions_label") });
+        small.appendText(" " + this.card.reviews.length);
         small.createEl("br");
-        const lastLine = small.createEl("span");
-        lastLine.createEl("strong", { text: "Последняя: " });
-        lastLine.appendText(
+
+        // Последняя
+        small.createEl("strong", { text: i18n.t("review.last_review_label") });
+        const lastReviewStr =
             this.card.reviews.length > 0
                 ? new Date(
                       this.card.reviews[this.card.reviews.length - 1]!.date,
                   ).toLocaleString()
-                : "нет",
-        );
-        info.createEl("hr");
+                : i18n.t("review.no_reviews");
+        small.appendText(" " + lastReviewStr);
+        small.createEl("hr");
 
         // Кнопки оценок
         const ratings: {
@@ -65,22 +69,22 @@ export class ReviewModal extends Modal {
         }[] = [
             {
                 rating: "Again",
-                label: "Again (1)",
+                label: i18n.t("review.buttons.again"),
                 color: "var(--color-red)",
             },
             {
                 rating: "Hard",
-                label: "Hard (2)",
+                label: i18n.t("review.buttons.hard"),
                 color: "var(--color-orange)",
             },
             {
                 rating: "Good",
-                label: "Good (3)",
+                label: i18n.t("review.buttons.good"),
                 color: "var(--color-green)",
             },
             {
                 rating: "Easy",
-                label: "Easy (4)",
+                label: i18n.t("review.buttons.easy"),
                 color: "var(--color-blue)",
             },
         ];
@@ -120,7 +124,9 @@ export class ReviewModal extends Modal {
         });
 
         // Кнопка отмены
-        const cancelButton = contentEl.createEl("button", { text: "Отмена" });
+        const cancelButton = contentEl.createEl("button", {
+            text: i18n.t("review.buttons.cancel"),
+        });
         cancelButton.style.cssText = `
 			margin-top: 15px;
 			width: 100%;

@@ -1,4 +1,5 @@
-import { Notice, App } from "obsidian";
+import { App } from "obsidian";
+import { showNotice } from "../utils/i18n";
 import {
     getNewCardYaml,
     extractFrontmatterWithMatch,
@@ -18,7 +19,7 @@ export async function addFsrsFieldsToCurrentFile(
         // Получаем активный файл
         const activeFile = app.workspace.getActiveFile();
         if (!activeFile) {
-            new Notice("Нет активного файла");
+            showNotice("notices.no_active_file");
             return;
         }
 
@@ -37,16 +38,14 @@ export async function addFsrsFieldsToCurrentFile(
             // Есть frontmatter - проверяем, есть ли уже поля FSRS
             const existingContent = frontmatterMatch.content;
             if (!existingContent) {
-                new Notice("Ошибка: frontmatter пуст");
+                showNotice("notices.frontmatter_empty");
                 return;
             }
 
             // Проверяем, есть ли уже reviews поле (FSRS карточка)
             if (/^reviews\s*:/m.test(existingContent)) {
                 // Уже есть поля FSRS - обновляем их
-                new Notice(
-                    "В файле уже есть поля FSRS. Используйте команду повторения для обновления.",
-                );
+                showNotice("notices.fsrs_fields_exists");
                 return;
             }
 
@@ -91,7 +90,7 @@ export async function addFsrsFieldsToCurrentFile(
 
         // Сохраняем изменения
         await app.vault.modify(activeFile, newContent);
-        new Notice("Поля FSRS (новый формат) добавлены в файл");
+        showNotice("notices.fsrs_fields_added");
         console.debug("Поля FSRS успешно добавлены в файл:", activeFile.name);
 
         // Показываем информацию о формате
@@ -105,6 +104,6 @@ export async function addFsrsFieldsToCurrentFile(
         console.error("Ошибка при добавлении полей FSRS:", error);
         const errorMessage =
             error instanceof Error ? error.message : String(error);
-        new Notice("Ошибка при добавлении полей FSRS: " + errorMessage);
+        showNotice("notices.error_parsing_card", { error: errorMessage });
     }
 }

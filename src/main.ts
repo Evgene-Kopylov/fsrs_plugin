@@ -1,4 +1,4 @@
-import { Plugin, Notice } from "obsidian";
+import { Plugin } from "obsidian";
 import { registerCommands } from "./commands/index";
 import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from "./commands/add-fsrs-fields";
 import { findFsrsCards } from "./commands/find-fsrs-cards";
@@ -19,6 +19,7 @@ import { FsrsSettingTab } from "./settings";
 import { IncrementalCache } from "./utils/fsrs";
 import { base64ToBytes } from "./utils/fsrs-helper";
 import type { FSRSRating, CachedCard } from "./interfaces/fsrs";
+import { showNotice } from "./utils/i18n";
 
 // Импорт WASM функций
 import init from "../wasm-lib/pkg/wasm_lib";
@@ -139,7 +140,7 @@ export default class FsrsPlugin extends Plugin {
             this.isWasmInitialized = true;
         } catch (error) {
             console.error("Ошибка загрузки WASM модуля:", error);
-            new Notice("Ошибка загрузки WASM компонента FSRS"); // eslint-disable-line obsidianmd/ui/sentence-case
+            showNotice("notices.wasm_not_ready");
             this.isWasmInitialized = false;
         }
     }
@@ -159,9 +160,6 @@ export default class FsrsPlugin extends Plugin {
     private invalidateCache(): void {
         this.cardCache.invalidateCache();
     }
-
-    // Метод shouldIgnoreFile был вынесен в модуль fsrs-filter.ts
-    // Используйте функцию shouldIgnoreFileWithSettings из импорта
 
     /**
      * Добавляет поля FSRS в текущий файл
