@@ -9,7 +9,8 @@ import {
 } from "../utils/fsrs-helper";
 import type FsrsPlugin from "../main";
 import { ReviewHistoryModal } from "./review-history-modal";
-import { showNotice, getLocalizedNoun, i18n } from "../utils/i18n";
+import { showNotice } from "../utils/notice";
+import { getLocalizedNoun, i18n } from "../utils/i18n";
 
 /**
  * Рендерер кнопки повторения карточки FSRS для блока `fsrs-review-button`

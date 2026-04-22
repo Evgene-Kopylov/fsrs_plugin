@@ -1,6 +1,5 @@
 import en from "../locales/en.json";
 import ru from "../locales/ru.json";
-import { Notice } from "obsidian";
 
 interface TranslationObject {
     [key: string]: string | TranslationObject;
@@ -33,7 +32,10 @@ class I18n {
         return this.currentLocale;
     }
 
-    public t(key: string, params?: Record<string, string | number>): string {
+    public t(
+        key: string,
+        params?: Record<string, string | number | undefined>,
+    ): string {
         const keys = key.split(".");
         let value: unknown = this.translations;
         for (const k of keys) {
@@ -41,14 +43,24 @@ class I18n {
                 value = (value as TranslationObject)[k];
             } else {
                 console.warn(`Missing translation key: ${key}`);
+                // Если есть defaultValue в params, возвращаем его
+                if (params && params.defaultValue !== undefined) {
+                    return String(params.defaultValue);
+                }
                 return key;
             }
         }
         if (typeof value !== "string") {
+            if (params && params.defaultValue !== undefined) {
+                return String(params.defaultValue);
+            }
             return key;
         }
         if (params) {
             return value.replace(/\{(\w+)\}/g, (_, param) => {
+                if (param === "defaultValue") {
+                    return `{${param}}`;
+                }
                 const key = param as keyof typeof params;
                 return key in params ? String(params[key]) : `{${param}}`;
             });
@@ -58,13 +70,6 @@ class I18n {
 }
 
 export const i18n = new I18n();
-
-export function showNotice(
-    key: string,
-    params?: Record<string, string | number>,
-): void {
-    new Notice(i18n.t(key, params));
-}
 
 /**
  * Returns the correct noun form for the given number based on current locale.

@@ -1,4 +1,4 @@
-import { showNotice } from "../utils/i18n";
+import { showNotice } from "../utils/notice";
 import type FsrsPlugin from "../main";
 import { createDefaultTableBlock } from "../utils/fsrs-table-helpers";
 

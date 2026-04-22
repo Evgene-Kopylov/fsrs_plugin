@@ -1,5 +1,6 @@
 import { App, TFile } from "obsidian";
-import { showNotice, getLocalizedNoun, i18n } from "../../utils/i18n";
+import { showNotice } from "../../utils/notice";
+import { getLocalizedNoun, i18n } from "../../utils/i18n";
 import {
     parseModernFsrsFromFrontmatter,
     addReviewSession,

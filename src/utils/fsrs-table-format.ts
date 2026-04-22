@@ -1,6 +1,7 @@
 import type { ModernFSRSCard, ComputedCardState } from "../interfaces/fsrs";
 import type { App } from "obsidian";
 import { formatDateTime } from "./date-format";
+import { i18n } from "./i18n";
 
 /**
  * Форматирует просрочку в читаемый вид
@@ -38,19 +39,12 @@ export function extractDisplayName(filePath: string): string {
 }
 
 /**
- * Переводит состояние карточки на русский язык
- * @param state Английское название состояния
- * @returns Русский перевод
+ * Переводит состояние карточки на выбранный язык
+ * @param state Название состояния
+ * @returns Перевод состояния
  */
 export function translateState(state: string): string {
-    const translations: Record<string, string> = {
-        New: "Новая",
-        Learning: "Изучение",
-        Review: "Повторение",
-        Relearning: "Переучивание",
-        due: "Повторить",
-    };
-    return translations[state] || state;
+    return i18n.t(`table.states.${state}`, { defaultValue: state });
 }
 
 /**
@@ -121,5 +115,5 @@ export function formatError(errorMessage: string): string {
               "... [truncated]"
             : errorMessage;
 
-    return `FSRS: Error:\n-- PARSING FAILED --------------------------------------------------\n\n${truncatedMessage}\n`;
+    return i18n.t("table.error_prefix") + truncatedMessage + "\n";
 }

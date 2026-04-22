@@ -1,5 +1,5 @@
 import { Modal, App } from "obsidian";
-import { showNotice } from "../utils/i18n";
+import { showNotice } from "../utils/notice";
 import {
     parseModernFsrsFromFrontmatter,
     extractFrontmatter,

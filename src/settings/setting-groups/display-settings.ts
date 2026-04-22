@@ -1,5 +1,6 @@
 import { Setting } from "obsidian";
 import type MyPlugin from "../../main";
+import { i18n } from "../../utils/i18n";
 
 /**
  * Рендерит группу настроек отображения.
@@ -10,14 +11,14 @@ export function renderDisplaySettings(
     plugin: MyPlugin,
 ): void {
     // Настройки отображения
-    new Setting(containerEl).setName("Display").setHeading();
+    new Setting(containerEl)
+        .setName(i18n.t("settings.display.heading"))
+        .setHeading();
 
     // auto_add_review_button
     new Setting(containerEl)
-        .setName("Auto add review button")
-        .setDesc(
-            "Automatically insert review button block after frontmatter when adding FSRS fields.",
-        )
+        .setName(i18n.t("settings.display.auto_add_button.name"))
+        .setDesc(i18n.t("settings.display.auto_add_button.desc"))
         .addToggle((toggle) =>
             toggle
                 .setValue(plugin.settings.auto_add_review_button)
@@ -29,11 +30,13 @@ export function renderDisplaySettings(
 
     // status_bar_icon
     new Setting(containerEl)
-        .setName("Status bar icon")
-        .setDesc("Emoji or icon shown in status bar (e.g., 🔄, 📚, ⏰).")
+        .setName(i18n.t("settings.display.status_bar_icon.name"))
+        .setDesc(i18n.t("settings.display.status_bar_icon.desc"))
         .addText((text) =>
             text
-                .setPlaceholder("🔄")
+                .setPlaceholder(
+                    i18n.t("settings.display.status_bar_icon.placeholder"),
+                )
                 .setValue(plugin.settings.status_bar_icon)
                 .onChange(async (value) => {
                     plugin.settings.status_bar_icon = value.trim() || "🔄";

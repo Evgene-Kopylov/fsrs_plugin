@@ -19,7 +19,8 @@ import { FsrsSettingTab } from "./settings";
 import { IncrementalCache } from "./utils/fsrs";
 import { base64ToBytes } from "./utils/fsrs-helper";
 import type { FSRSRating, CachedCard } from "./interfaces/fsrs";
-import { showNotice } from "./utils/i18n";
+import { i18n } from "./utils/i18n";
+import { showNotice } from "./utils/notice";
 
 // Импорт WASM функций
 import init from "../wasm-lib/pkg/wasm_lib";
@@ -220,6 +221,7 @@ export default class FsrsPlugin extends Plugin {
             DEFAULT_SETTINGS,
             await this.loadData(),
         );
+        i18n.setLocale(this.settings.language || "en");
     }
 
     /**
