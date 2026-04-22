@@ -17,7 +17,7 @@ export class IncrementalCache {
     private cardCache = new Map<string, CachedCard>();
     private cacheInitialized = false;
     private scanPromise: Promise<void> | null = null;
-    private pendingUpdates = new Map<string, NodeJS.Timeout>();
+    private pendingUpdates = new Map<string, ReturnType<typeof setTimeout>>();
 
     constructor(
         private app: App,

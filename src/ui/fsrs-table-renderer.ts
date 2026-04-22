@@ -172,7 +172,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             // Сохраняем позицию прокрутки перед обновлением
             const scrollContainer = this.container.querySelector(
                 ".fsrs-table-container",
-            ) as HTMLElement | null;
+            );
             const savedScrollLeft = scrollContainer?.scrollLeft ?? 0;
 
             // Очищаем контейнер и вставляем DOM элементы
@@ -182,7 +182,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             // Восстанавливаем позицию прокрутки
             const newScrollContainer = this.container.querySelector(
                 ".fsrs-table-container",
-            ) as HTMLElement | null;
+            );
             if (newScrollContainer && savedScrollLeft > 0) {
                 newScrollContainer.scrollLeft = savedScrollLeft;
             }
