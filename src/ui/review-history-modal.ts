@@ -301,7 +301,7 @@ export class ReviewHistoryModal extends Modal {
     private translateRating(rating: FSRSRating): string {
         const translations: Record<FSRSRating, string> = {
             Again: "🟥 Снова",
-            Hard: "🟨 Трудно",
+            Hard: "🟨 Тяжело",
             Good: "🟩 Нормально",
             Easy: "🟦 Легко",
         };
