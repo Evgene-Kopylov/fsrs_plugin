@@ -77,6 +77,7 @@ npm run build
 - **Organize into multiple files**: Split functionality, not everything in `main.ts`.
 - Source in `src/`. `main.ts` small → plugin lifecycle (load, unload, register commands).
 - **Example structure**:
+
   ```
   src/
     main.ts
@@ -86,6 +87,7 @@ npm run build
     utils/
     types.ts
   ```
+
 - **Never commit build artifacts**: `node_modules/`, `main.js`, generated files.
 - **Agent context**: use `.agentignore` (included) to exclude generated files.
 - Keep plugin small. Avoid large deps. Prefer browser-compatible packages.
@@ -99,14 +101,16 @@ npm run build
   - Optional: `author`, `authorUrl`, `fundingUrl` (string or map)
 - Never change `id` after release. Stable API.
 - Keep `minAppVersion` accurate for newer APIs.
-- Canonical validation: https://github.com/obsidianmd/obsidian-releases/blob/master/.github/workflows/validate-plugin-entry.yml
+- Canonical validation: <https://github.com/obsidianmd/obsidian-releases/blob/master/.github/workflows/validate-plugin-entry.yml>
 
 ## Testing
 
 - Manual test: copy `main.js`, `manifest.json`, `styles.css` (if any) to:
+
   ```
   <Vault>/.obsidian/plugins/<plugin-id>/
   ```
+
 - Reload Obsidian, enable plugin in **Settings → Community plugins**.
 
 ## Commands & settings
@@ -173,11 +177,13 @@ Follow Obsidian's **Developer Policies** + **Plugin Guidelines**:
 - **Единый источник истины** – модель данных и алгоритмы в Rust. TS передаёт только сериализуемые данные (JSON) в WASM и обратно.
 
 **Что запрещено в TS:**
+
 - Переписывать логику Rust (парсинг, работу с датами, формулы FSRS).
 - Вызывать Rust для каждой карточки по отдельности, если можно пакетно.
 - Хранить мёртвый код «для обратной совместимости».
 
 **Что запрещено в Rust:**
+
 - Использовать API Obsidian (файловая система, UI, события) – это остаётся в TS.
 - Хранить состояние между вызовами – Rust-функции stateless, кэшированием занимается TS.
 
@@ -190,6 +196,7 @@ Follow Obsidian's **Developer Policies** + **Plugin Guidelines**:
 ## Agent do/don't
 
 **Do**
+
 - Add commands with stable IDs (don't rename after release).
 - Provide defaults + validation in settings.
 - Idempotent code paths → reload/unload doesn't leak listeners/intervals.
@@ -197,6 +204,7 @@ Follow Obsidian's **Developer Policies** + **Plugin Guidelines**:
 - **ОБЯЗАТЕЛЬНО** всю логику FSRS держать в Rust; TS только вызывает WASM и кэширует результаты.
 
 **Don't**
+
 - Network calls without obvious user-facing reason + docs.
 - Features requiring cloud services without clear disclosure + explicit opt-in.
 - Store/transmit vault contents unless essential + consented.
@@ -208,6 +216,7 @@ Follow Obsidian's **Developer Policies** + **Plugin Guidelines**:
 ### Organize code across multiple files
 
 **main.ts** (minimal):
+
 ```ts
 import { Plugin } from "obsidian";
 import { MySettings, DEFAULT_SETTINGS } from "./settings";
@@ -224,6 +233,7 @@ export default class MyPlugin extends Plugin {
 ```
 
 **settings.ts**:
+
 ```ts
 export interface MySettings {
   enabled: boolean;
@@ -237,6 +247,7 @@ export const DEFAULT_SETTINGS: MySettings = {
 ```
 
 **commands/index.ts**:
+
 ```ts
 import { Plugin } from "obsidian";
 import { doSomething } from "./my-command";
@@ -290,8 +301,8 @@ this.registerInterval(window.setInterval(() => { /* ... */ }, 1000));
 
 ## References
 
-- Obsidian sample plugin: https://github.com/obsidianmd/obsidian-sample-plugin
-- API docs: https://docs.obsidian.md
-- Developer policies: https://docs.obsidian.md/Developer+policies
-- Plugin guidelines: https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines
-- Style guide: https://help.obsidian.md/style-guide
+- Obsidian sample plugin: <https://github.com/obsidianmd/obsidian-sample-plugin>
+- API docs: <https://docs.obsidian.md>
+- Developer policies: <https://docs.obsidian.md/Developer+policies>
+- Plugin guidelines: <https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines>
+- Style guide: <https://help.obsidian.md/style-guide>

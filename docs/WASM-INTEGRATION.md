@@ -1,11 +1,13 @@
 ## Как интегрировать Rust + WASM в плагин Obsidian (рабочий метод)
 
 ### Что мы сделали
+
 Мы добавили в плагин Obsidian вызов функции, написанной на Rust, скомпилированной в WebAssembly.  
 WASM-код исполняется внутри плагина, результат отображается через `Notice`.  
 Весь процесс обошёлся без `top-level await`, без глобальных переменных и без дополнительных сетевых запросов к `.wasm` файлу – бинарник встроен в плагин через base64.
 
 ### Итоговая архитектура
+
 - **Rust-часть** – `wasm-lib/` с одной экспортируемой функцией `my_wasm_function`.
 - **Сборка WASM** – `wasm-pack build --target web` (генерирует ES-модуль, подходящий для `import` в CommonJS-среде Obsidian).
 - **Встраивание** – бинарный `.wasm` преобразуется в base64 и сохраняется как TypeScript-константа (`wasm-lib/pkg/wasm_lib_base64.ts`).
@@ -15,11 +17,14 @@ WASM-код исполняется внутри плагина, результа
 ### Как повторить для любого плагина Obsidian
 
 #### 1. Создайте Rust-библиотеку внутри папки плагина
+
 ```bash
 cargo new wasm-lib --lib
 cd wasm-lib
 ```
+
 **Cargo.toml**
+
 ```toml
 [package]
 name = "wasm-lib"
@@ -32,7 +37,9 @@ crate-type = ["cdylib"]
 [dependencies]
 wasm-bindgen = "0.2"
 ```
+
 **src/lib.rs**
+
 ```rust
 use wasm_bindgen::prelude::*;
 
@@ -43,21 +50,25 @@ pub fn my_wasm_function(input: String) -> String {
 ```
 
 #### 2. Скомпилируйте WASM (из корня плагина)
+
 ```bash
 wasm-pack build wasm-lib --target web --out-dir pkg --out-name wasm_lib
 ```
 
 #### 3. Встройте WASM как base64
+
 ```bash
 echo "export const WASM_BASE64 = \"$(base64 wasm-lib/pkg/wasm_lib_bg.wasm | tr -d '\n')\";" > wasm-lib/pkg/wasm_lib_base64.ts
 ```
 
 #### 4. Настройте `esbuild.config.mjs`
+
 - Удалите импорт `wasmLoader`
 - Уберите `wasmLoader` из массива `plugins` (оставьте `plugins: []`)
 - Остальные настройки (формат `cjs`, `target: "es2018"`) не меняйте
 
 Пример минимального конфига:
+
 ```javascript
 import esbuild from "esbuild";
 import process from "process";
@@ -80,6 +91,7 @@ else await context.watch();
 ```
 
 #### 5. Напишите код плагина (`src/main.ts`)
+
 ```typescript
 import { Plugin, Notice } from "obsidian";
 import init, { my_wasm_function } from "../wasm-lib/pkg/wasm_lib";
@@ -108,13 +120,16 @@ export default class FsrsPlugin extends Plugin {
 ```
 
 #### 6. Соберите и установите
+
 ```bash
 npm run dev
 ```
+
 Скопируйте папку плагина в `<ваше хранилище>/.obsidian/plugins/`, включите плагин.  
 В консоли и через `Notice` увидите результат из Rust.
 
 ### Почему этот метод работает в Obsidian
+
 - **`--target web`** генерирует модуль, который не использует `top-level await` и не требует `import.meta` при передаче бинарных данных через `module_or_path`.
 - **Base64 + ручной `init`** обходят ограничения Obsidian (CommonJS, старый target), не требуя сетевых запросов.
 - **Отсутствие плагинов esbuild** для WASM – меньше зависимостей и конфликтов.
