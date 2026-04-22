@@ -191,6 +191,10 @@
                 "name": "Status bar icon",
                 "desc": "Emoji or icon shown in status bar (e.g., 🔄, 📚, ⏰).",
                 "placeholder": "🔄"
+            },
+            "verbose_logging": {
+                "name": "Verbose logging",
+                "desc": "Show detailed performance logs with emojis (⏱️, ✅) in Obsidian console. Useful for debugging."
             }
         },
         "early_review": {

@@ -21,6 +21,7 @@ import { base64ToBytes } from "./utils/fsrs-helper";
 import type { FSRSRating, CachedCard } from "./interfaces/fsrs";
 import { i18n } from "./utils/i18n";
 import { showNotice } from "./utils/notice";
+import { verboseLog, setVerboseLoggingEnabled } from "./utils/logger";
 
 // Импорт WASM функций
 import init from "../wasm-lib/pkg/wasm_lib";
@@ -46,7 +47,7 @@ export default class FsrsPlugin extends Plugin {
         await this.loadSettings();
         this.addSettingTab(new FsrsSettingTab(this.app, this));
 
-        console.debug("=== Загрузка FSRS плагина с WASM ===");
+        verboseLog("=== Загрузка FSRS плагина с WASM ===");
 
         // Инициализация WASM модуля
         await this.initializeWasm();
@@ -123,7 +124,7 @@ export default class FsrsPlugin extends Plugin {
             }),
         );
 
-        console.debug("FSRS плагин успешно загружен");
+        verboseLog("FSRS плагин успешно загружен");
     }
 
     /**
@@ -131,13 +132,13 @@ export default class FsrsPlugin extends Plugin {
      */
     private async initializeWasm(): Promise<void> {
         try {
-            console.debug("1. Конвертируем base64 в байты...");
+            verboseLog("1. Конвертируем base64 в байты...");
             const wasmBytes = base64ToBytes(WASM_BASE64);
-            console.debug("2. Длина WASM байтов:", wasmBytes.length);
+            verboseLog("2. Длина WASM байтов:", wasmBytes.length);
 
-            console.debug("3. Вызываем init...");
+            verboseLog("3. Вызываем init...");
             await init({ module_or_path: wasmBytes });
-            console.debug("4. WASM инициализирован");
+            verboseLog("4. WASM инициализирован");
             this.isWasmInitialized = true;
         } catch (error) {
             console.error("Ошибка загрузки WASM модуля:", error);
@@ -226,12 +227,14 @@ export default class FsrsPlugin extends Plugin {
                 ? i18n.resolveLocale("system")
                 : this.settings.language || "en";
         i18n.setLocale(lang);
+        setVerboseLoggingEnabled(this.settings.verbose_logging);
     }
 
     /**
      * Сохраняет настройки плагина
      */
     async saveSettings() {
+        setVerboseLoggingEnabled(this.settings.verbose_logging);
         await this.saveData(this.settings);
         // Инвалидируем кэш при изменении настроек
         this.invalidateCache();
@@ -250,7 +253,7 @@ export default class FsrsPlugin extends Plugin {
      * Выгрузка плагина
      */
     onunload() {
-        console.debug("Выгрузка FSRS плагина");
+        verboseLog("Выгрузка FSRS плагина");
         this.isWasmInitialized = false;
         this.fsrsTableRenderers.clear();
         // Очищаем все ресурсы инкрементального кэша

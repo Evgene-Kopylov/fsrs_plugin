@@ -1,10 +1,11 @@
 import { Setting } from "obsidian";
 import type MyPlugin from "../../main";
 import { i18n } from "../../utils/i18n";
+import { setVerboseLoggingEnabled } from "../../utils/logger";
 
 /**
  * Рендерит группу настроек отображения.
- * Включает настройки: auto_add_review_button.
+ * Включает настройки: auto_add_review_button, status_bar_icon, verbose_logging.
  */
 export function renderDisplaySettings(
     containerEl: HTMLElement,
@@ -43,6 +44,20 @@ export function renderDisplaySettings(
                     await plugin.saveSettings();
                     // Обновить статус-бар
                     void plugin.statusBarManager?.updateStatusBar();
+                }),
+        );
+
+    // verbose_logging
+    new Setting(containerEl)
+        .setName(i18n.t("settings.display.verbose_logging.name"))
+        .setDesc(i18n.t("settings.display.verbose_logging.desc"))
+        .addToggle((toggle) =>
+            toggle
+                .setValue(plugin.settings.verbose_logging)
+                .onChange(async (value) => {
+                    plugin.settings.verbose_logging = value;
+                    setVerboseLoggingEnabled(value);
+                    await plugin.saveSettings();
                 }),
         );
 }

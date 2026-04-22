@@ -7,6 +7,7 @@ import {
     generateTableDOMFromSql,
 } from "../utils/fsrs-table-helpers";
 import { i18n } from "../utils/i18n";
+import { verboseLog } from "../utils/logger";
 
 /**
  * Класс для динамического рендеринга блока fsrs-table
@@ -203,8 +204,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         } finally {
             const elapsedMs = performance.now() - start;
             const elapsedSec = elapsedMs / 1000;
-            // eslint-disable-next-line no-console
-            console.log(`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`);
+            verboseLog(`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`);
         }
     }
 

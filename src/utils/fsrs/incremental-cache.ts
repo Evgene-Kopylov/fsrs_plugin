@@ -5,6 +5,7 @@ import { shouldIgnoreFileWithSettings } from "./fsrs-filter";
 import { shouldProcessFile, extractFrontmatter } from "./fsrs-frontmatter";
 import { parseModernFsrsFromFrontmatter } from "./fsrs-parser";
 import { computeCardState } from "./fsrs-wasm";
+import { verboseLog } from "../../utils/logger";
 
 /**
  * Менеджер инкрементального кэша карточек FSRS
@@ -80,11 +81,9 @@ export class IncrementalCache {
             }
         }
 
-        console.debug(`✅ Найдено карточек FSRS: ${this.cardCache.size}`);
+        verboseLog(`✅ Найдено карточек FSRS: ${this.cardCache.size}`);
         const elapsed = (performance.now() - start) / 1000;
-        console.debug(
-            `⏱️ Сканирование всего хранилища: ${elapsed.toFixed(2)} с`,
-        );
+        verboseLog(`⏱️ Сканирование всего хранилища: ${elapsed.toFixed(2)} с`);
     }
 
     /**
