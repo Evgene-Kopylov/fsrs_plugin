@@ -35,6 +35,9 @@ pub fn create_card_from_last_session(
         let mut had_successful_review = false;
 
         for session in reviews {
+            // Каждая сессия — это одно повторение
+            reps += 1;
+
             match session.rating.as_str() {
                 "Again" => {
                     if had_successful_review {
@@ -42,7 +45,6 @@ pub fn create_card_from_last_session(
                     }
                 }
                 _ => {
-                    reps += 1;
                     had_successful_review = true;
                 }
             }
@@ -175,8 +177,8 @@ mod tests {
         // Должны использоваться значения из последней сессии
         assert_eq!(card.stability, 8.0);
         assert_eq!(card.difficulty, 3.0);
-        // reps: Good и Easy (2), lapses: 0 (Again был первым, до успешного повторения)
-        assert_eq!(card.reps, 2);
+        // reps: все три сессии (3), lapses: 0 (Again был первым, до успешного повторения)
+        assert_eq!(card.reps, 3);
         assert_eq!(card.lapses, 0);
         assert_eq!(card.state, State::Review); // stability >= 1.0
     }
@@ -218,5 +220,57 @@ mod tests {
         assert!(last_review_diff < 5);
         // due должно быть позже last_review
         assert!(card.due > card.last_review);
+    }
+
+    #[test]
+    fn test_create_card_from_last_session_lapses_calculation() {
+        let params = create_test_parameters();
+
+        // Test 1: Again before any successful review -> lapses = 0
+        let reviews1 = vec![
+            create_test_review_session("2025-01-01T10:00:00Z", "Again", 0.5, 8.0),
+        ];
+        let card1 = create_card_from_last_session(&reviews1, 2.5, 5.0, &params);
+        assert_eq!(card1.lapses, 0);
+        assert_eq!(card1.reps, 1);
+
+        // Test 2: Good then Again -> lapses = 1
+        let reviews2 = vec![
+            create_test_review_session("2025-01-01T10:00:00Z", "Good", 5.0, 3.0),
+            create_test_review_session("2025-01-02T10:00:00Z", "Again", 0.8, 7.0),
+        ];
+        let card2 = create_card_from_last_session(&reviews2, 2.5, 5.0, &params);
+        assert_eq!(card2.lapses, 1);
+        assert_eq!(card2.reps, 2);
+
+        // Test 3: Good, Good, Again -> lapses = 1 (only one lapse after successful)
+        let reviews3 = vec![
+            create_test_review_session("2025-01-01T10:00:00Z", "Good", 5.0, 3.0),
+            create_test_review_session("2025-01-02T10:00:00Z", "Good", 8.0, 2.5),
+            create_test_review_session("2025-01-03T10:00:00Z", "Again", 0.8, 7.0),
+        ];
+        let card3 = create_card_from_last_session(&reviews3, 2.5, 5.0, &params);
+        assert_eq!(card3.lapses, 1);
+        assert_eq!(card3.reps, 3);
+
+        // Test 4: Again, Good, Again -> lapses = 1
+        let reviews4 = vec![
+            create_test_review_session("2025-01-01T10:00:00Z", "Again", 0.5, 8.0),
+            create_test_review_session("2025-01-02T10:00:00Z", "Good", 2.0, 5.0),
+            create_test_review_session("2025-01-03T10:00:00Z", "Again", 0.8, 7.0),
+        ];
+        let card4 = create_card_from_last_session(&reviews4, 2.5, 5.0, &params);
+        assert_eq!(card4.lapses, 1);
+        assert_eq!(card4.reps, 3);
+
+        // Test 5: Again, Again, Good -> lapses = 0 (no successful review before Again)
+        let reviews5 = vec![
+            create_test_review_session("2025-01-01T10:00:00Z", "Again", 0.5, 8.0),
+            create_test_review_session("2025-01-02T10:00:00Z", "Again", 0.3, 9.0),
+            create_test_review_session("2025-01-03T10:00:00Z", "Good", 2.0, 5.0),
+        ];
+        let card5 = create_card_from_last_session(&reviews5, 2.5, 5.0, &params);
+        assert_eq!(card5.lapses, 0);
+        assert_eq!(card5.reps, 3);
     }
 }
