@@ -1,17 +1,19 @@
 # FSRS Plugin для Obsidian
 
-**Free Spaced Repetition Scheduler** — современный алгоритм интервального повторения в Obsidian. Плагин превращает заметки в карточки для запоминания по FSRS.
+**Free Spaced Repetition Scheduler** — современный алгоритм интервального
+повторения в Obsidian.
+Плагин превращает заметки в карточки для запоминания по FSRS.
 
-[![Obsidian](https://img.shields.io/badge/Obsidian-%23483699.svg?style=for-the-badge&logo=obsidian&logoColor=white)](https://obsidian.md)
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?style=for-the-badge&logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/)
-[![Rust](https://img.shields.io/badge/Rust-000000.svg?style=for-the-badge&logo=Rust&logoColor=white)](https://www.rust-lang.org/)
-[![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?style=for-the-badge)](LICENSE)
-[![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&style=for-the-badge)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
+[![Obsidian](https://img.shields.io/badge/Obsidian-%23483699.svg?&logo=obsidian&logoColor=white)](https://obsidian.md)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?&logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/)
+[![Rust](https://img.shields.io/badge/Rust-000000.svg?&logo=Rust&logoColor=white)](https://www.rust-lang.org/)
+[![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?)](LICENSE)
+[![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
 
----
+***
 
 Репозиторий на GitHub только зеркало, разработка ведется на GitLab: [gitlab.com/Evgene-Kopylov/FSRS-plugin](https://gitlab.com/Evgene-Kopylov/FSRS-plugin)
----
+***
 
 ## 📋 Содержание
 
@@ -56,8 +58,9 @@
 
    ````markdown
    ```fsrs-table
-   SELECT file as " ", retrievability as "R", stability as "S", difficulty as "D", overdue as "oDue."
-   LIMIT 20
+   SELECT file as " ", retrievability as "R",
+          stability as "S", difficulty as "D",
+          overdue as "Проср."
    ```
    ````
 
@@ -82,7 +85,7 @@ LIMIT 30
 **Доступные поля (columns):**
 
 | Поле | Описание | Примечания |
-|------|----------|------------|
+| ------ | ---------- | ------------ |
 | `file` | имя файла карточки | кликабельная ссылка |
 | `reps` | количество выполненных повторений | |
 | `overdue` | часов просрочки | |
@@ -106,7 +109,9 @@ LIMIT 30
 
 ````markdown
 ```fsrs-table
-SELECT file as " ", retrievability as "R", stability as "S", difficulty as "D", overdue as "Проср."
+SELECT file as " ", retrievability as "R",
+       stability as "S", difficulty as "D",
+       overdue as "Проср."
 LIMIT 20
 ```
 ````
@@ -180,39 +185,40 @@ reviews:
 ### Параметры алгоритма FSRS
 
 | Настройка | Описание | По умолчанию |
-|-----------|----------|--------------|
-| **Request Retention** | Целевой уровень запоминания (0.5-1.0) | 0.92 (92%) |
+| :--- | :--- | :--- |
+| **Request Retention** | Целевой уровень запоминания | 0.92 (92%) |
 | **Maximum Interval** | Макс. интервал (дни) | 36500 (~100 лет) |
 | **Enable Interval Fuzz** | Случайное изменение интервалов (±5%) | Включено |
 
 ### Настройки по умолчанию для новых карточек
 
 | Настройка | Описание | По умолчанию |
-|-----------|----------|--------------|
-| **Initial Stability** | Начальная стабильность для новых карточек | 0.0 |
+| :--- | :--- | :--- |
+| **Initial Stability** | Начальная стабильность | 0.0 |
 | **Initial Difficulty** | Начальная сложность для новых карточек | 0.0 |
 
 ### Настройки отображения
 
 | Настройка | Описание | По умолчанию |
-|-----------|----------|--------------|
-| **Auto Add Review Button** | Автоматическое добавление кнопки повторения | Выключено |
+| :--- | :--- | :--- |
+| **Auto Add Review Button** | Автоматическая кнопка повторения | Выключено |
 
 ### Настройки досрочного повторения
 
 | Настройка | Описание | По умолчанию |
-|-----------|----------|--------------|
-| **Minimum Early Review Interval** | Минимальные минуты до досрочного повторения | 40 |
+| :--- | :--- | :--- |
+| **Minimum Early Review Interval** | Минимальные минуты до повторения | 40 |
 
 ### Настройки фильтрации
 
 | Настройка | Описание | Пример |
-|-----------|----------|--------|
-| **Ignore Patterns** | Паттерны для игнорирования файлов/папок | `.obsidian/`, `templates/`, `*.excalidraw.md` |
+| :--- | :--- | :--- |
+| **Ignore Patterns** | Паттерны игнорирования | `.obsidian/`, `templates/` |
 
 ## 🧠 Алгоритм FSRS
 
-**FSRS** — современный алгоритм интервального повторения от Jarrett Ye. Отличие от SM-2:
+**FSRS** — современный алгоритм интервального повторения от Jarrett Ye.
+Отличие от SM-2:
 
 - Изучает паттерны памяти через ML
 - Адаптируется под скорость запоминания
@@ -231,7 +237,8 @@ reviews:
 
 ## 🛠️ Разработка
 
-**Разработка ведётся на GitLab:** [gitlab.com/Evgene-Kopylov/FSRS-plugin](https://gitlab.com/Evgene-Kopylov/FSRS-plugin). Репозиторий на GitHub является зеркалом.
+**Разработка ведётся на GitLab:** [gitlab.com/Evgene-Kopylov/FSRS-plugin](https://gitlab.com/Evgene-Kopylov/FSRS-plugin).
+Репозиторий на GitHub является зеркалом.
 
 ### Технический стек
 
@@ -248,7 +255,7 @@ reviews:
 
 Проект использует GitLab CI/CD для автоматической сборки, тестирования и релиза:
 
-[![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&style=for-the-badge)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
+[![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
 
 ### Сборка из исходников
 
@@ -325,9 +332,10 @@ npm run build
 - [Issues и feature requests](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/work_items)
 - [Руководство по использованию fsrs-table](docs/ABC%20of%20FSRS.md)
 
----
+***
 
-**Примечание:** Плагин в активной разработке. Функциональность может не значительно меняться.
+**Примечание:** Плагин в активной разработке.
+Функциональность может не значительно меняться.
 
 *Последнее обновление: 2026*
 *Версия плагина: 0.1.3*
