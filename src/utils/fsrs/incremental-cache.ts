@@ -1,13 +1,11 @@
 import { App, TFile, TAbstractFile } from "obsidian";
-import type {
-    CachedCard,
-    FSRSSettings,
-    ModernFSRSCard,
-} from "../../interfaces/fsrs";
+import type { CachedCard, ModernFSRSCard } from "../../interfaces/fsrs";
+import type { FsrsPluginSettings } from "../../settings";
 import { shouldIgnoreFileWithSettings } from "./fsrs-filter";
 import { shouldProcessFile, extractFrontmatter } from "./fsrs-frontmatter";
 import { parseModernFsrsFromFrontmatter } from "./fsrs-parser";
 import { computeCardState } from "./fsrs-wasm";
+import { verboseLog } from "../../utils/logger";
 
 /**
  * Менеджер инкрементального кэша карточек FSRS
@@ -21,7 +19,7 @@ export class IncrementalCache {
 
     constructor(
         private app: App,
-        private settings: FSRSSettings,
+        private settings: FsrsPluginSettings,
         private onCacheUpdated: () => void,
     ) {}
 
@@ -83,11 +81,9 @@ export class IncrementalCache {
             }
         }
 
-        console.debug(`✅ Найдено карточек FSRS: ${this.cardCache.size}`);
+        verboseLog(`✅ Найдено карточек FSRS: ${this.cardCache.size}`);
         const elapsed = (performance.now() - start) / 1000;
-        console.debug(
-            `⏱️ Сканирование всего хранилища: ${elapsed.toFixed(2)} с`,
-        );
+        verboseLog(`⏱️ Сканирование всего хранилища: ${elapsed.toFixed(2)} с`);
     }
 
     /**

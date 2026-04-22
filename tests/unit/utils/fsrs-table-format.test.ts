@@ -56,15 +56,15 @@ describe("fsrs-table-format pure functions", () => {
     });
 
     describe("translateState", () => {
-        it("translates known states to Russian", () => {
-            expect(translateState("New")).toBe("Новая");
-            expect(translateState("Learning")).toBe("Изучение");
-            expect(translateState("Review")).toBe("Повторение");
-            expect(translateState("Relearning")).toBe("Переучивание");
-            expect(translateState("due")).toBe("Повторить");
+        it("returns English state names by default", () => {
+            expect(translateState("New")).toBe("New");
+            expect(translateState("Learning")).toBe("Learning");
+            expect(translateState("Review")).toBe("Review");
+            expect(translateState("Relearning")).toBe("Relearning");
+            expect(translateState("due")).toBe("Due");
         });
 
-        it("returns unchanged for unknown state", () => {
+        it("returns state name as fallback for unknown state", () => {
             expect(translateState("Unknown")).toBe("Unknown");
             expect(translateState("")).toBe("");
         });

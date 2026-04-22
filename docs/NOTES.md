@@ -2,13 +2,14 @@
 
 # Dev notes
 
-## TS линтер.
+## TS линтер
 
 ```bash
 npm run lint
 ```
 
 Исправить, что можно, автоматически
+
 ```bash
 npx eslint src/ --fix 
 ```
@@ -19,6 +20,7 @@ npx eslint src/ --fix
 npm version patch
 git push --tags
 ```
+
 - patch  1.0.0 → 1.0.1
 - minor  1.0.0 → 1.1.0
 - major  1.0.0 → 2.0.0
@@ -31,4 +33,10 @@ git push --tags
 
 ```bash
 npx repogrok
+```
+
+## Git
+
+```bash
+git checkout -b dev/$(date +%Y-%m-%d_%H-%M-%S)
 ```
