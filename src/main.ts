@@ -1,4 +1,4 @@
-import { Plugin, Notice, TAbstractFile } from "obsidian";
+import { Plugin, Notice } from "obsidian";
 import { registerCommands } from "./commands/index";
 import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from "./commands/add-fsrs-fields";
 import { findFsrsCards } from "./commands/find-fsrs-cards";
@@ -16,14 +16,8 @@ import { StatusBarManager } from "./ui/status-bar-manager";
 import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings";
 import { FsrsSettingTab } from "./settings";
 
+import { IncrementalCache } from "./utils/fsrs";
 import { base64ToBytes } from "./utils/fsrs-helper";
-import {
-    parseModernFsrsFromFrontmatter,
-    shouldProcessFile,
-    extractFrontmatter,
-    computeCardState,
-} from "./utils/fsrs-helper";
-import { shouldIgnoreFileWithSettings } from "./utils/fsrs/fsrs-filter";
 import type { FSRSRating, CachedCard } from "./interfaces/fsrs";
 
 // Импорт WASM функций
@@ -39,11 +33,9 @@ export default class FsrsPlugin extends Plugin {
     private isWasmInitialized = false;
 
     private fsrsTableRenderers = new Set<FsrsTableRenderer>();
-    // Кэш с состояниями
-    private cachedCardsWithState: CachedCard[] | null = null;
-    private scanPromise: Promise<CachedCard[]> | null = null;
+    // Инкрементальный кэш карточек
+    private cardCache!: IncrementalCache;
     public statusBarManager: StatusBarManager | null = null;
-    private fileModifyHandler?: (file: TAbstractFile) => void;
 
     /**
      * Загрузка плагина
@@ -67,6 +59,11 @@ export default class FsrsPlugin extends Plugin {
             this.settings,
         );
         this.statusBarManager.init();
+
+        // Инициализация инкрементального кэша карточек
+        this.cardCache = new IncrementalCache(this.app, this.settings, () =>
+            this.notifyFsrsTableRenderers(),
+        );
 
         // Регистрация процессора для кнопки повторения карточки
         this.registerMarkdownCodeBlockProcessor(
@@ -107,9 +104,22 @@ export default class FsrsPlugin extends Plugin {
             },
         );
 
-        // Регистрация обработчика изменений файлов для инвалидации кэша
-        this.fileModifyHandler = () => this.invalidateCache();
-        this.app.vault.on("modify", this.fileModifyHandler);
+        // Регистрация обработчиков изменений файлов для инкрементального кэша
+        this.registerEvent(
+            this.app.vault.on("modify", (file) => {
+                if (file.path) this.cardCache.scheduleCardUpdate(file.path);
+            }),
+        );
+        this.registerEvent(
+            this.app.vault.on("delete", (file) => {
+                this.cardCache.handleFileDelete(file);
+            }),
+        );
+        this.registerEvent(
+            this.app.vault.on("rename", (file, oldPath) => {
+                this.cardCache.handleFileRename(file, oldPath);
+            }),
+        );
 
         console.debug("FSRS плагин успешно загружен");
     }
@@ -139,52 +149,7 @@ export default class FsrsPlugin extends Plugin {
      * Кэш инвалидируется при изменении файлов или настроек.
      */
     async getCachedCardsWithState(): Promise<CachedCard[]> {
-        if (this.cachedCardsWithState) return this.cachedCardsWithState;
-        if (this.scanPromise) return this.scanPromise;
-        this.scanPromise = this.performFullScan();
-        try {
-            this.cachedCardsWithState = await this.scanPromise;
-            return this.cachedCardsWithState;
-        } finally {
-            this.scanPromise = null;
-        }
-    }
-
-    private async performFullScan(): Promise<CachedCard[]> {
-        const start = performance.now();
-        const files = this.app.vault.getMarkdownFiles();
-        const cards: CachedCard[] = [];
-
-        for (const file of files) {
-            if (shouldIgnoreFileWithSettings(file.path, this.settings))
-                continue;
-            try {
-                const content = await this.app.vault.read(file);
-                if (!shouldProcessFile(content)) continue;
-                const frontmatter = extractFrontmatter(content);
-                if (!frontmatter) continue;
-                const parseResult = parseModernFsrsFromFrontmatter(
-                    frontmatter,
-                    file.path,
-                );
-                if (parseResult.success && parseResult.card) {
-                    const state = await computeCardState(
-                        parseResult.card,
-                        this.settings,
-                    );
-                    cards.push({ card: parseResult.card, state });
-                }
-            } catch (error) {
-                console.warn(`Ошибка при чтении файла ${file.path}:`, error);
-            }
-        }
-
-        console.debug(`✅ Найдено карточек FSRS: ${cards.length}`);
-        const elapsed = (performance.now() - start) / 1000;
-        console.debug(
-            `⏱️ Сканирование всего хранилища: ${elapsed.toFixed(2)} с`,
-        );
-        return cards;
+        return await this.cardCache.getCachedCardsWithState();
     }
 
     /**
@@ -192,8 +157,7 @@ export default class FsrsPlugin extends Plugin {
      * Вызывается при изменении файлов или настроек.
      */
     private invalidateCache(): void {
-        this.cachedCardsWithState = null;
-        this.scanPromise = null;
+        this.cardCache.invalidateCache();
     }
 
     // Метод shouldIgnoreFile был вынесен в модуль fsrs-filter.ts
@@ -285,9 +249,9 @@ export default class FsrsPlugin extends Plugin {
         console.debug("Выгрузка FSRS плагина");
         this.isWasmInitialized = false;
         this.fsrsTableRenderers.clear();
-        if (this.fileModifyHandler) {
-            this.app.vault.off("modify", this.fileModifyHandler);
-            this.fileModifyHandler = undefined;
+        // Очищаем все ресурсы инкрементального кэша
+        if (this.cardCache) {
+            this.cardCache.unload();
         }
         if (this.statusBarManager) {
             this.statusBarManager.unload();

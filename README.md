@@ -6,6 +6,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?style=for-the-badge&logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/)
 [![Rust](https://img.shields.io/badge/Rust-000000.svg?style=for-the-badge&logo=Rust&logoColor=white)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?style=for-the-badge)](LICENSE)
+[![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&style=for-the-badge)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
+
+**Разработка ведётся на GitLab:** [gitlab.com/Evgene-Kopylov/FSRS-plugin](https://gitlab.com/Evgene-Kopylov/FSRS-plugin)
 
 ## 📋 Содержание
 
@@ -31,7 +34,7 @@
 
 ### Ручная установка
 
-1. Скачайте последнюю версию из [релизов]() # TODO
+1. Скачайте последнюю версию из [релизов](https://github.com/Evgene-Kopylov/fsrs_plugin/releases)
 2. Распакуйте в папку плагина хранилища:
    ```
    <ваше-хранилище>/.obsidian/plugins/fsrs-plugin/
@@ -240,6 +243,8 @@ reviews:
 
 ## 🛠️ Разработка
 
+**Разработка ведётся на GitLab:** [gitlab.com/Evgene-Kopylov/FSRS-plugin](https://gitlab.com/Evgene-Kopylov/FSRS-plugin). Репозиторий на GitHub является зеркалом.
+
 ### Технический стек
 
 - **Frontend:** TypeScript, Obsidian API
@@ -266,11 +271,28 @@ FSRS-plugin/
 └── tests/                 # Тесты
 ```
 
+### CI/CD Pipeline
+
+Проект использует GitLab CI/CD для автоматической сборки и тестирования:
+
+[![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&style=for-the-badge)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
+
+**Этапы пайплайна:**
+1. **build-wasm** — компиляция Rust в WebAssembly
+2. **encode-wasm** — кодирование WASM в base64 для встраивания в плагин
+3. **test** — запуск unit-тестов на TypeScript
+4. **lint** — проверка TypeScript типов и ESLint
+5. **build** — сборка плагина (main.js, styles.css, manifest.json)
+6. **mirror** — зеркалирование кода в GitHub (автоматическая синхронизация)
+7. **release** — создание релиза в GitHub на основе последнего тега
+
+Все изменения в ветке `main` автоматически проходят полный цикл CI/CD. Релизы публикуются только при наличии тега версии.
+
 ### Сборка из исходников
 
 ```bash
 # Клонирование репозитория
-git clone <репозиторий>
+git clone https://gitlab.com/Evgene-Kopylov/FSRS-plugin.git
 cd FSRS-plugin
 
 # Установка зависимостей
@@ -334,12 +356,12 @@ npm run build
 
 - [Официальная документация FSRS](https://github.com/open-spaced-repetition/fsrs)
 - [Обсуждение на форуме Obsidian](https://forum.obsidian.md/)
-- [Issues и feature requests]() # TODO
+- [Issues и feature requests](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/work_items)
 - [Руководство по использованию fsrs-table](docs/ABC%20of%20FSRS.md)
 
 ---
 
 **Примечание:** Плагин в активной разработке. Функциональность может меняться. Делайте резервные копии хранилища перед обновлениями.
 
-*Последнее обновление: 2025*
-*Версия плагина: 0.0.0*
+*Последнее обновление: 2026*
+*Версия плагина: 0.1.3*

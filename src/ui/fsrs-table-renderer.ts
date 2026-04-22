@@ -169,9 +169,23 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 console.debug("Parsed params from SQL:", this.params);
             }
 
+            // Сохраняем позицию прокрутки перед обновлением
+            const scrollContainer = this.container.querySelector(
+                ".fsrs-table-container",
+            );
+            const savedScrollLeft = scrollContainer?.scrollLeft ?? 0;
+
             // Очищаем контейнер и вставляем DOM элементы
             this.container.empty();
             this.container.appendChild(container);
+
+            // Восстанавливаем позицию прокрутки
+            const newScrollContainer = this.container.querySelector(
+                ".fsrs-table-container",
+            );
+            if (newScrollContainer && savedScrollLeft > 0) {
+                newScrollContainer.scrollLeft = savedScrollLeft;
+            }
 
             // Добавляем обработчики событий для кликабельных ссылок
             this.addEventListeners();
@@ -227,9 +241,11 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
      * Отображает состояние ошибки в виде простого текста без стилей
      */
     private renderErrorState(error: unknown) {
-        console.error(`Ошибка при рендеринге блока fsrs-table:`, error);
         const errorMessage =
             error instanceof Error ? error.message : String(error);
+        console.debug(
+            `Ошибка при рендеринге блока fsrs-table: ${errorMessage}`,
+        );
 
         // Добавляем класс ошибки и очищаем контейнер
         this.container.addClass("fsrs-table-error");

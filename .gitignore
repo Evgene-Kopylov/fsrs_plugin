@@ -1,6 +1,7 @@
 .tmp/
 .agents/
 repogrok-output.xml
+.repogrokignore
 .gitlab-ci-local
 # vscode
 .vscode
