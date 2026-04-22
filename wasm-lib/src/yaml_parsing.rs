@@ -200,7 +200,7 @@ fn validate_review_session(session: &serde_yaml::Value) -> Option<ReviewSession>
         return None;
     }
     let difficulty = session.get("difficulty")?.as_f64()?;
-    if !(1.0..=10.0).contains(&difficulty) {
+    if !(0.0..=10.0).contains(&difficulty) {
         return None;
     }
     Some(ReviewSession {
@@ -245,7 +245,7 @@ pub fn validate_review_sessions(card: &ModernFsrsCard) -> Vec<String> {
             ));
         }
 
-        if session.difficulty < 1.0 || session.difficulty > 10.0 {
+        if session.difficulty < 0.0 || session.difficulty > 10.0 {
             errors.push(format!(
                 "Session {}: difficulty out of range: {}",
                 i, session.difficulty
