@@ -1,71 +1,3 @@
-## Caveman communication mode (автоматически для всех ответов)
-
-Отвечай предельно коротко и по существу, как умный caveman. Вся техническая суть остаётся. Умирает только словесный мусор.
-
-### Постоянство режима
-
-Режим активен для КАЖДОГО ответа. Не отключайся после нескольких сообщений. Не добавляй фразы-паразиты. Если сомневаешься — всё равно режим активен. Выключить: "stop caveman" или "normal mode".
-
-**Уровень по умолчанию:** `full` (классический caveman).  
-**Переключение:** `/caveman lite|full|ultra` (в середине диалога).
-
-### Основные правила
-
-- **Удаляй:** артикли (a/an/the), слова-паразиты (just/really/basically/actually/simply), вежливости (sure/certainly/of course/happy to), увиливания (it might be worth / you could consider).
-- **Фрагменты предложений — норм.** Цельные предложения необязательны.
-- **Короткие синонимы:** "большой" вместо "обширный", "почини" вместо "реализуй решение для".
-- **Технические термины, имена, пути — точно как есть.**
-- **Код в блоках и инлайн-код — не трогай.**
-- **Ошибки цитируй дословно.**
-
-**Формат:** `[что] [действие] [зачем]. [следующий шаг].`
-
-Пример плохого: "Конечно! Я с удовольствием помогу вам с этим. Проблема, с которой вы столкнулись, вероятно, вызвана..."  
-Пример хорошего: "Баг в auth middleware. Проверка expiry использует `<` вместо `<=`. Фикс:"
-
-### Уровни сжатия
-
-| Уровень | Что меняется |
-|---------|--------------|
-| **lite** | Нет слов-паразитов и увиливаний. Артикли + целые предложения остаются. Профессионально, но плотно. |
-| **full** | Нет артиклей, фрагменты OK, короткие синонимы. Классический caveman. |
-| **ultra** | Аббревиатуры (БД/аут/конфиг/запрос/ответ/функция/реализ), убирай союзы, стрелки для причины (X → Y). Одно слово, если достаточно. |
-
-**Примеры для «Почему React-компонент перерисовывается?»**  
-- lite: "Ваш компонент перерисовывается, потому что вы создаёте новую ссылку на объект при каждом рендере. Оберните в `useMemo`."  
-- full: "Новая ссылка на объект при каждом рендере. Inline-объект в пропсах → новая ссылка → перерисовка. Оберни в `useMemo`."  
-- ultra: "Inline-объект в пропсах → новая ссылка → перерисовка. `useMemo`."
-
-**Примеры для «Объясни пул соединений с БД»**  
-- lite: "Пул соединений переиспользует открытые подключения вместо создания новых под каждый запрос. Избегает повторных накладных расходов на рукопожатие."  
-- full: "Пул переиспользует открытые подключения к БД. Не создаёт новое подключение на каждый запрос. Пропускает рукопожатие."  
-- ultra: "Пул = переиспользуй соединение с БД. Пропусти рукопожатие → быстро под нагрузкой."
-
-### Автоматическое отключение режима (только в критических местах)
-
-Временно говори нормально (без caveman) для:
-- предупреждений безопасности
-- подтверждения необратимых действий (DROP TABLE, удаление данных)
-- многошаговых последовательностей, где порядок операций критичен и фрагменты могут быть неправильно поняты
-- когда пользователь явно просит уточнить или переспрашивает
-
-После такого фрагмента — возвращайся к caveman.
-
-Пример для деструктивной операции:
-
-> **Предупреждение:** Это безвозвратно удалит все строки из таблицы `users` и не может быть отменено.
-> ```sql
-> DROP TABLE users;
-> ```
-> Возвращаюсь к caveman. Сначала проверь наличие резервной копии.
-
-### Границы
-
-- Код, коммиты, PR — пиши нормально (не применяй caveman к содержимому кода).
-- "stop caveman" или "normal mode" — выключить режим полностью до следующей команды.
-- Уровень сохраняется, пока не поменяют командой `/caveman` или не завершат сессию.
-
-
 # Agents.md — правила для FSRS Plugin
 
 ## 🚫 Запрещённые файлы (никогда не читать)
@@ -74,13 +6,6 @@
 - `wasm-lib/target/` — скомпилированные артефакты Rust
 - `main.js` — сгенерированный бандл (очень большой, длинные строки)
 - любые другие сгенерированные файлы
-
-## Документация проекта
-
-- `docs/PROJECT_STRUCTURE.md`
-- `docs/DATA_MODEL.md`
-- `docs/FSRS_DEV_PLAN.md`
-- `docs/FSRS_USAGE.md`
 
 ## Как увидеть консольный вывод Obsidian
 
@@ -152,6 +77,7 @@ npm run build
 - **Organize into multiple files**: Split functionality, not everything in `main.ts`.
 - Source in `src/`. `main.ts` small → plugin lifecycle (load, unload, register commands).
 - **Example structure**:
+
   ```
   src/
     main.ts
@@ -161,6 +87,7 @@ npm run build
     utils/
     types.ts
   ```
+
 - **Never commit build artifacts**: `node_modules/`, `main.js`, generated files.
 - **Agent context**: use `.agentignore` (included) to exclude generated files.
 - Keep plugin small. Avoid large deps. Prefer browser-compatible packages.
@@ -174,15 +101,26 @@ npm run build
   - Optional: `author`, `authorUrl`, `fundingUrl` (string or map)
 - Never change `id` after release. Stable API.
 - Keep `minAppVersion` accurate for newer APIs.
-- Canonical validation: https://github.com/obsidianmd/obsidian-releases/blob/master/.github/workflows/validate-plugin-entry.yml
+- Canonical validation: <https://github.com/obsidianmd/obsidian-releases/blob/master/.github/workflows/validate-plugin-entry.yml>
 
 ## Testing
 
 - Manual test: copy `main.js`, `manifest.json`, `styles.css` (if any) to:
+
   ```
   <Vault>/.obsidian/plugins/<plugin-id>/
   ```
+
 - Reload Obsidian, enable plugin in **Settings → Community plugins**.
+
+## TS Unit testing
+
+- Используйте Vitest (конфиг `vitest.config.ts`).
+- **Запрещены моки** внешних зависимостей (Obsidian API, файловая система, WASM). Вместо моков — тестируйте изолированные чистые функции (утилиты, парсеры, преобразования).
+    Причины: 
+    - агент не различает внешние зависимости и собственный WASM проекта.
+    - Снжено доверие таким тестам.
+- Пример: тесты для `fsrs-table-format.ts`, `date-format.ts`, `i18n.ts` и других pure-модулей.
 
 ## Commands & settings
 
@@ -248,11 +186,13 @@ Follow Obsidian's **Developer Policies** + **Plugin Guidelines**:
 - **Единый источник истины** – модель данных и алгоритмы в Rust. TS передаёт только сериализуемые данные (JSON) в WASM и обратно.
 
 **Что запрещено в TS:**
+
 - Переписывать логику Rust (парсинг, работу с датами, формулы FSRS).
 - Вызывать Rust для каждой карточки по отдельности, если можно пакетно.
 - Хранить мёртвый код «для обратной совместимости».
 
 **Что запрещено в Rust:**
+
 - Использовать API Obsidian (файловая система, UI, события) – это остаётся в TS.
 - Хранить состояние между вызовами – Rust-функции stateless, кэшированием занимается TS.
 
@@ -265,6 +205,7 @@ Follow Obsidian's **Developer Policies** + **Plugin Guidelines**:
 ## Agent do/don't
 
 **Do**
+
 - Add commands with stable IDs (don't rename after release).
 - Provide defaults + validation in settings.
 - Idempotent code paths → reload/unload doesn't leak listeners/intervals.
@@ -272,6 +213,7 @@ Follow Obsidian's **Developer Policies** + **Plugin Guidelines**:
 - **ОБЯЗАТЕЛЬНО** всю логику FSRS держать в Rust; TS только вызывает WASM и кэширует результаты.
 
 **Don't**
+
 - Network calls without obvious user-facing reason + docs.
 - Features requiring cloud services without clear disclosure + explicit opt-in.
 - Store/transmit vault contents unless essential + consented.
@@ -283,6 +225,7 @@ Follow Obsidian's **Developer Policies** + **Plugin Guidelines**:
 ### Organize code across multiple files
 
 **main.ts** (minimal):
+
 ```ts
 import { Plugin } from "obsidian";
 import { MySettings, DEFAULT_SETTINGS } from "./settings";
@@ -299,6 +242,7 @@ export default class MyPlugin extends Plugin {
 ```
 
 **settings.ts**:
+
 ```ts
 export interface MySettings {
   enabled: boolean;
@@ -312,6 +256,7 @@ export const DEFAULT_SETTINGS: MySettings = {
 ```
 
 **commands/index.ts**:
+
 ```ts
 import { Plugin } from "obsidian";
 import { doSomething } from "./my-command";
@@ -365,8 +310,8 @@ this.registerInterval(window.setInterval(() => { /* ... */ }, 1000));
 
 ## References
 
-- Obsidian sample plugin: https://github.com/obsidianmd/obsidian-sample-plugin
-- API docs: https://docs.obsidian.md
-- Developer policies: https://docs.obsidian.md/Developer+policies
-- Plugin guidelines: https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines
-- Style guide: https://help.obsidian.md/style-guide
+- Obsidian sample plugin: <https://github.com/obsidianmd/obsidian-sample-plugin>
+- API docs: <https://docs.obsidian.md>
+- Developer policies: <https://docs.obsidian.md/Developer+policies>
+- Plugin guidelines: <https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines>
+- Style guide: <https://help.obsidian.md/style-guide>

@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Notice, TAbstractFile } from "obsidian";
+import { MarkdownRenderChild, TAbstractFile } from "obsidian";
 import {
     parseModernFsrsFromFrontmatter,
     extractFrontmatterWithMatch,
@@ -6,10 +6,11 @@ import {
     computeCardState,
     formatLocalDate,
     getMinutesSinceLastReview,
-    getRussianNoun,
 } from "../utils/fsrs-helper";
 import type FsrsPlugin from "../main";
 import { ReviewHistoryModal } from "./review-history-modal";
+import { showNotice } from "../utils/notice";
+import { getLocalizedNoun, i18n } from "../utils/i18n";
 
 /**
  * Рендерер кнопки повторения карточки FSRS для блока `fsrs-review-button`
@@ -230,7 +231,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             // Проверяем статус карточки перед открытием модального окна
             const file = this.plugin.app.vault.getFileByPath(this.sourcePath);
             if (!file) {
-                new Notice("Файл не найден");
+                showNotice("notices.file_not_found", { path: this.sourcePath });
                 await this.updateButtonState();
                 return;
             }
@@ -239,7 +240,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             const frontmatterMatch = extractFrontmatterWithMatch(content);
 
             if (!frontmatterMatch) {
-                new Notice("Файл не содержит frontmatter");
+                showNotice("notices.no_frontmatter");
                 await this.updateButtonState();
                 return;
             }
@@ -252,7 +253,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 
             if (!parseResult.success || !parseResult.card) {
                 // Карточка не является FSRS карточкой - показываем уведомление
-                new Notice("Not an FSRS card");
+                showNotice("notices.not_fsrs_card");
                 // Обновляем состояние кнопки (на случай, если статус изменился)
                 await this.updateButtonState();
                 return;
@@ -283,13 +284,23 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
                     );
                     const nextDate = new Date(state.due);
 
-                    let message = `Карточка уже повторена. `;
                     if (remainingMinutes > 0) {
-                        message += `Досрочное повторение возможно через ${remainingMinutes} ${getRussianNoun(remainingMinutes, "минуту", "минуты", "минут")}. `;
+                        const noun = getLocalizedNoun(
+                            remainingMinutes,
+                            i18n.getLocale() === "ru" ? "минуту" : "minute",
+                            i18n.getLocale() === "ru" ? "минуты" : "minutes",
+                            i18n.getLocale() === "ru" ? "минут" : "minutes",
+                        );
+                        showNotice("notices.early_review_blocked", {
+                            minutes: remainingMinutes,
+                            noun: noun,
+                            date: formatLocalDate(nextDate, this.plugin.app),
+                        });
+                    } else {
+                        showNotice("notices.card_not_due", {
+                            date: formatLocalDate(nextDate, this.plugin.app),
+                        });
                     }
-                    message += `Следующее повторение по графику: ${formatLocalDate(nextDate, this.plugin.app)}`;
-
-                    new Notice(message);
                     await this.updateButtonState();
                     return;
                 }
@@ -307,7 +318,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             }
         } catch (error) {
             console.error("Ошибка при обработке карточки:", error);
-            new Notice("Ошибка при обработке карточки");
+            showNotice("notices.card_processing_error");
             // Восстанавливаем состояние при ошибке
             await this.updateButtonState();
         }
@@ -344,11 +355,12 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             await modal.show();
         } catch (error) {
             console.error("Ошибка при открытии истории повторений:", error);
-            new Notice("Ошибка при открытии истории повторений");
+            showNotice("notices.review_history_error");
         }
     }
 
     /**
+
      * Обновляет рендерер (например, при изменении файла)
      * Может быть вызван извне для принудительного обновления
      */

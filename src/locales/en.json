@@ -1,0 +1,217 @@
+{
+    "review": {
+        "title": "Card Review",
+        "file_label": "File:",
+        "sessions_label": "Reviews:",
+        "last_review_label": "Last review:",
+        "no_reviews": "none",
+        "buttons": {
+            "again": "Again (1)",
+            "hard": "Hard (2)",
+            "good": "Good (3)",
+            "easy": "Easy (4)",
+            "cancel": "Cancel"
+        }
+    },
+    "notices": {
+        "no_active_file": "No active file",
+        "no_frontmatter": "File has no frontmatter",
+        "frontmatter_empty": "Frontmatter is empty",
+        "not_fsrs_card": "Not an FSRS card",
+        "review_cancelled": "Review cancelled",
+        "card_reviewed": "Card reviewed: {rating}",
+        "next_review": "Next review: {date}",
+        "card_reviewed_with_next": "Card reviewed: {rating}\nNext review: {date}",
+        "fsrs_fields_added": "FSRS fields added to file",
+        "fsrs_fields_exists": "File already has FSRS fields. Use review command to update.",
+        "no_cards_for_review": "No cards due for review",
+        "cards_found": "Found {count} cards due for review",
+        "fsrs_table_inserted": "Added fsrs-table block with {count} cards due for review",
+        "review_deleted": "Last review deleted",
+        "no_reviews_to_delete": "No reviews to delete",
+        "error_parsing_card": "Failed to parse FSRS card: {error}",
+        "card_processing_error": "Error processing card",
+        "review_history_error": "Error opening review history",
+        "card_load_error": "Failed to load card data",
+        "wasm_not_ready": "FSRS component not ready. Please restart Obsidian.",
+        "file_not_found": "File not found: {path}",
+        "card_not_due": "Card already reviewed. Next scheduled review: {date}",
+        "early_review_blocked": "Early review available in {minutes} {noun}. Next scheduled: {date}"
+    },
+    "commands": {
+        "add_fsrs_fields": "Add FSRS fields to frontmatter",
+        "find_fsrs_cards": "Find cards due for review",
+        "review_current_card": "Review current card",
+        "delete_last_review": "Delete last review",
+        "show_fsrs_help": "Show fsrs-table syntax help",
+        "show_review_history": "Show review history"
+    },
+    "statusBar": {
+        "loading": "loading...",
+        "no_file": "no file",
+        "not_fsrs": "not FSRS",
+        "due": "due!",
+        "error": "error",
+        "wait_early": "Wait {minutes} {noun}",
+        "next_review": "{date}",
+        "tooltip": {
+            "no_file": "FSRS plugin - no active file",
+            "not_fsrs": "FSRS plugin - current file is not a FSRS card",
+            "due": "FSRS plugin - card is due for review. Click to review.",
+            "error": "FSRS plugin - error updating status",
+            "default": "FSRS plugin - left-click to review, right-click for menu",
+            "next_scheduled": "FSRS Plugin - Next review: {date}",
+            "early_available": "FSRS Plugin - Early review available in {minutes} {noun}. Next scheduled review: {date}"
+        },
+        "menu": {
+            "add_fields": "Add FSRS fields to frontmatter",
+            "show_history": "Show review history",
+            "show_help": "Show fsrs-table syntax help"
+        }
+    },
+    "table": {
+        "loading": "Loading FSRS cards...",
+        "no_cards": "No FSRS cards found",
+        "showing_limit": "Showing: {shown} of {total} cards ({hidden} hidden)",
+        "error_prefix": "FSRS: Error:\n-- PARSING FAILED --------------------------------------------------\n\n",
+        "column_defaults": {
+            "file": "File",
+            "reps": "Reps",
+            "overdue": "Overdue",
+            "stability": "Stability",
+            "difficulty": "Difficulty",
+            "retrievability": "Retrievability",
+            "due": "Due",
+            "state": "State",
+            "elapsed": "Elapsed",
+            "scheduled": "Scheduled"
+        },
+        "states": {
+            "New": "New",
+            "Learning": "Learning",
+            "Review": "Review",
+            "Relearning": "Relearning",
+            "due": "Due"
+        }
+    },
+    "help": {
+        "title": "Syntax help for fsrs-table",
+        "intro": "Use this help to configure fsrs-table blocks in your notes.",
+        "examples": {
+            "heading": "Examples",
+            "actual": "### Actual overdue cards (most urgent)\n```fsrs-table\nSELECT file as \"File\", reps as \"Reps\", overdue as \"Overdue\", retrievability as \"Retrievability\"\nLIMIT 20\n```",
+            "sort": "### Sorting by field\n```fsrs-table\nSELECT file as \"File\", reps as \"Reps\", due as \"Next review\", state as \"State\"\nORDER BY due DESC\nLIMIT 20\n```",
+            "full": "### Full table (all fields)\n```fsrs-table\nSELECT file as \"🗎\", difficulty as \"D\", due as \"D\", elapsed as \"E\", overdue as \"O\", reps as \"R\", retrievability as \"R\", scheduled as \"S\", stability as \"S\", state as \"S\"\nLIMIT 20\n```"
+        },
+        "available_fields": {
+            "heading": "Available fields (columns)",
+            "descriptions": {
+                "file": "File name (clickable link)",
+                "reps": "Number of completed reviews",
+                "overdue": "Hours overdue",
+                "stability": "Stability (S) — FSRS parameter determining growth interval",
+                "difficulty": "Difficulty (D) — value from 0 to 10",
+                "retrievability": "Retrievability (R) — probability of correct answer at this moment",
+                "due": "Date and time of next review",
+                "state": "Card state: New, Learning, Review, Relearning",
+                "elapsed": "Days since last review",
+                "scheduled": "Days until next review"
+            }
+        },
+        "parameters": {
+            "heading": "Parameters (SQL syntax)",
+            "select": "**`SELECT field1, field2 as \"Title\", ...`** — select fields to display",
+            "select_star": "**`SELECT *`** — select all available fields",
+            "order_by": "**`ORDER BY field ASC|DESC`** — sort by specified field (ASC - ascending, DESC - descending)",
+            "limit": "**`LIMIT number`** — limit number of rows (0 = use plugin default, usually 30)",
+            "select_format": "### SELECT format\n```\nSELECT file, reps as \"Repetitions\", stability, difficulty as \"Difficulty\"\nSELECT *\n```",
+            "order_by_format": "### ORDER BY format\n```\nORDER BY due DESC\nORDER BY file ASC\n```",
+            "notes": "**Note:** If ORDER BY is not specified, default sorting ORDER BY overdue DESC is used. Custom ORDER BY overrides default.",
+            "select_desc": "Fields are listed separated by commas after the SELECT keyword.\n- You can use `*` to select all available fields.\n- You can set a custom title using `as \"Title\"`.\n- If no title is specified, the default field name is used.\n- Column order matches the order in the SELECT parameter.",
+            "order_by_desc": "Sort field must be one of the available fields.\n- Sort direction: ASC (ascending) or DESC (descending).\n- If ORDER BY is not specified, default ORDER BY overdue DESC is used.\n- Custom sort overrides the default sort."
+        },
+        "general": {
+            "heading": "General information",
+            "description": "The `fsrs-table` block displays a table of FSRS cards with customizable columns and sorting.",
+            "update_note": "Data updates automatically when opening the file.",
+            "notes": {
+                "heading": "Notes",
+                "cache": "Table data is cached and refreshed when opening the file.",
+                "click_file": "Click on file name opens the corresponding note.",
+                "click_row": "Click on table row also opens the file.",
+                "default_sort": "Without ORDER BY parameter, default sorting ORDER BY overdue DESC is used.",
+                "custom_sort": "With ORDER BY parameter, user-specified sorting is used.",
+                "rounding": "All numeric values are rounded for better readability."
+            }
+        }
+    },
+    "settings": {
+        "language": {
+            "heading": "Language",
+            "desc": "Select interface language",
+            "system": "System (Obsidian language)",
+            "en": "English",
+            "ru": "Russian"
+        },
+        "fsrs_algorithm": {
+            "heading": "FSRS Algorithm",
+            "request_retention": {
+                "name": "Request retention",
+                "desc": "Target retention rate (0.0-1.0). Higher = more reviews, lower retention."
+            },
+            "maximum_interval": {
+                "name": "Maximum interval",
+                "desc": "Maximum days between reviews. 36500 = ~100 years."
+            },
+            "enable_fuzz": {
+                "name": "Enable interval fuzz",
+                "desc": "Add random variation to intervals (±5%) to prevent card grouping."
+            }
+        },
+        "card_defaults": {
+            "heading": "New card defaults",
+            "initial_stability": {
+                "name": "Initial stability",
+                "desc": "Default stability value for new cards.",
+                "placeholder": "0.0"
+            },
+            "initial_difficulty": {
+                "name": "Initial difficulty",
+                "desc": "Default difficulty value for new cards.",
+                "placeholder": "0.0"
+            }
+        },
+        "display": {
+            "heading": "Display",
+            "auto_add_button": {
+                "name": "Auto add review button block under frontmatter",
+                "desc": "Automatically insert review button block after frontmatter when adding FSRS fields. Example: ```fsrs-review-button```"
+            },
+            "status_bar_icon": {
+                "name": "Status bar icon",
+                "desc": "Emoji or icon shown in status bar (e.g., 🔄, 📚, ⏰).",
+                "placeholder": "🔄"
+            },
+            "verbose_logging": {
+                "name": "Verbose logging",
+                "desc": "Show detailed performance logs with emojis (⏱️, ✅) in Obsidian console. Useful for debugging."
+            }
+        },
+        "early_review": {
+            "heading": "Early review",
+            "minimum_interval": {
+                "name": "Minimum early review interval",
+                "desc": "Minimum minutes before a card can be reviewed early. Set to 0 to allow immediate review.",
+                "placeholder": "40"
+            }
+        },
+        "filtering": {
+            "heading": "File filtering",
+            "ignore_patterns": {
+                "name": "Ignore patterns",
+                "desc": "File and folder patterns to ignore (one per line). Patterns ending with / are folders. *.extension for file types. Example: config/, templates/, *.excalidraw.md",
+                "placeholder": ".obsidian/\ntemplates/\n*.excalidraw.md"
+            }
+        }
+    }
+}

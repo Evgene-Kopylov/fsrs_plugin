@@ -6,6 +6,8 @@ import {
     generateTableDOMFromCards,
     generateTableDOMFromSql,
 } from "../utils/fsrs-table-helpers";
+import { i18n } from "../utils/i18n";
+import { verboseLog } from "../utils/logger";
 
 /**
  * Класс для динамического рендеринга блока fsrs-table
@@ -202,8 +204,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         } finally {
             const elapsedMs = performance.now() - start;
             const elapsedSec = elapsedMs / 1000;
-            // eslint-disable-next-line no-console
-            console.log(`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`);
+            verboseLog(`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`);
         }
     }
 
@@ -216,7 +217,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             cls: "fsrs-table-loading",
         });
         loadingDiv.createEl("small", {
-            text: "Loading FSRS cards...",
+            text: i18n.t("table.loading"),
         });
     }
 
@@ -230,8 +231,8 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             this.container.style.transition = "opacity 0.3s ease"; // eslint-disable-line obsidianmd/no-static-styles-assignment
         }
         this.container.empty();
-
-        // Просто очищаем контейнер без вставки сообщения
+        const emptyDiv = this.container.createDiv({ cls: "fsrs-table-empty" });
+        emptyDiv.createEl("small", { text: i18n.t("table.no_cards") });
         if (!this.isFirstLoad) {
             this.container.style.opacity = "1"; // eslint-disable-line obsidianmd/no-static-styles-assignment
         }
@@ -339,7 +340,14 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         const now = Date.now();
         if (now - this.lastVisibilityUpdate > 2000) {
             this.lastVisibilityUpdate = now;
-            await this.refresh();
+            try {
+                await this.refresh();
+            } catch (error) {
+                console.error(
+                    "Ошибка при обновлении таблицы fsrs-table:",
+                    error,
+                );
+            }
         }
     }
 

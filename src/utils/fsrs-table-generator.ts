@@ -13,6 +13,7 @@ import type { TableParams } from "./fsrs-table-params";
 import type { CardWithState } from "./fsrs-table-filter";
 
 import { formatFieldValue } from "./fsrs-table-format";
+import { i18n } from "./i18n";
 import { parseSqlBlock } from "./fsrs-table-params";
 
 /**
@@ -148,7 +149,11 @@ export function generateTableDOM(
         const infoDiv = document.createElement("div");
         infoDiv.className = "fsrs-table-info";
         const small = document.createElement("small");
-        small.textContent = `Показано: ${limit} из ${totalCards} карточек (${hiddenCount} скрыто)`;
+        small.textContent = i18n.t("table.showing_limit", {
+            shown: limit,
+            total: totalCards,
+            hidden: hiddenCount,
+        });
         infoDiv.appendChild(small);
         container.appendChild(infoDiv);
     }

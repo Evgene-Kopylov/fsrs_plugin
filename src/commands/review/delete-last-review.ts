@@ -1,4 +1,5 @@
-import { Notice, App } from "obsidian";
+import { App } from "obsidian";
+import { showNotice } from "../../utils/notice";
 import {
     parseModernFsrsFromFrontmatter,
     extractFrontmatterWithMatch,
@@ -22,7 +23,7 @@ export async function deleteLastReview(
     try {
         const file = app.vault.getFileByPath(filePath);
         if (!file) {
-            new Notice("Файл не найден");
+            showNotice("notices.file_not_found", { path: filePath });
             return false;
         }
 
@@ -30,7 +31,7 @@ export async function deleteLastReview(
         const frontmatterMatch = extractFrontmatterWithMatch(content);
 
         if (!frontmatterMatch) {
-            new Notice("Файл не содержит frontmatter");
+            showNotice("notices.no_frontmatter");
             return false;
         }
 
@@ -41,7 +42,7 @@ export async function deleteLastReview(
         );
 
         if (!parseResult.success || !parseResult.card) {
-            new Notice("Not an FSRS card. Nothing to delete.");
+            showNotice("notices.not_fsrs_card");
             return false;
         }
 
@@ -49,7 +50,7 @@ export async function deleteLastReview(
 
         // Проверяем, есть ли что удалять
         if (card.reviews.length === 0) {
-            new Notice("Нет повторений для удаления");
+            showNotice("notices.no_reviews_to_delete");
             return false;
         }
 
@@ -87,14 +88,16 @@ export async function deleteLastReview(
         // Сохраняем изменения
         await app.vault.modify(file, newContent);
 
-        new Notice("Последнее повторение удалено");
+        showNotice("notices.review_deleted");
 
         // Уведомляем рендереры таблиц об обновлении данных
         plugin.notifyFsrsTableRenderers();
         return true;
     } catch (error) {
         console.error("Ошибка при удалении повторения:", error);
-        new Notice("Ошибка при удалении повторения");
+        const errorMessage =
+            error instanceof Error ? error.message : String(error);
+        showNotice("notices.error_parsing_card", { error: errorMessage });
         return false;
     }
 }
@@ -112,7 +115,7 @@ export async function deleteLastReviewCurrentCard(
     try {
         const activeFile = app.workspace.getActiveFile();
         if (!activeFile) {
-            new Notice("Нет активного файла");
+            showNotice("notices.no_active_file");
             return false;
         }
 
@@ -122,7 +125,9 @@ export async function deleteLastReviewCurrentCard(
             "Ошибка при удалении повторения текущей карточки:",
             error,
         );
-        new Notice("Ошибка при удалении повторения");
+        const errorMessage =
+            error instanceof Error ? error.message : String(error);
+        showNotice("notices.error_parsing_card", { error: errorMessage });
         return false;
     }
 }

@@ -1,4 +1,6 @@
-import { Notice, App, TFile } from "obsidian";
+import { App, TFile } from "obsidian";
+import { showNotice } from "../../utils/notice";
+import { getLocalizedNoun, i18n } from "../../utils/i18n";
 import {
     parseModernFsrsFromFrontmatter,
     addReviewSession,
@@ -8,7 +10,6 @@ import {
     formatLocalDate,
     getCardYamlAfterReview,
     getMinutesSinceLastReview,
-    getRussianNoun,
     extractFrontmatterWithMatch,
 } from "../../utils/fsrs-helper";
 import type { FSRSRating } from "../../interfaces/fsrs";
@@ -78,7 +79,7 @@ async function reviewCardByFile(
     const frontmatterMatch = extractFrontmatterWithMatch(content);
 
     if (!frontmatterMatch) {
-        new Notice("Файл не содержит frontmatter");
+        showNotice("notices.no_frontmatter");
         return null;
     }
 
@@ -87,7 +88,7 @@ async function reviewCardByFile(
     const parseResult = parseModernFsrsFromFrontmatter(frontmatter, file.path);
 
     if (!parseResult.success || !parseResult.card) {
-        new Notice(parseResult.error || "Не удалось распарсить карточку FSRS");
+        showNotice("notices.not_fsrs_card");
         return null;
     }
 
@@ -107,13 +108,22 @@ async function reviewCardByFile(
             const state = await computeCardState(card, plugin.settings);
             const nextDate = new Date(state.due);
 
-            let message = `Карточка уже повторена. `;
             if (remainingMinutes > 0) {
-                message += `Досрочное повторение возможно через ${remainingMinutes} ${getRussianNoun(remainingMinutes, "минуту", "минуты", "минут")}. `;
+                showNotice("notices.early_review_blocked", {
+                    minutes: remainingMinutes,
+                    noun: getLocalizedNoun(
+                        remainingMinutes,
+                        i18n.getLocale() === "ru" ? "минуту" : "minute",
+                        i18n.getLocale() === "ru" ? "минуты" : "minutes",
+                        i18n.getLocale() === "ru" ? "минут" : "minutes",
+                    ),
+                    date: formatLocalDate(nextDate, plugin.app),
+                });
+            } else {
+                showNotice("notices.card_not_due", {
+                    date: formatLocalDate(nextDate, plugin.app),
+                });
             }
-            message += `Следующее повторение по графику: ${formatLocalDate(nextDate, plugin.app)}`;
-
-            new Notice(message);
             return null;
         }
     }
@@ -124,7 +134,7 @@ async function reviewCardByFile(
     const rating = await modal.show();
 
     if (!rating) {
-        new Notice("Повторение отменено");
+        showNotice("notices.review_cancelled");
         return null;
     }
 
@@ -160,12 +170,15 @@ async function reviewCardByFile(
     await app.vault.modify(file, newContent);
 
     const nextDates = await getNextReviewDates(updatedCard, plugin.settings);
-    let message = `Карточка повторена: ${rating}`;
     if (nextDates[rating]) {
         const nextDate = new Date(nextDates[rating]);
-        message += `\nСледующее повторение: ${nextDate.toLocaleDateString()}`;
+        showNotice("notices.card_reviewed_with_next", {
+            rating,
+            date: nextDate.toLocaleDateString(),
+        });
+    } else {
+        showNotice("notices.card_reviewed", { rating });
     }
-    new Notice(message);
     plugin.notifyFsrsTableRenderers();
     console.debug("Карточка успешно обновлена");
 
@@ -188,7 +201,7 @@ export async function reviewCurrentCard(
 ): Promise<void> {
     const activeFile = app.workspace.getActiveFile();
     if (!activeFile) {
-        new Notice("Нет активного файла");
+        showNotice("notices.no_active_file");
         return;
     }
 
@@ -198,7 +211,7 @@ export async function reviewCurrentCard(
         console.error("Ошибка при повторении карточки:", error);
         const errorMessage =
             error instanceof Error ? error.message : String(error);
-        new Notice("Ошибка при повторении карточки: " + errorMessage);
+        showNotice("notices.error_parsing_card", { error: errorMessage });
     }
 }
 
@@ -212,7 +225,7 @@ export async function reviewCardByPath(
 ): Promise<FSRSRating | null> {
     const file = app.vault.getFileByPath(filePath);
     if (!file) {
-        new Notice(`Файл не найден: ${filePath}`);
+        showNotice("notices.file_not_found", { path: filePath });
         return null;
     }
 
@@ -222,7 +235,7 @@ export async function reviewCardByPath(
         console.error("Ошибка при повторении карточки по пути:", error);
         const errorMessage =
             error instanceof Error ? error.message : String(error);
-        new Notice("Ошибка при повторении карточки: " + errorMessage);
+        showNotice("notices.error_parsing_card", { error: errorMessage });
         return null;
     }
 }
