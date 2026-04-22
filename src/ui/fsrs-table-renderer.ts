@@ -339,7 +339,14 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         const now = Date.now();
         if (now - this.lastVisibilityUpdate > 2000) {
             this.lastVisibilityUpdate = now;
-            await this.refresh();
+            try {
+                await this.refresh();
+            } catch (error) {
+                console.error(
+                    "Ошибка при обновлении таблицы fsrs-table:",
+                    error,
+                );
+            }
         }
     }
 
