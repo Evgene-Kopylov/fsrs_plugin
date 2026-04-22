@@ -8,7 +8,9 @@
 [![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?style=for-the-badge)](LICENSE)
 [![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&style=for-the-badge)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
 
-**Разработка ведётся на GitLab:** [gitlab.com/Evgene-Kopylov/FSRS-plugin](https://gitlab.com/Evgene-Kopylov/FSRS-plugin)
+---
+Репозиторий на GitHub только зеркало, разработка ведется на GitLab: [gitlab.com/Evgene-Kopylov/FSRS-plugin](https://gitlab.com/Evgene-Kopylov/FSRS-plugin)
+---
 
 ## 📋 Содержание
 
