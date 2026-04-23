@@ -2,20 +2,14 @@ import { describe, it, expect } from "vitest";
 import {
     extractFrontmatter,
     extractFrontmatterWithMatch,
-    hasFsrsFields,
-    hasFsrsFieldsInFrontmatter,
-    shouldProcessFile,
     createFrontmatter,
     updateFrontmatterInContent,
     removeFrontmatterFromContent,
-    extractSimpleFields,
-    getFieldFromFrontmatter,
-    hasAnyFieldInFrontmatter,
 } from "../../../src/utils/fsrs/fsrs-frontmatter";
 
 describe("fsrs-frontmatter", () => {
     describe("extractFrontmatter", () => {
-        it("should extract frontmatter content", () => {
+        it("should extract frontmatter content at file start", () => {
             const content = `---
 reviews:
   - date: "2025-01-01"
@@ -38,7 +32,7 @@ tags: test
             expect(extractFrontmatter(content)).toBeNull();
         });
 
-        it("should handle empty frontmatter", () => {
+        it("should handle empty frontmatter at file start", () => {
             const content = `---
 ---
 Content after empty frontmatter`;
@@ -52,10 +46,52 @@ title: Test
 Body`;
             expect(extractFrontmatter(content)?.trim()).toBe("title: Test");
         });
+
+        it("should return null when frontmatter is not at file start", () => {
+            const content = `Some text before frontmatter
+---
+reviews: []
+---
+Body`;
+            expect(extractFrontmatter(content)).toBeNull();
+        });
+
+        it("should return null when frontmatter has leading whitespace", () => {
+            const content = `
+---
+reviews: []
+---
+Body`;
+            expect(extractFrontmatter(content)).toBeNull();
+        });
+
+        it("should return null when frontmatter is indented", () => {
+            const content = `    ---
+    reviews: []
+    ---
+
+This is indented, not a real frontmatter.`;
+            expect(extractFrontmatter(content)).toBeNull();
+        });
+
+        it("should return null when frontmatter appears as code example", () => {
+            const content = `Here is an example of frontmatter in markdown:
+
+\`\`\`yaml
+---
+reviews:
+  - date: "2025-01-01"
+    rating: Good
+---
+\`\`\`
+
+This is not a real frontmatter.`;
+            expect(extractFrontmatter(content)).toBeNull();
+        });
     });
 
     describe("extractFrontmatterWithMatch", () => {
-        it("should extract frontmatter with match object", () => {
+        it("should extract frontmatter with match object at file start", () => {
             const content = `---
 title: Hello
 ---
@@ -69,81 +105,23 @@ Body`;
         it("should return null when no frontmatter", () => {
             expect(extractFrontmatterWithMatch("No frontmatter")).toBeNull();
         });
-    });
 
-    describe("hasFsrsFieldsInFrontmatter", () => {
-        it("should detect reviews field", () => {
-            const frontmatter = `reviews:
-  - date: "2025-01-01"
-    rating: Good`;
-            expect(hasFsrsFieldsInFrontmatter(frontmatter)).toBe(true);
-        });
-
-        it("should detect reviews field case-insensitively", () => {
-            const frontmatter = `REVIEWS: []`;
-            expect(hasFsrsFieldsInFrontmatter(frontmatter)).toBe(true);
-        });
-
-        it("should not detect reviews in nested structures", () => {
-            const frontmatter = `meta:
-  reviews: something`;
-            expect(hasFsrsFieldsInFrontmatter(frontmatter)).toBe(false);
-        });
-
-        it("should return false for frontmatter without reviews", () => {
-            expect(hasFsrsFieldsInFrontmatter("tags: hello")).toBe(false);
-        });
-    });
-
-    describe("hasFsrsFields", () => {
-        it("should return true when content contains reviews in frontmatter", () => {
-            const content = `---
+        it("should return null when frontmatter is not at file start", () => {
+            const content = `Some text before frontmatter
+---
 reviews: []
 ---
 Body`;
-            expect(hasFsrsFields(content)).toBe(true);
+            expect(extractFrontmatterWithMatch(content)).toBeNull();
         });
 
-        it("should return false when reviews outside frontmatter", () => {
-            const content = "No frontmatter\nreviews: something";
-            expect(hasFsrsFields(content)).toBe(false);
-        });
-
-        it("should return false when no reviews field", () => {
-            const content = `---
-tags: test
----`;
-            expect(hasFsrsFields(content)).toBe(false);
-        });
-    });
-
-    describe("shouldProcessFile", () => {
-        it("should return true for files with reviews in frontmatter", () => {
-            const content = `---
-reviews:
-  - date: "2025-01-01"
+        it("should return null when frontmatter has leading whitespace", () => {
+            const content = `
+---
+reviews: []
 ---
 Body`;
-            expect(shouldProcessFile(content)).toBe(true);
-        });
-
-        it("should return false when reviews not in frontmatter", () => {
-            const content = "Some text reviews: but no frontmatter";
-            expect(shouldProcessFile(content)).toBe(false);
-        });
-
-        it("should return false when no reviews at all", () => {
-            const content = `---
-title: Test
----`;
-            expect(shouldProcessFile(content)).toBe(false);
-        });
-
-        it("should handle case-insensitive reviews", () => {
-            const content = `---
-REVIEWS: []
----`;
-            expect(shouldProcessFile(content)).toBe(true);
+            expect(extractFrontmatterWithMatch(content)).toBeNull();
         });
     });
 
@@ -165,10 +143,6 @@ old: value
 ---
 Body`;
             const newYaml = "new: value";
-            const expected = `---
-new: value
----
-   Body`;
             expect(updateFrontmatterInContent(content, newYaml)).toBe(`---
 new: value
 ---
@@ -194,6 +168,13 @@ old: value
             const newYaml = "new: value";
             const result = updateFrontmatterInContent(content, newYaml);
             expect(result).toContain("---\nnew: value\n---\n   Body");
+        });
+
+        it("should handle content without frontmatter but with leading whitespace", () => {
+            const content = "   Some content";
+            const newYaml = "title: Added";
+            const result = updateFrontmatterInContent(content, newYaml);
+            expect(result).toContain("---\ntitle: Added\n---\n   Some content");
         });
     });
 
@@ -222,82 +203,12 @@ title: Test
                 "No frontmatter",
             );
         });
-    });
 
-    describe("extractSimpleFields", () => {
-        it("should extract key-value pairs", () => {
-            const frontmatter = `title: Hello
-tags: one, two`;
-            const result = extractSimpleFields(frontmatter);
-            expect(result).toEqual({
-                title: "Hello",
-                tags: "one, two",
-            });
-        });
-
-        it("should strip quotes from values", () => {
-            const frontmatter = `title: "Hello World"
-desc: 'Test'`;
-            const result = extractSimpleFields(frontmatter);
-            expect(result.title).toBe("Hello World");
-            expect(result.desc).toBe("Test");
-        });
-
-        it("should ignore comments and empty lines", () => {
-            const frontmatter = `# Comment
+        it("should handle content with only frontmatter", () => {
+            const content = `---
 title: Test
-
-tags: demo`;
-            const result = extractSimpleFields(frontmatter);
-            expect(result).toEqual({
-                title: "Test",
-                tags: "demo",
-            });
-        });
-
-        it("should handle multiline values as separate lines (simple parser limitation)", () => {
-            const frontmatter = `list:
-  - one
-  - two`;
-            const result = extractSimpleFields(frontmatter);
-            // The simple parser will only capture "list:" as key with empty value
-            expect(result.list).toBe("");
-        });
-    });
-
-    describe("getFieldFromFrontmatter", () => {
-        it("should return field value", () => {
-            const frontmatter = `title: Hello
-tags: test`;
-            expect(getFieldFromFrontmatter(frontmatter, "title")).toBe("Hello");
-            expect(getFieldFromFrontmatter(frontmatter, "tags")).toBe("test");
-        });
-
-        it("should return null for missing field", () => {
-            const frontmatter = `title: Hello`;
-            expect(getFieldFromFrontmatter(frontmatter, "missing")).toBeNull();
-        });
-    });
-
-    describe("hasAnyFieldInFrontmatter", () => {
-        it("should return true if any field exists", () => {
-            const frontmatter = `title: Hello
-tags: test`;
-            expect(
-                hasAnyFieldInFrontmatter(frontmatter, ["title", "missing"]),
-            ).toBe(true);
-        });
-
-        it("should return false if none exist", () => {
-            const frontmatter = `title: Hello`;
-            expect(
-                hasAnyFieldInFrontmatter(frontmatter, ["reviews", "tags"]),
-            ).toBe(false);
-        });
-
-        it("should be case-insensitive", () => {
-            const frontmatter = `TITLE: Hello`;
-            expect(hasAnyFieldInFrontmatter(frontmatter, ["title"])).toBe(true);
+---`;
+            expect(removeFrontmatterFromContent(content)).toBe("");
         });
     });
 });

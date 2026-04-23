@@ -23,6 +23,11 @@ export interface CardWithState {
     isDue: boolean;
 }
 
+export interface FilterSortResult {
+    cards: CardWithState[];
+    totalCount: number;
+}
+
 /**
  * Вычисленные поля карточки из WASM (соответствует Rust структуре CardWithComputedFields)
  */
@@ -188,9 +193,9 @@ export async function filterAndSortCards(
     settings: FSRSSettings,
     params: TableParams,
     now: Date = new Date(),
-): Promise<CardWithState[]> {
+): Promise<FilterSortResult> {
     if (!cards || cards.length === 0) {
-        return [];
+        return { cards: [], totalCount: 0 };
     }
 
     // Отладочный вывод параметров
@@ -302,13 +307,13 @@ export async function filterAndSortCards(
             }
         }
 
-        return cardsWithState;
+        return { cards: cardsWithState, totalCount: wasmResult.total_count };
     } catch (error) {
         console.error(
             `Ошибка фильтрации и сортировки карточек через WASM: ${String(error)}. Возвращаем пустой массив.`,
         );
 
-        return [];
+        return { cards: [], totalCount: 0 };
     }
 }
 
@@ -326,9 +331,9 @@ export async function filterAndSortCardsWithStates(
     settings: FSRSSettings,
     params: TableParams,
     now: Date = new Date(),
-): Promise<CardWithState[]> {
+): Promise<FilterSortResult> {
     if (!cachedCards || cachedCards.length === 0) {
-        return [];
+        return { cards: [], totalCount: 0 };
     }
 
     // Отладочный вывод параметров
@@ -449,13 +454,13 @@ export async function filterAndSortCardsWithStates(
             }
         }
 
-        return cardsWithState;
+        return { cards: cardsWithState, totalCount: wasmResult.total_count };
     } catch (error) {
         console.error(
             `Ошибка фильтрации и сортировки карточек с состояниями через WASM: ${String(error)}. Возвращаем пустой массив.`,
         );
 
         // В случае ошибки WASM, возвращаем пустой массив
-        return [];
+        return { cards: [], totalCount: 0 };
     }
 }

@@ -7,7 +7,7 @@
         "no_reviews": "нет",
         "buttons": {
             "again": "Снова (1)",
-            "hard": "Трудно (2)",
+            "hard": "Тяжело (2)",
             "good": "Нормально (3)",
             "easy": "Легко (4)",
             "cancel": "Отмена"
@@ -36,7 +36,8 @@
         "wasm_not_ready": "WASM компонент FSRS не загружен. Перезапустите Obsidian.",
         "file_not_found": "Файл не найден: {path}",
         "card_not_due": "Карточка уже повторена. Следующее повторение по графику: {date}",
-        "early_review_blocked": "Досрочное повторение возможно через {minutes} {noun}. Следующее: {date}"
+        "early_review_blocked": "Досрочное повторение возможно через {minutes} {noun}. Следующее: {date}",
+        "review_button_exists": "Блок кнопки повторения уже существует в этом файле"
     },
     "commands": {
         "add_fsrs_fields": "Добавить поля FSRS в шапку файла",
@@ -44,7 +45,8 @@
         "review_current_card": "Повторить текущую карточку",
         "delete_last_review": "Удалить последнее повторение карточки",
         "show_fsrs_help": "Показать справку по синтаксису fsrs-table",
-        "show_review_history": "Показать историю повторений"
+        "show_review_history": "Показать историю повторений",
+        "insert_review_button": "Вставить блок кнопки повторения"
     },
     "statusBar": {
         "loading": "загрузка...",
@@ -185,7 +187,7 @@
             "heading": "Отображение",
             "auto_add_button": {
                 "name": "Автоматически добавлять блок кнопки повторения под frontmatter",
-                "desc": "Автоматически вставлять блок кнопки повторения после frontmatter при добавлении полей FSRS. Пример: ```fsrs-review-button```"
+                "desc": "Блок кнопки повторения ```fsrs-review-button``` будет вставлен вверху страници при инициализации карточки."
             },
             "status_bar_icon": {
                 "name": "Иконка статус-бара",

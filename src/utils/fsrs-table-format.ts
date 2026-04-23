@@ -75,7 +75,7 @@ export function formatFieldValue(
         case "difficulty":
             return state.difficulty.toFixed(1);
         case "retrievability":
-            return state.retrievability.toFixed(1);
+            return `${(state.retrievability * 100).toFixed(1)}%`;
         case "due":
             return formatDateTime(app, new Date(state.due));
         case "state":

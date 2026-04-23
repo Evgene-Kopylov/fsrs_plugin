@@ -2,6 +2,7 @@ import type FsrsPlugin from "../main";
 import { i18n } from "../utils/i18n";
 import { FsrsHelpModal } from "../ui/fsrs-help-modal";
 import { showReviewHistoryForCurrentFile } from "../ui/review-history-modal";
+import { insertReviewButton } from "./add-review-button";
 
 /**
  * Регистрирует все команды плагина FSRS
@@ -63,6 +64,15 @@ export function registerCommands(plugin: FsrsPlugin): void {
         name: i18n.t("commands.show_review_history"),
         callback: async () => {
             await showReviewHistoryForCurrentFile(plugin.app);
+        },
+    });
+
+    // Команда для вставки блока кнопки повторения после frontmatter
+    plugin.addCommand({
+        id: "insert-review-button",
+        name: i18n.t("commands.insert_review_button"),
+        callback: async () => {
+            await insertReviewButton(plugin.app, plugin);
         },
     });
 }

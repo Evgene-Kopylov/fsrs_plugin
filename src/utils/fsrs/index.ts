@@ -43,15 +43,9 @@ export {
 export {
     extractFrontmatter,
     extractFrontmatterWithMatch,
-    hasFsrsFields,
-    hasFsrsFieldsInFrontmatter,
-    shouldProcessFile,
     createFrontmatter,
     updateFrontmatterInContent,
     removeFrontmatterFromContent,
-    extractSimpleFields,
-    getFieldFromFrontmatter,
-    hasAnyFieldInFrontmatter,
 } from "./fsrs-frontmatter";
 
 // Экспорт инкрементального кэша
