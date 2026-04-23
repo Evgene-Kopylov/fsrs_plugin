@@ -52,6 +52,15 @@ title: Test
 Body`;
             expect(extractFrontmatter(content)?.trim()).toBe("title: Test");
         });
+
+        it("should return null when frontmatter is not at file start", () => {
+            const content = `Some text before frontmatter
+---
+reviews: []
+---
+Body`;
+            expect(extractFrontmatter(content)).toBeNull();
+        });
     });
 
     describe("extractFrontmatterWithMatch", () => {
@@ -68,6 +77,15 @@ Body`;
 
         it("should return null when no frontmatter", () => {
             expect(extractFrontmatterWithMatch("No frontmatter")).toBeNull();
+        });
+
+        it("should return null when frontmatter is not at file start", () => {
+            const content = `Some text before frontmatter
+---
+reviews: []
+---
+Body`;
+            expect(extractFrontmatterWithMatch(content)).toBeNull();
         });
     });
 
@@ -115,9 +133,26 @@ tags: test
 ---`;
             expect(hasFsrsFields(content)).toBe(false);
         });
+
+        it("should return false when frontmatter is not at file start", () => {
+            const content = `Some text before frontmatter
+---
+reviews: []
+---
+Body`;
+            expect(hasFsrsFields(content)).toBe(false);
+        });
     });
 
     describe("shouldProcessFile", () => {
+        it("should return false when frontmatter is not at file start", () => {
+            const content = `Some text before frontmatter
+---
+reviews: []
+---
+Body`;
+            expect(shouldProcessFile(content)).toBe(false);
+        });
         it("should return true for files with reviews in frontmatter", () => {
             const content = `---
 reviews:
@@ -125,6 +160,46 @@ reviews:
 ---
 Body`;
             expect(shouldProcessFile(content)).toBe(true);
+        });
+
+        it("should return false when frontmatter appears as code example", () => {
+            const content = `Here is an example of frontmatter in markdown:
+
+\`\`\`yaml
+---
+reviews:
+  - date: "2025-01-01"
+    rating: Good
+---
+\`\`\`
+
+This is not a real frontmatter.`;
+            expect(shouldProcessFile(content)).toBe(false);
+        });
+
+        it("should return false when frontmatter is indented", () => {
+            const content = `    ---
+    reviews: []
+    ---
+
+This is indented, not a real frontmatter.`;
+            expect(shouldProcessFile(content)).toBe(false);
+        });
+
+        it("should return false when only partial frontmatter markers", () => {
+            const content = `Some text ---
+reviews: []
+--- more text`;
+            expect(shouldProcessFile(content)).toBe(false);
+        });
+
+        it("should return false for frontmatter with leading whitespace", () => {
+            const content = `
+---
+reviews: []
+---
+Body`;
+            expect(shouldProcessFile(content)).toBe(false);
         });
 
         it("should return false when reviews not in frontmatter", () => {
