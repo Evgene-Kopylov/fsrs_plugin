@@ -171,7 +171,11 @@ async function reviewCardByFile(
 
     console.debug("Карточка для повторения:", card);
 
-    const modal = new ReviewModal(app, card);
+    const modal = new ReviewModal(
+        app,
+        card,
+        plugin.settings.customButtonLabels,
+    );
     const rating = await modal.show();
 
     if (!rating) {

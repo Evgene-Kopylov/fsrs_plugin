@@ -11,7 +11,16 @@ export class ReviewModal extends Modal {
     private resolve: (rating: FSRSRating | null) => void;
     private ratingSelected: boolean = false;
 
-    constructor(app: App, card: ModernFSRSCard) {
+    constructor(
+        app: App,
+        card: ModernFSRSCard,
+        private customLabels?: {
+            again: string;
+            hard: string;
+            good: string;
+            easy: string;
+        },
+    ) {
         super(app);
         this.card = card;
     }
@@ -61,6 +70,16 @@ export class ReviewModal extends Modal {
         small.appendText(" " + lastReviewStr);
         small.createEl("hr");
 
+        // Вспомогательная функция: custom label или перевод
+        const labelOrTranslation = (
+            key: "again" | "hard" | "good" | "easy",
+        ): string => {
+            const custom = this.customLabels?.[key];
+            return custom && custom.trim() !== ""
+                ? custom
+                : i18n.t(`review.buttons.${key}`);
+        };
+
         // Кнопки оценок
         const ratings: {
             rating: FSRSRating;
@@ -69,22 +88,22 @@ export class ReviewModal extends Modal {
         }[] = [
             {
                 rating: "Again",
-                label: i18n.t("review.buttons.again"),
+                label: labelOrTranslation("again"),
                 color: "var(--color-red)",
             },
             {
                 rating: "Hard",
-                label: i18n.t("review.buttons.hard"),
+                label: labelOrTranslation("hard"),
                 color: "var(--color-orange)",
             },
             {
                 rating: "Good",
-                label: i18n.t("review.buttons.good"),
+                label: labelOrTranslation("good"),
                 color: "var(--color-green)",
             },
             {
                 rating: "Easy",
-                label: i18n.t("review.buttons.easy"),
+                label: labelOrTranslation("easy"),
                 color: "var(--color-blue)",
             },
         ];

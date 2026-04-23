@@ -195,6 +195,18 @@
             "verbose_logging": {
                 "name": "Verbose logging",
                 "desc": "Show detailed performance logs with emojis (⏱️, ✅) in Obsidian console. Useful for debugging."
+            },
+            "custom_button_labels": {
+                "name": "Custom button labels",
+                "desc": "Override review button text. Leave empty to use default translation.",
+                "again": "Again button",
+                "hard": "Hard button",
+                "good": "Good button",
+                "easy": "Easy button",
+                "placeholder_again": "Again (1)",
+                "placeholder_hard": "Hard (2)",
+                "placeholder_good": "Good (3)",
+                "placeholder_easy": "Easy (4)"
             }
         },
         "early_review": {
