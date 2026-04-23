@@ -465,8 +465,8 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         direction: "ASC" | "DESC",
     ): CardWithState[] {
         return [...cards].sort((a, b) => {
-            let valueA: any;
-            let valueB: any;
+            let valueA: string | number;
+            let valueB: string | number;
 
             // Получаем значения в зависимости от поля
             switch (field) {
@@ -511,14 +511,20 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                     valueA = a.state.scheduled_days;
                     valueB = b.state.scheduled_days;
                     break;
-                default:
+                default: {
                     // Для неизвестных полей сортируем как строки
-                    valueA = String(
-                        a.card[field as keyof ModernFSRSCard] || "",
-                    );
-                    valueB = String(
-                        b.card[field as keyof ModernFSRSCard] || "",
-                    );
+                    const valA = a.card[field as keyof ModernFSRSCard];
+                    valueA =
+                        typeof valA === "string" || typeof valA === "number"
+                            ? String(valA)
+                            : "";
+                    const valB = b.card[field as keyof ModernFSRSCard];
+                    valueB =
+                        typeof valB === "string" || typeof valB === "number"
+                            ? String(valB)
+                            : "";
+                    break;
+                }
             }
 
             // Сравниваем значения
