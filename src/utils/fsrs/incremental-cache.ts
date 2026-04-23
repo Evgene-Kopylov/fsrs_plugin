@@ -2,7 +2,7 @@ import { App, TFile, TAbstractFile } from "obsidian";
 import type { CachedCard, ModernFSRSCard } from "../../interfaces/fsrs";
 import type { FsrsPluginSettings } from "../../settings";
 import { shouldIgnoreFileWithSettings } from "./fsrs-filter";
-import { shouldProcessFile, extractFrontmatter } from "./fsrs-frontmatter";
+import { extractFrontmatter } from "./fsrs-frontmatter";
 import { parseModernFsrsFromFrontmatter } from "./fsrs-parser";
 import { computeCardState } from "./fsrs-wasm";
 import { verboseLog } from "../../utils/logger";
@@ -59,7 +59,6 @@ export class IncrementalCache {
                 continue;
             try {
                 const content = await this.app.vault.read(file);
-                if (!shouldProcessFile(content)) continue;
                 const frontmatter = extractFrontmatter(content);
                 if (!frontmatter) continue;
                 const parseResult = parseModernFsrsFromFrontmatter(
@@ -104,15 +103,6 @@ export class IncrementalCache {
             if (!file || !(file instanceof TFile)) return;
 
             const content = await this.app.vault.read(file);
-            if (!shouldProcessFile(content)) {
-                // Не FSRS карточка - удаляем из кэша
-                if (this.cardCache.has(filePath)) {
-                    this.cardCache.delete(filePath);
-                    this.onCacheUpdated();
-                }
-                return;
-            }
-
             const frontmatter = extractFrontmatter(content);
             if (!frontmatter) {
                 if (this.cardCache.has(filePath)) {

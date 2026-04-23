@@ -16,15 +16,6 @@ export function parseModernFsrsFromFrontmatter(
     filePath: string,
 ): ParseResult {
     try {
-        // Проверяем, содержит ли frontmatter поле reviews (базовая проверка перед вызовом WASM)
-        if (!/reviews\s*:/m.test(frontmatter)) {
-            return {
-                success: false,
-                card: null,
-                error: "not a FSRS card (missing reviews field)",
-            };
-        }
-
         // WASM ожидает полный frontmatter с ---, поэтому оборачиваем
         const wrappedFrontmatter = `---\n${frontmatter}\n---`;
 
