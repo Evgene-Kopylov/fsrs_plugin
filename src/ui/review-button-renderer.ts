@@ -8,6 +8,7 @@ import {
     getMinutesSinceLastReview,
 } from "../utils/fsrs-helper";
 import type FsrsPlugin from "../main";
+import type { FSRSRating } from "../interfaces/fsrs";
 import { ReviewHistoryModal } from "./review-history-modal";
 import { showNotice } from "../utils/notice";
 import { getLocalizedNoun, i18n } from "../utils/i18n";
@@ -124,12 +125,12 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
                 if (card.reviews.length > 0) {
                     const lastReview = card.reviews[card.reviews.length - 1];
                     if (lastReview) {
-                        this.mainButton.textContent = `Повторено: ${lastReview.rating}`;
+                        this.mainButton.textContent = `Повторение: ${this.translateRating(lastReview.rating)}`;
                     } else {
-                        this.mainButton.textContent = "Повторено";
+                        this.mainButton.textContent = "Повторение";
                     }
                 } else {
-                    this.mainButton.textContent = "Повторено";
+                    this.mainButton.textContent = "Повторение";
                 }
                 this.mainButton.disabled = false;
                 this.updateButtonClass("reviewed");
@@ -164,6 +165,17 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 
         // Добавляем текущий класс состояния
         this.mainButton.classList.add(`fsrs-review-button--${state}`);
+    }
+
+    /**
+     * Возвращает отображаемое название оценки
+     * Приоритет: custom label > i18n перевод
+     */
+    private translateRating(rating: FSRSRating): string {
+        const key = rating.toLowerCase() as "again" | "hard" | "good" | "easy";
+        const custom = this.plugin.settings.customButtonLabels?.[key];
+        if (custom && custom.trim() !== "") return custom;
+        return i18n.t(`review.buttons.${key}`);
     }
 
     /**
