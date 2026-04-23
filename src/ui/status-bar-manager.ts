@@ -212,7 +212,7 @@ export class StatusBarManager extends Component {
                     );
                 } else {
                     if (this.textSpan)
-                        this.textSpan.textContent = ` FSRS: ${i18n.t("statusBar.next_review", { date: formattedDate })}`;
+                        this.textSpan.textContent = ` FSRS next ${i18n.t("statusBar.next_review", { date: formattedDate })}`;
                     this.statusBarItem.title = i18n.t(
                         "statusBar.tooltip.next_scheduled",
                         { date: formattedDate },

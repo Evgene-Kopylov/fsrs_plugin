@@ -89,22 +89,22 @@ export class ReviewModal extends Modal {
             {
                 rating: "Again",
                 label: labelOrTranslation("again"),
-                color: "var(--color-red)",
+                color: "var(--fsrs-color-again)",
             },
             {
                 rating: "Hard",
                 label: labelOrTranslation("hard"),
-                color: "var(--color-orange)",
+                color: "var(--fsrs-color-hard)",
             },
             {
                 rating: "Good",
                 label: labelOrTranslation("good"),
-                color: "var(--color-green)",
+                color: "var(--fsrs-color-good)",
             },
             {
                 rating: "Easy",
                 label: labelOrTranslation("easy"),
-                color: "var(--color-blue)",
+                color: "var(--fsrs-color-easy)",
             },
         ];
 
@@ -122,7 +122,7 @@ export class ReviewModal extends Modal {
 				min-width: 120px;
 				padding: 10px 15px;
 				background: ${color};
-				color: white;
+				color: var(--fsrs-button-text);
 				border: none;
 				border-radius: 4px;
 				cursor: pointer;

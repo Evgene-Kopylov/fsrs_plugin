@@ -407,3 +407,20 @@
 .fsrs-status-bar-item:hover {
     background-color: var(--background-modifier-hover);
 }
+
+/* Цвета кнопок повторения — пастель на светлой теме, сочнее на тёмной */
+:root {
+    --fsrs-color-again: #ffcdd2;
+    --fsrs-color-hard: #ffe0b2;
+    --fsrs-color-good: #c8e6c9;
+    --fsrs-color-easy: #bbdefb;
+    --fsrs-button-text: #333;
+}
+
+.theme-dark {
+    --fsrs-color-again: #b07171;
+    --fsrs-color-hard: #b8945e;
+    --fsrs-color-good: #6e9670;
+    --fsrs-color-easy: #638bab;
+    --fsrs-button-text: #000;
+}
