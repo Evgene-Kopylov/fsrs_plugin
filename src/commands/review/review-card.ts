@@ -19,8 +19,11 @@ import { ReviewModal } from "./review-modal";
 /**
  * Заменяет поле reviews в frontmatter на новое содержимое YAML
  * Сохраняет все остальные поля неизменными
+ * Устойчива к различным форматированиям (кавычки, форматы дат, пробелы)
+ * Удаляет ВСЕ существующие блоки reviews и заменяет их одним новым блоком
+ * Сохраняет позицию и отступ первого найденного блока reviews
  * @param frontmatter Исходный frontmatter (без разделителей ---)
- * @param reviewsYaml Новое содержимое поля reviews в формате YAML
+ * @param reviewsYaml Новое содержимое поля reviews в формате YAML (без отступов)
  * @returns Обновленный frontmatter
  */
 export function replaceReviewsInFrontmatter(
@@ -28,42 +31,80 @@ export function replaceReviewsInFrontmatter(
     reviewsYaml: string,
 ): string {
     const lines = frontmatter.split("\n");
-    const result: string[] = [];
-    let inReviewsBlock = false;
-    let reviewsIndent = 0;
-    let reviewsProcessed = false;
+    const resultLines: string[] = [];
+    let i = 0;
+    let firstReviewsIndex = -1;
+    let firstReviewsIndent = 0;
+    let foundAnyReviews = false;
 
-    for (const line of lines) {
-        const trimmed = line.trim();
+    // Проходим по всем строкам
+    while (i < lines.length) {
+        const line = lines[i]!;
+        const match = line.match(/^(\s*)reviews\s*:/);
 
-        if (!inReviewsBlock && /^reviews\s*:/i.test(trimmed)) {
-            inReviewsBlock = true;
-            reviewsIndent = line.search(/\S/);
-            result.push(...reviewsYaml.split("\n"));
-            reviewsProcessed = true;
+        if (match) {
+            foundAnyReviews = true;
+            const baseIndent = match[1]!.length;
+
+            // Запоминаем позицию и отступ первого блока reviews
+            if (firstReviewsIndex === -1) {
+                firstReviewsIndex = resultLines.length;
+                firstReviewsIndent = baseIndent;
+            }
+
+            // Пропускаем весь блок reviews
+            i++; // Переходим к следующей строке после "reviews:"
+
+            // Пропускаем все строки, которые являются частью блока reviews
+            while (i < lines.length) {
+                const nextLine = lines[i]!;
+                const indent = nextLine.search(/\S/);
+
+                if (indent === -1) {
+                    // Пустая строка - часть блока
+                    i++;
+                } else if (indent > baseIndent) {
+                    // Строка с большим отступом - часть блока
+                    i++;
+                } else if (
+                    indent === baseIndent &&
+                    nextLine.substring(indent).startsWith("- ")
+                ) {
+                    // Строка с тем же отступом, начинающаяся с "- " - элемент YAML списка, часть блока
+                    i++;
+                } else {
+                    // Строка с отступом <= baseIndent и не элемент списка - конец блока
+                    break;
+                }
+            }
+            // Продолжаем цикл, не добавляя старый блок в результат
             continue;
         }
 
-        if (inReviewsBlock) {
-            const currentIndent = line.search(/\S/);
-            if (currentIndent > reviewsIndent) {
-                continue;
-            } else {
-                inReviewsBlock = false;
-            }
-        }
-
-        result.push(line);
+        // Если это не блок reviews, добавляем строку в результат
+        resultLines.push(line);
+        i++;
     }
 
-    if (!reviewsProcessed) {
-        if (frontmatter.trim() !== "" && !frontmatter.endsWith("\n")) {
-            result.push("");
-        }
-        result.push(...reviewsYaml.split("\n"));
+    // Подготавливаем новый блок reviews с правильным отступом
+    const newBlockLines = reviewsYaml.split("\n").map((line) => {
+        if (line.trim() === "") return line;
+        // Если нашли блок reviews, используем его отступ, иначе без отступа
+        const indent = foundAnyReviews ? firstReviewsIndent : 0;
+        return " ".repeat(indent) + line;
+    });
+
+    // Вставляем новый блок reviews
+    if (foundAnyReviews && firstReviewsIndex !== -1) {
+        // Вставляем на позицию первого блока
+        resultLines.splice(firstReviewsIndex, 0, ...newBlockLines);
+    } else {
+        // Блоков reviews не было, добавляем в конец
+        // Не добавляем пустую строку перед блоком reviews
+        resultLines.push(...newBlockLines);
     }
 
-    return result.join("\n");
+    return resultLines.join("\n");
 }
 
 /**
