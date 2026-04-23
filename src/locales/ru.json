@@ -54,7 +54,7 @@
         "not_fsrs": "не FSRS",
         "due": "готово!",
         "error": "ошибка",
-        "wait_early": "Ждать {minutes} {noun}",
+
         "next_review": "{date}",
         "tooltip": {
             "no_file": "Плагин FSRS - нет активного файла",

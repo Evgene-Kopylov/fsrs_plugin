@@ -1,6 +1,7 @@
 import { App, Component, TFile, Menu } from "obsidian";
 import type FsrsPlugin from "../main";
 import type { FsrsPluginSettings } from "../settings";
+import type { FSRSRating } from "../interfaces/fsrs";
 import {
     parseModernFsrsFromFrontmatter,
     isCardDue,
@@ -32,6 +33,16 @@ export class StatusBarManager extends Component {
         private settings: FsrsPluginSettings,
     ) {
         super();
+    }
+
+    /**
+     * Текст последней оценки (custom label или i18n перевод)
+     */
+    private lastRatingText(rating: FSRSRating): string {
+        const key = rating.toLowerCase() as "again" | "hard" | "good" | "easy";
+        const custom = this.settings.customButtonLabels?.[key];
+        if (custom && custom.trim() !== "") return custom;
+        return i18n.t(`review.buttons.${key}`);
     }
 
     /**
@@ -190,7 +201,7 @@ export class StatusBarManager extends Component {
                         );
                     }
                     if (this.textSpan)
-                        this.textSpan.textContent = ` FSRS: ${i18n.t("statusBar.wait_early", { minutes: remainingMinutes, noun })}`;
+                        this.textSpan.textContent = ` FSRS: ${this.lastRatingText(card.reviews[card.reviews.length - 1]?.rating ?? "Again")}`;
                     this.statusBarItem.title = i18n.t(
                         "statusBar.tooltip.early_available",
                         {

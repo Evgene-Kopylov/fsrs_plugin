@@ -54,7 +54,7 @@
         "not_fsrs": "not FSRS",
         "due": "due!",
         "error": "error",
-        "wait_early": "Wait {minutes} {noun}",
+
         "next_review": "{date}",
         "tooltip": {
             "no_file": "FSRS plugin - no active file",
