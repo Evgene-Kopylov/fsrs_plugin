@@ -1,0 +1,38 @@
+# $ npx repogrok
+# Исключаем Rust и его артефакты
+wasm-lib/
+*.rs
+Cargo.toml
+Cargo.lock
+
+# Исключаем сторонние инструменты, сборки и временные файлы
+caveman-compress/
+tmp/plan/
+*.original.md
+node_modules/
+main.js
+main.js.map
+*.js.map
+*.ts.map
+wasm-lib/pkg/
+wasm-lib/target/
+tests/
+test_script/
+scripts/test-build.js
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# НО: включаем TypeScript-тесты (не игнорируем их)
+!**/*.test.ts
+!**/__tests__/**/*.ts
+!**/*.spec.ts
+
+# Включаем package.json
+!package.json
+
+# Если нужно, можно также включить все TypeScript-исходники (они и так не исключены)
+# src/ уже не исключена, так что остаётся

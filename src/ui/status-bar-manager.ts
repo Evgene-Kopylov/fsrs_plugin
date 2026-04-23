@@ -10,8 +10,6 @@ import {
     extractFrontmatter,
 } from "../utils/fsrs-helper";
 import { i18n, getLocalizedNoun } from "../utils/i18n";
-import { FsrsHelpModal } from "./fsrs-help-modal";
-import { showReviewHistoryForCurrentFile } from "./review-history-modal";
 
 /**
  * Менеджер статус-бара FSRS для управления отображением статуса текущей карточки
@@ -65,22 +63,6 @@ export class StatusBarManager extends Component {
                     .setIcon("plus")
                     .onClick(() => {
                         void this.plugin.addFsrsFieldsToCurrentFile();
-                    });
-            });
-
-            menu.addItem((item) => {
-                item.setTitle(i18n.t("statusBar.menu.show_history"))
-                    .setIcon("clock")
-                    .onClick(() => {
-                        void showReviewHistoryForCurrentFile(this.app);
-                    });
-            });
-
-            menu.addItem((item) => {
-                item.setTitle(i18n.t("statusBar.menu.show_help"))
-                    .setIcon("help")
-                    .onClick(() => {
-                        new FsrsHelpModal(this.app).show();
                     });
             });
 
