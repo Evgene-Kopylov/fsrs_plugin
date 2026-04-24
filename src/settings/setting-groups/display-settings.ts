@@ -68,10 +68,7 @@ export function renderDisplaySettings(
         .setHeading();
 
     const labelsContainer = containerEl.createEl("div");
-    labelsContainer.style.display = "flex";
-    labelsContainer.style.flexDirection = "column";
-    labelsContainer.style.gap = "8px";
-    labelsContainer.style.marginTop = "8px";
+    labelsContainer.classList.add("fsrs-labels-container");
 
     const buttonKeys: ("again" | "hard" | "good" | "easy")[] = [
         "again",

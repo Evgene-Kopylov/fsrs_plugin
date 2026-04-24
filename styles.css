@@ -408,6 +408,14 @@
     background-color: var(--background-modifier-hover);
 }
 
+/* Контейнер для кастомных меток кнопок в настройках */
+.fsrs-labels-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+}
+
 /* Цвета кнопок повторения — пастель на светлой теме, сочнее на тёмной */
 :root {
     --fsrs-color-again: #ffcdd2;
