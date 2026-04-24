@@ -362,6 +362,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
         try {
             const modal = new ReviewHistoryModal(
                 this.plugin.app,
+                this.plugin,
                 this.sourcePath,
                 this.plugin.settings.customButtonLabels,
             );

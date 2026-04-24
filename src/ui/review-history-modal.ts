@@ -7,6 +7,8 @@ import {
     formatLocalDate,
 } from "../utils/fsrs-helper";
 import type { ModernFSRSCard, FSRSRating } from "../interfaces/fsrs";
+import type MyPlugin from "../main";
+import { deleteLastReview } from "../commands/review/delete-last-review";
 
 /**
  * Модальное окно для просмотра истории повторений карточки FSRS
@@ -15,6 +17,7 @@ import type { ModernFSRSCard, FSRSRating } from "../interfaces/fsrs";
 export class ReviewHistoryModal extends Modal {
     private card: ModernFSRSCard | null = null;
     private filePath: string;
+    private deleteCooldownUntil = 0;
 
     /**
      * Создает модальное окно для просмотра истории повторений
@@ -24,6 +27,7 @@ export class ReviewHistoryModal extends Modal {
      */
     constructor(
         app: App,
+        private plugin: MyPlugin,
         filePath: string,
         private customLabels?: {
             again: string;
@@ -163,6 +167,7 @@ export class ReviewHistoryModal extends Modal {
         headerRow.insertCell().textContent = "Стабильность";
         headerRow.insertCell().textContent = "Сложность";
         headerRow.insertCell().textContent = "Дней с прошлого";
+        headerRow.insertCell().textContent = "";
 
         // Тело таблицы
         const tbody = table.createEl("tbody");
@@ -216,6 +221,51 @@ export class ReviewHistoryModal extends Modal {
                 intervalCell.textContent = intervalDays.toString();
             } else {
                 intervalCell.textContent = "-";
+            }
+
+            // Кнопка удаления — только для последнего повторения (первая строка)
+            const actionsCell = row.insertCell();
+            if (i === 0) {
+                const deleteBtn = actionsCell.createEl("button", {
+                    cls: "fsrs-history-delete-btn",
+                    text: "✕",
+                });
+                deleteBtn.setAttribute(
+                    "aria-label",
+                    "Удалить последнее повторение",
+                );
+                // Блокируем кнопку, если ещё не прошло 3 секунды после удаления
+                const now = Date.now();
+                if (now < this.deleteCooldownUntil) {
+                    deleteBtn.disabled = true;
+                    const remaining = this.deleteCooldownUntil - now;
+                    setTimeout(() => {
+                        this.onOpen();
+                    }, remaining);
+                }
+
+                deleteBtn.addEventListener("click", () => {
+                    deleteBtn.disabled = true;
+
+                    void deleteLastReview(
+                        this.app,
+                        this.plugin,
+                        this.filePath,
+                    ).then((success) => {
+                        if (success) {
+                            this.deleteCooldownUntil = Date.now() + 3000;
+                            // Перезагружаем данные и обновляем содержимое модального окна
+                            void this.loadCardData().then(() => {
+                                this.onOpen();
+                            });
+                        } else {
+                            // При ошибке разблокируем кнопку
+                            deleteBtn.disabled = false;
+                        }
+                    });
+                });
+            } else {
+                actionsCell.textContent = "";
             }
         }
     }
@@ -341,7 +391,7 @@ export class ReviewHistoryModal extends Modal {
  * @param customLabels - Настраиваемые названия кнопок (опционально)
  */
 export async function showReviewHistoryForCurrentFile(
-    app: App,
+    plugin: MyPlugin,
     customLabels?: {
         again: string;
         hard: string;
@@ -350,14 +400,15 @@ export async function showReviewHistoryForCurrentFile(
     },
 ): Promise<void> {
     try {
-        const activeFile = app.workspace.getActiveFile();
+        const activeFile = plugin.app.workspace.getActiveFile();
         if (!activeFile) {
             showNotice("notices.no_active_file");
             return;
         }
 
         const modal = new ReviewHistoryModal(
-            app,
+            plugin.app,
+            plugin,
             activeFile.path,
             customLabels,
         );
