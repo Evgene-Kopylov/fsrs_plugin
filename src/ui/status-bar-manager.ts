@@ -1,6 +1,7 @@
 import { App, Component, TFile, Menu } from "obsidian";
 import type FsrsPlugin from "../main";
 import type { FsrsPluginSettings } from "../settings";
+import type { FSRSRating } from "../interfaces/fsrs";
 import {
     parseModernFsrsFromFrontmatter,
     isCardDue,
@@ -10,8 +11,6 @@ import {
     extractFrontmatter,
 } from "../utils/fsrs-helper";
 import { i18n, getLocalizedNoun } from "../utils/i18n";
-import { FsrsHelpModal } from "./fsrs-help-modal";
-import { showReviewHistoryForCurrentFile } from "./review-history-modal";
 
 /**
  * Менеджер статус-бара FSRS для управления отображением статуса текущей карточки
@@ -34,6 +33,16 @@ export class StatusBarManager extends Component {
         private settings: FsrsPluginSettings,
     ) {
         super();
+    }
+
+    /**
+     * Текст последней оценки (custom label или i18n перевод)
+     */
+    private lastRatingText(rating: FSRSRating): string {
+        const key = rating.toLowerCase() as "again" | "hard" | "good" | "easy";
+        const custom = this.settings.customButtonLabels?.[key];
+        if (custom && custom.trim() !== "") return custom;
+        return i18n.t(`review.buttons.${key}`);
     }
 
     /**
@@ -65,22 +74,6 @@ export class StatusBarManager extends Component {
                     .setIcon("plus")
                     .onClick(() => {
                         void this.plugin.addFsrsFieldsToCurrentFile();
-                    });
-            });
-
-            menu.addItem((item) => {
-                item.setTitle(i18n.t("statusBar.menu.show_history"))
-                    .setIcon("clock")
-                    .onClick(() => {
-                        void showReviewHistoryForCurrentFile(this.app);
-                    });
-            });
-
-            menu.addItem((item) => {
-                item.setTitle(i18n.t("statusBar.menu.show_help"))
-                    .setIcon("help")
-                    .onClick(() => {
-                        new FsrsHelpModal(this.app).show();
                     });
             });
 
@@ -208,7 +201,7 @@ export class StatusBarManager extends Component {
                         );
                     }
                     if (this.textSpan)
-                        this.textSpan.textContent = ` FSRS: ${i18n.t("statusBar.wait_early", { minutes: remainingMinutes, noun })}`;
+                        this.textSpan.textContent = ` FSRS: ${this.lastRatingText(card.reviews[card.reviews.length - 1]?.rating ?? "Again")}`;
                     this.statusBarItem.title = i18n.t(
                         "statusBar.tooltip.early_available",
                         {
@@ -219,7 +212,7 @@ export class StatusBarManager extends Component {
                     );
                 } else {
                     if (this.textSpan)
-                        this.textSpan.textContent = ` FSRS: ${i18n.t("statusBar.next_review", { date: formattedDate })}`;
+                        this.textSpan.textContent = ` FSRS next ${i18n.t("statusBar.next_review", { date: formattedDate })}`;
                     this.statusBarItem.title = i18n.t(
                         "statusBar.tooltip.next_scheduled",
                         { date: formattedDate },

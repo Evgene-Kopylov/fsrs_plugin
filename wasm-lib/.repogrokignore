@@ -1,3 +1,4 @@
+# $ npx repogrok
 # Игнорируем артефакты сборки
 target/
 pkg/

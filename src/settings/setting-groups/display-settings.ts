@@ -60,4 +60,46 @@ export function renderDisplaySettings(
                     await plugin.saveSettings();
                 }),
         );
+
+    // custom_button_labels
+    new Setting(containerEl)
+        .setName(i18n.t("settings.display.custom_button_labels.name"))
+        .setDesc(i18n.t("settings.display.custom_button_labels.desc"))
+        .setHeading();
+
+    const labelsContainer = containerEl.createEl("div");
+    labelsContainer.classList.add("fsrs-labels-container");
+
+    const buttonKeys: ("again" | "hard" | "good" | "easy")[] = [
+        "again",
+        "hard",
+        "good",
+        "easy",
+    ];
+
+    buttonKeys.forEach((key) => {
+        new Setting(labelsContainer)
+            .setName(i18n.t(`settings.display.custom_button_labels.${key}`))
+            .addText((text) =>
+                text
+                    .setPlaceholder(
+                        i18n.t(
+                            `settings.display.custom_button_labels.placeholder_${key}`,
+                        ),
+                    )
+                    .setValue(plugin.settings.customButtonLabels?.[key] ?? "")
+                    .onChange(async (value) => {
+                        if (!plugin.settings.customButtonLabels) {
+                            plugin.settings.customButtonLabels = {
+                                again: "",
+                                hard: "",
+                                good: "",
+                                easy: "",
+                            };
+                        }
+                        plugin.settings.customButtonLabels[key] = value;
+                        await plugin.saveSettings();
+                    }),
+            );
+    });
 }

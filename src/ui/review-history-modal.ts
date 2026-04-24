@@ -1,5 +1,6 @@
 import { Modal, App } from "obsidian";
 import { showNotice } from "../utils/notice";
+import { i18n } from "../utils/i18n";
 import {
     parseModernFsrsFromFrontmatter,
     extractFrontmatter,
@@ -19,8 +20,18 @@ export class ReviewHistoryModal extends Modal {
      * Создает модальное окно для просмотра истории повторений
      * @param app - Экземпляр приложения Obsidian
      * @param filePath - Путь к файлу карточки
+     * @param customLabels - Настраиваемые названия кнопок (опционально)
      */
-    constructor(app: App, filePath: string) {
+    constructor(
+        app: App,
+        filePath: string,
+        private customLabels?: {
+            again: string;
+            hard: string;
+            good: string;
+            easy: string;
+        },
+    ) {
         super(app);
         this.filePath = filePath;
     }
@@ -296,16 +307,23 @@ export class ReviewHistoryModal extends Modal {
     }
 
     /**
-     * Переводит оценку на русский язык
+     * Возвращает отображаемое название оценки
+     * Приоритет: custom label > i18n перевод
      */
     private translateRating(rating: FSRSRating): string {
-        const translations: Record<FSRSRating, string> = {
-            Again: "🟥 Снова",
-            Hard: "🟨 Тяжело",
-            Good: "🟩 Нормально",
-            Easy: "🟦 Легко",
+        const emojiMap: Record<FSRSRating, string> = {
+            Again: "\u{1F7E5}",
+            Hard: "\u{1F7E8}",
+            Good: "\u{1F7E9}",
+            Easy: "\u{1F7E6}",
         };
-        return translations[rating] || rating;
+        const key = rating.toLowerCase() as "again" | "hard" | "good" | "easy";
+        const custom = this.customLabels?.[key];
+        const label =
+            custom && custom.trim() !== ""
+                ? custom
+                : i18n.t(`review.buttons.${key}`);
+        return `${emojiMap[rating]} ${label}`;
     }
 
     /**
@@ -319,8 +337,18 @@ export class ReviewHistoryModal extends Modal {
 
 /**
  * Показывает историю повторений для текущей карточки
+ * @param app - Экземпляр приложения Obsidian
+ * @param customLabels - Настраиваемые названия кнопок (опционально)
  */
-export async function showReviewHistoryForCurrentFile(app: App): Promise<void> {
+export async function showReviewHistoryForCurrentFile(
+    app: App,
+    customLabels?: {
+        again: string;
+        hard: string;
+        good: string;
+        easy: string;
+    },
+): Promise<void> {
     try {
         const activeFile = app.workspace.getActiveFile();
         if (!activeFile) {
@@ -328,7 +356,11 @@ export async function showReviewHistoryForCurrentFile(app: App): Promise<void> {
             return;
         }
 
-        const modal = new ReviewHistoryModal(app, activeFile.path);
+        const modal = new ReviewHistoryModal(
+            app,
+            activeFile.path,
+            customLabels,
+        );
         await modal.show();
     } catch (error) {
         console.error("Ошибка при открытии истории повторений:", error);

@@ -1,7 +1,7 @@
 {
 	"id": "fsrs-plugin",
 	"name": "FSRS Plugin",
-	"version": "0.4.1",
+	"version": "0.4.2",
 	"minAppVersion": "0.1.0",
 	"description": "Free Spaced Repetition Scheduler integration for Obsidian. Adds FSRS algorithm for spaced repetition flashcards directly in your notes.",
 	"author": "Evgene Kopylov",

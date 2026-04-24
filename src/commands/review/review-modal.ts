@@ -11,7 +11,16 @@ export class ReviewModal extends Modal {
     private resolve: (rating: FSRSRating | null) => void;
     private ratingSelected: boolean = false;
 
-    constructor(app: App, card: ModernFSRSCard) {
+    constructor(
+        app: App,
+        card: ModernFSRSCard,
+        private customLabels?: {
+            again: string;
+            hard: string;
+            good: string;
+            easy: string;
+        },
+    ) {
         super(app);
         this.card = card;
     }
@@ -61,6 +70,16 @@ export class ReviewModal extends Modal {
         small.appendText(" " + lastReviewStr);
         small.createEl("hr");
 
+        // Вспомогательная функция: custom label или перевод
+        const labelOrTranslation = (
+            key: "again" | "hard" | "good" | "easy",
+        ): string => {
+            const custom = this.customLabels?.[key];
+            return custom && custom.trim() !== ""
+                ? custom
+                : i18n.t(`review.buttons.${key}`);
+        };
+
         // Кнопки оценок
         const ratings: {
             rating: FSRSRating;
@@ -69,23 +88,23 @@ export class ReviewModal extends Modal {
         }[] = [
             {
                 rating: "Again",
-                label: i18n.t("review.buttons.again"),
-                color: "var(--color-red)",
+                label: labelOrTranslation("again"),
+                color: "var(--fsrs-color-again)",
             },
             {
                 rating: "Hard",
-                label: i18n.t("review.buttons.hard"),
-                color: "var(--color-orange)",
+                label: labelOrTranslation("hard"),
+                color: "var(--fsrs-color-hard)",
             },
             {
                 rating: "Good",
-                label: i18n.t("review.buttons.good"),
-                color: "var(--color-green)",
+                label: labelOrTranslation("good"),
+                color: "var(--fsrs-color-good)",
             },
             {
                 rating: "Easy",
-                label: i18n.t("review.buttons.easy"),
-                color: "var(--color-blue)",
+                label: labelOrTranslation("easy"),
+                color: "var(--fsrs-color-easy)",
             },
         ];
 
@@ -103,7 +122,7 @@ export class ReviewModal extends Modal {
 				min-width: 120px;
 				padding: 10px 15px;
 				background: ${color};
-				color: white;
+				color: var(--fsrs-button-text);
 				border: none;
 				border-radius: 4px;
 				cursor: pointer;
