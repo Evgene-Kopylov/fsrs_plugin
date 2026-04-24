@@ -396,6 +396,46 @@
     border-bottom: none;
 }
 
+/* Кнопка удаления последнего повторения */
+.fsrs-history-delete-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: transparent;
+    color: var(--text-error);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    transition: all 0.15s ease;
+}
+
+.fsrs-history-delete-btn:hover {
+    background: var(--background-modifier-error-rgb);
+    color: var(--text-on-accent);
+    border-color: var(--background-modifier-error);
+}
+
+.fsrs-history-delete-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    color: var(--text-muted);
+    background: transparent;
+    border-color: transparent;
+}
+
+.fsrs-history-delete-btn:disabled:hover {
+    opacity: 0.35;
+    cursor: not-allowed;
+    color: var(--text-muted);
+    background: transparent;
+    border-color: transparent;
+}
+
 /* Стили для статус-бара FSRS */
 .fsrs-status-bar-item {
     padding: 0 6px;

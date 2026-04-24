@@ -64,7 +64,7 @@ export function registerCommands(plugin: FsrsPlugin): void {
         name: i18n.t("commands.show_review_history"),
         callback: async () => {
             await showReviewHistoryForCurrentFile(
-                plugin.app,
+                plugin,
                 plugin.settings.customButtonLabels,
             );
         },

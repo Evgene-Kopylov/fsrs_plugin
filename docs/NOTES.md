@@ -38,5 +38,20 @@ npx repogrok
 ## Git
 
 ```bash
-git checkout -b dev/$(date +%Y-%m-%d_%H-%M-%S)
+branch_name="dev/$(date +%d-%b_%H%M)"
+git checkout -b "$branch_name"
+git push -u origin "$branch_name"
+```
+
+## Terminal
+
+```bash
+export PROMPT_DIRTRIM=1
+PS1='\w\$ '
+```
+
+с подкраской
+```bash
+export PROMPT_DIRTRIM=1
+PS1='\[\033[01;34m\]\w\[\033[00m\]\$ '
 ```
