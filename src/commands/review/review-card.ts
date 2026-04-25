@@ -198,21 +198,15 @@ async function reviewCardByFile(
         updatedYaml,
     );
 
-    const beforeFrontmatter = content.substring(
-        0,
-        frontmatterMatch.match.index,
-    );
-    const afterFrontmatter = content.substring(
-        frontmatterMatch.match.index + frontmatterMatch.match[0].length,
-    );
-    const newContent =
-        beforeFrontmatter +
-        "---\n" +
-        updatedFrontmatter +
-        "\n---" +
-        afterFrontmatter;
+    // Атомарная запись через process — используем свежее содержимое файла
+    await app.vault.process(file, (data) => {
+        const match = extractFrontmatterWithMatch(data);
+        if (!match) return data;
 
-    await app.vault.modify(file, newContent);
+        const before = data.substring(0, match.match.index);
+        const after = data.substring(match.match.index + match.match[0].length);
+        return before + "---\n" + updatedFrontmatter + "\n---" + after;
+    });
 
     const nextDates = await getNextReviewDates(updatedCard, plugin.settings);
     if (nextDates[rating]) {
