@@ -4,7 +4,6 @@ stages:
     - test
     - lint
     - build
-    - mirror
     - release
 
 variables:
@@ -152,7 +151,7 @@ plugin-build:
     timeout: 10m
 
 push_to_github:
-    stage: mirror
+    stage: release
     image: alpine:latest
     rules:
         - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
