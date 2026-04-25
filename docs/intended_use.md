@@ -71,7 +71,6 @@ In reading mode the block renders as a table with all your cards,
 sorted by default (most overdue first). If you have no overdue cards, that column is empty.
 
 ![rendered fsrs-table with cards](gifs/fsrs-table.gif)
-> GIF coming soon: a note with fsrs-table in reading mode, showing 2–3 cards with columns File, R, S, D, Overdue.
 
 ### Column reference
 
@@ -87,7 +86,6 @@ A popover appears showing the note's content,
 with the review button inside — clickable directly from the preview.
 
 ![popover with card content and review button](gifs/hover-review.gif)
-> GIF coming soon: hovering a file name in the table, a popover appears with the note content and review button, clicking Good.
 
 This lets you:
 
