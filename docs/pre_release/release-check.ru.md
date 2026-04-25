@@ -4,17 +4,17 @@
 
 ## Общий чек-лист
 
-- [ ] **Задача 1** — Поднять `minAppVersion` в `manifest.json`
+- [x] **Задача 1** — Поднять `minAppVersion` в `manifest.json`
       → [tasks/fix-min-app-version.ru.md](tasks/fix-min-app-version.ru.md)
-- [ ] **Задача 2** — Дополнить `versions.json`
+- [x] **Задача 2** — Дополнить `versions.json`
       → [tasks/fix-versions-json.ru.md](tasks/fix-versions-json.ru.md)
-- [ ] **Задача 3** — Версия в `README.md`
+- [x] **Задача 3** — Версия в `README.md`
       → [tasks/fix-readme-version.ru.md](tasks/fix-readme-version.ru.md)
-- [ ] **Задача 4** — Версия в `README.ru.md`
+- [x] **Задача 4** — Версия в `README.ru.md`
       → [tasks/fix-readme-ru-version.ru.md](tasks/fix-readme-ru-version.ru.md)
-- [ ] **Задача 5** — Версия + language switcher в `docs/intended_use.md`
+- [x] **Задача 5** — Версия + language switcher в `docs/intended_use.md`
       → [tasks/fix-intended-use-version.ru.md](tasks/fix-intended-use-version.ru.md)
-- [ ] **Задача 6** — Версия + language switcher в `docs/intended_use.ru.md`
+- [x] **Задача 6** — Версия + language switcher в `docs/intended_use.ru.md`
       → [tasks/fix-intended-use-ru-version.ru.md](tasks/fix-intended-use-ru-version.ru.md)
 - [ ] **Задача 7 (опционально)** — Замена `Vault.modify` на `Vault.process`
       → [tasks/opt-vault-process.ru.md](tasks/opt-vault-process.ru.md)

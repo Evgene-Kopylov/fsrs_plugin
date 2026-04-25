@@ -1,7 +1,7 @@
 # FSRS Plugin Usage Guide
 
-- [🇷🇺](README.ru.md)
-- [🇺🇸](README.md) <
+- [🇷🇺](intended_use.ru.md)
+- [🇺🇸](intended_use.md) <
 
 This guide shows how to start using the plugin after installation.
 Everything works inside Obsidian — no external services needed.
@@ -120,4 +120,4 @@ The main usage workflow:
 
 ---
 
-*Plugin version: 0.4.5*
+*Plugin version: 0.4.6*
