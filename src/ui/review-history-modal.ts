@@ -109,7 +109,7 @@ export class ReviewHistoryModal extends Modal {
 
         if (!this.card) {
             contentEl.createEl("p", {
-                text: "Не удалось загрузить данные карточки",
+                text: i18n.t("history.error_load"),
             });
             return;
         }
@@ -117,7 +117,7 @@ export class ReviewHistoryModal extends Modal {
         // Заголовок с именем файла
         const fileName = this.filePath.split("/").pop() || this.filePath;
         contentEl.createEl("h2", {
-            text: `История повторений: ${fileName}`,
+            text: i18n.t("history.title", { file: fileName }),
             cls: "fsrs-history-title",
         });
 
@@ -126,7 +126,7 @@ export class ReviewHistoryModal extends Modal {
             cls: "fsrs-history-file-info",
         });
         fileInfo.createEl("small", {
-            text: `Файл: ${this.filePath}`,
+            text: `${i18n.t("history.file_label")} ${this.filePath}`,
         });
 
         // Таблица с историей повторений
@@ -144,7 +144,7 @@ export class ReviewHistoryModal extends Modal {
             const emptyMessage = container.createEl("p", {
                 cls: "fsrs-history-empty",
             });
-            emptyMessage.textContent = "Нет истории повторений";
+            emptyMessage.textContent = i18n.t("history.empty");
             return;
         }
 
@@ -161,13 +161,15 @@ export class ReviewHistoryModal extends Modal {
         // Заголовок таблицы
         const thead = table.createEl("thead");
         const headerRow = thead.insertRow();
-        headerRow.insertCell().textContent = "#";
-        headerRow.insertCell().textContent = "Дата и время";
-        headerRow.insertCell().textContent = "Оценка";
-        headerRow.insertCell().textContent = "Стабильность";
-        headerRow.insertCell().textContent = "Сложность";
-        headerRow.insertCell().textContent = "Дней с прошлого";
-        headerRow.insertCell().textContent = "";
+        headerRow.insertCell().textContent = i18n.t("history.table.number");
+        headerRow.insertCell().textContent = i18n.t("history.table.datetime");
+        headerRow.insertCell().textContent = i18n.t("history.table.rating");
+        headerRow.insertCell().textContent = i18n.t("history.table.stability");
+        headerRow.insertCell().textContent = i18n.t("history.table.difficulty");
+        headerRow.insertCell().textContent = i18n.t(
+            "history.table.days_since_last",
+        );
+        headerRow.insertCell().textContent = i18n.t("history.table.actions");
 
         // Тело таблицы
         const tbody = table.createEl("tbody");
@@ -232,7 +234,7 @@ export class ReviewHistoryModal extends Modal {
                 });
                 deleteBtn.setAttribute(
                     "aria-label",
-                    "Удалить последнее повторение",
+                    i18n.t("history.delete_aria"),
                 );
                 // Блокируем кнопку, если ещё не прошло 3 секунды после удаления
                 const now = Date.now();
@@ -281,7 +283,7 @@ export class ReviewHistoryModal extends Modal {
         });
 
         statsContainer.createEl("h3", {
-            text: "Статистика",
+            text: i18n.t("history.statistics.heading"),
         });
 
         const statsList = statsContainer.createEl("ul", {
@@ -290,7 +292,9 @@ export class ReviewHistoryModal extends Modal {
 
         // Общее количество повторений
         const totalItem = statsList.createEl("li");
-        totalItem.textContent = `Всего повторений: ${this.card.reviews.length}`;
+        totalItem.textContent = i18n.t("history.statistics.total_reviews", {
+            count: this.card.reviews.length,
+        });
 
         // Первое повторение
         if (this.card.reviews.length > 0) {
@@ -303,12 +307,15 @@ export class ReviewHistoryModal extends Modal {
             const firstItem = statsList.createEl("li");
             try {
                 const date = new Date(firstReview.date);
-                firstItem.textContent = `Первое повторение: ${formatLocalDate(
-                    date,
-                    this.app,
-                )}`;
+                firstItem.textContent = i18n.t(
+                    "history.statistics.first_review",
+                    { date: formatLocalDate(date, this.app) },
+                );
             } catch {
-                firstItem.textContent = `Первое повторение: ${firstReview.date}`;
+                firstItem.textContent = i18n.t(
+                    "history.statistics.first_review",
+                    { date: firstReview.date },
+                );
             }
         }
 
@@ -323,19 +330,25 @@ export class ReviewHistoryModal extends Modal {
             const lastItem = statsList.createEl("li");
             try {
                 const date = new Date(lastReview.date);
-                lastItem.textContent = `Последнее повторение: ${formatLocalDate(
-                    date,
-                    this.app,
-                )}`;
+                lastItem.textContent = i18n.t(
+                    "history.statistics.last_review",
+                    { date: formatLocalDate(date, this.app) },
+                );
             } catch {
-                lastItem.textContent = `Последнее повторение: ${lastReview.date}`;
+                lastItem.textContent = i18n.t(
+                    "history.statistics.last_review",
+                    { date: lastReview.date },
+                );
             }
 
             // Оценка последнего повторения
             const lastRatingItem = statsList.createEl("li");
-            lastRatingItem.textContent = `Последняя оценка: ${this.translateRating(
-                lastReview.rating,
-            )}`;
+            lastRatingItem.textContent = i18n.t(
+                "history.statistics.last_rating",
+                {
+                    rating: this.translateRating(lastReview.rating),
+                },
+            );
         }
 
         // Распределение оценок
@@ -352,7 +365,15 @@ export class ReviewHistoryModal extends Modal {
             }
 
             const ratingsItem = statsList.createEl("li");
-            ratingsItem.textContent = `Оценки: ${ratingCounts.Again}×🟥 ${ratingCounts.Hard}×🟨 ${ratingCounts.Good}×🟩 ${ratingCounts.Easy}×🟦`;
+            ratingsItem.textContent = i18n.t(
+                "history.statistics.ratings_distribution",
+                {
+                    again: ratingCounts.Again,
+                    hard: ratingCounts.Hard,
+                    good: ratingCounts.Good,
+                    easy: ratingCounts.Easy,
+                },
+            );
         }
     }
 
