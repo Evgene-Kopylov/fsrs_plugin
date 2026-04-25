@@ -16,7 +16,7 @@
       → [tasks/fix-intended-use-version.ru.md](tasks/fix-intended-use-version.ru.md)
 - [x] **Задача 6** — Версия + language switcher в `docs/intended_use.ru.md`
       → [tasks/fix-intended-use-ru-version.ru.md](tasks/fix-intended-use-ru-version.ru.md)
-- [ ] **Задача 7 (опционально)** — Замена `Vault.modify` на `Vault.process`
+- [x] **Задача 7 (опционально)** — Замена `Vault.modify` на `Vault.process`
       → [tasks/opt-vault-process.ru.md](tasks/opt-vault-process.ru.md)
 
 ---
