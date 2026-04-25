@@ -45,6 +45,10 @@ git checkout -b "$branch_name"
 git push -u origin "$branch_name"
 ```
 
+Обновить мейн перед переходом на него.
+```bash
+git fetch origin main:main
+```
 
 ## Terminal
 
