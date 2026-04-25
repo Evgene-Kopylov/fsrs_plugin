@@ -92,6 +92,11 @@
             "Review": "Review",
             "Relearning": "Relearning",
             "due": "Due"
+        },
+        "units": {
+            "days": "d",
+            "hours": "h",
+            "minutes": "m"
         }
     },
     "history": {

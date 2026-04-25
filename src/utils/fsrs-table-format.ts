@@ -14,14 +14,14 @@ export function formatOverdue(overdueHours: number): string {
     }
     if (overdueHours < 1) {
         const minutes = Math.round(overdueHours * 60);
-        return `${minutes}м`;
+        return `${minutes}${i18n.t("table.units.minutes")}`;
     }
     if (overdueHours < 24) {
         const hours = Math.round(overdueHours * 10) / 10;
-        return `${hours}ч`;
+        return `${hours}${i18n.t("table.units.hours")}`;
     }
     const days = Math.round((overdueHours / 24) * 10) / 10;
-    return `${days}д`;
+    return `${days}${i18n.t("table.units.days")}`;
 }
 
 /**
