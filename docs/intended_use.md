@@ -119,5 +119,3 @@ The main usage workflow:
 - [ ] Ready to review
 
 ---
-
-*Plugin version: 0.4.6*
