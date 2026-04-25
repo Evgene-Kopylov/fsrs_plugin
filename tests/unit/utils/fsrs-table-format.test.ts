@@ -15,23 +15,24 @@ describe("fsrs-table-format pure functions", () => {
         });
 
         it("formats minutes for less than 1 hour", () => {
-            expect(formatOverdue(0.1)).toBe("6м"); // 0.1 * 60 = 6
-            expect(formatOverdue(0.5)).toBe("30м");
-            expect(formatOverdue(0.9)).toBe("54м");
+            expect(formatOverdue(0.1)).toBe("6 m"); // 0.1 * 60 = 6
+            expect(formatOverdue(0.5)).toBe("30 m");
+            expect(formatOverdue(0.9)).toBe("54 m");
         });
 
-        it("formats hours for less than 24 hours", () => {
-            expect(formatOverdue(1)).toBe("1ч");
-            expect(formatOverdue(2.5)).toBe("2.5ч");
-            expect(formatOverdue(12)).toBe("12ч");
-            expect(formatOverdue(23.9)).toBe("23.9ч");
+        it("formats hours for 1 to 72 hours", () => {
+            expect(formatOverdue(1)).toBe("1 h");
+            expect(formatOverdue(2.5)).toBe("3 h"); // округление до целого
+            expect(formatOverdue(12)).toBe("12 h");
+            expect(formatOverdue(23.9)).toBe("24 h"); // округление до целого
+            expect(formatOverdue(48)).toBe("48 h");
+            expect(formatOverdue(72)).toBe("72 h");
         });
 
-        it("formats days for 24 hours or more", () => {
-            expect(formatOverdue(24)).toBe("1д");
-            expect(formatOverdue(48)).toBe("2д");
-            expect(formatOverdue(72.5)).toBe("3д");
-            expect(formatOverdue(100)).toBe("4.2д"); // 100/24 = 4.166..., округление до десятых
+        it("formats days for more than 72 hours", () => {
+            expect(formatOverdue(72.5)).toBe("3 d");
+            expect(formatOverdue(100)).toBe("4 d"); // 100/24 = 4.166..., округление до целого
+            expect(formatOverdue(168)).toBe("7 d"); // ровно неделя
         });
     });
 
