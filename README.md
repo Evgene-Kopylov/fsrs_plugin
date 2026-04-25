@@ -331,4 +331,4 @@ Full text: [LICENSE](LICENSE)
 Functionality may change slightly.
 
 *Last updated: 2026*
-*Plugin version: 0.1.3*
+*Plugin version: 0.4.4*
