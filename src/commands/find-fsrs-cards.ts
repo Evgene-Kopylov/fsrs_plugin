@@ -9,7 +9,7 @@ import { createDefaultTableBlock } from "../utils/fsrs-table-helpers";
  */
 export async function findFsrsCards(plugin: FsrsPlugin): Promise<void> {
     try {
-        // Получаем карточки для повторения
+        // Получаем карточки для повторения (асинхронно, до process)
         const cachedCardsWithState = await plugin.getCachedCardsWithState();
         const cardsForReview = cachedCardsWithState.map((c) => c.card);
 
@@ -27,28 +27,18 @@ export async function findFsrsCards(plugin: FsrsPlugin): Promise<void> {
             return;
         }
 
-        // Читаем содержимое активного файла
-        const fileContent = await plugin.app.vault.read(activeFile);
+        // Атомарная запись через process
+        await plugin.app.vault.process(activeFile, (data) => {
+            const fsrsTableBlockRegex = /```fsrs-table\n([\s\S]*?)\n```/g;
+            const defaultBlock = createDefaultTableBlock();
 
-        // Ищем существующий блок кода fsrs-table
-        const fsrsTableBlockRegex = /```fsrs-table\n([\s\S]*?)\n```/g;
-        const defaultBlock = createDefaultTableBlock();
-
-        let newContent: string;
-
-        // Проверяем, есть ли уже блок fsrs-table в файле
-        if (fsrsTableBlockRegex.test(fileContent)) {
-            // Сбрасываем lastIndex для корректной работы replace
-            fsrsTableBlockRegex.lastIndex = 0;
-            // Заменяем первый найденный блок на блок по умолчанию
-            newContent = fileContent.replace(fsrsTableBlockRegex, defaultBlock);
-        } else {
-            // Добавляем блок по умолчанию в конец файла
-            newContent = fileContent + "\n\n" + defaultBlock;
-        }
-
-        // Сохраняем изменения
-        await plugin.app.vault.modify(activeFile, newContent);
+            if (fsrsTableBlockRegex.test(data)) {
+                fsrsTableBlockRegex.lastIndex = 0;
+                return data.replace(fsrsTableBlockRegex, defaultBlock);
+            } else {
+                return data + "\n\n" + defaultBlock;
+            }
+        });
 
         if (cardsForReview.length > 0) {
             showNotice("notices.fsrs_table_inserted", {
