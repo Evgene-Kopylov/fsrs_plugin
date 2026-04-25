@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, Notice } from "obsidian";
+import { MarkdownRenderChild } from "obsidian";
 import type FsrsPlugin from "../main";
 import type { CachedCard, ModernFSRSCard } from "../interfaces/fsrs";
 import type { TableParams, CardWithState } from "../utils/fsrs-table-helpers";
@@ -283,17 +283,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
      * Добавляет обработчики событий для кликабельных элементов
      */
     private addEventListeners() {
-        // Обработчики для ссылок на файлы
-        this.container.querySelectorAll(".internal-link").forEach((link) => {
-            link.addEventListener("click", (e) => {
-                e.preventDefault();
-                const filePath = (link as HTMLElement).dataset.filePath;
-                if (filePath) {
-                    void this.openFile(filePath);
-                }
-            });
-        });
-
         // Обработчик для заголовков сортировки в таблице
         this.container
             .querySelectorAll(".fsrs-sort-header")
@@ -307,27 +296,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                     }
                 });
             });
-    }
-
-    /**
-     * Открывает файл в Obsidian
-     */
-    private async openFile(filePath: string) {
-        try {
-            const file = this.plugin.app.vault.getFileByPath(filePath);
-            if (file) {
-                await this.plugin.app.workspace.openLinkText(
-                    filePath,
-                    "",
-                    true,
-                );
-            } else {
-                void new Notice(`File not found: ${filePath}`);
-            }
-        } catch (error) {
-            console.error("Ошибка при открытии файла:", error);
-            void new Notice(`Could not open file: ${filePath}`);
-        }
     }
 
     /**
