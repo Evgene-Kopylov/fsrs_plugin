@@ -1,5 +1,8 @@
 # FSRS Plugin for Obsidian
 
+- [🇷🇺](README.ru.md)
+- [🇺🇸](README.md) <
+
 **Free Spaced Repetition Scheduler** — a modern spaced repetition algorithm for Obsidian.
 The plugin turns your notes into FSRS-based flashcards for effective memorization.
 
@@ -43,22 +46,14 @@ The plugin turns your notes into FSRS-based flashcards for effective memorizatio
 - Obsidian v0.15.0 or higher
 - WebAssembly support (enabled by default)
 
-## 🏃 Quick Start
+## 🐌 Quick Start
 
-1. **Enable the plugin** in Obsidian settings
-2. **Create a card**:
-   - Open a note → run the command `Add FSRS fields to file header` (Ctrl/Cmd+P)
-3. **Add a review block** to your file:
+1. **Create a card** – open a note → run the command `Add FSRS fields to file header` (Ctrl/Cmd+P).
+2. **Add a review button** – insert a ` ```fsrs-review-button``` ` block in your note (or enable auto-adding in settings).
+3. **Insert a table** – in another note, create a ` ```fsrs-table ...``` ` block.
+4. **Start reviewing** – open the table, hover over a file name, and click a rating.
 
-   ````markdown
-   ```fsrs-table
-   SELECT file as " ", retrievability as "R",
-          stability as "S", difficulty as "D",
-          overdue as "Overdue"
-   ```
-   ````
-
-4. **Start reviewing** — open the file with the block and click on cards
+A detailed step-by-step guide with screenshots: [**Usage Guide**](docs/intended_use.md)
 
 ## 📖 Usage
 
@@ -323,7 +318,7 @@ Full text: [LICENSE](LICENSE)
 - [Official FSRS Documentation](https://github.com/open-spaced-repetition/fsrs)
 - [Obsidian Forum Discussion](https://forum.obsidian.md/)
 - [Issues & Feature Requests](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/work_items)
-- [FSRS Table Usage Guide](docs/ABC%20of%20FSRS.md)
+- [FSRS Table Usage Guide](docs/intended_use.md)
 
 ***
 
@@ -331,4 +326,4 @@ Full text: [LICENSE](LICENSE)
 Functionality may change slightly.
 
 *Last updated: 2026*
-*Plugin version: 0.4.4*
+*Plugin version: 0.4.5*

@@ -1,5 +1,8 @@
 # FSRS Plugin Usage Guide
 
+- [🇷🇺](README.ru.md)
+- [🇺🇸](README.md) <
+
 This guide shows how to start using the plugin after installation.
 Everything works inside Obsidian — no external services needed.
 
@@ -35,7 +38,7 @@ directly in reading mode — no need to switch to editing.
 
 Open the command palette (`Ctrl/Cmd+P`) and run:
 
-**FSRS Plugin: Insert review button block**
+**FSRS Plugin: Insert review button**
 
 The button is inserted as a code block in the note:
 
@@ -117,4 +120,4 @@ The main usage workflow:
 
 ---
 
-*Plugin version: 0.4.4*
+*Plugin version: 0.4.5*
