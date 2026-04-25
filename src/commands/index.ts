@@ -92,10 +92,7 @@ export function registerCommands(plugin: FsrsPlugin): void {
         id: "show-review-history",
         name: i18n.t("commands.show_review_history"),
         callback: async () => {
-            await showReviewHistoryForCurrentFile(
-                plugin,
-                plugin.settings.customButtonLabels,
-            );
+            await showReviewHistoryForCurrentFile(plugin);
         },
     });
 

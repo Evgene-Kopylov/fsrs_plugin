@@ -364,7 +364,6 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
                 this.plugin.app,
                 this.plugin,
                 this.sourcePath,
-                this.plugin.settings.customButtonLabels,
             );
             await modal.show();
         } catch (error) {

@@ -23,18 +23,11 @@ export class ReviewHistoryModal extends Modal {
      * Создает модальное окно для просмотра истории повторений
      * @param app - Экземпляр приложения Obsidian
      * @param filePath - Путь к файлу карточки
-     * @param customLabels - Настраиваемые названия кнопок (опционально)
      */
     constructor(
         app: App,
         private plugin: MyPlugin,
         filePath: string,
-        private customLabels?: {
-            again: string;
-            hard: string;
-            good: string;
-            easy: string;
-        },
     ) {
         super(app);
         this.filePath = filePath;
@@ -378,8 +371,8 @@ export class ReviewHistoryModal extends Modal {
     }
 
     /**
-     * Возвращает отображаемое название оценки
-     * Приоритет: custom label > i18n перевод
+     * Возвращает название оценки с цветным индикатором
+     * Берёт строку из review.buttons.*, отрезает номер клавиши "(N)"
      */
     private translateRating(rating: FSRSRating): string {
         const emojiMap: Record<FSRSRating, string> = {
@@ -389,11 +382,7 @@ export class ReviewHistoryModal extends Modal {
             Easy: "\u{1F7E6}",
         };
         const key = rating.toLowerCase() as "again" | "hard" | "good" | "easy";
-        const custom = this.customLabels?.[key];
-        const label =
-            custom && custom.trim() !== ""
-                ? custom
-                : i18n.t(`review.buttons.${key}`);
+        const label = i18n.t(`review.buttons.${key}`).replace(/ \(\d\)$/, "");
         return `${emojiMap[rating]} ${label}`;
     }
 
@@ -408,17 +397,9 @@ export class ReviewHistoryModal extends Modal {
 
 /**
  * Показывает историю повторений для текущей карточки
- * @param app - Экземпляр приложения Obsidian
- * @param customLabels - Настраиваемые названия кнопок (опционально)
  */
 export async function showReviewHistoryForCurrentFile(
     plugin: MyPlugin,
-    customLabels?: {
-        again: string;
-        hard: string;
-        good: string;
-        easy: string;
-    },
 ): Promise<void> {
     try {
         const activeFile = plugin.app.workspace.getActiveFile();
@@ -431,7 +412,6 @@ export async function showReviewHistoryForCurrentFile(
             plugin.app,
             plugin,
             activeFile.path,
-            customLabels,
         );
         await modal.show();
     } catch (error) {
