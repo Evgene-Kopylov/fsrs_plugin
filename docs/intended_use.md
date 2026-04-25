@@ -1,24 +1,24 @@
-# Руководство по использованию FSRS Plugin
+# FSRS Plugin Usage Guide
 
-Этот гайд покажет, как начать использовать плагин после установки.
-Всё работает прямо в Obsidian — никакие внешние сервисы не нужны.
+This guide shows how to start using the plugin after installation.
+Everything works inside Obsidian — no external services needed.
 
 ---
 
-## 1. Добавить поля FSRS в заметку
+## 1. Add FSRS fields to a note
 
-После установки и включения плагина откройте любую заметку.
+After installing and enabling the plugin, open any note.
 
-Вызовите палитру команд (`Ctrl/Cmd+P`) и выполните:
+Open the command palette (`Ctrl/Cmd+P`) and run:
 
-**FSRS Plugin: Добавить поля FSRS в шапку файла**
+**FSRS Plugin: Add FSRS fields to frontmatter**
 
-Плагин добавит в frontmatter заметки пустой массив `reviews: []`.
-С этого момента заметка считается карточкой FSRS — можно начинать повторять.
+The plugin adds an empty `reviews: []` array to the note's frontmatter.
+From now on, the note is considered an FSRS card — ready for review.
 
-![команда «Добавить поля FSRS» в палитре](TODO)
+![«Add FSRS fields» command in the palette](gifs/add-fsrs-fields.gif)
 
-После добавления полей frontmatter заметки выглядит так:
+After adding the fields, the frontmatter looks like this:
 
 ```yaml
 ---
@@ -28,93 +28,94 @@ reviews: []
 
 ---
 
-## 2. Добавить кнопку повторения
+## 2. Insert the review button
 
-Кнопка повторения позволяет оценить карточку (Again / Hard / Good / Easy)
-прямо в режиме просмотра — без переключения в режим редактирования.
+The review button lets you rate a card (Again / Hard / Good / Easy)
+directly in reading mode — no need to switch to editing.
 
-Снова откройте палитру (`Ctrl/Cmd+P`) и выполните:
+Open the command palette (`Ctrl/Cmd+P`) and run:
 
-**FSRS Plugin: Вставить кнопку повторения**
+**FSRS Plugin: Insert review button block**
 
-Кнопка вставляется прямо в текст заметки в виде code-блока:
+The button is inserted as a code block in the note:
 
 ````markdown
 ```fsrs-review-button
 ```
 ````
 
-В режиме просмотра (`Ctrl/Cmd+E`) блок превращается в кнопку
-с четырьмя вариантами оценки.
+In reading mode (`Ctrl/Cmd+E`) the block renders as a button
+with four rating options.
 
-![кнопка повторения в режиме просмотра](TODO)
+![review button in reading mode](gifs/insert-review-button.gif)
 
 ---
 
-## 3. Создать таблицу карточек
+## 3. Create the card table
 
-Теперь откройте заметку где хотите видеть выборку по своим карточекам
-и вставьте блок `fsrs-table` с SQL-подобным запросом:
+Open a note where you want to see a list of your cards
+and insert an `fsrs-table` block with an SQL-like query:
 
 ````markdown
 ```fsrs-table
-SELECT file as "Карточка",
+SELECT file as "Card",
        retrievability as "R",
        stability as "S",
        difficulty as "D",
-       overdue as "Проср."
+       overdue as "Overdue"
 LIMIT 20
 ```
 ````
 
-В режиме просмотра блок отрендерится в таблицу со всеми карточками,
-отсортированными по умолчанию (по просрочке — самые просроченные сверху). У вас нет просроченных, потому это поле пустое.
+In reading mode the block renders as a table with all your cards,
+sorted by default (most overdue first). If you have no overdue cards, that column is empty.
 
-![отрендеренная fsrs-table с карточками](TODO)
+![rendered fsrs-table with cards](gifs/fsrs-table.gif)
+> GIF coming soon: a note with fsrs-table in reading mode, showing 2–3 cards with columns File, R, S, D, Overdue.
 
-### Что значат колонки
+### Column reference
 
-Полный список полей — в [README](../README.ru.md###блок-fsrs-table).
-
-
----
-
-## 4. Повторять без перехода к заметке
-
-Наведите курсор на имя файла в таблице.
-
-Появится всплывающее окно с содержимым заметки,
-а внутри — та самая кнопка повторения, кликабельна из предпросмотра.
-
-![всплывающее окно с контентом и кнопкой повторения](TODO)
-
-Таким образом можно:
-
-- **Просмотреть** содержимое карточки — не переходя в заметку.
-- **Оценить** карточку (Again / Hard / Good / Easy) —
-  прямо из всплывающего окна.
-- **Пролистать** все просроченные карточки за пару минут —
-  открывая их по одной через таблицу.
-
-Это основной сценарий использования плагина:
-
-1. Открываете заметку с таблицей (например, ежедневную заметку).
-2. Таблица показывает все карточки и их статус.
-3. Наводите на просроченную — всплывает содержимое.
-4. Нажимаете оценку — карточка обновляется.
-5. Переходите к следующей.
+Full list of available columns in the [README](README.md#available-columns).
 
 ---
 
-## Краткий чек-лист при первом запуске
+## 4. Review without navigating
 
-- [ ] Установлен плагин
-- [ ] Выполнена команда «Добавить поля FSRS в шапку файла»
-  для первой заметки
-- [ ] Вставлена кнопка повторения `fsrs-review-button`
-  в ту же заметку
-- [ ] Создана заметка с блоком `fsrs-table` для обзора всех карточек
-- [ ] Всё готово к повторению
+Hover over a file name in the table.
+
+A popover appears showing the note's content,
+with the review button inside — clickable directly from the preview.
+
+![popover with card content and review button](gifs/hover-review.gif)
+> GIF coming soon: hovering a file name in the table, a popover appears with the note content and review button, clicking Good.
+
+This lets you:
+
+- **Preview** the card content — without opening the note.
+- **Rate** the card (Again / Hard / Good / Easy) —
+  right from the popover.
+- **Go through** all overdue cards in minutes —
+  opening them one by one from the table.
+
+The main usage workflow:
+
+1. Open a note with the table (e.g., your daily note).
+2. The table shows all cards and their status.
+3. Hover over an overdue card — the content pops up.
+4. Click a rating — the card updates.
+5. Move on to the next one.
+
+---
+
+## Quick-start checklist
+
+- [ ] Plugin installed and enabled
+- [ ] Run **Add FSRS fields to frontmatter**
+  on your first card note
+- [ ] Insert `fsrs-review-button`
+  in the same note
+- [ ] Create a note with `fsrs-table` to view all cards
+- [ ] Ready to review
 
 ---
 
