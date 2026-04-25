@@ -64,7 +64,7 @@ export async function addFsrsFieldsToCurrentFile(
                     "---\n" + updatedFrontmatterContent + "\n---";
 
                 const afterFrontmatter = data.slice(
-                    match.match.index! + match.match[0].length,
+                    match.match.index + match.match[0].length,
                 );
                 let buttonBlock = "";
                 if (settings?.auto_add_review_button) {
