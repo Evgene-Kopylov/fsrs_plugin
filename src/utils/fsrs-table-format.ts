@@ -2,6 +2,7 @@ import type { ModernFSRSCard, ComputedCardState } from "../interfaces/fsrs";
 import type { App } from "obsidian";
 import { formatDateTime } from "./date-format";
 import { i18n } from "./i18n";
+import { OVERDUE_HOURS_THRESHOLD } from "../constants";
 
 /**
  * Форматирует просрочку в читаемый вид
@@ -16,7 +17,7 @@ export function formatOverdue(overdueHours: number): string {
         const minutes = Math.round(overdueHours * 60);
         return `${minutes} ${i18n.t("table.units.minutes")}`;
     }
-    if (overdueHours <= 72) {
+    if (overdueHours <= OVERDUE_HOURS_THRESHOLD) {
         const hours = Math.round(overdueHours);
         return `${hours} ${i18n.t("table.units.hours")}`;
     }

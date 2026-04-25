@@ -40,3 +40,6 @@ export const DEFAULT_IGNORE_PATTERNS = [
     "*.canvas",
     "*.excalidraw.md",
 ];
+
+/** Порог переключения часов → дни: <= порога — часы, > порога — дни */
+export const OVERDUE_HOURS_THRESHOLD = 72;
