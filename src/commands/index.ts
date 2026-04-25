@@ -14,18 +14,18 @@ import { insertReviewButton } from "./add-review-button";
  */
 export function updateCommandNames(app: App): void {
     const commands = [
-        { id: "add-fsrs-fields", key: "commands.add_fsrs_fields" },
-        { id: "find-fsrs-cards", key: "commands.find_fsrs_cards" },
+        { id: "add-fields", key: "commands.add_fsrs_fields" },
+        { id: "find-cards", key: "commands.find_fsrs_cards" },
         { id: "review-current-card", key: "commands.review_current_card" },
         { id: "delete-last-review", key: "commands.delete_last_review" },
-        { id: "show-fsrs-help", key: "commands.show_fsrs_help" },
+        { id: "show-help", key: "commands.show_fsrs_help" },
         { id: "show-review-history", key: "commands.show_review_history" },
         { id: "insert-review-button", key: "commands.insert_review_button" },
     ];
 
     const commandMap = (app as unknown as CommandsAccess).commands;
     for (const cmd of commands) {
-        const key = `fsrs-plugin:${cmd.id}`;
+        const key = `fsrs:${cmd.id}`;
         const command = commandMap?.get(key);
         if (command) {
             command.name = i18n.t(cmd.key);
@@ -39,7 +39,7 @@ export function updateCommandNames(app: App): void {
 export function registerCommands(plugin: FsrsPlugin): void {
     // Команда для добавления полей FSRS в текущий файл
     plugin.addCommand({
-        id: "add-fsrs-fields",
+        id: "add-fields",
         name: i18n.t("commands.add_fsrs_fields"),
         callback: async () => {
             await plugin.addFsrsFieldsToCurrentFile();
@@ -48,7 +48,7 @@ export function registerCommands(plugin: FsrsPlugin): void {
 
     // Команда для поиска карточек, готовых к повторению
     plugin.addCommand({
-        id: "find-fsrs-cards",
+        id: "find-cards",
         name: i18n.t("commands.find_fsrs_cards"),
         callback: async () => {
             await plugin.findCardsForReview();
@@ -79,7 +79,7 @@ export function registerCommands(plugin: FsrsPlugin): void {
 
     // Команда для открытия справки по синтаксису fsrs-table
     plugin.addCommand({
-        id: "show-fsrs-help",
+        id: "show-help",
         name: i18n.t("commands.show_fsrs_help"),
         callback: () => {
             const modal = new FsrsHelpModal(plugin.app);

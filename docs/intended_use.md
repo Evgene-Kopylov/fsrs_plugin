@@ -1,4 +1,4 @@
-# FSRS Plugin Usage Guide
+# FSRS Usage Guide
 
 - [🇷🇺](intended_use.ru.md)
 - [🇺🇸](intended_use.md) <
@@ -14,7 +14,7 @@ After installing and enabling the plugin, open any note.
 
 Open the command palette (`Ctrl/Cmd+P`) and run:
 
-**FSRS Plugin: Add FSRS fields to frontmatter**
+**FSRS: Add FSRS fields to frontmatter**
 
 The plugin adds an empty `reviews: []` array to the note's frontmatter.
 From now on, the note is considered an FSRS card — ready for review.
@@ -38,7 +38,7 @@ directly in reading mode — no need to switch to editing.
 
 Open the command palette (`Ctrl/Cmd+P`) and run:
 
-**FSRS Plugin: Insert review button**
+**FSRS: Insert review button**
 
 The button is inserted as a code block in the note:
 
