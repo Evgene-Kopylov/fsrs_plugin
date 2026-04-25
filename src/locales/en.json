@@ -92,6 +92,35 @@
             "Review": "Review",
             "Relearning": "Relearning",
             "due": "Due"
+        },
+        "units": {
+            "days": "d",
+            "hours": "h",
+            "minutes": "m"
+        }
+    },
+    "history": {
+        "title": "Review History: {file}",
+        "file_label": "File:",
+        "empty": "No review history",
+        "error_load": "Failed to load card data",
+        "table": {
+            "number": "#",
+            "datetime": "Date and time",
+            "rating": "Rating",
+            "stability": "Stability",
+            "difficulty": "Difficulty",
+            "days_since_last": "Days since last",
+            "actions": ""
+        },
+        "delete_aria": "Delete last review",
+        "statistics": {
+            "heading": "Statistics",
+            "total_reviews": "Total reviews: {count}",
+            "first_review": "First review: {date}",
+            "last_review": "Last review: {date}",
+            "last_rating": "Last rating: {rating}",
+            "ratings_distribution": "Ratings: {again}×🟥 {hard}×🟨 {good}×🟩 {easy}×🟦"
         }
     },
     "help": {

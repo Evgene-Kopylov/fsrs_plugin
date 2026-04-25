@@ -6,6 +6,7 @@ import { renderDisplaySettings } from "./setting-groups/display-settings";
 import { renderEarlyReviewSettings } from "./setting-groups/early-review-settings";
 import { renderFilteringSettings } from "./setting-groups/filtering-settings";
 import { i18n } from "../utils/i18n";
+import { updateCommandNames } from "../commands/index";
 
 /**
  * Основной класс вкладки настроек FSRS плагина.
@@ -46,6 +47,7 @@ export class FsrsSettingTab extends PluginSettingTab {
                         } else {
                             i18n.setLocale(value);
                         }
+                        updateCommandNames(this.plugin.app);
                         // Перерисовать вкладку настроек для применения нового языка
                         this.display();
                     });

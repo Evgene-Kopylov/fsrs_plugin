@@ -1,8 +1,7 @@
-# FSRS Plugin для Obsidian
+# FSRS Plugin for Obsidian
 
-**Free Spaced Repetition Scheduler** — современный алгоритм интервального
-повторения в Obsidian.
-Плагин превращает заметки в карточки для запоминания по FSRS.
+**Free Spaced Repetition Scheduler** — a modern spaced repetition algorithm for Obsidian.
+The plugin turns your notes into FSRS-based flashcards for effective memorization.
 
 [![Obsidian](https://img.shields.io/badge/Obsidian-%23483699.svg?&logo=obsidian&logoColor=white)](https://obsidian.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?&logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/)
@@ -10,108 +9,108 @@
 [![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?)](LICENSE)
 [![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
 
-## 📋 Содержание
+## 📋 Table of Contents
 
 [toc]
 
-## 🚀 Особенности
+## 🚀 Features
 
-- **📊 Алгоритм FSRS** — эффективнее SM-2
-- **🎯 Контроль запоминания** — уровень 70-97%
-- **⚡ Высокая производительность** — Rust/WASM для быстрых вычислений
-- **🔄 Динамический интерфейс** — автообновление списков
-- **📱 Поддержка мобильных** — iOS, Android
-- **🎨 Гибкая настройка** — фильтрация, сортировка, кастомизация
-- **📈 Статистика** — отслеживание прогресса
+- **📊 FSRS Algorithm** — more efficient than SM-2
+- **🎯 Retention Control** — 70–97% target level
+- **⚡ High Performance** — Rust/WASM for fast computations
+- **🔄 Dynamic Interface** — auto-updating lists
+- **📱 Mobile Support** — iOS, Android
+- **🎨 Flexible Configuration** — filtering, sorting, customization
+- **📈 Statistics** — track your progress
 
-## 📦 Установка
+## 📦 Installation
 
-### Через Obsidian Community Plugins (рекомендуется)
+### Via Obsidian Community Plugins (recommended)
 
-1. Откройте **Настройки** → **Community plugins** → **Browse**
-2. Найдите "FSRS Plugin"
-3. Нажмите **Install**, затем **Enable**
+1. Go to **Settings** → **Community plugins** → **Browse**
+2. Search for "FSRS Plugin"
+3. Click **Install**, then **Enable**
 
-### Через BRAT (для тестирования бета-версий)
+### Via BRAT (for beta testing)
 
-1. Установите плагин [BRAT](https://github.com/TfTHacker/obsidian42-brat) в Obsidian
-2. Откройте **Настройки** → **Community plugins** → **BRAT**
-3. Добавьте репозиторий: `https://github.com/Evgene-Kopylov/fsrs_plugin`
-4. Включите плагин в **Настройки** → **Community plugins**
+1. Install the [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin in Obsidian
+2. Open **Settings** → **Community plugins** → **BRAT**
+3. Add the repository: `https://github.com/Evgene-Kopylov/fsrs_plugin`
+4. Enable the plugin in **Settings** → **Community plugins**
 
-### Требования
+### Requirements
 
-- Obsidian v0.15.0 или выше
-- Поддержка WebAssembly (по умолчанию включена)
+- Obsidian v0.15.0 or higher
+- WebAssembly support (enabled by default)
 
-## 🏃 Быстрый старт
+## 🏃 Quick Start
 
-1. **Включите плагин** в настройках Obsidian
-2. **Создайте карточку**:
-   - Откройте заметку → команда `Добавить поля FSRS в шапку файла` (Ctrl/Cmd+P)
-3. **Добавьте блок повторений** в нужный файл:
+1. **Enable the plugin** in Obsidian settings
+2. **Create a card**:
+   - Open a note → run the command `Add FSRS fields to file header` (Ctrl/Cmd+P)
+3. **Add a review block** to your file:
 
    ````markdown
    ```fsrs-table
    SELECT file as " ", retrievability as "R",
           stability as "S", difficulty as "D",
-          overdue as "Проср."
+          overdue as "Overdue"
    ```
    ````
 
-4. **Начните повторять** — откройте файл с блоком, кликайте карточки
+4. **Start reviewing** — open the file with the block and click on cards
 
-## 📖 Использование
+## 📖 Usage
 
-### Блок `fsrs-table` (SQL-подобный синтаксис)
+### The `fsrs-table` Block (SQL-like Syntax)
 
-Блок `fsrs-table` использует SQL-подобный синтаксис для настройки отображения карточек.
+The `fsrs-table` block uses SQL-like syntax to customize how cards are displayed.
 
-**Базовый синтаксис:**
+**Basic syntax:**
 
 ````markdown
 ```fsrs-table
-SELECT поле1, поле2 as "Заголовок", поле3
-ORDER BY поле4 DESC
+SELECT field1, field2 as "Header", field3
+ORDER BY field4 DESC
 LIMIT 30
 ```
 ````
 
-**Доступные поля (columns):**
+**Available columns:**
 
-| Поле | Описание | Примечания |
-| ------ | ---------- | ------------ |
-| `file` | имя файла карточки | кликабельная ссылка |
-| `reps` | количество выполненных повторений | |
-| `overdue` | часов просрочки | |
-| `stability` | стабильность карточки (S) | параметр FSRS |
-| `difficulty` | сложность карточки (D) | значение от 0 до 10 |
-| `retrievability` | извлекаемость (R) | вероятность правильного ответа |
-| `due` | дата и время следующего повторения | |
-| `state` | состояние карточки | New, Learning, Review, Relearning |
-| `elapsed` | дней с последнего повторения | |
-| `scheduled` | дней до следующего повторения | |
+| Field | Description | Notes |
+|-------|-------------|-------|
+| `file` | card file name | clickable link |
+| `reps` | number of repetitions completed | |
+| `overdue` | hours overdue | |
+| `stability` | card stability (S) | FSRS parameter |
+| `difficulty` | card difficulty (D) | value from 0 to 10 |
+| `retrievability` | retrievability (R) | probability of correct recall |
+| `due` | next review date and time | |
+| `state` | card state | New, Learning, Review, Relearning |
+| `elapsed` | days since last review | |
+| `scheduled` | days until next review | |
 
-**Параметры блока:**
+**Block parameters:**
 
-- `SELECT` — выбор полей для отображения (обязательный)
-- `ORDER BY` — сортировка по указанному полю (ASC - по возрастанию, DESC - по убыванию)
-- `LIMIT` — ограничение количества строк (0 = используется значение из настроек плагина)
+- `SELECT` — choose fields to display (required)
+- `ORDER BY` — sort by a specified field (`ASC` ascending, `DESC` descending)
+- `LIMIT` — limit the number of rows (`0` uses the value from plugin settings)
 
-**Примеры:**
+**Examples:**
 
-1. Просроченные карточки с приоритетом:
+1. Overdue cards with priority:
 
 ````markdown
 ```fsrs-table
 SELECT file as " ", retrievability as "R",
        stability as "S", difficulty as "D",
-       overdue as "Проср."
+       overdue as "Overdue"
 LIMIT 20
 ```
 ````
 
-1. Все карточки с сортировкой по дате:
+2. All cards sorted by date:
 
 ````markdown
 ```fsrs-table
@@ -121,16 +120,16 @@ LIMIT 100
 ```
 ````
 
-### Кнопка повнорения в теле заметки `fsrs-review-button`
+### Review Button in Notes `fsrs-review-button`
 
 ````markdown
 ```fsrs-review-button
 ```
 ````
 
-### Формат карточек FSRS
+### FSRS Card Format
 
-Карточки FSRS хранятся в frontmatter заметки. Поле `reviews`:
+FSRS cards are stored in the note's frontmatter under the `reviews` field:
 
 ```yaml
 ---
@@ -146,191 +145,190 @@ reviews:
 ---
 ```
 
-**Поля каждой сессии:**
+**Fields of each review session:**
 
-- **`date`** — дата/время в ISO 8601
-- **`rating`** — `"Again"`, `"Hard"`, `"Good"` или `"Easy"`
-- **`stability`** — S, стабильность (дни)
-- **`difficulty`** — D, сложность (0.0–1.0)
+- **`date`** — date/time in ISO 8601
+- **`rating`** — `"Again"`, `"Hard"`, `"Good"`, or `"Easy"`
+- **`stability`** — S, stability (days)
+- **`difficulty`** — D, difficulty (0.0–1.0)
 
-**Особенности:**
+**Notes:**
 
-- `reviews` может быть `[]` для новых карточек
-- Каждое повторение добавляет сессию в массив
-- FSRS вычисляет следующую дату на основе истории
-- Плагин добавляет поля автоматически
+- `reviews` can be `[]` for new cards
+- Each review adds a session to the array
+- FSRS calculates the next review date based on history
+- The plugin adds these fields automatically
 
-## 🎮 Команды плагина
+## 🎮 Plugin Commands
 
-### Через палитру (Ctrl/Cmd+P)
+### Via Command Palette (Ctrl/Cmd+P)
 
-- **FSRS Plugin: Добавить поля FSRS в шапку файла**
-- **FSRS Plugin: Найти карточки для повторения**
-- **FSRS Plugin: Повторить текущую карточку**
-- **FSRS Plugin: Удалить последнее повторение карточки**
-- **FSRS Plugin: Показать историю повторений**
-- **FSRS Plugin: Показать справку по синтаксису fsrs-table**
+- **FSRS Plugin: Add FSRS fields to file header**
+- **FSRS Plugin: Find cards to review**
+- **FSRS Plugin: Review current card**
+- **FSRS Plugin: Remove last card review**
+- **FSRS Plugin: Show review history**
+- **FSRS Plugin: Show fsrs-table syntax help**
 
-### Через Obsidian Status bar
+### Via the Status Bar
 
-- Кнопка `🔄FSRS:` внизу экрана
+- Button `🔄FSRS:` at the bottom of the Obsidian window
 
-## ⚙️ Настройки
+## ⚙️ Settings
 
-### Параметры алгоритма FSRS
+### FSRS Algorithm Parameters
 
-| Настройка | Описание | По умолчанию |
-| :--- | :--- | :--- |
-| **Request Retention** | Целевой уровень запоминания | 0.92 (92%) |
-| **Maximum Interval** | Макс. интервал (дни) | 36500 (~100 лет) |
-| **Enable Interval Fuzz** | Случайное изменение интервалов (±5%) | Включено |
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Request Retention** | Target retention level | 0.92 (92%) |
+| **Maximum Interval** | Max interval (days) | 36500 (~100 years) |
+| **Enable Interval Fuzz** | Randomize intervals (±5%) | Enabled |
 
-### Настройки по умолчанию для новых карточек
+### Default Settings for New Cards
 
-| Настройка | Описание | По умолчанию |
-| :--- | :--- | :--- |
-| **Initial Stability** | Начальная стабильность | 0.0 |
-| **Initial Difficulty** | Начальная сложность для новых карточек | 0.0 |
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Initial Stability** | Initial stability | 0.0 |
+| **Initial Difficulty** | Initial difficulty for new cards | 0.0 |
 
-### Настройки отображения
+### Display Settings
 
-| Настройка | Описание | По умолчанию |
-| :--- | :--- | :--- |
-| **Auto Add Review Button** | Автоматическая кнопка повторения | Выключено |
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Auto Add Review Button** | Automatically add review button | Disabled |
 
-### Настройки досрочного повторения
+### Early Review Settings
 
-| Настройка | Описание | По умолчанию |
-| :--- | :--- | :--- |
-| **Minimum Early Review Interval** | Минимальные минуты до повторения | 40 |
+| Setting | Description | Default |
+|---------|-------------|---------|
+| **Minimum Early Review Interval** | Minimum minutes before review | 40 |
 
-### Настройки фильтрации
+### Filter Settings
 
-| Настройка | Описание | Пример |
-| :--- | :--- | :--- |
-| **Ignore Patterns** | Паттерны игнорирования | `.obsidian/`, `templates/` |
+| Setting | Description | Example |
+|---------|-------------|---------|
+| **Ignore Patterns** | Ignore patterns | `.obsidian/`, `templates/` |
 
-## 🧠 Алгоритм FSRS
+## 🧠 The FSRS Algorithm
 
-**FSRS** — современный алгоритм интервального повторения от Jarrett Ye.
-Отличие от SM-2:
+**FSRS** is a modern spaced repetition algorithm by Jarrett Ye. Compared to SM-2:
 
-- Изучает паттерны памяти через ML
-- Адаптируется под скорость запоминания
-- Требует на 20-30% меньше повторений для того же уровня запоминания
-- Лучше обрабатывает перерывы (недели/месяцы)
+- Learns memory patterns via machine learning
+- Adapts to your memory speed
+- Requires 20–30% fewer reviews for the same retention level
+- Handles breaks (weeks/months) much better
 
-### Ключевые концепции
+### Key Concepts
 
-- **Retrievability (R)** — вероятность успешного вспоминания
-- **Stability (S)** — время, за которое R падает с 100% до 90%
-- **Difficulty (D)** — сложность информации (влияет на рост стабильности)
+- **Retrievability (R)** — probability of successful recall
+- **Stability (S)** — time it takes for R to decay from 100% to 90%
+- **Difficulty (D)** — information difficulty (affects how stability grows)
 
-Алгоритм использует 21 параметр, оптимизированный на миллионах повторений.
+The algorithm uses 21 parameters optimized on millions of reviews.
 
-**Подробнее:** [ABC of FSRS](docs/ABC%20of%20FSRS.md)
+**Read more:** [ABC of FSRS](docs/ABC%20of%20FSRS.md)
 
-## 🛠️ Разработка
+## 🛠️ Development
 
-**Разработка ведётся на GitLab:** [gitlab.com/Evgene-Kopylov/FSRS-plugin](https://gitlab.com/Evgene-Kopylov/FSRS-plugin).
-Репозиторий на GitHub является зеркалом.
+**Development happens on GitLab:** [gitlab.com/Evgene-Kopylov/FSRS-plugin](https://gitlab.com/Evgene-Kopylov/FSRS-plugin).
+The GitHub repository is a mirror.
 
-### Технический стек
+### Tech Stack
 
 - **Frontend:** TypeScript, Obsidian API
-- **Алгоритм:** Rust (компилируется в WebAssembly)
-- **Сборка:** esbuild, wasm-pack
-- **Тестирование:** Rust (cargo test) + TypeScript (vitest)
+- **Algorithm:** Rust (compiled to WebAssembly)
+- **Build:** esbuild, wasm-pack
+- **Testing:** Rust (cargo test) + TypeScript (vitest)
 
-## Разграничение ответственности Rust и TypeScript
+### Rust and TypeScript Responsibility Split
 
-**Принцип:** Rust — вычислительное ядро, TypeScript — тонкая обвязка для API Obsidian.
+**Principle:** Rust is the computation core, TypeScript is a thin wrapper for the Obsidian API.
 
-### Пайплайн релиза
+### Release Pipeline
 
-Проект использует GitLab CI/CD для автоматической сборки, тестирования и релиза:
+The project uses GitLab CI/CD for automated build, test, and release:
 
 [![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
 
-### Сборка из исходников
+### Building from Source
 
 ```bash
-# Клонирование репозитория
+# Clone the repository
 git clone https://gitlab.com/Evgene-Kopylov/FSRS-plugin.git
 cd FSRS-plugin
 
-# Установка зависимостей
+# Install dependencies
 npm install
 
-# Сборка WASM модуля
+# Build the WASM module
 npm run build-wasm
 
-# Разработка (watch mode)
+# Development (watch mode)
 npm run dev
 
-# Продакшн сборка
+# Production build
 npm run build
 ```
 
-### WASM интеграция
+### WASM Integration
 
-Плагин использует Rust/WASM для вычислений FSRS:
+The plugin uses Rust/WASM for FSRS computations:
 
-- **Бинарник WASM** встраивается в плагин через base64
-- **Нет сетевых запросов** — всё локально
-- **Высокая производительность** — нативные вычисления
+- **WASM binary** is embedded into the plugin via base64
+- **No network requests** — everything runs locally
+- **High performance** — native-level computation
 
-**Подробнее:** [WASM Integration](docs/WASM-INTEGRATION.md)
+**Read more:** [WASM Integration](docs/WASM-INTEGRATION.md)
 
-## 📄 Лицензия
+## 📄 License
 
-Плагин под **LGPLv3**.
+This plugin is licensed under **LGPLv3**.
 
-**LGPL** разрешает:
+**LGPL** permits:
 
-- Использование в проприетарном ПО
-- Требует открытия исходного кода модифицированной библиотеки
+- Use in proprietary software
+- Requires modified library source code to be open
 
-### Основные права
+### Main Rights
 
-- ✅ Использовать (бесплатно, включая коммерцию)
-- ✅ Изучать (доступ к исходникам)
-- ✅ Распространять
-- ✅ Совершенствовать
+- ✅ Use (free, including commercial use)
+- ✅ Study (access to source code)
+- ✅ Distribute
+- ✅ Improve
 
-### Условия
+### Requirements
 
-- Модификации библиотеки — под LGPLv3
-- Динамическое связывание разрешено без открытия кода приложения
-- Сохранять уведомления об авторских правах
-- При распространении модификаций — предоставить исходный код
+- Library modifications must remain under LGPLv3
+- Dynamic linking is allowed without disclosing application code
+- Maintain copyright notices
+- Provide source code when distributing modifications
 
-### Для пользователей Obsidian
+### For Obsidian Users
 
-- Свободно использовать в личных/коммерческих целях
-- Производные плагины — под LGPLv3
-- Модификации WASM-компонентов на Rust — под LGPLv3
+- Free to use for personal/commercial purposes
+- Derivative plugins must be under LGPLv3
+- Modifications to Rust WASM components must be under LGPLv3
 
-Полный текст: [LICENSE](LICENSE)
+Full text: [LICENSE](LICENSE)
 
-## 🙏 Благодарности
+## 🙏 Acknowledgements
 
-- **Jarrett Ye** — создатель FSRS
-- **Сообщество Obsidian** — вдохновение и поддержка
-- **Сообщество Rust** — инструменты WASM
-- **Все контрибьюторы** — улучшения и баг-репорты
+- **Jarrett Ye** — creator of FSRS
+- **Obsidian Community** — inspiration and support
+- **Rust Community** — WASM tooling
+- **All contributors** — improvements and bug reports
 
-## 📚 Дополнительные ресурсы
+## 📚 Additional Resources
 
-- [Официальная документация FSRS](https://github.com/open-spaced-repetition/fsrs)
-- [Обсуждение на форуме Obsidian](https://forum.obsidian.md/)
-- [Issues и feature requests](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/work_items)
-- [Руководство по использованию fsrs-table](docs/ABC%20of%20FSRS.md)
+- [Official FSRS Documentation](https://github.com/open-spaced-repetition/fsrs)
+- [Obsidian Forum Discussion](https://forum.obsidian.md/)
+- [Issues & Feature Requests](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/work_items)
+- [FSRS Table Usage Guide](docs/ABC%20of%20FSRS.md)
 
 ***
 
-**Примечание:** Плагин в активной разработке.
-Функциональность может не значительно меняться.
+**Note:** The plugin is under active development.
+Functionality may change slightly.
 
-*Последнее обновление: 2026*
-*Версия плагина: 0.1.3*
+*Last updated: 2026*
+*Plugin version: 0.4.4*

@@ -13,6 +13,30 @@
             "cancel": "Отмена"
         }
     },
+    "history": {
+        "title": "История повторений: {file}",
+        "file_label": "Файл:",
+        "empty": "Нет истории повторений",
+        "error_load": "Не удалось загрузить данные карточки",
+        "table": {
+            "number": "#",
+            "datetime": "Дата и время",
+            "rating": "Оценка",
+            "stability": "Стабильность",
+            "difficulty": "Сложность",
+            "days_since_last": "Дней с прошлого",
+            "actions": ""
+        },
+        "delete_aria": "Удалить последнее повторение",
+        "statistics": {
+            "heading": "Статистика",
+            "total_reviews": "Всего повторений: {count}",
+            "first_review": "Первое повторение: {date}",
+            "last_review": "Последнее повторение: {date}",
+            "last_rating": "Последняя оценка: {rating}",
+            "ratings_distribution": "Оценки: {again}×🟥 {hard}×🟨 {good}×🟩 {easy}×🟦"
+        }
+    },
     "notices": {
         "no_active_file": "Нет активного файла",
         "no_frontmatter": "Файл не содержит frontmatter",
@@ -92,6 +116,11 @@
             "Review": "Повторение",
             "Relearning": "Переучивание",
             "due": "Повторить"
+        },
+        "units": {
+            "days": "д",
+            "hours": "ч",
+            "minutes": "мин"
         }
     },
     "help": {

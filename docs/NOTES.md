@@ -37,6 +37,8 @@ npx repogrok
 
 ## Git
 
+### New barnch
+
 ```bash
 branch_name="dev/$(date +%d-%b_%H%M)"
 git checkout -b "$branch_name"
