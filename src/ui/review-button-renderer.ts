@@ -111,7 +111,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 
             if (!parseResult.success || !parseResult.card) {
                 // Карточка не является FSRS карточкой - кнопка активна, но затемнена
-                this.mainButton.textContent = "Not an FSRS card";
+                this.mainButton.textContent = i18n.t("notices.not_fsrs_card");
                 this.mainButton.disabled = false;
                 this.updateButtonClass("not-fsrs");
                 return;
