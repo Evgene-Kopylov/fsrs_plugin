@@ -108,30 +108,15 @@ export class ReviewModal extends Modal {
             },
         ];
 
-        const buttonContainer = contentEl.createEl("div");
-        buttonContainer.style.display = "flex"; // eslint-disable-line obsidianmd/no-static-styles-assignment
-        buttonContainer.style.gap = "10px"; // eslint-disable-line obsidianmd/no-static-styles-assignment
-        buttonContainer.style.flexWrap = "wrap"; // eslint-disable-line obsidianmd/no-static-styles-assignment
-        buttonContainer.style.justifyContent = "center"; // eslint-disable-line obsidianmd/no-static-styles-assignment
+        const buttonContainer = contentEl.createEl("div", {
+            cls: "fsrs-rating-container",
+        });
 
         ratings.forEach(({ rating, label, color }) => {
             const button = document.createElement("button");
+            button.className = "fsrs-rating-button";
             button.textContent = label;
-            button.style.cssText = `
-				flex: 1;
-				min-width: 120px;
-				padding: 10px 15px;
-				background: ${color};
-				color: var(--fsrs-button-text);
-				border: none;
-				border-radius: 4px;
-				cursor: pointer;
-				font-weight: bold;
-				transition: opacity 0.2s;
-			`;
-
-            button.onmouseenter = () => (button.style.opacity = "0.8"); // eslint-disable-line obsidianmd/no-static-styles-assignment
-            button.onmouseleave = () => (button.style.opacity = "1"); // eslint-disable-line obsidianmd/no-static-styles-assignment
+            button.style.backgroundColor = color;
 
             button.onclick = () => {
                 this.ratingSelected = true;

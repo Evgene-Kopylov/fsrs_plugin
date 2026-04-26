@@ -84,19 +84,8 @@ export class FsrsHelpModal extends Modal {
     onOpen(): void {
         const { contentEl, modalEl } = this;
 
-        // Увеличиваем ширину модального окна
-        // eslint-disable-next-line obsidianmd/no-static-styles-assignment
-        modalEl.style.width = "80%";
-        // eslint-disable-next-line obsidianmd/no-static-styles-assignment
-        modalEl.style.maxWidth = "900px";
-        // eslint-disable-next-line obsidianmd/no-static-styles-assignment
-        modalEl.style.maxHeight = "85vh";
-
-        // Разрешаем выделение текста во всём контенте
-        // eslint-disable-next-line obsidianmd/no-static-styles-assignment
-        modalEl.style.userSelect = "text";
-        // eslint-disable-next-line obsidianmd/no-static-styles-assignment
-        contentEl.style.userSelect = "text";
+        // Применяем стили через CSS-класс
+        modalEl.classList.add("fsrs-help-modal");
 
         contentEl.empty();
 
@@ -117,17 +106,13 @@ export class FsrsHelpModal extends Modal {
             cls: "fsrs-help-content-container",
         });
 
-        // Разрешаем выделение текста в контейнере
-        // eslint-disable-next-line obsidianmd/no-static-styles-assignment
-        contentContainer.style.userSelect = "text";
-
         // Рендерим Markdown контент
         void MarkdownRenderer.render(
             this.app,
             getLocalizedHelpText(),
             contentContainer,
             "",
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument -- MarkdownRenderer.render() требует any для component
             null as any,
         );
     }

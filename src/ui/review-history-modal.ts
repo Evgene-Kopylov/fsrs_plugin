@@ -91,12 +91,7 @@ export class ReviewHistoryModal extends Modal {
         const { contentEl, modalEl } = this;
 
         // Настраиваем размер модального окна
-        // eslint-disable-next-line obsidianmd/no-static-styles-assignment
-        modalEl.style.width = "70%";
-        // eslint-disable-next-line obsidianmd/no-static-styles-assignment
-        modalEl.style.maxWidth = "800px";
-        // eslint-disable-next-line obsidianmd/no-static-styles-assignment
-        modalEl.style.maxHeight = "80vh";
+        modalEl.classList.add("fsrs-history-modal");
 
         contentEl.empty();
 
