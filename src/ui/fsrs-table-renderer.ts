@@ -104,8 +104,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 this.lastAction === "sort" && this.cachedCards
                     ? this.cachedCards
                     : await this.plugin.getCachedCardsWithState();
-            // Сохраняем карточки в кеш для будущих сортировок
-            this.cachedCards = allCards;
             const now = new Date();
 
             // Отладочный вывод для отслеживания параметров
@@ -176,6 +174,18 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                     this.originalCardsWithState = result.cards;
                 }
                 console.debug("Parsed params from SQL:", this.params);
+            }
+
+            // Если задано WHERE, кэшируем только карточки, прошедшие фильтр
+            if (this.params?.where && this.cachedCardsWithState) {
+                const filteredPaths = new Set(
+                    this.cachedCardsWithState.map((c) => c.card.filePath),
+                );
+                this.cachedCards = allCards.filter((c) =>
+                    filteredPaths.has(c.card.filePath),
+                );
+            } else {
+                this.cachedCards = allCards;
             }
 
             // Сохраняем позицию прокрутки перед обновлением
