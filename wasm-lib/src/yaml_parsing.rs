@@ -3,11 +3,10 @@
 use crate::json_parsing::parse_datetime_flexible;
 use crate::types::{FsrsParameters, ModernFsrsCard, ReviewSession};
 
-/// Макрос для логирования предупреждений, работает как в WASM, так и в нативных тестах
+/// Макрос для логирования предупреждений, работает в нативных тестах.
+/// В WASM не выводит ничего — ошибки обрабатываются на стороне TypeScript.
 macro_rules! log_warn {
     ($($arg:tt)*) => {
-        #[cfg(target_arch = "wasm32")]
-        web_sys::console::debug_1(&format!("⚠️ {}", format!($($arg)*)).into());
         #[cfg(not(target_arch = "wasm32"))]
         eprintln!("⚠️ WARN: {}", format!($($arg)*));
     };

@@ -51,8 +51,11 @@ export class IncrementalCache {
      */
     private async performFullScan(): Promise<void> {
         const start = performance.now();
-        const files = this.app.vault.getMarkdownFiles();
+        let files = this.app.vault.getMarkdownFiles();
+        // Сортируем файлы для стабильного порядка
+        files = files.sort((a, b) => a.path.localeCompare(b.path));
         this.cardCache.clear();
+        let brokenCount = 0;
 
         for (const file of files) {
             if (
@@ -80,13 +83,18 @@ export class IncrementalCache {
                         card: parseResult.card,
                         state,
                     });
+                } else {
+                    brokenCount++;
                 }
             } catch (error) {
-                console.warn(`Ошибка при чтении файла ${file.path}:`, error);
+                brokenCount++;
             }
         }
 
         verboseLog(`✅ Найдено карточек FSRS: ${this.cardCache.size}`);
+        if (brokenCount > 0) {
+            verboseLog(`⚠️ Пропущено битых карточек: ${brokenCount}`);
+        }
         const elapsed = (performance.now() - start) / 1000;
         verboseLog(`⏱️ Сканирование всего хранилища: ${elapsed.toFixed(2)} с`);
     }
