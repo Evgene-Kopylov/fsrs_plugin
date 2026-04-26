@@ -96,4 +96,15 @@ tags: fsrs
         // перед этим \n нет второго \n подряд
         expect(result.startsWith("\n\n")).toBe(false);
     });
+
+    it("после блока не менее одной пустой строки", () => {
+        const content = "test";
+        const result = addDefaultTableToContent(content);
+        // блок заканчивается на \n, после него идёт \n (разделитель), потом контент
+        const idxAfterBlock =
+            result.indexOf(DEFAULT_TABLE_BLOCK) + DEFAULT_TABLE_BLOCK.length;
+        expect(result[idxAfterBlock]).toBe("\n");
+        // после разделителя сразу начинается контент
+        expect(result.slice(idxAfterBlock + 1)).toBe(content);
+    });
 });
