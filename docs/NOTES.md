@@ -27,9 +27,7 @@ npx eslint src/ --fix
 ## Version bump
 
 ```bash
-npm version patch \
-&& git push --tags \
-&& git push
+npm version patch && git push --tags && git push
 ```
 
 - patch  1.0.0 → 1.0.1
