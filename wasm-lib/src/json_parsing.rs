@@ -92,10 +92,6 @@ pub fn create_default_card() -> ModernFsrsCard {
     }
 }
 
-
-
-
-
 /// Получает YAML строку для новой карточки
 pub fn get_fsrs_yaml() -> String {
     use serde_yaml;
