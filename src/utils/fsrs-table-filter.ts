@@ -210,7 +210,7 @@ export function filterAndSortCards(
             resultJson,
         ) as unknown as WasmFilterResult;
 
-        console.debug("WASM filter result:", {
+        console.debug("📊 WASM filter result:", {
             totalCards: wasmResult.cards?.length || 0,
             totalCount: wasmResult.total_count,
             errorCount: wasmResult.errors?.length || 0,

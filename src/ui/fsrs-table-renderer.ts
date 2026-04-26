@@ -107,7 +107,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             const now = new Date();
 
             // Отладочный вывод для отслеживания параметров
-            console.debug("FsrsTableRenderer.renderContent:", {
+            console.debug("📊 FsrsTableRenderer.renderContent:", {
                 cardCount: allCards.length,
                 hasParams: !!this.params,
                 params: this.params
