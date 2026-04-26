@@ -180,15 +180,6 @@ export function filterAndSortCards(
         return { cards: [], totalCount: 0 };
     }
 
-    // Отладочный вывод параметров
-    console.debug("filterAndSortCards parameters:", {
-        cardCount: cards.length,
-        params: JSON.parse(JSON.stringify(params)) as unknown,
-        hasSort: !!params.sort,
-        limit: params.limit,
-        now: now.toISOString(),
-    });
-
     try {
         // Преобразуем параметры сортировки для WASM
         const wasmParams = {
@@ -212,11 +203,6 @@ export function filterAndSortCards(
             JSON.stringify(wasmParams),
             JSON.stringify(settings),
             now.toISOString(),
-        );
-
-        console.debug(
-            "WASM filter_and_sort_cards result JSON length:",
-            resultJson.length,
         );
 
         // Парсим результат с явным приведением типов
@@ -305,15 +291,6 @@ export function filterAndSortCardsWithStates(
         return { cards: [], totalCount: 0 };
     }
 
-    // Отладочный вывод параметров
-    console.debug("filterAndSortCardsWithStates parameters:", {
-        cachedCardCount: cachedCards.length,
-        params: JSON.parse(JSON.stringify(params)) as unknown,
-        hasSort: !!params.sort,
-        limit: params.limit,
-        now: now.toISOString(),
-    });
-
     try {
         // Преобразуем параметры сортировки для WASM
         const wasmParams = {
@@ -345,21 +322,10 @@ export function filterAndSortCardsWithStates(
             now.toISOString(),
         );
 
-        console.debug(
-            "WASM filter_and_sort_cards_with_states result JSON length:",
-            resultJson.length,
-        );
-
         // Парсим результат с явным приведением типов
         const wasmResult: WasmFilterResult = JSON.parse(
             resultJson,
         ) as unknown as WasmFilterResult;
-
-        console.debug("WASM filter result with states:", {
-            totalCards: wasmResult.cards?.length || 0,
-            totalCount: wasmResult.total_count,
-            errorCount: wasmResult.errors?.length || 0,
-        });
 
         // Обрабатываем ошибки, если есть
         if (wasmResult.errors && wasmResult.errors.length > 0) {
