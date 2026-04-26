@@ -17,8 +17,8 @@ npx eslint src/ --fix
 ## Version bump
 
 ```bash
-npm version patch
-git push --tags
+npm version patch \
+&& git push --tags
 ```
 
 - patch  1.0.0 → 1.0.1
@@ -40,14 +40,14 @@ npx repogrok
 ### New barnch
 
 ```bash
-branch_name="dev/$(date +%d-%b_%H%M)"
-git checkout -b "$branch_name"
-git push -u origin "$branch_name"
+branch_name="dev/$(date +%d-%b_%H%M)" \
+&& git checkout -b "$branch_name" \
+&& git push -u origin "$branch_name"
 ```
 
 Обновить мейн перед переходом на него.
 ```bash
-git fetch origin main:main
+git fetch origin main:main && git switch main
 ```
 
 ## Terminal
