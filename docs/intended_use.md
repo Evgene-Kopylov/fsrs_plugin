@@ -57,7 +57,8 @@ with four rating options.
 ## 3. Create the card table
 
 Open a note where you want to see a list of your cards
-and insert an `fsrs-table` block with an SQL-like query:
+and insert an `fsrs-table` block with an SQL-like query
+(or use the `Insert default fsrs-table` command):
 
 ````markdown
 ```fsrs-table
