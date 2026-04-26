@@ -1,4 +1,4 @@
-import { Modal, App, MarkdownRenderer } from "obsidian";
+import { Modal, App, MarkdownRenderer, Component } from "obsidian";
 import { AVAILABLE_FIELDS } from "../utils/fsrs-table-params";
 import { i18n } from "../utils/i18n";
 
@@ -107,12 +107,14 @@ export class FsrsHelpModal extends Modal {
         });
 
         // Рендерим Markdown контент
+        // Modal уже является Component в runtime Obsidian, но типы не экспортируют
+        // методы Component наружу, поэтому кастуем через unknown
         void MarkdownRenderer.render(
             this.app,
             getLocalizedHelpText(),
             contentContainer,
             "",
-            null,
+            this as unknown as Component,
         );
     }
 

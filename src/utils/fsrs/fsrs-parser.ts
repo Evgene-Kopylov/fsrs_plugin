@@ -1,6 +1,7 @@
 // Парсеры для работы с YAML и FSRS данными
 
 import type {
+    FSRSRating,
     ModernFSRSCard,
     ReviewSession,
     ParseResult,
@@ -86,7 +87,7 @@ export function parseModernFsrsFromFrontmatter(
             }
             reviews.push({
                 date: session.date,
-                rating: session.rating,
+                rating: session.rating as FSRSRating,
                 stability: session.stability,
                 difficulty: session.difficulty,
             });
