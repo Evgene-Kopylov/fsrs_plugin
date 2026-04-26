@@ -3,10 +3,8 @@
 
 import type { FsrsPluginSettings } from "../../settings";
 
-// Паттерны игнорирования файлов и папок по умолчанию
+// Паттерны игнорирования файлов и папок по умолчанию (без .obsidian/ — передаётся через configDir)
 export const DEFAULT_IGNORE_PATTERNS = [
-    // eslint-disable-next-line obsidianmd/hardcoded-config-path -- system folder, no API for ignore patterns
-    ".obsidian/",
     "templates/",
     "attachments/",
     "media/",
@@ -70,10 +68,11 @@ export function shouldIgnoreFile(
 export function shouldIgnoreFileWithSettings(
     filePath: string,
     settings: FsrsPluginSettings,
+    configDir: string,
 ): boolean {
     return shouldIgnoreFile(
         filePath,
-        DEFAULT_IGNORE_PATTERNS,
+        [`${configDir}/`, ...DEFAULT_IGNORE_PATTERNS],
         settings.ignore_patterns,
     );
 }
@@ -104,6 +103,13 @@ export function parseIgnorePatterns(patternsString: string): string[] {
  * @param settings Настройки плагина
  * @returns Массив всех активных паттернов
  */
-export function getAllIgnorePatterns(settings: FsrsPluginSettings): string[] {
-    return [...DEFAULT_IGNORE_PATTERNS, ...settings.ignore_patterns];
+export function getAllIgnorePatterns(
+    settings: FsrsPluginSettings,
+    configDir: string,
+): string[] {
+    return [
+        `${configDir}/`,
+        ...DEFAULT_IGNORE_PATTERNS,
+        ...settings.ignore_patterns,
+    ];
 }

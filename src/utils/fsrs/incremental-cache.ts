@@ -55,7 +55,13 @@ export class IncrementalCache {
         this.cardCache.clear();
 
         for (const file of files) {
-            if (shouldIgnoreFileWithSettings(file.path, this.settings))
+            if (
+                shouldIgnoreFileWithSettings(
+                    file.path,
+                    this.settings,
+                    this.app.vault.configDir,
+                )
+            )
                 continue;
             try {
                 const content = await this.app.vault.read(file);
@@ -89,7 +95,13 @@ export class IncrementalCache {
      * Обновляет карточку в кэше по указанному пути файла
      */
     async updateCard(filePath: string): Promise<void> {
-        if (shouldIgnoreFileWithSettings(filePath, this.settings)) {
+        if (
+            shouldIgnoreFileWithSettings(
+                filePath,
+                this.settings,
+                this.app.vault.configDir,
+            )
+        ) {
             // Удаляем из кэша если файл игнорируется
             if (this.cardCache.has(filePath)) {
                 this.cardCache.delete(filePath);
