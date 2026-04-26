@@ -40,7 +40,7 @@ export function isVerboseLoggingEnabled(): boolean {
  */
 export function verboseLog(...args: unknown[]): void {
     if (isVerboseLoggingEnabled()) {
-        // eslint-disable-next-line no-console
+        // eslint-disable-next-line no-console -- log level is toggled in settings
         console.log(...args);
     }
 }

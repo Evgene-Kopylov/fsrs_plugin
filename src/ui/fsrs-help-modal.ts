@@ -112,7 +112,7 @@ export class FsrsHelpModal extends Modal {
             getLocalizedHelpText(),
             contentContainer,
             "",
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument -- MarkdownRenderer.render() требует any для component
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument -- MarkdownRenderer.render() requires any for component parameter
             null as any,
         );
     }

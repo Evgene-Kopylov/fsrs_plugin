@@ -29,7 +29,7 @@ export const DEFAULT_SETTINGS: FSRSSettings = {
 
 // Паттерны игнорирования файлов и папок по умолчанию
 export const DEFAULT_IGNORE_PATTERNS = [
-    // eslint-disable-next-line obsidianmd/hardcoded-config-path
+    // eslint-disable-next-line obsidianmd/hardcoded-config-path -- system folder path, no API for ignore patterns
     ".obsidian/",
     "templates/",
     "attachments/",

@@ -1,5 +1,5 @@
 // Парсеры для работы с YAML и FSRS данными
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument -- frontmatter structure unknown at compile time */
 
 import type {
     ModernFSRSCard,
