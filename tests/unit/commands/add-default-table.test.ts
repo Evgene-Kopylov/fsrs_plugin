@@ -86,4 +86,14 @@ tags: fsrs
         expect(lines[0]).toBe("```fsrs-table");
         expect(lines[lines.length - 1]).toBe("```");
     });
+
+    it("перед блоком ровно одна пустая строка", () => {
+        const result = addDefaultTableToContent("test");
+        // индекс первого вхождения блока
+        const idx = result.indexOf(DEFAULT_TABLE_BLOCK);
+        expect(idx).toBe(1); // \n (1 символ) перед блоком
+        expect(result[idx - 1]).toBe("\n");
+        // перед этим \n нет второго \n подряд
+        expect(result.startsWith("\n\n")).toBe(false);
+    });
 });
