@@ -99,14 +99,6 @@ impl ValidationResult {
     pub fn new(warnings: Vec<ParseWarning>) -> Self {
         Self { warnings }
     }
-
-    /// Создает пустой результат валидации
-    #[allow(unused)]
-    pub fn empty() -> Self {
-        Self {
-            warnings: Vec::new(),
-        }
-    }
 }
 
 /// Рекурсивно собирает все поля из выражения WHERE
@@ -331,8 +323,5 @@ mod tests {
         ];
         let result = ValidationResult::new(warnings.clone());
         assert_eq!(result.warnings.len(), 2);
-
-        let empty = ValidationResult::empty();
-        assert!(empty.warnings.is_empty());
     }
 }
