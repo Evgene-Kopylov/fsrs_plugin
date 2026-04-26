@@ -315,6 +315,12 @@
     justify-content: center;
 }
 
+/* Стили для состояния загрузки таблицы */
+.fsrs-table-loading {
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
 /* Стили для кнопок рейтинга */
 .fsrs-rating-button {
     flex: 1;
