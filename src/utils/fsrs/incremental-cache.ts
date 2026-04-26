@@ -48,6 +48,7 @@ export class IncrementalCache {
 
     /**
      * Выполняет полное сканирование хранилища и заполняет кэш
+     * Разбивает файлы на чанки с паузами между ними, чтобы не блокировать UI
      */
     private async performFullScan(): Promise<void> {
         const start = performance.now();
@@ -57,38 +58,47 @@ export class IncrementalCache {
         this.cardCache.clear();
         let brokenCount = 0;
 
-        for (const file of files) {
-            if (
-                shouldIgnoreFileWithSettings(
-                    file.path,
-                    this.settings,
-                    this.app.vault.configDir,
-                )
-            )
-                continue;
-            try {
-                const content = await this.app.vault.read(file);
-                const frontmatter = extractFrontmatter(content);
-                if (!frontmatter) continue;
-                const parseResult = parseModernFsrsFromFrontmatter(
-                    frontmatter,
-                    file.path,
-                );
-                if (parseResult.success && parseResult.card) {
-                    const state = computeCardState(
-                        parseResult.card,
+        const CHUNK_SIZE = 100;
+
+        for (let i = 0; i < files.length; i += CHUNK_SIZE) {
+            const chunk = files.slice(i, i + CHUNK_SIZE);
+
+            for (const file of chunk) {
+                if (
+                    shouldIgnoreFileWithSettings(
+                        file.path,
                         this.settings,
+                        this.app.vault.configDir,
+                    )
+                )
+                    continue;
+                try {
+                    const content = await this.app.vault.read(file);
+                    const frontmatter = extractFrontmatter(content);
+                    if (!frontmatter) continue;
+                    const parseResult = parseModernFsrsFromFrontmatter(
+                        frontmatter,
+                        file.path,
                     );
-                    this.cardCache.set(file.path, {
-                        card: parseResult.card,
-                        state,
-                    });
-                } else {
+                    if (parseResult.success && parseResult.card) {
+                        const state = computeCardState(
+                            parseResult.card,
+                            this.settings,
+                        );
+                        this.cardCache.set(file.path, {
+                            card: parseResult.card,
+                            state,
+                        });
+                    } else {
+                        brokenCount++;
+                    }
+                } catch (error) {
                     brokenCount++;
                 }
-            } catch (error) {
-                brokenCount++;
             }
+
+            // Отдаём управление браузеру для обновления UI
+            await new Promise((resolve) => setTimeout(resolve, 0));
         }
 
         verboseLog(`✅ Найдено карточек FSRS: ${this.cardCache.size}`);
