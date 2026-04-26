@@ -2,6 +2,9 @@
 name = "wasm-lib"
 version = "0.1.0"
 edition = "2024"
+description = "Библиотека FSRS для плагина Obsidian — расчёты, парсинг, фильтрация и сортировка карточек"
+repository = "https://gitlab.com/Evgene-Kopylov/FSRS-plugin"
+license = "LGPL-3.0"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
