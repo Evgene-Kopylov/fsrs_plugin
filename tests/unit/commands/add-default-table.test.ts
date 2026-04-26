@@ -17,7 +17,7 @@ describe("addDefaultTableToContent (чистая функция)", () => {
         expect(result).toBe(EXPECTED_PREFIX + "Простой контент");
     });
 
-    it("добавляет блок перед содержимым с frontmatter", () => {
+    it("добавляет блок после frontmatter", () => {
         const content = `---
 title: Тест
 tags: fsrs
@@ -25,7 +25,15 @@ tags: fsrs
 
 Основной текст заметки.`;
         const result = addDefaultTableToContent(content);
-        expect(result).toBe(EXPECTED_PREFIX + content);
+        // блок вставляется после закрывающего ---, а не в начало файла
+        const frontmatterEnd = content.indexOf("---", 3) + 3;
+        const expected =
+            content.slice(0, frontmatterEnd) +
+            "\n" +
+            DEFAULT_TABLE_BLOCK +
+            "\n" +
+            content.slice(frontmatterEnd);
+        expect(result).toBe(expected);
     });
 
     it("добавляет блок перед содержимым с ведущими пробелами", () => {
