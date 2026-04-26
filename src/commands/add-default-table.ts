@@ -2,6 +2,7 @@ import { App } from "obsidian";
 import type FsrsPlugin from "../main";
 import { showNotice } from "../utils/notice";
 import { verboseLog } from "../utils/logger";
+import { extractFrontmatterWithMatch } from "../utils/fsrs/fsrs-frontmatter";
 
 /**
  * Дефолтный блок fsrs-table
@@ -14,6 +15,14 @@ export const DEFAULT_TABLE_BLOCK =
  * Пустая строка перед блоком, пустая строка после блока.
  */
 export function addDefaultTableToContent(data: string): string {
+    const frontmatterMatch = extractFrontmatterWithMatch(data);
+    if (frontmatterMatch) {
+        const afterFmIndex =
+            frontmatterMatch.match.index + frontmatterMatch.match[0].length;
+        const before = data.slice(0, afterFmIndex) + "\n";
+        const after = data.slice(afterFmIndex);
+        return before + "\n" + DEFAULT_TABLE_BLOCK + "\n" + after;
+    }
     return "\n" + DEFAULT_TABLE_BLOCK + "\n" + data;
 }
 

@@ -29,7 +29,7 @@ tags: fsrs
         const frontmatterEnd = content.indexOf("---", 3) + 3;
         const expected =
             content.slice(0, frontmatterEnd) +
-            "\n" +
+            "\n\n" +
             DEFAULT_TABLE_BLOCK +
             "\n" +
             content.slice(frontmatterEnd);
@@ -114,5 +114,29 @@ tags: fsrs
         expect(result[idxAfterBlock]).toBe("\n");
         // после разделителя сразу начинается контент
         expect(result.slice(idxAfterBlock + 1)).toBe(content);
+    });
+
+    it("при вставке после frontmatter есть пустые строки перед и после блока", () => {
+        const content = `---
+title: Тест
+tags: fsrs
+---
+
+Основной текст заметки.`;
+        const result = addDefaultTableToContent(content);
+
+        const blockIdx = result.indexOf(DEFAULT_TABLE_BLOCK);
+        expect(blockIdx).toBeGreaterThan(0);
+
+        // перед блоком есть пустая строка
+        expect(result[blockIdx - 1]).toBe("\n");
+
+        // после блока есть пустая строка
+        const afterBlockIdx = blockIdx + DEFAULT_TABLE_BLOCK.length;
+        expect(result[afterBlockIdx]).toBe("\n");
+
+        // блок стоит после закрывающего ---
+        const fmEnd = content.indexOf("---", 3) + 3;
+        expect(result.slice(0, fmEnd)).toBe(content.slice(0, fmEnd));
     });
 });
