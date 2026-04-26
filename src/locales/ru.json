@@ -70,7 +70,8 @@
         "delete_last_review": "Удалить последнее повторение карточки",
         "show_fsrs_help": "Показать справку по синтаксису fsrs-table",
         "show_review_history": "Показать историю повторений",
-        "insert_review_button": "Вставить блок кнопки повторения"
+        "insert_review_button": "Вставить блок кнопки повторения",
+        "insert_default_table": "Вставить таблицу fsrs-table по умолчанию"
     },
     "statusBar": {
         "loading": "загрузка...",

@@ -46,7 +46,8 @@
         "delete_last_review": "Delete last review",
         "show_fsrs_help": "Show fsrs-table syntax help",
         "show_review_history": "Show review history",
-        "insert_review_button": "Insert review button block"
+        "insert_review_button": "Insert review button block",
+        "insert_default_table": "Insert default fsrs-table"
     },
     "statusBar": {
         "loading": "loading...",

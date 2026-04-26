@@ -8,6 +8,7 @@ import { i18n } from "../utils/i18n";
 import { FsrsHelpModal } from "../ui/fsrs-help-modal";
 import { showReviewHistoryForCurrentFile } from "../ui/review-history-modal";
 import { insertReviewButton } from "./add-review-button";
+import { insertDefaultTable } from "./add-default-table";
 
 /**
  * Обновляет имена команд при смене языка без перезагрузки плагина
@@ -21,6 +22,7 @@ export function updateCommandNames(app: App): void {
         { id: "show-help", key: "commands.show_fsrs_help" },
         { id: "show-review-history", key: "commands.show_review_history" },
         { id: "insert-review-button", key: "commands.insert_review_button" },
+        { id: "insert-default-table", key: "commands.insert_default_table" },
     ];
 
     const commandMap = (app as unknown as CommandsAccess).commands;
@@ -102,6 +104,15 @@ export function registerCommands(plugin: FsrsPlugin): void {
         name: i18n.t("commands.insert_review_button"),
         callback: async () => {
             await insertReviewButton(plugin.app, plugin);
+        },
+    });
+
+    // Команда для вставки дефолтного fsrs-table
+    plugin.addCommand({
+        id: "insert-default-table",
+        name: i18n.t("commands.insert_default_table"),
+        callback: async () => {
+            await insertDefaultTable(plugin.app, plugin);
         },
     });
 }
