@@ -2,16 +2,6 @@
 
 use crate::types::{FsrsParameters, ModernFsrsCard};
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-
-/// Результат парсинга с информацией об ошибке
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[allow(unused)]
-pub struct ParseResult<T> {
-    pub had_error: bool,
-    pub value: T,
-    pub error_message: Option<String>,
-}
 
 /// Парсит карточку из JSON строки
 pub fn parse_card_from_json(card_json: &str) -> ModernFsrsCard {
@@ -34,12 +24,6 @@ pub fn parse_parameters_from_json(parameters_json: &str) -> FsrsParameters {
             enable_fuzz: true,
         }
     })
-}
-
-/// Парсит дату из строки ISO 8601
-#[allow(dead_code)]
-pub fn parse_datetime_from_iso(iso_str: &str) -> DateTime<Utc> {
-    parse_datetime_flexible(iso_str).unwrap_or_else(Utc::now)
 }
 
 /// Гибкий парсер дат, поддерживающий различные форматы ISO 8601
@@ -108,48 +92,9 @@ pub fn create_default_card() -> ModernFsrsCard {
     }
 }
 
-/// Создает дефолтные параметры
-pub fn create_default_parameters() -> FsrsParameters {
-    FsrsParameters {
-        request_retention: 0.9,
-        maximum_interval: 36500.0,
-        enable_fuzz: true,
-    }
-}
 
-/// Парсит карточку с информацией об ошибке
-#[allow(unused)]
-pub fn parse_card_with_error_info(card_json: &str) -> ParseResult<ModernFsrsCard> {
-    match serde_json::from_str::<ModernFsrsCard>(card_json) {
-        Ok(card) => ParseResult {
-            had_error: false,
-            value: card,
-            error_message: None,
-        },
-        Err(e) => ParseResult {
-            had_error: true,
-            value: create_default_card(),
-            error_message: Some(e.to_string()),
-        },
-    }
-}
 
-/// Парсит параметры с информацией об ошибке
-#[allow(unused)]
-pub fn parse_parameters_with_error_info(parameters_json: &str) -> ParseResult<FsrsParameters> {
-    match serde_json::from_str::<FsrsParameters>(parameters_json) {
-        Ok(params) => ParseResult {
-            had_error: false,
-            value: params,
-            error_message: None,
-        },
-        Err(e) => ParseResult {
-            had_error: true,
-            value: create_default_parameters(),
-            error_message: Some(e.to_string()),
-        },
-    }
-}
+
 
 /// Получает YAML строку для новой карточки
 pub fn get_fsrs_yaml() -> String {
@@ -168,7 +113,7 @@ pub fn get_current_time() -> String {
 mod tests {
     use super::*;
     use crate::types::{FsrsParameters, ModernFsrsCard, ReviewSession};
-    use chrono::{DateTime, Datelike, TimeZone, Timelike, Utc};
+    use chrono::{DateTime, Datelike, Timelike, Utc};
 
     #[test]
     fn test_parse_card_from_json_valid() {
@@ -229,28 +174,6 @@ mod tests {
         assert_eq!(params.request_retention, 0.9);
         assert_eq!(params.maximum_interval, 36500.0);
         assert_eq!(params.enable_fuzz, true);
-    }
-
-    #[test]
-    fn test_parse_datetime_from_iso_valid() {
-        let iso_str = "2025-01-01T10:30:45Z";
-        let dt = parse_datetime_from_iso(iso_str);
-
-        let expected = Utc.with_ymd_and_hms(2025, 1, 1, 10, 30, 45).unwrap();
-        assert_eq!(dt, expected);
-    }
-
-    #[test]
-    fn test_parse_datetime_from_iso_invalid() {
-        // Невалидная дата должна вернуть текущее время
-        let iso_str = "invalid date";
-        let dt = parse_datetime_from_iso(iso_str);
-
-        // Проверяем, что это валидная дата (не паника)
-        let now = Utc::now();
-        // Разница должна быть небольшой (несколько секунд)
-        let diff = (dt - now).num_seconds().abs();
-        assert!(diff < 10);
     }
 
     #[test]
@@ -363,49 +286,6 @@ mod tests {
         let card = create_default_card();
         assert!(card.reviews.is_empty());
         assert!(card.file_path.is_none());
-    }
-
-    #[test]
-    fn test_create_default_parameters() {
-        let params = create_default_parameters();
-        assert_eq!(params.request_retention, 0.9);
-        assert_eq!(params.maximum_interval, 36500.0);
-        assert_eq!(params.enable_fuzz, true);
-    }
-
-    #[test]
-    fn test_parse_card_with_error_info_valid() {
-        let json = r#"{"reviews": []}"#;
-        let result = parse_card_with_error_info(json);
-
-        assert!(!result.had_error);
-        assert!(result.value.reviews.is_empty());
-    }
-
-    #[test]
-    fn test_parse_card_with_error_info_invalid() {
-        let json = r#"{invalid}"#;
-        let result = parse_card_with_error_info(json);
-
-        assert!(result.had_error);
-        // Должна вернуться дефолтная карточка
-        assert!(result.value.reviews.is_empty());
-    }
-
-    #[test]
-    fn test_parse_parameters_with_error_info() {
-        // Тест валидных параметров
-        let valid_json =
-            r#"{"request_retention": 0.8, "maximum_interval": 500.0, "enable_fuzz": true}"#;
-        let valid_result = parse_parameters_with_error_info(valid_json);
-        assert!(!valid_result.had_error);
-        assert_eq!(valid_result.value.request_retention, 0.8);
-
-        // Тест невалидных параметров
-        let invalid_json = r#"{bad}"#;
-        let invalid_result = parse_parameters_with_error_info(invalid_json);
-        assert!(invalid_result.had_error);
-        assert_eq!(invalid_result.value.request_retention, 0.9); // дефолтное значение
     }
 
     #[test]
