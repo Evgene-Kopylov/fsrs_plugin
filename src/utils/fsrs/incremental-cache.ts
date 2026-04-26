@@ -72,7 +72,7 @@ export class IncrementalCache {
                     file.path,
                 );
                 if (parseResult.success && parseResult.card) {
-                    const state = await computeCardState(
+                    const state = computeCardState(
                         parseResult.card,
                         this.settings,
                     );
@@ -129,10 +129,7 @@ export class IncrementalCache {
                 filePath,
             );
             if (parseResult.success && parseResult.card) {
-                const state = await computeCardState(
-                    parseResult.card,
-                    this.settings,
-                );
+                const state = computeCardState(parseResult.card, this.settings);
                 this.cardCache.set(filePath, { card: parseResult.card, state });
                 this.onCacheUpdated();
             } else {

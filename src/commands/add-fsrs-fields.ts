@@ -24,7 +24,7 @@ export async function addFsrsFieldsToCurrentFile(
         }
 
         console.debug("Получение YAML полей FSRS в новом формате...");
-        const fsrsYaml = await getNewCardYaml();
+        const fsrsYaml = getNewCardYaml();
         console.debug("FSRS YAML поля (новый формат):", fsrsYaml);
 
         // Проверяем условия ДО process, чтобы показать уведомления

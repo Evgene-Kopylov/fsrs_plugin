@@ -153,7 +153,7 @@ export class StatusBarManager extends Component {
             }
 
             const card = parseResult.card;
-            const isDue = await isCardDue(card, this.settings);
+            const isDue = isCardDue(card, this.settings);
             const icon = this.settings.status_bar_icon || "🔄";
             if (this.iconSpan) this.iconSpan.textContent = icon;
             if (this.iconSpan)
@@ -165,7 +165,7 @@ export class StatusBarManager extends Component {
                 this.statusBarItem.title = i18n.t("statusBar.tooltip.due");
                 console.debug("Status bar: card is ready for review");
             } else {
-                const state = await computeCardState(card, this.settings);
+                const state = computeCardState(card, this.settings);
                 console.debug(
                     "Status bar: card already reviewed, next review:",
                     state.due,

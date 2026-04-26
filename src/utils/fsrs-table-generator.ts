@@ -186,7 +186,7 @@ export async function generateTableDOMFromCards(
     const { filterAndSortCardsWithStates } =
         await import("./fsrs-table-filter");
 
-    const { cards, totalCount } = await filterAndSortCardsWithStates(
+    const { cards, totalCount } = filterAndSortCardsWithStates(
         cachedCards,
         settings,
         params,
@@ -226,7 +226,7 @@ export async function generateTableDOMFromSql(
 
     const { filterAndSortCards } = await import("./fsrs-table-filter");
 
-    const { cards: cardsWithState, totalCount } = await filterAndSortCards(
+    const { cards: cardsWithState, totalCount } = filterAndSortCards(
         cards,
         settings,
         params,

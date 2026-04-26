@@ -71,7 +71,7 @@ export default class FsrsPlugin extends Plugin {
         // Регистрация процессора для кнопки повторения карточки
         this.registerMarkdownCodeBlockProcessor(
             "fsrs-review-button",
-            async (_source, el, ctx) => {
+            (_source, el, ctx) => {
                 // Создаем контейнер для кнопки
                 const buttonContainer = document.createElement("div");
                 buttonContainer.className = "fsrs-review-button-container";
@@ -90,7 +90,7 @@ export default class FsrsPlugin extends Plugin {
         // Регистрация MarkdownCodeBlockProcessor для блоков fsrs-table
         this.registerMarkdownCodeBlockProcessor(
             "fsrs-table",
-            async (source, el, ctx) => {
+            (source, el, ctx) => {
                 // Создаем контейнер для рендеринга
                 const renderContainer = document.createElement("div");
                 renderContainer.className = "fsrs-table-render-container";
