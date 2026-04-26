@@ -1,5 +1,4 @@
 // Парсеры для работы с YAML и FSRS данными
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument -- frontmatter structure unknown at compile time */
 
 import type {
     ModernFSRSCard,
@@ -34,8 +33,18 @@ export function parseModernFsrsFromFrontmatter(
             };
         }
 
+        // Тип данных, возвращаемых WASM
+        interface WasmCardData {
+            reviews: Array<{
+                date: string;
+                rating: string;
+                stability: number;
+                difficulty: number;
+            }>;
+        }
+
         // Парсим JSON результат из WASM
-        const parsedCard = JSON.parse(cardJson);
+        const parsedCard = JSON.parse(cardJson) as WasmCardData;
 
         if (
             !parsedCard ||

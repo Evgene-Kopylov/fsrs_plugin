@@ -216,11 +216,10 @@ export default class FsrsPlugin extends Plugin {
      * Загружает настройки плагина
      */
     async loadSettings() {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- loadData() returns unknown; Obsidian pattern
         this.settings = Object.assign(
             {},
             DEFAULT_SETTINGS,
-            await this.loadData(),
+            (await this.loadData()) as Partial<FsrsPluginSettings>,
         );
         const lang =
             this.settings.language === "system"
