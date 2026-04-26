@@ -18,7 +18,8 @@ npx eslint src/ --fix
 
 ```bash
 npm version patch \
-&& git push --tags
+&& git push --tags \
+&& git push
 ```
 
 - patch  1.0.0 → 1.0.1
