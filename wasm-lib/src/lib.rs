@@ -161,12 +161,10 @@ pub fn extract_fsrs_from_frontmatter_wrapped(frontmatter: String) -> String {
     use crate::json_parsing::card_to_json;
     use crate::yaml_parsing::extract_fsrs_from_frontmatter;
 
-    let result = match extract_fsrs_from_frontmatter(&frontmatter) {
+    match extract_fsrs_from_frontmatter(&frontmatter) {
         Some(card) => card_to_json(&card),
         None => "null".to_string(),
-    };
-
-    result
+    }
 }
 
 // Создает frontmatter с FSRS карточкой
