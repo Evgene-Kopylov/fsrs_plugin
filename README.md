@@ -50,7 +50,7 @@ Search for "FSRS"
 
 1. **Create a card** – open a note → run the command `Add FSRS fields to file header` (Ctrl/Cmd+P).
 2. **Add a review button** – insert a ` ```fsrs-review-button``` ` block in your note (or enable auto-adding in settings).
-3. **Insert a table** – in another note, create a ` ```fsrs-table ...``` ` block.
+3. **Insert a table** – use the command `Insert default fsrs-table` (Ctrl/Cmd+P), or create a ` ```fsrs-table ...``` ` block manually.
 4. **Start reviewing** – open the table, hover over a file name, and click a rating.
 
 A detailed step-by-step guide with screenshots: [**Usage Guide**](docs/intended_use.md)
@@ -163,6 +163,7 @@ reviews:
 - **FSRS: Review current card**
 - **FSRS: Remove last card review**
 - **FSRS: Show review history**
+- **FSRS: Insert default fsrs-table**
 - **FSRS: Show fsrs-table syntax help**
 
 ### Via the Status Bar

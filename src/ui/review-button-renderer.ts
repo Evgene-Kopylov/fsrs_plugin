@@ -76,7 +76,6 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
      */
     onunload(): void {
         this.cleanup();
-        this.removeFileWatcher();
     }
 
     /**
@@ -342,14 +341,9 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
                 void this.refresh();
             }
         };
-        this.plugin.app.vault.on("modify", this.fileChangeHandler);
-    }
-
-    private removeFileWatcher(): void {
-        if (this.fileChangeHandler) {
-            this.plugin.app.vault.off("modify", this.fileChangeHandler);
-            this.fileChangeHandler = undefined;
-        }
+        this.registerEvent(
+            this.plugin.app.vault.on("modify", this.fileChangeHandler),
+        );
     }
 
     /**
