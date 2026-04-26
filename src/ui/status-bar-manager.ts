@@ -148,7 +148,7 @@ export class StatusBarManager extends Component {
                 this.statusBarItem.title = i18n.t("statusBar.tooltip.not_fsrs");
                 if (this.iconSpan)
                     this.iconSpan.classList.add("fsrs-status-bar-icon-dimmed");
-                console.debug("Status bar: file is not an FSRS card");
+
                 return;
             }
 
