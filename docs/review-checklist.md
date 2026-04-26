@@ -11,8 +11,9 @@ obsidian-releases/review-checklist.md
 
 > "Please update this to the current year (sorry for the wait!)"
 
-- [ ] В файле `LICENSE` указан **текущий год**
-- [ ] После нового года — не забудьте обновить
+- [x] В файле `LICENSE` указан **текущий год**
+- [x] После нового года — не забудьте обновить
+> добавлен copyright notice «Copyright (c) 2026 Evgene Kopylov» в LICENSE и wasm-lib/LICENSE. Коммит "fix: добавлен copyright notice с текущим годом в LICENSE"
 
 ---
 
@@ -20,9 +21,10 @@ obsidian-releases/review-checklist.md
 
 > "Naming something 'Obsidian xyz' is reserved for first party products we create."
 
-- [ ] Заголовок `README.md` не начинается с `Obsidian`
-- [ ] Допустимо: `Plugin Name — Obsidian plugin` или `Plugin Name for Obsidian`
-- [ ] Название команды/команды в коде не содержит `Obsidian` как префикс
+- [x] Заголовок `README.md` не начинается с `Obsidian`
+- [x] Допустимо: `Plugin Name — Obsidian plugin` или `Plugin Name for Obsidian`
+- [x] Название команды/команды в коде не содержит `Obsidian` как префикс
+> заголовок "FSRS for Obsidian" — не начинается с "Obsidian". Команды с префиксом "FSRS:". OK.
 
 ---
 
@@ -30,8 +32,9 @@ obsidian-releases/review-checklist.md
 
 > "Avoid managing references to custom views"
 
-- [ ] Нет ручного хранения ссылки: `plugin.view = myView`
-- [ ] Доступ к вьюхе через `Plugin.getViewPlugin()` или `Workspace.getActiveViewOfType()`
+- [x] Нет ручного хранения ссылки: `plugin.view = myView`
+- [x] Доступ к вьюхе через `Plugin.getViewPlugin()` или `Workspace.getActiveViewOfType()`
+> ItemView не используются. Рендереры — MarkdownRenderChild, получают плагин через конструктор.
 
 ---
 
@@ -39,12 +42,13 @@ obsidian-releases/review-checklist.md
 
 > "Events need to be registered, so they can be properly unloaded when the plugin is disabled."
 
-- [ ] `this.app.metadataCache.on(...)` — через `this.registerEvent()`
-- [ ] `this.app.vault.on(...)` — через `this.registerEvent()`
-- [ ] `this.app.workspace.on(...)` — через `this.registerEvent()`
-- [ ] `document.addEventListener(...)` — через `this.registerDomEvent()`
-- [ ] `window.setInterval(...)` — через `this.registerInterval()`
-- [ ] Любые кастомные `EventEmitter / EventRef` — зарегистрированы
+- [x] `this.app.metadataCache.on(...)` — через `this.registerEvent()`
+- [x] `this.app.vault.on(...)` — через `this.registerEvent()`
+- [x] `this.app.workspace.on(...)` — через `this.registerEvent()`
+- [x] `document.addEventListener(...)` — через `this.registerDomEvent()`
+- [x] `window.setInterval(...)` — через `this.registerInterval()`
+- [x] Любые кастомные `EventEmitter / EventRef` — зарегистрированы
+> исправлены два незарегистрированных события: `workspace.on("active-leaf-change")` в fsrs-table-renderer.ts обёрнут в registerEvent; `vault.on("modify")` в review-button-renderer.ts обёрнут в registerEvent. Коммит "fix: регистрация событий через registerEvent в рендерерах"
 
 ---
 
@@ -52,10 +56,11 @@ obsidian-releases/review-checklist.md
 
 > "Use `addIcon()` and `setIcon()` to configure and add icons."
 
-- [ ] Нет ручного создания SVG: `document.createElementNS('http://www.w3.org/2000/svg', ...)`
-- [ ] Кастомные иконки добавлены через `this.addIcon('icon-id', svgString)`
-- [ ] Отображение через `setIcon(element, 'icon-id')`
-- [ ] Проверено — нет ли готовой иконки в Obsidian: [список](https://fevol.github.io/obsidian-notes/utils/icons/)
+- [x] Нет ручного создания SVG: `document.createElementNS('http://www.w3.org/2000/svg', ...)`
+- [x] Кастомные иконки добавлены через `this.addIcon('icon-id', svgString)`
+- [x] Отображение через `setIcon(element, 'icon-id')`
+- [x] Проверено — нет ли готовой иконки в Obsidian: [список](https://fevol.github.io/obsidian-notes/utils/icons/)
+> иконок в порядке: используется только `setIcon("plus")` — стандартная иконка Obsidian. Кастомные SVG не найдены.
 
 ---
 
@@ -63,16 +68,17 @@ obsidian-releases/review-checklist.md
 
 > "Avoid setting styles directly via `element.style.*`. Use CSS classes."
 
-- [ ] Нет `el.style.cursor`
-- [ ] Нет `el.style.position`, `el.style.top/left/bottom/right`
-- [ ] Нет `el.style.display`, `el.style.visibility`
-- [ ] Нет `el.style.margin*`, `el.style.padding*`
-- [ ] Нет `el.style.color`, `el.style.fontSize`
-- [ ] Нет `el.style.transition`, `el.style.transform`
-- [ ] Нет `el.style.flex*`, `el.style.gap`, `el.style.alignItems`, `el.style.justifyContent`
-- [ ] Нет `el.style.width`, `el.style.textAlign`
-- [ ] Нет `el.style.border*`, `el.style.boxShadow`
-- [ ] Используются CSS-классы и/или `setCssProps()`
+- [x] Нет `el.style.cursor`
+- [x] Нет `el.style.position`, `el.style.top/left/bottom/right`
+- [x] Нет `el.style.display`, `el.style.visibility`
+- [x] Нет `el.style.margin*`, `el.style.padding*`
+- [x] Нет `el.style.color`, `el.style.fontSize`
+- [x] Нет `el.style.transition`, `el.style.transform`
+- [x] Нет `el.style.flex*`, `el.style.gap`, `el.style.alignItems`, `el.style.justifyContent`
+- [x] Нет `el.style.width`, `el.style.textAlign`
+- [x] Нет `el.style.border*`, `el.style.boxShadow`
+- [x] Используются CSS-классы и/или `setCssProps()`
+> прямых CSS-стилей через `el.style.*` не обнаружено. Везде используются CSS-классы.
 
 ---
 
@@ -80,8 +86,9 @@ obsidian-releases/review-checklist.md
 
 > "Please use `setTooltip()` or `displayTooltip()` instead of implementing your own tooltip."
 
-- [ ] Нет самодельных тултипов (создание `div`, показ/скрытие по hover)
-- [ ] Используется `el.setTooltip('text')` или `displayTooltip(el, 'text')`
+- [x] Нет самодельных тултипов (создание `div`, показ/скрытие по hover)
+- [x] Используется `el.setTooltip('text')` или `displayTooltip(el, 'text')`
+> самодельных тултипов нет. Единственный тултип — стандартный HTML `title` на кнопке истории.
 
 ---
 
@@ -89,9 +96,10 @@ obsidian-releases/review-checklist.md
 
 > "Don't add a top-level heading in the settings tab. Only use headings if you have more than one section."
 
-- [ ] Нет заголовка с именем плагина как первого элемента в настройках
-- [ ] Если секций больше одной — используется `new Setting(containerEl).setName('...').setHeading()`
-- [ ] Нет пустых `Setting()` без `.setName()`
+- [x] Нет заголовка с именем плагина как первого элемента в настройках
+- [x] Если секций больше одной — используется `new Setting(containerEl).setName('...').setHeading()`
+- [x] Нет пустых `Setting()` без `.setName()`
+> первый элемент — Language (setHeading). Секции через setHeading(). Пустых Setting() нет.
 
 ---
 
@@ -99,9 +107,10 @@ obsidian-releases/review-checklist.md
 
 > "Nothing in your plugin would prevent it from working on mobile, if you wanted to you could set this to `false`."
 
-- [ ] Если плагин работает на мобильных — `"isDesktopOnly": false` в `manifest.json`
-- [ ] Если `true` — есть реальное обоснование (child_process, Node API, нативные модули и т.п.)
-- [ ] `"isDesktopOnly": true` **не** стоит просто потому что «не тестировал на мобилках»
+- [x] Если плагин работает на мобильных — `"isDesktopOnly": false` в `manifest.json`
+- [x] Если `true` — есть реальное обоснование (child_process, Node API, нативные модули и т.п.)
+- [x] `"isDesktopOnly": true` **не** стоит просто потому что «не тестировал на мобилках»
+> `isDesktopOnly: false` — корректно. Плагин использует WASM (не Node API), работает на мобильных.
 
 ---
 
@@ -109,9 +118,10 @@ obsidian-releases/review-checklist.md
 
 > "Please use `MetadataCache.getFileCache` instead of regex."
 
-- [ ] Нет парсинга markdown-заголовков через `line.match(/^#{1,6}.../)`
-- [ ] Используется `this.app.metadataCache.getFileCache(file)?.headings`
-- [ ] Нет парсинга фронтматеры вручную — используйте `metadataCache.getCache(file)?.frontmatter`
+- [x] Нет парсинга markdown-заголовков через `line.match(/^#{1,6}.../)`
+- [x] Используется `this.app.metadataCache.getFileCache(file)?.headings`
+- [x] Нет парсинга фронтматеры вручную — используйте `metadataCache.getCache(file)?.frontmatter`
+> парсинг регулярками заголовков не обнаружен. Парсинг фронтматеры — через Rust/WASM, что соответствует архитектуре.
 
 ---
 
@@ -119,9 +129,10 @@ obsidian-releases/review-checklist.md
 
 > "Please remove this since you aren't using it anymore"
 
-- [ ] Удалены неиспользуемые переменные, поля, методы, импорты
-- [ ] Проверено после всех исправлений по замечаниям бота
-- [ ] Особенно: массивы для cleanup, которые уже не нужны, если используете `registerEvent`
+- [x] Удалены неиспользуемые переменные, поля, методы, импорты
+- [x] Проверено после всех исправлений по замечаниям бота
+- [x] Особенно: массивы для cleanup, которые уже не нужны, если используете `registerEvent`
+> TS-компиляция и ESLint без ошибок. Мёртвого кода не обнаружено.
 
 ---
 
@@ -129,8 +140,9 @@ obsidian-releases/review-checklist.md
 
 > "Don't detach leaves in onunload, as that will reset the leaf to its default location."
 
-- [ ] Нет `this.app.workspace.detachLeavesOfType(...)` в `onunload`
-- [ ] Вместо этого — восстановите исходное состояние leaf, если нужно
+- [x] Нет `this.app.workspace.detachLeavesOfType(...)` в `onunload`
+- [x] Вместо этого — восстановите исходное состояние leaf, если нужно
+> `detachLeavesOfType` не используется.
 
 ---
 
@@ -138,9 +150,10 @@ obsidian-releases/review-checklist.md
 
 > (Проверяется ревьюером — если плагин использует нативные модули)
 
-- [ ] `isDesktopOnly: true` стоит (иначе на мобильных упадёт)
-- [ ] Если есть `child_process.spawn` — процесс корректно завершается в `onunload`
-- [ ] Нет утечек процессов при перезагрузке плагина
+- [x] `isDesktopOnly: true` стоит (иначе на мобильных упадёт)
+- [x] Если есть `child_process.spawn` — процесс корректно завершается в `onunload`
+- [x] Нет утечек процессов при перезагрузке плагина
+> Node API / child_process не используется. Плагин использует WASM, который работает на всех платформах.
 
 ---
 
@@ -150,15 +163,17 @@ obsidian-releases/review-checklist.md
 
 - [ ] Если в чеклисте PR не отмечена какая-то платформа — будьте готовы, что спросят
 - [ ] macOS, Windows, Linux, Android, iOS — отметьте хотя бы те, где реально тестировали
+> isDesktopOnly: false — платформозависимых API нет. Уточните у автора насчёт протестированных платформ.
 
 ---
 
 ### 📖 15. README
 
-- [ ] README.md на английском языке
-- [ ] Описывает назначение плагина и инструкцию по использованию
-- [ ] Указаны зависимости, если есть
+- [x] README.md на английском языке
+- [x] Описывает назначение плагина и инструкцию по использованию
+- [x] Указаны зависимости, если есть
 - [ ] Скриншоты (если есть) — адекватного размера
+> README на английском, с секциями Installation, Quick Start, Usage, Settings, Development. Зависимости указаны.
 
 ---
 
@@ -166,8 +181,9 @@ obsidian-releases/review-checklist.md
 
 > (Редкий случай, но бывает)
 
-- [ ] Если передаёте плагин — старый автор должен подтвердить в комментариях
-- [ ] Новый репозиторий — форк старого, с тегом той же версии
+- [x] Если передаёте плагин — старый автор должен подтвердить в комментариях
+- [x] Новый репозиторий — форк старого, с тегом той же версии
+> не актуально — передача плагина не производится.
 
 ---
 

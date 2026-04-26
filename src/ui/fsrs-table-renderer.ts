@@ -54,9 +54,11 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 );
             });
         };
-        this.plugin.app.workspace.on(
-            "active-leaf-change",
-            this.activeLeafCallback,
+        this.registerEvent(
+            this.plugin.app.workspace.on(
+                "active-leaf-change",
+                this.activeLeafCallback,
+            ),
         );
 
         void (async () => {
@@ -69,15 +71,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
      * Вызывается при выгрузке компонента
      */
     onunload() {
-        // Удаляем обработчик активного листа
-        if (this.activeLeafCallback) {
-            this.plugin.app.workspace.off(
-                "active-leaf-change",
-                this.activeLeafCallback,
-            );
-            this.activeLeafCallback = undefined;
-        }
-
         // Удаляем рендерер из списка активных
         this.plugin.unregisterFsrsTableRenderer(this);
         super.onunload();
