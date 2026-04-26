@@ -39,7 +39,8 @@ npm version patch && git push --tags && git push
 ### New barnch
 
 ```bash
-branch_name="dev/$(date +%d-%b_%H%M)" \
+git fetch origin main:main && git switch main \
+&& branch_name="dev/$(date +%d-%b_%H%M)" \
 && git checkout -b "$branch_name" \
 && git push -u origin "$branch_name"
 ```
