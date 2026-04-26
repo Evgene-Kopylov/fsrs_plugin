@@ -1,6 +1,6 @@
 import { MarkdownRenderChild } from "obsidian";
 import type FsrsPlugin from "../main";
-import type { CachedCard, ModernFSRSCard } from "../interfaces/fsrs";
+import type { ModernFSRSCard } from "../interfaces/fsrs";
 import type { TableParams, CardWithState } from "../utils/fsrs-table-helpers";
 import {
     generateTableDOM,
@@ -14,13 +14,22 @@ import { verboseLog } from "../utils/logger";
  * Класс для динамического рендеринга блока fsrs-table
  * Отображает все карточки
  */
+
+interface RendererCacheEntry {
+    cardsWithState: CardWithState[];
+    totalCount: number;
+    params: TableParams | null;
+    sourceText: string;
+}
+
 export class FsrsTableRenderer extends MarkdownRenderChild {
+    private static rendererCache = new Map<string, RendererCacheEntry>();
+
     private params: TableParams | null = null;
     private isFirstLoad = true;
     private activeLeafCallback?: () => void;
     private lastVisibilityUpdate = 0;
     private lastAction: "sort" | "refresh" | null = null;
-    private cachedCards: CachedCard[] | null = null;
     private cachedCardsWithState: CardWithState[] | null = null;
     private cachedTotalCount: number = 0;
     private originalCardsWithState: CardWithState[] | null = null;
@@ -99,11 +108,20 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 this.container.classList.add("fsrs-table-loading");
             }
 
-            // Получаем все карточки через плагин, при сортировке используем кеш
-            const allCards =
-                this.lastAction === "sort" && this.cachedCards
-                    ? this.cachedCards
-                    : await this.plugin.getCachedCardsWithState();
+            // Используем кэш (сначала экземпляра, потом статический), чтобы не загружать 20000 карточек
+            if (!this.cachedCardsWithState) {
+                const cached = FsrsTableRenderer.rendererCache.get(
+                    this.sourcePath,
+                );
+                if (cached && cached.sourceText === this.sourceText) {
+                    this.cachedCardsWithState = cached.cardsWithState;
+                    this.cachedTotalCount = cached.totalCount;
+                    this.params = cached.params;
+                }
+            }
+            const allCards = this.cachedCardsWithState
+                ? this.cachedCardsWithState
+                : ((await this.plugin.getCachedCardsWithState()) as CardWithState[]);
             const now = new Date();
 
             // Отладочный вывод для отслеживания параметров
@@ -169,18 +187,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 }
             }
 
-            // Если задано WHERE, кэшируем только карточки, прошедшие фильтр
-            if (this.params?.where && this.cachedCardsWithState) {
-                const filteredPaths = new Set(
-                    this.cachedCardsWithState.map((c) => c.card.filePath),
-                );
-                this.cachedCards = allCards.filter((c) =>
-                    filteredPaths.has(c.card.filePath),
-                );
-            } else {
-                this.cachedCards = allCards;
-            }
-
             // Сохраняем позицию прокрутки перед обновлением
             const scrollContainer = this.container.querySelector(
                 ".fsrs-table-container",
@@ -209,6 +215,16 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 
             // Обновляем время последнего обновления
             this.lastVisibilityUpdate = Date.now();
+
+            // Сохраняем результат в статический кэш для быстрого возвращения на заметку
+            if (this.cachedCardsWithState) {
+                FsrsTableRenderer.rendererCache.set(this.sourcePath, {
+                    cardsWithState: this.cachedCardsWithState,
+                    totalCount: this.cachedTotalCount,
+                    params: this.params,
+                    sourceText: this.sourceText,
+                });
+            }
         } catch (error) {
             this.renderErrorState(error);
         } finally {
@@ -296,15 +312,21 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
      * Обновляет содержимое блока с поддержкой анимации
      * Может быть вызвано извне для принудительного обновления
      */
-    async refresh() {
+    /**
+     * Обновляет содержимое блока с поддержкой анимации
+     * @param forceRefresh - если true, сбрасывает кэш и загружает все карточки заново
+     */
+    async refresh(forceRefresh: boolean = false) {
         if (this.lastAction !== "sort") {
             this.lastAction = "refresh";
         }
-        // Сбрасываем кэш при полном обновлении
-        this.cachedCards = null;
-        this.cachedCardsWithState = null;
-        this.cachedTotalCount = 0;
-        this.originalCardsWithState = null;
+        if (forceRefresh) {
+            // Сбрасываем кэш при полном обновлении (например, после ревью)
+            this.cachedCardsWithState = null;
+            this.cachedTotalCount = 0;
+            this.originalCardsWithState = null;
+            FsrsTableRenderer.rendererCache.delete(this.sourcePath);
+        }
         await this.renderContent();
         this.lastAction = null;
     }
