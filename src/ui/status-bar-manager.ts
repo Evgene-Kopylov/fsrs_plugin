@@ -107,7 +107,7 @@ export class StatusBarManager extends Component {
         if (!this.statusBarItem) return;
 
         const file = this.app.workspace.getActiveFile();
-        console.debug("Updating status bar for file:", file?.path || "no file");
+
         if (!file) {
             const icon = this.settings.status_bar_icon || "🔄";
             if (this.iconSpan) this.iconSpan.textContent = icon;
@@ -116,7 +116,7 @@ export class StatusBarManager extends Component {
             this.statusBarItem.title = i18n.t("statusBar.tooltip.no_file");
             if (this.iconSpan)
                 this.iconSpan.classList.add("fsrs-status-bar-icon-dimmed");
-            console.debug("Status bar: no active file");
+
             return;
         }
 
@@ -163,13 +163,9 @@ export class StatusBarManager extends Component {
                 if (this.textSpan)
                     this.textSpan.textContent = ` FSRS: ${i18n.t("statusBar.due")}`;
                 this.statusBarItem.title = i18n.t("statusBar.tooltip.due");
-                console.debug("Status bar: card is ready for review");
             } else {
                 const state = computeCardState(card, this.settings);
-                console.debug(
-                    "Status bar: card already reviewed, next review:",
-                    state.due,
-                );
+
                 const nextDate = new Date(state.due);
                 const formattedDate = formatLocalDate(nextDate, this.app);
 
