@@ -254,7 +254,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         const errorMessage =
             error instanceof Error ? error.message : String(error);
         console.debug(
-            `Ошибка при рендеринге блока fsrs-table: ${errorMessage}`,
+            `⚠️ Ошибка при рендеринге блока fsrs-table: ${errorMessage}`,
         );
 
         // Добавляем класс ошибки и очищаем контейнер
