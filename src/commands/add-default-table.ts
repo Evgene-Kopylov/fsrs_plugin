@@ -6,8 +6,16 @@ import { verboseLog } from "../utils/logger";
 /**
  * Дефолтный блок fsrs-table
  */
-const DEFAULT_TABLE_BLOCK =
+export const DEFAULT_TABLE_BLOCK =
     '```fsrs-table\nSELECT file as " ", retrievability as "R",\n       stability as "S", difficulty as "D",\n       overdue as "Overdue"\nLIMIT 20\n```\n';
+
+/**
+ * Чистая функция: добавляет дефолтный блок fsrs-table в начало содержимого.
+ * Пустая строка перед блоком, пустая строка после блока.
+ */
+export function addDefaultTableToContent(data: string): string {
+    return "\n" + DEFAULT_TABLE_BLOCK + "\n" + data;
+}
 
 /**
  * Вставляет дефолтный блок `fsrs-table` в начало активного файла.
@@ -35,7 +43,7 @@ export async function insertDefaultTable(
         );
 
         await app.vault.process(activeFile, (data) => {
-            return "\n" + DEFAULT_TABLE_BLOCK + "\n" + data;
+            return addDefaultTableToContent(data);
         });
 
         plugin.notifyFsrsTableRenderers();
