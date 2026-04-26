@@ -118,7 +118,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             }
 
             const card = parseResult.card;
-            const isDue = await isCardDue(card, this.plugin.settings);
+            const isDue = isCardDue(card, this.plugin.settings);
 
             if (!isDue) {
                 // Карточка уже повторена - показываем последнюю оценку
@@ -272,7 +272,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             }
 
             const card = parseResult.card;
-            const isDue = await isCardDue(card, this.plugin.settings);
+            const isDue = isCardDue(card, this.plugin.settings);
 
             if (!isDue) {
                 // Карточка не готова к повторению - проверяем возможность досрочного повторения
@@ -290,10 +290,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
                     // Недостаточно времени прошло - показываем информацию
                     const remainingMinutes =
                         minInterval - minutesSinceLastReview;
-                    const state = await computeCardState(
-                        card,
-                        this.plugin.settings,
-                    );
+                    const state = computeCardState(card, this.plugin.settings);
                     const nextDate = new Date(state.due);
 
                     if (remainingMinutes > 0) {

@@ -103,8 +103,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 this.showLoadingIndicator();
             } else {
                 // При последующих обновлениях применяем плавную анимацию opacity
-                this.container.style.opacity = "0.7"; // eslint-disable-line obsidianmd/no-static-styles-assignment
-                this.container.style.transition = "opacity 0.3s ease"; // eslint-disable-line obsidianmd/no-static-styles-assignment
+                this.container.classList.add("fsrs-table-loading");
             }
 
             // Получаем все карточки через плагин, при сортировке используем кеш
@@ -209,7 +208,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 
             // Восстанавливаем полную прозрачность после обновления
             if (!this.isFirstLoad) {
-                this.container.style.opacity = "1"; // eslint-disable-line obsidianmd/no-static-styles-assignment
+                this.container.classList.remove("fsrs-table-loading");
             }
 
             // Обновляем время последнего обновления
@@ -242,14 +241,13 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
     private renderEmptyState() {
         // При пустом состоянии также применяем анимацию, если это не первый показ
         if (!this.isFirstLoad) {
-            this.container.style.opacity = "0.7"; // eslint-disable-line obsidianmd/no-static-styles-assignment
-            this.container.style.transition = "opacity 0.3s ease"; // eslint-disable-line obsidianmd/no-static-styles-assignment
+            this.container.classList.add("fsrs-table-loading");
         }
         this.container.empty();
         const emptyDiv = this.container.createDiv({ cls: "fsrs-table-empty" });
         emptyDiv.createEl("small", { text: i18n.t("table.no_cards") });
         if (!this.isFirstLoad) {
-            this.container.style.opacity = "1"; // eslint-disable-line obsidianmd/no-static-styles-assignment
+            this.container.classList.remove("fsrs-table-loading");
         }
     }
 

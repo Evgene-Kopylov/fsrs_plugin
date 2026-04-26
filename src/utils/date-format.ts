@@ -13,12 +13,17 @@ import type { App } from "obsidian";
 export function formatDateTime(app: App, date: Date): string {
     try {
         const dateFormat =
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            ((app.vault as any).getConfig("dateFormat") as string) ||
-            "YYYY-MM-DD";
+            (
+                app.vault as unknown as {
+                    getConfig(key: string): string | null;
+                }
+            ).getConfig("dateFormat") ?? "YYYY-MM-DD";
         const timeFormat =
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            ((app.vault as any).getConfig("timeFormat") as string) || "HH:mm";
+            (
+                app.vault as unknown as {
+                    getConfig(key: string): string | null;
+                }
+            ).getConfig("timeFormat") ?? "HH:mm";
         return window.moment(date).format(`${dateFormat} ${timeFormat}`);
     } catch (error) {
         console.error("Ошибка форматирования даты и времени:", error);
@@ -35,9 +40,11 @@ export function formatDateTime(app: App, date: Date): string {
 export function formatDate(app: App, date: Date): string {
     try {
         const dateFormat =
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
-            ((app.vault as any).getConfig("dateFormat") as string) ||
-            "YYYY-MM-DD";
+            (
+                app.vault as unknown as {
+                    getConfig(key: string): string | null;
+                }
+            ).getConfig("dateFormat") ?? "YYYY-MM-DD";
         return window.moment(date).format(dateFormat);
     } catch (error) {
         console.error("Ошибка форматирования даты:", error);

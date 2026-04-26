@@ -134,7 +134,7 @@ async function reviewCardByFile(
     }
 
     const card = parseResult.card;
-    const isDue = await isCardDue(card, plugin.settings);
+    const isDue = isCardDue(card, plugin.settings);
 
     if (!isDue) {
         const minutesSinceLastReview = getMinutesSinceLastReview(card);
@@ -146,7 +146,7 @@ async function reviewCardByFile(
             );
         } else {
             const remainingMinutes = minInterval - minutesSinceLastReview;
-            const state = await computeCardState(card, plugin.settings);
+            const state = computeCardState(card, plugin.settings);
             const nextDate = new Date(state.due);
 
             if (remainingMinutes > 0) {
@@ -185,14 +185,10 @@ async function reviewCardByFile(
 
     console.debug("Выбранная оценка:", rating);
 
-    const updatedCard = await addReviewSession(card, rating, plugin.settings);
+    const updatedCard = addReviewSession(card, rating, plugin.settings);
     console.debug("Обновленная карточка:", updatedCard);
 
-    const updatedYaml = await getCardYamlAfterReview(
-        card,
-        rating,
-        plugin.settings,
-    );
+    const updatedYaml = getCardYamlAfterReview(card, rating, plugin.settings);
     const updatedFrontmatter = replaceReviewsInFrontmatter(
         frontmatter,
         updatedYaml,
@@ -208,7 +204,7 @@ async function reviewCardByFile(
         return before + "---\n" + updatedFrontmatter + "\n---" + after;
     });
 
-    const nextDates = await getNextReviewDates(updatedCard, plugin.settings);
+    const nextDates = getNextReviewDates(updatedCard, plugin.settings);
     if (nextDates[rating]) {
         const nextDate = new Date(nextDates[rating]);
         showNotice("notices.card_reviewed_with_next", {

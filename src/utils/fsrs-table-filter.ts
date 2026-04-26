@@ -188,12 +188,12 @@ function isCardDue(
  * @param now Текущее время
  * @returns Отфильтрованный и отсортированный массив карточек с состояниями
  */
-export async function filterAndSortCards(
+export function filterAndSortCards(
     cards: ModernFSRSCard[],
     settings: FSRSSettings,
     params: TableParams,
     now: Date = new Date(),
-): Promise<FilterSortResult> {
+): FilterSortResult {
     if (!cards || cards.length === 0) {
         return { cards: [], totalCount: 0 };
     }
@@ -326,12 +326,12 @@ export async function filterAndSortCards(
  * @param now Текущее время
  * @returns Отфильтрованный и отсортированный массив карточек с состояниями
  */
-export async function filterAndSortCardsWithStates(
+export function filterAndSortCardsWithStates(
     cachedCards: CachedCard[],
     settings: FSRSSettings,
     params: TableParams,
     now: Date = new Date(),
-): Promise<FilterSortResult> {
+): FilterSortResult {
     if (!cachedCards || cachedCards.length === 0) {
         return { cards: [], totalCount: 0 };
     }

@@ -1,7 +1,7 @@
 // Парсеры для работы с YAML и FSRS данными
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 
 import type {
+    FSRSRating,
     ModernFSRSCard,
     ReviewSession,
     ParseResult,
@@ -34,8 +34,18 @@ export function parseModernFsrsFromFrontmatter(
             };
         }
 
+        // Тип данных, возвращаемых WASM
+        interface WasmCardData {
+            reviews: Array<{
+                date: string;
+                rating: string;
+                stability: number;
+                difficulty: number;
+            }>;
+        }
+
         // Парсим JSON результат из WASM
-        const parsedCard = JSON.parse(cardJson);
+        const parsedCard = JSON.parse(cardJson) as WasmCardData;
 
         if (
             !parsedCard ||
@@ -77,7 +87,7 @@ export function parseModernFsrsFromFrontmatter(
             }
             reviews.push({
                 date: session.date,
-                rating: session.rating,
+                rating: session.rating as FSRSRating,
                 stability: session.stability,
                 difficulty: session.difficulty,
             });

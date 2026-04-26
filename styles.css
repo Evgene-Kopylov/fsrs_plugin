@@ -307,6 +307,56 @@
     margin-bottom: 1.5em;
 }
 
+/* Стили для контейнера кнопок рейтинга (review-modal) */
+.fsrs-rating-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Стили для состояния загрузки таблицы */
+.fsrs-table-loading {
+    opacity: 0.7;
+    transition: opacity 0.3s ease;
+}
+
+/* Стили для кнопок рейтинга */
+.fsrs-rating-button {
+    flex: 1;
+    min-width: 120px;
+    padding: 10px 15px;
+    color: var(--fsrs-button-text);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: opacity 0.2s;
+}
+
+.fsrs-rating-button:hover {
+    opacity: 0.8;
+}
+
+/* Стили для модального окна справки */
+.fsrs-help-modal {
+    width: 80%;
+    max-width: 900px;
+    max-height: 85vh;
+    user-select: text;
+}
+
+.fsrs-help-modal .fsrs-help-content-container {
+    user-select: text;
+}
+
+/* Стили для модального окна истории повторений */
+.fsrs-history-modal {
+    width: 70%;
+    max-width: 800px;
+    max-height: 80vh;
+}
+
 .fsrs-history-table {
     width: 100%;
     border-collapse: collapse;

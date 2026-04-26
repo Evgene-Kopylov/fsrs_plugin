@@ -3,18 +3,16 @@
 
 import type { FsrsPluginSettings } from "../../settings";
 
-// Паттерны игнорирования файлов и папок по умолчанию
+// Паттерны игнорирования файлов и папок по умолчанию (без .obsidian/ — передаётся через configDir)
 export const DEFAULT_IGNORE_PATTERNS = [
-	// eslint-disable-next-line obsidianmd/hardcoded-config-path
-	".obsidian/",
-	"templates/",
-	"attachments/",
-	"media/",
-	"images/",
-	"_trash/",
-	".trash/",
-	"*.canvas",
-	"*.excalidraw.md",
+    "templates/",
+    "attachments/",
+    "media/",
+    "images/",
+    "_trash/",
+    ".trash/",
+    "*.canvas",
+    "*.excalidraw.md",
 ];
 
 /**
@@ -25,40 +23,40 @@ export const DEFAULT_IGNORE_PATTERNS = [
  * @returns true если файл должен быть проигнорирован
  */
 export function shouldIgnoreFile(
-	filePath: string,
-	defaultPatterns: string[],
-	userPatterns: string[],
+    filePath: string,
+    defaultPatterns: string[],
+    userPatterns: string[],
 ): boolean {
-	// Объединяем дефолтные паттерны и пользовательские паттерны
-	const allPatterns = [...defaultPatterns, ...userPatterns];
+    // Объединяем дефолтные паттерны и пользовательские паттерны
+    const allPatterns = [...defaultPatterns, ...userPatterns];
 
-	for (const pattern of allPatterns) {
-		const trimmedPattern = pattern.trim();
-		if (trimmedPattern === "") continue;
+    for (const pattern of allPatterns) {
+        const trimmedPattern = pattern.trim();
+        if (trimmedPattern === "") continue;
 
-		// Паттерн для папки (заканчивается на /)
-		if (trimmedPattern.endsWith("/")) {
-			// Проверяем, содержит ли путь эту папку (включая вложенные пути)
-			if (filePath.includes(trimmedPattern)) {
-				return true;
-			}
-		}
-		// Паттерн для расширения файла (начинается с *.)
-		else if (trimmedPattern.startsWith("*.")) {
-			const extension = trimmedPattern.substring(1); // удаляем *
-			if (filePath.endsWith(extension)) {
-				return true;
-			}
-		}
-		// Точное совпадение имени файла
-		else if (
-			filePath === trimmedPattern ||
-			filePath.endsWith("/" + trimmedPattern)
-		) {
-			return true;
-		}
-	}
-	return false;
+        // Паттерн для папки (заканчивается на /)
+        if (trimmedPattern.endsWith("/")) {
+            // Проверяем, содержит ли путь эту папку (включая вложенные пути)
+            if (filePath.includes(trimmedPattern)) {
+                return true;
+            }
+        }
+        // Паттерн для расширения файла (начинается с *.)
+        else if (trimmedPattern.startsWith("*.")) {
+            const extension = trimmedPattern.substring(1); // удаляем *
+            if (filePath.endsWith(extension)) {
+                return true;
+            }
+        }
+        // Точное совпадение имени файла
+        else if (
+            filePath === trimmedPattern ||
+            filePath.endsWith("/" + trimmedPattern)
+        ) {
+            return true;
+        }
+    }
+    return false;
 }
 
 /**
@@ -68,14 +66,15 @@ export function shouldIgnoreFile(
  * @returns true если файл должен быть проигнорирован
  */
 export function shouldIgnoreFileWithSettings(
-	filePath: string,
-	settings: FsrsPluginSettings,
+    filePath: string,
+    settings: FsrsPluginSettings,
+    configDir: string,
 ): boolean {
-	return shouldIgnoreFile(
-		filePath,
-		DEFAULT_IGNORE_PATTERNS,
-		settings.ignore_patterns,
-	);
+    return shouldIgnoreFile(
+        filePath,
+        [`${configDir}/`, ...DEFAULT_IGNORE_PATTERNS],
+        settings.ignore_patterns,
+    );
 }
 
 /**
@@ -84,7 +83,7 @@ export function shouldIgnoreFileWithSettings(
  * @returns Строка с паттернами (по одному на строку)
  */
 export function formatIgnorePatterns(patterns: string[]): string {
-	return patterns.filter((p) => p.trim() !== "").join("\n");
+    return patterns.filter((p) => p.trim() !== "").join("\n");
 }
 
 /**
@@ -93,10 +92,10 @@ export function formatIgnorePatterns(patterns: string[]): string {
  * @returns Массив паттернов
  */
 export function parseIgnorePatterns(patternsString: string): string[] {
-	return patternsString
-		.split("\n")
-		.map((p) => p.trim())
-		.filter((p) => p !== "");
+    return patternsString
+        .split("\n")
+        .map((p) => p.trim())
+        .filter((p) => p !== "");
 }
 
 /**
@@ -104,6 +103,13 @@ export function parseIgnorePatterns(patternsString: string): string[] {
  * @param settings Настройки плагина
  * @returns Массив всех активных паттернов
  */
-export function getAllIgnorePatterns(settings: FsrsPluginSettings): string[] {
-	return [...DEFAULT_IGNORE_PATTERNS, ...settings.ignore_patterns];
+export function getAllIgnorePatterns(
+    settings: FsrsPluginSettings,
+    configDir: string,
+): string[] {
+    return [
+        `${configDir}/`,
+        ...DEFAULT_IGNORE_PATTERNS,
+        ...settings.ignore_patterns,
+    ];
 }

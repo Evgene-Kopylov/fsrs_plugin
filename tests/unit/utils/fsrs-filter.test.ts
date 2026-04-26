@@ -17,7 +17,6 @@ describe("fsrs-filter", () => {
     describe("DEFAULT_IGNORE_PATTERNS", () => {
         it("should contain default patterns", () => {
             expect(DEFAULT_IGNORE_PATTERNS).toEqual([
-                ".obsidian/",
                 "templates/",
                 "attachments/",
                 "media/",
@@ -135,12 +134,13 @@ describe("fsrs-filter", () => {
     });
 
     describe("getAllIgnorePatterns", () => {
-        it("should combine default and user patterns", () => {
+        it("should combine default, config dir and user patterns", () => {
             const settings: MockSettings = {
                 ignore_patterns: ["*.pdf", "backup/"],
             };
-            const all = getAllIgnorePatterns(settings as any);
+            const all = getAllIgnorePatterns(settings as any, ".obsidian");
             expect(all).toEqual([
+                ".obsidian/",
                 ...DEFAULT_IGNORE_PATTERNS,
                 "*.pdf",
                 "backup/",
@@ -152,16 +152,25 @@ describe("fsrs-filter", () => {
         it("should use settings patterns", () => {
             const settings: MockSettings = { ignore_patterns: ["*.pdf"] };
             expect(
-                shouldIgnoreFileWithSettings("document.pdf", settings as any),
+                shouldIgnoreFileWithSettings(
+                    "document.pdf",
+                    settings as any,
+                    ".obsidian",
+                ),
             ).toBe(true);
             expect(
                 shouldIgnoreFileWithSettings(
                     ".obsidian/config.json",
                     settings as any,
+                    ".obsidian",
                 ),
             ).toBe(true);
             expect(
-                shouldIgnoreFileWithSettings("note.md", settings as any),
+                shouldIgnoreFileWithSettings(
+                    "note.md",
+                    settings as any,
+                    ".obsidian",
+                ),
             ).toBe(false);
         });
     });
