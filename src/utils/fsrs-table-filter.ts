@@ -13,6 +13,7 @@ import type {
 import type { TableParams } from "./fsrs-table-params";
 
 import * as wasm from "../../wasm-lib/pkg/wasm_lib";
+import { verboseLog } from "./logger";
 
 /**
  * Результат фильтрации и сортировки карточек с состояниями
@@ -210,7 +211,7 @@ export function filterAndSortCards(
             resultJson,
         ) as unknown as WasmFilterResult;
 
-        console.debug("📊 WASM filter result:", {
+        verboseLog("📊 WASM filter result:", {
             totalCards: wasmResult.cards?.length || 0,
             totalCount: wasmResult.total_count,
             errorCount: wasmResult.errors?.length || 0,
