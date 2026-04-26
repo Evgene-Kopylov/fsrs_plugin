@@ -24,9 +24,6 @@ export function parseModernFsrsFromFrontmatter(
 
         // Проверяем результат WASM перед парсингом JSON
         if (cardJson === "null" || !cardJson) {
-            console.warn(
-                `FSRS card in ${filePath} is broken: WASM parsing returned null or empty. Ignoring card.`,
-            );
             return {
                 success: false,
                 card: null,
