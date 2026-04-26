@@ -92,7 +92,7 @@ export class IncrementalCache {
                     } else {
                         brokenCount++;
                     }
-                } catch (error) {
+                } catch {
                     brokenCount++;
                 }
             }
