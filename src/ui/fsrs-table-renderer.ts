@@ -136,10 +136,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             // Генерируем DOM таблицы
             if (this.params) {
                 // Если параметры уже есть (при сортировке), используем их
-                console.debug(
-                    "Using existing params for table generation:",
-                    this.params,
-                );
+
                 const result = await generateTableDOMFromCards(
                     allCards,
                     this.params,
@@ -155,10 +152,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 }
             } else {
                 // При первом рендере используем SQL напрямую
-                console.debug(
-                    "Parsing SQL source for table generation:",
-                    this.sourceText,
-                );
+
                 const result = await generateTableDOMFromSql(
                     allCards.map((c) => c.card),
                     this.sourceText,
@@ -173,7 +167,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 if (this.originalCardsWithState === null) {
                     this.originalCardsWithState = result.cards;
                 }
-                console.debug("Parsed params from SQL:", this.params);
             }
 
             // Если задано WHERE, кэшируем только карточки, прошедшие фильтр

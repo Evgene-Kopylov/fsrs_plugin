@@ -47,16 +47,6 @@ export function generateTableDOM(
     const cardsToShow = cardsWithState; // WASM уже применил лимит
     const totalCards = totalCount;
 
-    // Отладочный вывод для проверки колонок
-    console.debug(
-        `[FSRS] Генерация DOM таблицы, колонок: ${params.columns.length}`,
-    );
-    params.columns.forEach((col, idx) => {
-        console.debug(
-            `[FSRS] Колонка ${idx}: field="${col.field}", title="${col.title}"`,
-        );
-    });
-
     const container = document.createElement("div");
     container.className = "fsrs-table-container";
 
@@ -72,7 +62,6 @@ export function generateTableDOM(
     thead.appendChild(headerRow);
 
     for (const column of params.columns) {
-        console.debug(`[FSRS] Генерация заголовка для поля: ${column.field}`);
         const th = document.createElement("th");
         th.className = `fsrs-col-${column.field} fsrs-sortable-header`;
         if (column.width) {
@@ -120,9 +109,6 @@ export function generateTableDOM(
         tbody.appendChild(row);
 
         for (const column of params.columns) {
-            console.debug(
-                `[FSRS] Генерация ячейки для поля: ${column.field}, карточка: ${card.filePath}`,
-            );
             const value = formatFieldValue(column.field, card, state, app, now);
             const td = document.createElement("td");
             td.className = `fsrs-col-${column.field}`;
@@ -217,12 +203,6 @@ export async function generateTableDOMFromSql(
     totalCount: number;
 }> {
     const params = parseSqlBlock(sqlSource);
-    console.debug("generateTableDOMFromSql:", {
-        cardCount: cards.length,
-        sqlSource,
-        params,
-        hasSort: !!params.sort,
-    });
 
     const { filterAndSortCards } = await import("./fsrs-table-filter");
 
