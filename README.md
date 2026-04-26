@@ -1,4 +1,4 @@
-# FSRS Plugin for Obsidian
+# FSRS for Obsidian
 
 - [🇷🇺](README.ru.md)
 - [🇺🇸](README.md) <
@@ -31,7 +31,7 @@ The plugin turns your notes into FSRS-based flashcards for effective memorizatio
 ### Via Obsidian Community Plugins (recommended)
 
 1. Go to **Settings** → **Community plugins** → **Browse**
-2. Search for "FSRS Plugin"
+Search for "FSRS"
 3. Click **Install**, then **Enable**
 
 ### Via BRAT (for beta testing)
@@ -158,12 +158,12 @@ reviews:
 
 ### Via Command Palette (Ctrl/Cmd+P)
 
-- **FSRS Plugin: Add FSRS fields to file header**
-- **FSRS Plugin: Find cards to review**
-- **FSRS Plugin: Review current card**
-- **FSRS Plugin: Remove last card review**
-- **FSRS Plugin: Show review history**
-- **FSRS Plugin: Show fsrs-table syntax help**
+- **FSRS: Add FSRS fields to file header**
+- **FSRS: Find cards to review**
+- **FSRS: Review current card**
+- **FSRS: Remove last card review**
+- **FSRS: Show review history**
+- **FSRS: Show fsrs-table syntax help**
 
 ### Via the Status Bar
 
@@ -308,7 +308,7 @@ Full text: [LICENSE](LICENSE)
 
 ## 🙏 Acknowledgements
 
-- **Jarrett Ye** — creator of FSRS
+- **Jarrett Ye** — author of the FSRS algorithm
 - **Obsidian Community** — inspiration and support
 - **Rust Community** — WASM tooling
 - **All contributors** — improvements and bug reports
@@ -324,4 +324,3 @@ Full text: [LICENSE](LICENSE)
 
 **Note:** The plugin is under active development.
 Functionality may change slightly.
-
