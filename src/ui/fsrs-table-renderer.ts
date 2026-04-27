@@ -5,7 +5,6 @@ import type { TableParams, CardWithState } from "../utils/fsrs-table-helpers";
 import {
     generateTableDOM,
     generateTableDOMFromCards,
-    generateTableDOMFromSql,
 } from "../utils/fsrs-table-helpers";
 import { i18n } from "../utils/i18n";
 import { verboseLog } from "../utils/logger";
@@ -176,17 +175,22 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                     this.originalCardsWithState = result.cards;
                 }
             } else {
-                // При первом рендере используем SQL напрямую
+                // При первом рендере парсим SQL, но используем готовые состояния из кэша
+                // (не гоняем все карточки через WASM для пересчёта состояний)
 
-                const result = await generateTableDOMFromSql(
-                    allCards.map((c) => c.card),
-                    this.sourceText,
+                const { parseSqlBlock } =
+                    await import("../utils/fsrs-table-params");
+                const sqlParams = parseSqlBlock(this.sourceText);
+
+                const result = await generateTableDOMFromCards(
+                    allCards.map((c) => ({ card: c.card, state: c.state })),
+                    sqlParams,
                     this.plugin.settings,
                     this.plugin.app,
                     now,
                 );
                 container = result.container;
-                this.params = result.params;
+                this.params = sqlParams;
                 this.cachedCardsWithState = result.cards;
                 this.cachedTotalCount = result.totalCount;
                 if (this.originalCardsWithState === null) {
@@ -553,7 +557,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             const savedScrollLeft = scrollContainer?.scrollLeft ?? 0;
 
             // Генерируем DOM таблицы из кэша
-            const container = generateTableDOM(
+            const container = await generateTableDOM(
                 this.cachedCardsWithState,
                 this.cachedTotalCount,
                 this.params,

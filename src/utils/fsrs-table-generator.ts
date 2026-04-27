@@ -36,15 +36,17 @@ import { parseSqlBlock } from "./fsrs-table-params";
  * @param now Текущее время
  * @returns HTMLDivElement контейнер таблицы
  */
-export function generateTableDOM(
+export async function generateTableDOM(
     cardsWithState: CardWithState[],
     totalCount: number,
     params: TableParams,
     _settings: FSRSSettings,
     app: App,
     now: Date = new Date(),
-): HTMLDivElement {
-    const cardsToShow = cardsWithState; // WASM уже применил лимит
+): Promise<HTMLDivElement> {
+    const CHUNK_SIZE = 50;
+    const effectiveLimit = params.limit > 0 ? params.limit : 200;
+    const cardsToShow = cardsWithState.slice(0, effectiveLimit);
     const totalCards = totalCount;
 
     const container = createDiv();
@@ -99,44 +101,57 @@ export function generateTableDOM(
     const tbody = createEl("tbody");
     table.appendChild(tbody);
 
-    for (const { card, state, isDue } of cardsToShow) {
-        // Добавляем класс для due карточек
-        const row = createEl("tr");
-        row.className = isDue
-            ? "fsrs-table-row fsrs-due-card"
-            : "fsrs-table-row";
-        row.dataset.filePath = card.filePath;
-        tbody.appendChild(row);
+    for (let i = 0; i < cardsToShow.length; i += CHUNK_SIZE) {
+        const chunk = cardsToShow.slice(i, i + CHUNK_SIZE);
 
-        for (const column of params.columns) {
-            const value = formatFieldValue(column.field, card, state, app, now);
-            const td = createEl("td");
-            td.className = `fsrs-col-${column.field}`;
+        for (const { card, state, isDue } of chunk) {
+            const row = createEl("tr");
+            row.className = isDue
+                ? "fsrs-table-row fsrs-due-card"
+                : "fsrs-table-row";
+            row.dataset.filePath = card.filePath;
+            tbody.appendChild(row);
 
-            // Для поля file делаем ссылку
-            if (column.field === "file") {
-                const link = createEl("a");
-                link.href = card.filePath;
-                link.dataset.filePath = card.filePath;
-                link.className = "internal-link";
-                link.textContent = value;
-                td.appendChild(link);
-            } else {
-                td.textContent = value;
+            for (const column of params.columns) {
+                const value = formatFieldValue(
+                    column.field,
+                    card,
+                    state,
+                    app,
+                    now,
+                );
+                const td = createEl("td");
+                td.className = `fsrs-col-${column.field}`;
+
+                if (column.field === "file") {
+                    const link = createEl("a");
+                    link.href = card.filePath;
+                    link.dataset.filePath = card.filePath;
+                    link.className = "internal-link";
+                    link.textContent = value;
+                    td.appendChild(link);
+                } else {
+                    td.textContent = value;
+                }
+
+                row.appendChild(td);
             }
+        }
 
-            row.appendChild(td);
+        // Отдаём управление браузеру между чанками
+        if (i + CHUNK_SIZE < cardsToShow.length) {
+            await new Promise((resolve) => activeWindow.setTimeout(resolve, 0));
         }
     }
 
     // Информация о лимите
-    if (totalCards > cardsWithState.length) {
-        const hiddenCount = totalCards - cardsWithState.length;
+    if (totalCards > cardsToShow.length) {
+        const hiddenCount = totalCards - cardsToShow.length;
         const infoDiv = createDiv();
         infoDiv.className = "fsrs-table-info";
         const small = createEl("small");
         small.textContent = i18n.t("table.showing_limit", {
-            shown: cardsWithState.length,
+            shown: cardsToShow.length,
             total: totalCards,
             hidden: hiddenCount,
         });
@@ -179,7 +194,7 @@ export async function generateTableDOMFromCards(
         now,
     );
 
-    const container = generateTableDOM(
+    const container = await generateTableDOM(
         cards,
         totalCount,
         params,
@@ -213,7 +228,7 @@ export async function generateTableDOMFromSql(
         now,
     );
 
-    const container = generateTableDOM(
+    const container = await generateTableDOM(
         cardsWithState,
         totalCount,
         params,
