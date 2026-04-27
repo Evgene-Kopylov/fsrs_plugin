@@ -47,22 +47,22 @@ export function generateTableDOM(
     const cardsToShow = cardsWithState; // WASM уже применил лимит
     const totalCards = totalCount;
 
-    const container = activeDocument.createDiv();
+    const container = createDiv();
     container.className = "fsrs-table-container";
 
     // Таблица
-    const table = activeDocument.createEl("table");
+    const table = createEl("table");
     table.className = "fsrs-table";
     container.appendChild(table);
 
     // Заголовки колонок с поддержкой сортировки
-    const thead = activeDocument.createEl("thead");
+    const thead = createEl("thead");
     table.appendChild(thead);
-    const headerRow = activeDocument.createEl("tr");
+    const headerRow = createEl("tr");
     thead.appendChild(headerRow);
 
     for (const column of params.columns) {
-        const th = activeDocument.createEl("th");
+        const th = createEl("th");
         th.className = `fsrs-col-${column.field} fsrs-sortable-header`;
         if (column.width) {
             th.style.width = column.width;
@@ -73,19 +73,19 @@ export function generateTableDOM(
         const currentDirection = isSorted ? params.sort!.direction : null;
 
         // Создаем заголовок с кликабельным элементом для сортировки
-        const sortHeader = activeDocument.createDiv();
+        const sortHeader = createDiv();
         sortHeader.className = "fsrs-sort-header";
         sortHeader.dataset.field = column.field;
         sortHeader.dataset.currentDirection = currentDirection || "";
 
-        const headerText = activeDocument.createSpan();
+        const headerText = createSpan();
         headerText.className = "fsrs-header-text";
         headerText.textContent = column.title;
         sortHeader.appendChild(headerText);
 
         // Добавляем индикатор сортировки
         if (isSorted) {
-            const sortIndicator = activeDocument.createSpan();
+            const sortIndicator = createSpan();
             sortIndicator.className = "fsrs-sort-indicator";
             sortIndicator.textContent = currentDirection === "ASC" ? "↑" : "↓";
             sortHeader.appendChild(sortIndicator);
@@ -96,12 +96,12 @@ export function generateTableDOM(
     }
 
     // Тело таблицы
-    const tbody = activeDocument.createEl("tbody");
+    const tbody = createEl("tbody");
     table.appendChild(tbody);
 
     for (const { card, state, isDue } of cardsToShow) {
         // Добавляем класс для due карточек
-        const row = activeDocument.createEl("tr");
+        const row = createEl("tr");
         row.className = isDue
             ? "fsrs-table-row fsrs-due-card"
             : "fsrs-table-row";
@@ -110,12 +110,12 @@ export function generateTableDOM(
 
         for (const column of params.columns) {
             const value = formatFieldValue(column.field, card, state, app, now);
-            const td = activeDocument.createEl("td");
+            const td = createEl("td");
             td.className = `fsrs-col-${column.field}`;
 
             // Для поля file делаем ссылку
             if (column.field === "file") {
-                const link = activeDocument.createEl("a");
+                const link = createEl("a");
                 link.href = card.filePath;
                 link.dataset.filePath = card.filePath;
                 link.className = "internal-link";
@@ -132,9 +132,9 @@ export function generateTableDOM(
     // Информация о лимите
     if (totalCards > cardsWithState.length) {
         const hiddenCount = totalCards - cardsWithState.length;
-        const infoDiv = activeDocument.createDiv();
+        const infoDiv = createDiv();
         infoDiv.className = "fsrs-table-info";
-        const small = activeDocument.createEl("small");
+        const small = createEl("small");
         small.textContent = i18n.t("table.showing_limit", {
             shown: cardsWithState.length,
             total: totalCards,

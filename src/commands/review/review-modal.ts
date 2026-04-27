@@ -130,7 +130,7 @@ export class ReviewModal extends Modal {
         });
 
         ratings.forEach(({ rating, label, color }) => {
-            const button = activeDocument.createEl("button");
+            const button = createEl("button");
             button.className = "fsrs-rating-button";
             button.textContent = label;
             button.style.backgroundColor = color;
