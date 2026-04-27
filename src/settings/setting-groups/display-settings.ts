@@ -78,28 +78,49 @@ export function renderDisplaySettings(
     ];
 
     buttonKeys.forEach((key) => {
-        new Setting(labelsContainer)
-            .setName(i18n.t(`settings.display.custom_button_labels.${key}`))
-            .addText((text) =>
-                text
-                    .setPlaceholder(
-                        i18n.t(
-                            `settings.display.custom_button_labels.placeholder_${key}`,
-                        ),
-                    )
-                    .setValue(plugin.settings.customButtonLabels?.[key] ?? "")
-                    .onChange(async (value) => {
-                        if (!plugin.settings.customButtonLabels) {
-                            plugin.settings.customButtonLabels = {
-                                again: "",
-                                hard: "",
-                                good: "",
-                                easy: "",
-                            };
-                        }
-                        plugin.settings.customButtonLabels[key] = value;
-                        await plugin.saveSettings();
-                    }),
-            );
+        const setting = new Setting(labelsContainer).setName(
+            i18n.t(`settings.display.custom_button_labels.${key}`),
+        );
+
+        // Поле для названия кнопки
+        setting.addText((text) =>
+            text
+                .setPlaceholder(
+                    i18n.t(
+                        `settings.display.custom_button_labels.placeholder_${key}`,
+                    ),
+                )
+                .setValue(plugin.settings.customButtonLabels?.[key] ?? "")
+                .onChange(async (value) => {
+                    if (!plugin.settings.customButtonLabels) {
+                        plugin.settings.customButtonLabels = {
+                            again: "",
+                            hard: "",
+                            good: "",
+                            easy: "",
+                        };
+                    }
+                    plugin.settings.customButtonLabels[key] = value;
+                    await plugin.saveSettings();
+                }),
+        );
+
+        // Поле для цвета кнопки
+        setting.addColorPicker((color) =>
+            color
+                .setValue(plugin.settings.customButtonColors?.[key] ?? "")
+                .onChange(async (value) => {
+                    if (!plugin.settings.customButtonColors) {
+                        plugin.settings.customButtonColors = {
+                            again: "",
+                            hard: "",
+                            good: "",
+                            easy: "",
+                        };
+                    }
+                    plugin.settings.customButtonColors[key] = value;
+                    await plugin.saveSettings();
+                }),
+        );
     });
 }

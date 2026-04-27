@@ -10,6 +10,12 @@ export interface FsrsPluginSettings extends FSRSSettings {
         good: string;
         easy: string;
     };
+    customButtonColors?: {
+        again: string;
+        hard: string;
+        good: string;
+        easy: string;
+    };
 }
 
 // Реэкспорт констант из модуля constants с правильным типом
@@ -18,6 +24,12 @@ export const DEFAULT_SETTINGS: FsrsPluginSettings = {
     language: "system",
     verbose_logging: false,
     customButtonLabels: {
+        again: "",
+        hard: "",
+        good: "",
+        easy: "",
+    },
+    customButtonColors: {
         again: "",
         hard: "",
         good: "",
