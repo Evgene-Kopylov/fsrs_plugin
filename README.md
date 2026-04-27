@@ -43,7 +43,7 @@ Search for "FSRS"
 
 ### Requirements
 
-- Obsidian v0.15.0 or higher
+- Obsidian v1.12.7 or higher
 - WebAssembly support (enabled by default)
 
 ## 🐌 Quick Start
