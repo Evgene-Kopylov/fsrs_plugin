@@ -23,8 +23,8 @@
             "datetime": "Дата и время",
             "rating": "Оценка",
             "retrievability": "Извлекаемость (R)",
-            "stability": "Стабильность",
-            "difficulty": "Сложность",
+            "stability": "Стабильность (S)",
+            "difficulty": "Сложность (D)",
             "days_since_last": "Дней с прошлого",
             "actions": ""
         },
