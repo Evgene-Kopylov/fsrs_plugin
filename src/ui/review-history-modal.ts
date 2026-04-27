@@ -207,9 +207,7 @@ export class ReviewHistoryModal extends Modal {
             // Оценка с переводом
             const ratingCell = row.insertCell();
             if (state.rating) {
-                ratingCell.textContent = this.translateRating(
-                    state.rating as FSRSRating,
-                );
+                ratingCell.textContent = this.translateRating(state.rating);
             } else {
                 ratingCell.textContent = "-";
             }
