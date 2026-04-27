@@ -89,7 +89,7 @@ mod tests {
     #[test]
     fn test_review_card_empty_card() {
         let card_json = create_empty_card_json();
-        let rating = "2".to_string();
+        let rating = 2u8;
         let now = "2025-01-01T12:00:00Z".to_string();
         let params_json = create_test_parameters_json();
         let default_stability = 2.5;
@@ -121,7 +121,7 @@ mod tests {
     #[test]
     fn test_review_card_with_existing_reviews() {
         let card_json = create_card_with_reviews_json();
-        let rating = "3".to_string();
+        let rating = 3u8;
         let now = "2025-01-02T14:00:00Z".to_string();
         let params_json = create_test_parameters_json();
         let default_stability = 2.5;
@@ -189,7 +189,7 @@ mod tests {
     #[test]
     fn test_review_card_invalid_json() {
         let invalid_json = r#"{invalid json}"#.to_string();
-        let rating = "2".to_string();
+        let rating = 2u8;
         let now = "2025-01-01T12:00:00Z".to_string();
         let params_json = create_test_parameters_json();
         let default_stability = 2.5;
@@ -215,7 +215,7 @@ mod tests {
     #[test]
     fn test_review_card_invalid_date() {
         let card_json = create_empty_card_json();
-        let rating = "2".to_string();
+        let rating = 2u8;
         let invalid_now = "invalid date".to_string();
         let params_json = create_test_parameters_json();
         let default_stability = 2.5;
@@ -245,7 +245,7 @@ mod tests {
     #[test]
     fn test_get_fsrs_yaml_after_review() {
         let card_json = create_empty_card_json();
-        let rating = "2".to_string();
+        let rating = 2u8;
         let now = "2025-01-01T12:00:00Z".to_string();
         let params_json = create_test_parameters_json();
         let default_stability = 2.5;
@@ -282,7 +282,7 @@ mod tests {
     #[test]
     fn test_get_fsrs_yaml_after_review_with_existing_reviews() {
         let card_json = create_card_with_reviews_json();
-        let rating = "1".to_string();
+        let rating = 1u8;
         let now = "2025-01-02T14:00:00Z".to_string();
         let params_json = create_test_parameters_json();
         let default_stability = 2.5;
@@ -332,7 +332,7 @@ mod tests {
         }"#
         .to_string();
 
-        let rating = "2".to_string();
+        let rating = 2u8;
         let now = "2025-01-03T14:00:00Z".to_string(); // 2 дня спустя
         let params_json = create_test_parameters_json();
         let default_stability = 2.5;
@@ -378,14 +378,14 @@ mod tests {
 
         for (params_json, description) in test_cases {
             let card_json = create_empty_card_json();
-            let rating = "2".to_string();
+            let rating = 2u8;
             let now = "2025-01-01T12:00:00Z".to_string();
             let default_stability = 2.5;
             let default_difficulty = 5.0;
 
             let result = review_card(
                 card_json,
-                rating.clone(),
+                rating,
                 now.clone(),
                 params_json.to_string(),
                 default_stability,
