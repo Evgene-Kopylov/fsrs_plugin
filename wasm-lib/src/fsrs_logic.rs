@@ -94,7 +94,7 @@ pub fn compute_card_from_reviews(
 
         // Вычисляем elapsed_days с предыдущего повторения
         let elapsed_days = if let Some(prev_date) = last_review_date {
-            (review_date - prev_date).num_days().max(0) as i64
+            (review_date - prev_date).num_days().max(0)
         } else {
             0
         };
