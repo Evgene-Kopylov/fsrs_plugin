@@ -96,7 +96,7 @@ export class FsrsHelpModal extends Modal {
         });
 
         // Информационная строка
-        const info = contentEl.createEl("div", { cls: "fsrs-help-info" });
+        const info = contentEl.createDiv({ cls: "fsrs-help-info" });
         info.createEl("small", {
             text: i18n.t("help.intro"),
         });

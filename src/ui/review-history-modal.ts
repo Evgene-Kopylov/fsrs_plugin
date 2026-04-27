@@ -128,7 +128,7 @@ export class ReviewHistoryModal extends Modal {
         });
 
         // Информация о файле
-        const fileInfo = contentEl.createEl("div", {
+        const fileInfo = contentEl.createDiv({
             cls: "fsrs-history-file-info",
         });
         fileInfo.createEl("small", {
@@ -257,7 +257,7 @@ export class ReviewHistoryModal extends Modal {
                 if (now < this.deleteCooldownUntil) {
                     deleteBtn.disabled = true;
                     const remaining = this.deleteCooldownUntil - now;
-                    setTimeout(() => {
+                    activeWindow.setTimeout(() => {
                         this.onOpen();
                     }, remaining);
                 }

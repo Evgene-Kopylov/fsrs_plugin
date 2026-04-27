@@ -52,7 +52,7 @@ export class ReviewModal extends Modal {
         contentEl.createEl("h3", { text: i18n.t("review.title") });
 
         // Информация о карточке
-        const info = contentEl.createEl("div");
+        const info = contentEl.createDiv();
         const small = info.createEl("small");
 
         // Файл
@@ -125,12 +125,12 @@ export class ReviewModal extends Modal {
             },
         ];
 
-        const buttonContainer = contentEl.createEl("div", {
+        const buttonContainer = contentEl.createDiv({
             cls: "fsrs-rating-container",
         });
 
         ratings.forEach(({ rating, label, color }) => {
-            const button = document.createElement("button");
+            const button = activeDocument.createEl("button");
             button.className = "fsrs-rating-button";
             button.textContent = label;
             button.style.backgroundColor = color;
