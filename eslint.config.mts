@@ -38,6 +38,19 @@ export default tseslint.config(
             ],
         },
     },
+    // Разрешить eslint-plugin-eslint-comments (нужен для require-description)
+    {
+        files: ["package.json"],
+        rules: {
+            "depend/ban-dependencies": [
+                "error",
+                {
+                    presets: ["native", "microutilities", "preferred"],
+                    allowed: ["eslint-plugin-eslint-comments"],
+                },
+            ],
+        },
+    },
     {
         files: ["src/**/*.ts"],
         plugins: {

@@ -47,22 +47,22 @@ export function generateTableDOM(
     const cardsToShow = cardsWithState; // WASM уже применил лимит
     const totalCards = totalCount;
 
-    const container = document.createElement("div");
+    const container = activeDocument.createDiv();
     container.className = "fsrs-table-container";
 
     // Таблица
-    const table = document.createElement("table");
+    const table = activeDocument.createEl("table");
     table.className = "fsrs-table";
     container.appendChild(table);
 
     // Заголовки колонок с поддержкой сортировки
-    const thead = document.createElement("thead");
+    const thead = activeDocument.createEl("thead");
     table.appendChild(thead);
-    const headerRow = document.createElement("tr");
+    const headerRow = activeDocument.createEl("tr");
     thead.appendChild(headerRow);
 
     for (const column of params.columns) {
-        const th = document.createElement("th");
+        const th = activeDocument.createEl("th");
         th.className = `fsrs-col-${column.field} fsrs-sortable-header`;
         if (column.width) {
             th.style.width = column.width;
@@ -73,19 +73,19 @@ export function generateTableDOM(
         const currentDirection = isSorted ? params.sort!.direction : null;
 
         // Создаем заголовок с кликабельным элементом для сортировки
-        const sortHeader = document.createElement("div");
+        const sortHeader = activeDocument.createDiv();
         sortHeader.className = "fsrs-sort-header";
         sortHeader.dataset.field = column.field;
         sortHeader.dataset.currentDirection = currentDirection || "";
 
-        const headerText = document.createElement("span");
+        const headerText = activeDocument.createSpan();
         headerText.className = "fsrs-header-text";
         headerText.textContent = column.title;
         sortHeader.appendChild(headerText);
 
         // Добавляем индикатор сортировки
         if (isSorted) {
-            const sortIndicator = document.createElement("span");
+            const sortIndicator = activeDocument.createSpan();
             sortIndicator.className = "fsrs-sort-indicator";
             sortIndicator.textContent = currentDirection === "ASC" ? "↑" : "↓";
             sortHeader.appendChild(sortIndicator);
@@ -96,12 +96,12 @@ export function generateTableDOM(
     }
 
     // Тело таблицы
-    const tbody = document.createElement("tbody");
+    const tbody = activeDocument.createEl("tbody");
     table.appendChild(tbody);
 
     for (const { card, state, isDue } of cardsToShow) {
         // Добавляем класс для due карточек
-        const row = document.createElement("tr");
+        const row = activeDocument.createEl("tr");
         row.className = isDue
             ? "fsrs-table-row fsrs-due-card"
             : "fsrs-table-row";
@@ -110,12 +110,12 @@ export function generateTableDOM(
 
         for (const column of params.columns) {
             const value = formatFieldValue(column.field, card, state, app, now);
-            const td = document.createElement("td");
+            const td = activeDocument.createEl("td");
             td.className = `fsrs-col-${column.field}`;
 
             // Для поля file делаем ссылку
             if (column.field === "file") {
-                const link = document.createElement("a");
+                const link = activeDocument.createEl("a");
                 link.href = card.filePath;
                 link.dataset.filePath = card.filePath;
                 link.className = "internal-link";
@@ -132,9 +132,9 @@ export function generateTableDOM(
     // Информация о лимите
     if (totalCards > cardsWithState.length) {
         const hiddenCount = totalCards - cardsWithState.length;
-        const infoDiv = document.createElement("div");
+        const infoDiv = activeDocument.createDiv();
         infoDiv.className = "fsrs-table-info";
-        const small = document.createElement("small");
+        const small = activeDocument.createEl("small");
         small.textContent = i18n.t("table.showing_limit", {
             shown: cardsWithState.length,
             total: totalCards,
