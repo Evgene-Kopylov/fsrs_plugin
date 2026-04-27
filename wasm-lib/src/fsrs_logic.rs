@@ -1,7 +1,10 @@
+use crate::conversion::{create_fsrs_parameters, rating_from_str};
+use crate::json_parsing::parse_datetime_flexible;
+use crate::log_warn;
 use crate::types::{FsrsParameters, ReviewSession};
 
 use chrono::{DateTime, Utc};
-use rs_fsrs::{Card, State};
+use rs_fsrs::{Card, FSRS, State};
 
 /// Создает Card из истории reviews
 pub fn create_card_from_last_session(
@@ -87,6 +90,102 @@ pub fn create_card_from_last_session(
             last_review,
         }
     }
+}
+
+/// Полностью пересчитывает карточку через fsrs.repeat() по всем повторениям.
+/// Используется вместо create_card_from_last_session для точного вычисления состояния
+/// с учётом текущих w-параметров FSRS.
+pub fn compute_card_from_reviews(
+    reviews: &[ReviewSession],
+    default_stability: f64,
+    default_difficulty: f64,
+    parameters: &FsrsParameters,
+    now: DateTime<Utc>,
+    enable_fuzz: bool,
+) -> Card {
+    // Защита от невалидных параметров, которые могут вызвать панику в FSRS::new()
+    let safe_max_interval = if parameters.maximum_interval > 0.0 {
+        parameters.maximum_interval
+    } else {
+        log_warn!(
+            "maximum_interval = {}, используется 365.0",
+            parameters.maximum_interval
+        );
+        365.0
+    };
+    let safe_request_retention =
+        if parameters.request_retention > 0.0 && parameters.request_retention <= 1.0 {
+            parameters.request_retention
+        } else {
+            log_warn!(
+                "request_retention = {}, используется 0.9",
+                parameters.request_retention
+            );
+            0.9
+        };
+
+    let safe_params = FsrsParameters {
+        request_retention: safe_request_retention,
+        maximum_interval: safe_max_interval,
+        enable_fuzz,
+    };
+    let fsrs_params = create_fsrs_parameters(&safe_params);
+    let fsrs = FSRS::new(fsrs_params);
+
+    // Начальное состояние
+    let mut current_card = Card {
+        stability: default_stability,
+        difficulty: default_difficulty,
+        elapsed_days: 0,
+        scheduled_days: 0,
+        reps: 0,
+        lapses: 0,
+        state: State::New,
+        due: now,
+        last_review: now,
+    };
+
+    if reviews.is_empty() {
+        return current_card;
+    }
+
+    let mut last_review_date: Option<DateTime<Utc>> = None;
+
+    for session in reviews {
+        let review_date = match parse_datetime_flexible(&session.date) {
+            Some(dt) => dt,
+            None => {
+                // Пропускаем сессии с неверной датой
+                continue;
+            }
+        };
+
+        // Вычисляем elapsed_days с предыдущего повторения
+        let elapsed_days = if let Some(prev_date) = last_review_date {
+            (review_date - prev_date).num_days().max(0) as i64
+        } else {
+            0
+        };
+        current_card.elapsed_days = elapsed_days;
+
+        let rating = rating_from_str(&session.rating);
+        let repeat_map = fsrs.repeat(current_card.clone(), review_date);
+        let scheduling_info = match repeat_map.get(&rating) {
+            Some(info) => info,
+            None => {
+                log_warn!(
+                    "Рейтинг {:?} не найден в repeat_map для сессии с датой {}",
+                    rating,
+                    session.date
+                );
+                continue;
+            }
+        };
+        current_card = scheduling_info.card.clone();
+        last_review_date = Some(review_date);
+    }
+
+    current_card
 }
 
 #[cfg(test)]

@@ -1124,11 +1124,11 @@ mod tests {
         let settings_json = r#"{
             "default_initial_stability": 2.0,
             "default_initial_difficulty": 5.0,
-            "parameters": "{\"request_retention\": 0.9, \"maximum_interval\": 36500.0, \"enable_fuzz\": true}"
+            "parameters": "{\"request_retention\": 0.9, \"maximum_interval\": 36500.0, \"enable_fuzz\": false}"
         }"#;
 
         // Используем фиксированное время, чтобы overdue было предсказуемым
-        let now_iso = "2024-01-02T00:00:00.000Z"; // На 1 день после создания карточек
+        let now_iso = "2024-01-01T00:00:01.000Z"; // Сразу после повторения — due ещё в будущем
 
         // Вызываем фильтрацию
         let result = filter_and_sort_cards(cards_json, &params, settings_json, now_iso);
@@ -1184,11 +1184,11 @@ mod tests {
         let settings_json = r#"{
             "default_initial_stability": 2.0,
             "default_initial_difficulty": 5.0,
-            "parameters": "{\"request_retention\": 0.9, \"maximum_interval\": 36500.0, \"enable_fuzz\": true}"
+            "parameters": "{\"request_retention\": 0.9, \"maximum_interval\": 36500.0, \"enable_fuzz\": false}"
         }"#;
 
         // Используем фиксированное время
-        let now_iso = "2024-01-02T00:00:00.000Z"; // На 1 день после создания карточек
+        let now_iso = "2024-01-01T00:00:01.000Z"; // Сразу после повторения — due ещё в будущем
 
         // Вызываем фильтрацию через существующую функцию
         let result = filter_and_sort_cards(cards_json, &params, settings_json, now_iso);
@@ -1240,11 +1240,11 @@ mod tests {
         let settings_json = r#"{
             "default_initial_stability": 2.0,
             "default_initial_difficulty": 5.0,
-            "parameters": "{\"request_retention\": 0.9, \"maximum_interval\": 36500.0, \"enable_fuzz\": true}"
+            "parameters": "{\"request_retention\": 0.9, \"maximum_interval\": 36500.0, \"enable_fuzz\": false}"
         }"#;
 
         // Используем фиксированное время
-        let now_iso = "2024-01-02T00:00:00.000Z"; // На 1 день после создания карточек
+        let now_iso = "2024-01-01T00:00:01.000Z"; // Сразу после повторения — due ещё в будущем
 
         // Вызываем фильтрацию
         let result = filter_and_sort_cards(cards_json, &params, settings_json, now_iso);
@@ -1286,11 +1286,11 @@ mod tests {
         let settings_json = r#"{
             "default_initial_stability": 2.0,
             "default_initial_difficulty": 5.0,
-            "parameters": "{\"request_retention\": 0.9, \"maximum_interval\": 36500.0, \"enable_fuzz\": true}"
+            "parameters": "{\"request_retention\": 0.9, \"maximum_interval\": 36500.0, \"enable_fuzz\": false}"
         }"#;
 
         // Используем фиксированное время
-        let now_iso = "2024-01-02T00:00:00.000Z"; // На 1 день после создания карточек
+        let now_iso = "2024-01-01T00:00:01.000Z"; // Сразу после повторения — due ещё в будущем
 
         // Вызываем WASM функцию напрямую
         let result_json =

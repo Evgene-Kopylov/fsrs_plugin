@@ -3,11 +3,12 @@
 use chrono::{DateTime, Utc};
 
 use crate::conversion::state_to_string;
-use crate::fsrs_logic::create_card_from_last_session;
+use crate::fsrs_logic::compute_card_from_reviews;
 use crate::json_parsing::{
     parse_card_from_json, parse_datetime_flexible, parse_parameters_from_json,
 };
 use crate::types::ComputedState;
+use rs_fsrs::State;
 
 /// Вычисляет текущее состояние карточки
 pub fn compute_current_state(
@@ -22,58 +23,95 @@ pub fn compute_current_state(
     let parameters = parse_parameters_from_json(&parameters_json);
     let now = parse_datetime_flexible(&now_str).unwrap_or_else(Utc::now);
 
-    // Создаем Card для алгоритма FSRS из истории reviews
-    let mut fsrs_card = create_card_from_last_session(
+    // Защита от NaN/Inf в дефолтных значениях
+    let default_stability = if default_stability.is_finite() && default_stability > 0.0 {
+        default_stability
+    } else {
+        2.5
+    };
+    let default_difficulty = if default_difficulty.is_finite() && default_difficulty > 0.0 {
+        default_difficulty
+    } else {
+        5.0
+    };
+
+    // Полностью пересчитываем карточку через fsrs.repeat()
+    // с текущими w-параметрами FSRS
+    let mut fsrs_card = compute_card_from_reviews(
         &card.reviews,
         default_stability,
         default_difficulty,
         &parameters,
+        now,
+        parameters.enable_fuzz,
     );
 
-    // Получаем последнюю сессию (если есть)
-    let last_session = card.reviews.last();
-
-    // Если есть последняя сессия, обновляем elapsed_days
-    if let Some(last_session) = last_session
-        && let Some(last_date) = parse_datetime_flexible(&last_session.date)
-    {
-        let elapsed_days = (now - last_date).num_days().max(0);
-        fsrs_card.elapsed_days = elapsed_days;
-        fsrs_card.last_review = last_date;
-
-        // Рассчитываем извлекаемость
-        let retrievability = fsrs_card.get_retrievability(now);
-
-        // Создаем вычисляемое состояние
-        let computed_state = ComputedState {
-            due: fsrs_card.due.to_rfc3339(),
-            stability: fsrs_card.stability,
-            difficulty: fsrs_card.difficulty,
-            state: state_to_string(fsrs_card.state),
-            elapsed_days: fsrs_card.elapsed_days as u64,
-            scheduled_days: fsrs_card.scheduled_days as u64,
-            reps: fsrs_card.reps as u64,
-            lapses: fsrs_card.lapses as u64,
-            retrievability,
-        };
-
-        return serde_json::to_string(&computed_state).unwrap_or_else(|_| "{}".to_string());
+    // Если есть повторения, обновляем elapsed_days от последнего до now
+    if let Some(last_session) = card.reviews.last() {
+        if let Some(last_date) = parse_datetime_flexible(&last_session.date) {
+            let elapsed_days = (now - last_date).num_days().max(0);
+            fsrs_card.elapsed_days = elapsed_days;
+            fsrs_card.last_review = last_date;
+        }
     }
 
-    // Если нет сессий, возвращаем дефолтное состояние
-    let computed_state = ComputedState {
-        due: now.to_rfc3339(),
-        stability: default_stability,
-        difficulty: default_difficulty,
-        state: "New".to_string(),
-        elapsed_days: 0,
-        scheduled_days: 0,
-        reps: 0,
-        lapses: 0,
-        retrievability: 1.0,
+    // Защита от NaN/Inf в значениях карточки после расчёта
+    let stability = if fsrs_card.stability.is_finite() && fsrs_card.stability >= 0.0 {
+        fsrs_card.stability
+    } else {
+        default_stability
+    };
+    let difficulty = if fsrs_card.difficulty.is_finite() && fsrs_card.difficulty >= 0.0 {
+        fsrs_card.difficulty
+    } else {
+        default_difficulty
     };
 
-    serde_json::to_string(&computed_state).unwrap_or_else(|_| "{}".to_string())
+    // Рассчитываем извлекаемость
+    // Для новой карточки (без повторений) rs-fsrs возвращает 0, но должна быть 1.0
+    let retrievability = if fsrs_card.state == State::New {
+        1.0
+    } else {
+        let r = fsrs_card.get_retrievability(now);
+        if r.is_finite() && (0.0..=1.0).contains(&r) {
+            r
+        } else {
+            1.0
+        }
+    };
+
+    // Создаем вычисляемое состояние
+    let computed_state = ComputedState {
+        due: fsrs_card.due.to_rfc3339(),
+        stability,
+        difficulty,
+        state: state_to_string(fsrs_card.state),
+        elapsed_days: fsrs_card.elapsed_days.max(0) as u64,
+        scheduled_days: fsrs_card.scheduled_days.max(0) as u64,
+        reps: fsrs_card.reps.max(0) as u64,
+        lapses: fsrs_card.lapses.max(0) as u64,
+        retrievability,
+    };
+
+    // Сериализация с запасным вариантом на случай невалидных чисел
+    match serde_json::to_string(&computed_state) {
+        Ok(json) => json,
+        Err(_) => {
+            // Ручное создание JSON при ошибке сериализации
+            format!(
+                r#"{{"due":"{}","stability":{},"difficulty":{},"state":"{}","elapsed_days":{},"scheduled_days":{},"reps":{},"lapses":{},"retrievability":{}}}"#,
+                computed_state.due,
+                computed_state.stability,
+                computed_state.difficulty,
+                computed_state.state,
+                computed_state.elapsed_days,
+                computed_state.scheduled_days,
+                computed_state.reps,
+                computed_state.lapses,
+                computed_state.retrievability
+            )
+        }
+    }
 }
 
 /// Проверяет, готова ли карточка к повторению
@@ -273,7 +311,7 @@ mod tests {
         }"#
         .to_string();
 
-        let now = "2025-01-02T10:00:00Z".to_string(); // Через 1 день после последнего повторения
+        let now = "2025-01-01T10:00:01Z".to_string(); // Сразу после повторения — due ещё в будущем
         let params_json = create_test_parameters_json();
         let default_stability = 2.5;
         let default_difficulty = 5.0;
@@ -298,7 +336,7 @@ mod tests {
         let parsed_result: Result<bool, _> = serde_json::from_str(&result);
         assert!(parsed_result.is_ok());
         let is_due = parsed_result.unwrap();
-        // Карточка не должна быть готова к повторению (ещё 1 день до due)
+        // Карточка не должна быть готова к повторению (due после repeat > now)
         assert!(
             !is_due,
             "Карточка не должна быть готова к повторению, но is_due = {}",
