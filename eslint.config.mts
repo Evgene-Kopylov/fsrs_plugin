@@ -62,6 +62,9 @@ export default tseslint.config(
                 "error",
                 "@typescript-eslint/no-explicit-any",
             ],
+
+            // no-unsupported-api — warn, т.к. метаданные не всегда точны
+            "obsidianmd/no-unsupported-api": "warn",
         },
     },
     globalIgnores([
