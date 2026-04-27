@@ -382,14 +382,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 
         this.lastAction = "sort";
 
-        verboseLog("📊 handleSortClick:", {
-            field,
-            nextDirection,
-            params: this.params
-                ? (JSON.parse(JSON.stringify(this.params)) as unknown)
-                : null,
-        });
-
         // Если есть кэшированные карточки, сортируем локально
         if (this.cachedCardsWithState && this.originalCardsWithState) {
             let cardsToRender = this.cachedCardsWithState;
