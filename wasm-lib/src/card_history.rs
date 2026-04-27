@@ -3,7 +3,7 @@
 use chrono::{DateTime, Utc};
 use rs_fsrs::{Card, FSRS, State};
 
-use crate::conversion::{create_fsrs_parameters, rating_from_str, state_to_string};
+use crate::conversion::{create_fsrs_parameters, rating_from_u8, state_to_string};
 use crate::json_parsing::{
     parse_card_from_json, parse_datetime_flexible, parse_parameters_from_json,
 };
@@ -71,7 +71,7 @@ pub fn compute_card_history(
         };
         current_card.elapsed_days = elapsed_days as i64;
 
-        let rating = rating_from_str(&session.rating);
+        let rating = rating_from_u8(session.rating);
         let repeat_map = fsrs.repeat(current_card.clone(), review_date);
         let scheduling_info = repeat_map
             .get(&rating)
@@ -92,7 +92,7 @@ pub fn compute_card_history(
 
         let hist_state = HistoricalState {
             date: review_date.to_rfc3339(),
-            rating: Some(session.rating.clone()),
+            rating: Some(session.rating),
             stability: updated_card.stability,
             difficulty: updated_card.difficulty,
             state: state_to_string(updated_card.state),
@@ -140,7 +140,7 @@ mod tests {
     fn test_compute_card_history_single_review() {
         let card_json = r#"{
             "reviews": [
-                {"date": "2025-01-01T10:00:00Z", "rating": "Good", "stability": 0.0, "difficulty": 0.0}
+                {"date": "2025-01-01T10:00:00Z", "rating": 2, "stability": 0.0, "difficulty": 0.0}
             ]
         }"#
         .to_string();
@@ -165,7 +165,7 @@ mod tests {
 
         let entry = &history[0];
         assert_eq!(entry.date, "2025-01-01T10:00:00+00:00");
-        assert_eq!(entry.rating.as_deref(), Some("Good"));
+        assert_eq!(entry.rating, Some(2u8));
         assert_eq!(entry.state, "Learning");
         assert_eq!(entry.elapsed_days, 0);
         assert!(
@@ -192,8 +192,8 @@ mod tests {
     fn test_compute_card_history_two_reviews() {
         let card_json = r#"{
             "reviews": [
-                {"date": "2025-01-01T10:00:00Z", "rating": "Good", "stability": 0.0, "difficulty": 0.0},
-                {"date": "2025-01-10T10:00:00Z", "rating": "Good", "stability": 0.0, "difficulty": 0.0}
+                {"date": "2025-01-01T10:00:00Z", "rating": 2, "stability": 0.0, "difficulty": 0.0},
+                {"date": "2025-01-10T10:00:00Z", "rating": 2, "stability": 0.0, "difficulty": 0.0}
             ]
         }"#
         .to_string();
@@ -219,7 +219,7 @@ mod tests {
         // Проверяем первую запись
         let first = &history[0];
         assert_eq!(first.date, "2025-01-01T10:00:00+00:00");
-        assert_eq!(first.rating.as_deref(), Some("Good"));
+        assert_eq!(first.rating, Some(2u8));
         assert_eq!(
             first.elapsed_days, 0,
             "Первое повторение — elapsed_days = 0"
@@ -240,7 +240,7 @@ mod tests {
         // Проверяем вторую запись
         let second = &history[1];
         assert_eq!(second.date, "2025-01-10T10:00:00+00:00");
-        assert_eq!(second.rating.as_deref(), Some("Good"));
+        assert_eq!(second.rating, Some(2u8));
         assert_eq!(second.elapsed_days, 9, "Между повторениями 9 дней");
         assert_eq!(second.retrievability, 1.0);
         let retrievability_before_2 = second.retrievability_before.unwrap();
@@ -274,9 +274,9 @@ mod tests {
     fn test_compute_card_history_invalid_date_skipped() {
         let card_json = r#"{
             "reviews": [
-                {"date": "2025-01-01T10:00:00Z", "rating": "Good", "stability": 0.0, "difficulty": 0.0},
-                {"date": "invalid-date", "rating": "Hard", "stability": 0.0, "difficulty": 0.0},
-                {"date": "2025-01-10T10:00:00Z", "rating": "Good", "stability": 0.0, "difficulty": 0.0}
+                {"date": "2025-01-01T10:00:00Z", "rating": 2, "stability": 0.0, "difficulty": 0.0},
+                {"date": "invalid-date", "rating": 1, "stability": 0.0, "difficulty": 0.0},
+                {"date": "2025-01-10T10:00:00Z", "rating": 2, "stability": 0.0, "difficulty": 0.0}
             ]
         }"#
         .to_string();
@@ -300,7 +300,7 @@ mod tests {
         // Невалидная дата должна быть пропущена, должно быть 2 записи вместо 3
         assert_eq!(history.len(), 2, "Невалидная дата должна быть пропущена");
 
-        assert_eq!(history[0].rating.as_deref(), Some("Good"));
-        assert_eq!(history[1].rating.as_deref(), Some("Good"));
+        assert_eq!(history[0].rating, Some(2u8));
+        assert_eq!(history[1].rating, Some(2u8));
     }
 }

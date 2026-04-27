@@ -209,7 +209,7 @@ mod tests {
             "reviews": [
                 {
                     "date": "2025-01-01T10:00:00Z",
-                    "rating": "Good",
+                    "rating": 2,
                     "stability": 5.0,
                     "difficulty": 3.0
                 }
@@ -303,7 +303,7 @@ mod tests {
             "reviews": [
                 {
                     "date": "2025-01-01T10:00:00Z",
-                    "rating": "Good",
+                    "rating": 2,
                     "stability": 2.0,
                     "difficulty": 3.0
                 }

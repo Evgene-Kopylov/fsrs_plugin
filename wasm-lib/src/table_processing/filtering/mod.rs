@@ -1005,7 +1005,7 @@ mod tests {
         let cards_json = r#"[
             {"filePath": "good.md", "reviews": []},
             {"filePath": "invalid_reviews.md", "reviews": "not an array"},
-            {"filePath": "invalid_date.md", "reviews": [{"date": "invalid date", "rating": "Good", "stability": 1.0, "difficulty": 5.0}]},
+            {"filePath": "invalid_date.md", "reviews": [{"date": "invalid date", "rating": 2, "stability": 1.0, "difficulty": 5.0}]},
             {"filePath": "another.md", "reviews": []}
         ]"#;
 
@@ -1081,17 +1081,17 @@ mod tests {
         // Создаем JSON карточек с разными значениями overdue
         let cards_json = r#"[
             {
-                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": 2, "stability": 5.0, "difficulty": 3.0}],
                 "filePath": "card1.md",
                 "due": "2024-01-03_00:00"
             },
             {
-                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": 2, "stability": 5.0, "difficulty": 3.0}],
                 "filePath": "card2.md",
                 "due": "2024-01-03_00:00"
             },
             {
-                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": 2, "stability": 5.0, "difficulty": 3.0}],
                 "filePath": "card3.md",
                 "due": "2024-01-03_00:00"
             }
@@ -1156,17 +1156,17 @@ mod tests {
         // Создаем JSON карточек с разными значениями overdue
         let cards_json = r#"[
             {
-                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": 2, "stability": 5.0, "difficulty": 3.0}],
                 "filePath": "card1.md",
                 "due": "2024-01-03_00:00"
             },
             {
-                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": 2, "stability": 5.0, "difficulty": 3.0}],
                 "filePath": "card2.md",
                 "due": "2024-01-03_00:00"
             },
             {
-                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": 2, "stability": 5.0, "difficulty": 3.0}],
                 "filePath": "card3.md",
                 "due": "2024-01-03_00:00"
             }
@@ -1218,12 +1218,12 @@ mod tests {
         // Создаем JSON карточек
         let cards_json = r#"[
             {
-                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": 2, "stability": 5.0, "difficulty": 3.0}],
                 "filePath": "card1.md",
                 "due": "2024-01-03_00:00"
             },
             {
-                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": 2, "stability": 5.0, "difficulty": 3.0}],
                 "filePath": "card2.md",
                 "due": "2024-01-03_00:00"
             }
@@ -1268,12 +1268,12 @@ mod tests {
         // Создаем JSON карточек
         let cards_json = r#"[
             {
-                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": 2, "stability": 5.0, "difficulty": 3.0}],
                 "filePath": "card1.md",
                 "due": "2024-01-03_00:00"
             },
             {
-                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "reviews": [{"date": "2024-01-01T00:00:00.000Z", "rating": 2, "stability": 5.0, "difficulty": 3.0}],
                 "filePath": "card2.md",
                 "due": "2024-01-03_00:00"
             }
@@ -1349,24 +1349,24 @@ mod tests {
                 "filePath": "card0.md"
             },
             {
-                "reviews": [{"date": "2024-01-01T10:00:00Z", "rating": "Again", "stability": 0.5, "difficulty": 8.0}],
+                "reviews": [{"date": "2024-01-01T10:00:00Z", "rating": 0, "stability": 0.5, "difficulty": 8.0}],
                 "filePath": "card1_again.md"
             },
             {
-                "reviews": [{"date": "2024-01-01T10:00:00Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0}],
+                "reviews": [{"date": "2024-01-01T10:00:00Z", "rating": 2, "stability": 5.0, "difficulty": 3.0}],
                 "filePath": "card1_good.md"
             },
             {
                 "reviews": [
-                    {"date": "2024-01-01T10:00:00Z", "rating": "Good", "stability": 5.0, "difficulty": 3.0},
-                    {"date": "2024-01-02T10:00:00Z", "rating": "Good", "stability": 8.0, "difficulty": 2.5}
+                    {"date": "2024-01-01T10:00:00Z", "rating": 2, "stability": 5.0, "difficulty": 3.0},
+                    {"date": "2024-01-02T10:00:00Z", "rating": 2, "stability": 8.0, "difficulty": 2.5}
                 ],
                 "filePath": "card2.md"
             },
             {
                 "reviews": [
-                    {"date": "2024-01-01T10:00:00Z", "rating": "Again", "stability": 0.5, "difficulty": 8.0},
-                    {"date": "2024-01-02T10:00:00Z", "rating": "Good", "stability": 2.0, "difficulty": 5.0}
+                    {"date": "2024-01-01T10:00:00Z", "rating": 0, "stability": 0.5, "difficulty": 8.0},
+                    {"date": "2024-01-02T10:00:00Z", "rating": 2, "stability": 2.0, "difficulty": 5.0}
                 ],
                 "filePath": "card_again_then_good.md"
             }

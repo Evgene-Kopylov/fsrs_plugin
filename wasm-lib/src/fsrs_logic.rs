@@ -1,4 +1,4 @@
-use crate::conversion::{create_fsrs_parameters, rating_from_str};
+use crate::conversion::{create_fsrs_parameters, rating_from_u8};
 use crate::json_parsing::parse_datetime_flexible;
 use crate::log_warn;
 use crate::types::{FsrsParameters, ReviewSession};
@@ -100,7 +100,7 @@ pub fn compute_card_from_reviews(
         };
         current_card.elapsed_days = elapsed_days;
 
-        let rating = rating_from_str(&session.rating);
+        let rating = rating_from_u8(session.rating);
         let repeat_map = fsrs.repeat(current_card.clone(), review_date);
         let scheduling_info = match repeat_map.get(&rating) {
             Some(info) => info,
@@ -133,10 +133,10 @@ mod tests {
         }
     }
 
-    fn create_test_review_session(date_str: &str, rating: &str) -> ReviewSession {
+    fn create_test_review_session(date_str: &str, rating: u8) -> ReviewSession {
         ReviewSession {
             date: date_str.to_string(),
-            rating: rating.to_string(),
+            rating,
         }
     }
 
@@ -165,7 +165,7 @@ mod tests {
     #[test]
     fn test_create_card_from_last_session_with_single_review() {
         let params = create_test_parameters();
-        let reviews = vec![create_test_review_session("2025-01-01T10:00:00Z", "Good")];
+        let reviews = vec![create_test_review_session("2025-01-01T10:00:00Z", 2u8)];
 
         let card = create_card_from_last_session(&reviews, 2.5, 5.0, &params);
 
@@ -188,9 +188,9 @@ mod tests {
     fn test_create_card_from_last_session_with_multiple_reviews() {
         let params = create_test_parameters();
         let reviews = vec![
-            create_test_review_session("2025-01-01T10:00:00Z", "Again"),
-            create_test_review_session("2025-01-02T10:00:00Z", "Good"),
-            create_test_review_session("2025-01-03T10:00:00Z", "Easy"),
+            create_test_review_session("2025-01-01T10:00:00Z", 0u8),
+            create_test_review_session("2025-01-02T10:00:00Z", 2u8),
+            create_test_review_session("2025-01-03T10:00:00Z", 3u8),
         ];
 
         let card = create_card_from_last_session(&reviews, 2.5, 5.0, &params);
@@ -206,7 +206,7 @@ mod tests {
     #[test]
     fn test_create_card_from_last_session_learning_state() {
         let params = create_test_parameters();
-        let reviews = vec![create_test_review_session("2025-01-01T10:00:00Z", "Again")];
+        let reviews = vec![create_test_review_session("2025-01-01T10:00:00Z", 0u8)];
 
         let card = create_card_from_last_session(&reviews, 2.5, 5.0, &params);
 
@@ -220,7 +220,7 @@ mod tests {
         let params = create_test_parameters();
         let reviews = vec![ReviewSession {
             date: "invalid date".to_string(),
-            rating: "Good".to_string(),
+            rating: 2u8,
         }];
 
         // Не должно паниковать, должно использовать текущее время для last_review
@@ -239,41 +239,41 @@ mod tests {
         let params = create_test_parameters();
 
         // Test 1: Again before any successful review -> lapses = 0
-        let reviews1 = vec![create_test_review_session("2025-01-01T10:00:00Z", "Again")];
+        let reviews1 = vec![create_test_review_session("2025-01-01T10:00:00Z", 0u8)];
         let card1 = create_card_from_last_session(&reviews1, 2.5, 5.0, &params);
         assert_eq!(card1.reps, 1);
 
         // Test 2: Good then Again -> lapses вычисляются алгоритмом FSRS
         let reviews2 = vec![
-            create_test_review_session("2025-01-01T10:00:00Z", "Good"),
-            create_test_review_session("2025-01-02T10:00:00Z", "Again"),
+            create_test_review_session("2025-01-01T10:00:00Z", 2u8),
+            create_test_review_session("2025-01-02T10:00:00Z", 0u8),
         ];
         let card2 = create_card_from_last_session(&reviews2, 2.5, 5.0, &params);
         assert_eq!(card2.reps, 2);
 
         // Test 3: Good, Good, Again
         let reviews3 = vec![
-            create_test_review_session("2025-01-01T10:00:00Z", "Good"),
-            create_test_review_session("2025-01-02T10:00:00Z", "Good"),
-            create_test_review_session("2025-01-03T10:00:00Z", "Again"),
+            create_test_review_session("2025-01-01T10:00:00Z", 2u8),
+            create_test_review_session("2025-01-02T10:00:00Z", 2u8),
+            create_test_review_session("2025-01-03T10:00:00Z", 0u8),
         ];
         let card3 = create_card_from_last_session(&reviews3, 2.5, 5.0, &params);
         assert_eq!(card3.reps, 3);
 
         // Test 4: Again, Good, Again
         let reviews4 = vec![
-            create_test_review_session("2025-01-01T10:00:00Z", "Again"),
-            create_test_review_session("2025-01-02T10:00:00Z", "Good"),
-            create_test_review_session("2025-01-03T10:00:00Z", "Again"),
+            create_test_review_session("2025-01-01T10:00:00Z", 0u8),
+            create_test_review_session("2025-01-02T10:00:00Z", 2u8),
+            create_test_review_session("2025-01-03T10:00:00Z", 0u8),
         ];
         let card4 = create_card_from_last_session(&reviews4, 2.5, 5.0, &params);
         assert_eq!(card4.reps, 3);
 
         // Test 5: Again, Again, Good
         let reviews5 = vec![
-            create_test_review_session("2025-01-01T10:00:00Z", "Again"),
-            create_test_review_session("2025-01-02T10:00:00Z", "Again"),
-            create_test_review_session("2025-01-03T10:00:00Z", "Good"),
+            create_test_review_session("2025-01-01T10:00:00Z", 0u8),
+            create_test_review_session("2025-01-02T10:00:00Z", 0u8),
+            create_test_review_session("2025-01-03T10:00:00Z", 2u8),
         ];
         let card5 = create_card_from_last_session(&reviews5, 2.5, 5.0, &params);
         assert_eq!(card5.reps, 3);
@@ -282,7 +282,7 @@ mod tests {
     #[test]
     fn test_create_card_from_last_session_with_hard_rating() {
         let params = create_test_parameters();
-        let reviews = vec![create_test_review_session("2025-01-01T10:00:00Z", "Hard")];
+        let reviews = vec![create_test_review_session("2025-01-01T10:00:00Z", 1u8)];
 
         let card = create_card_from_last_session(&reviews, 2.5, 5.0, &params);
 

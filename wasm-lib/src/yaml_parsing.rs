@@ -151,13 +151,13 @@ pub fn create_default_parameters() -> FsrsParameters {
 fn validate_review_session(session: &serde_yaml::Value) -> Option<ReviewSession> {
     let date_str = session.get("date")?.as_str()?;
     let date = parse_datetime_flexible(date_str)?;
-    let rating = session.get("rating")?.as_str()?;
-    if !["Again", "Hard", "Good", "Easy"].contains(&rating) {
+    let rating = session.get("rating")?.as_i64()?;
+    if !(0..=3).contains(&rating) {
         return None;
     }
     Some(ReviewSession {
         date: date.to_rfc3339(),
-        rating: rating.to_string(),
+        rating: rating as u8,
     })
 }
 
@@ -180,7 +180,7 @@ pub fn validate_review_sessions(card: &ModernFsrsCard) -> Vec<String> {
         }
 
         // Проверяем рейтинг
-        if !["Again", "Hard", "Good", "Easy"].contains(&session.rating.as_str()) {
+        if !(0..=3).contains(&session.rating) {
             errors.push(format!(
                 "Session {}: invalid rating '{}'",
                 i, session.rating
@@ -213,19 +213,19 @@ mod tests {
         let yaml = r#"
 reviews:
   - date: "2025-01-01T10:00:00Z"
-    rating: "Good"
+    rating: 2
   - date: "2025-01-02T14:30:00Z"
-    rating: "Easy"
+    rating: 3
 "#;
         let card = parse_yaml_to_card(yaml);
 
         assert_eq!(card.reviews.len(), 2);
 
         assert_eq!(card.reviews[0].date, "2025-01-01T10:00:00Z");
-        assert_eq!(card.reviews[0].rating, "Good");
+        assert_eq!(card.reviews[0].rating, 2u8);
 
         assert_eq!(card.reviews[1].date, "2025-01-02T14:30:00Z");
-        assert_eq!(card.reviews[1].rating, "Easy");
+        assert_eq!(card.reviews[1].rating, 3u8);
     }
 
     #[test]
@@ -242,7 +242,7 @@ reviews:
         let original_card = ModernFsrsCard {
             reviews: vec![ReviewSession {
                 date: "2025-01-01T10:00:00Z".to_string(),
-                rating: "Good".to_string(),
+                rating: 2u8,
             }],
             file_path: None,
         };
@@ -277,14 +277,14 @@ enable_fuzz: false
         let frontmatter = r#"---
 reviews:
   - date: "2025-01-01T10:00:00Z"
-    rating: "Good"
+    rating: 2
 ---
 Some content here"#;
 
         let card = extract_fsrs_from_frontmatter(frontmatter).unwrap();
 
         assert_eq!(card.reviews.len(), 1);
-        assert_eq!(card.reviews[0].rating, "Good");
+        assert_eq!(card.reviews[0].rating, 2u8);
     }
 
     #[test]
@@ -313,7 +313,7 @@ Content"#;
         let card = ModernFsrsCard {
             reviews: vec![ReviewSession {
                 date: "2025-01-01T10:00:00Z".to_string(),
-                rating: "Good".to_string(),
+                rating: 2u8,
             }],
             file_path: None,
         };
@@ -323,7 +323,7 @@ Content"#;
         assert!(frontmatter.starts_with("---\n"));
         assert!(frontmatter.ends_with("---"));
         assert!(frontmatter.contains("reviews:"));
-        assert!(frontmatter.contains("rating: Good"));
+        assert!(frontmatter.contains("rating: 2"));
         assert!(!frontmatter.contains("srs:")); // Поле srs больше не должно быть
     }
 
@@ -332,7 +332,7 @@ Content"#;
         let card = ModernFsrsCard {
             reviews: vec![ReviewSession {
                 date: "2025-01-01T10:00:00Z".to_string(),
-                rating: "Good".to_string(),
+                rating: 2u8,
             }],
             file_path: None,
         };
@@ -346,7 +346,7 @@ Content"#;
         let card = ModernFsrsCard {
             reviews: vec![ReviewSession {
                 date: "invalid-date".to_string(),
-                rating: "Good".to_string(),
+                rating: 2u8,
             }],
             file_path: None,
         };
@@ -361,7 +361,7 @@ Content"#;
         let card = ModernFsrsCard {
             reviews: vec![ReviewSession {
                 date: "2025-01-01T10:00:00Z".to_string(),
-                rating: "InvalidRating".to_string(),
+                rating: 255u8,
             }],
             file_path: None,
         };
@@ -377,7 +377,7 @@ Content"#;
         let frontmatter = r#"---
 reviews:
   - date: 2026-04-13T09:00:00+02:00
-    rating: Good
+    rating: 2
     stability: 25.8
     difficulty: 2.3
 ---"#;
@@ -386,7 +386,7 @@ reviews:
 
         assert_eq!(card.reviews.len(), 1);
         assert_eq!(card.reviews[0].date, "2026-04-13T07:00:00+00:00");
-        assert_eq!(card.reviews[0].rating, "Good");
+        assert_eq!(card.reviews[0].rating, 2u8);
     }
 
     #[test]
@@ -396,7 +396,7 @@ reviews:
 srs: true
 reviews:
   - date: 2026-04-13T09:00:00+02:00
-    rating: Good
+    rating: 2
     stability: 25.8
     difficulty: 2.3
 ---"#;
@@ -405,7 +405,7 @@ reviews:
 
         assert_eq!(card.reviews.len(), 1);
         assert_eq!(card.reviews[0].date, "2026-04-13T07:00:00+00:00");
-        assert_eq!(card.reviews[0].rating, "Good");
+        assert_eq!(card.reviews[0].rating, 2u8);
     }
 
     #[test]

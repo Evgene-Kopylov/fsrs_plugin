@@ -9,6 +9,7 @@ import {
 } from "../utils/fsrs-helper";
 import type FsrsPlugin from "../main";
 import type { FSRSRating } from "../interfaces/fsrs";
+import { numberToRating } from "../interfaces/fsrs";
 import { ReviewHistoryModal } from "./review-history-modal";
 import { showNotice } from "../utils/notice";
 import { getLocalizedNoun, i18n } from "../utils/i18n";
@@ -124,7 +125,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
                 if (card.reviews.length > 0) {
                     const lastReview = card.reviews[card.reviews.length - 1];
                     if (lastReview) {
-                        this.mainButton.textContent = `Повторение: ${this.translateRating(lastReview.rating)}`;
+                        this.mainButton.textContent = `Повторение: ${this.translateRating(numberToRating(lastReview.rating))}`;
                     } else {
                         this.mainButton.textContent = "Повторение";
                     }

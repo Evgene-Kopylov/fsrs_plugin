@@ -1,13 +1,13 @@
 use crate::types::FsrsParameters;
 use rs_fsrs::{Parameters, Rating, State};
 
-/// Конвертирует строковый рейтинг в Rating enum
-pub fn rating_from_str(rating: &str) -> Rating {
+/// Конвертирует числовой рейтинг (0-3) в Rating enum
+pub fn rating_from_u8(rating: u8) -> Rating {
     match rating {
-        "Again" => Rating::Again,
-        "Hard" => Rating::Hard,
-        "Good" => Rating::Good,
-        "Easy" => Rating::Easy,
+        0 => Rating::Again,
+        1 => Rating::Hard,
+        2 => Rating::Good,
+        3 => Rating::Easy,
         _ => Rating::Good,
     }
 }
@@ -38,19 +38,19 @@ mod tests {
     use rs_fsrs::{Parameters, Rating, State};
 
     #[test]
-    fn test_rating_from_str_valid() {
-        assert_eq!(rating_from_str("Again"), Rating::Again);
-        assert_eq!(rating_from_str("Hard"), Rating::Hard);
-        assert_eq!(rating_from_str("Good"), Rating::Good);
-        assert_eq!(rating_from_str("Easy"), Rating::Easy);
+    fn test_rating_from_u8_valid() {
+        assert_eq!(rating_from_u8(0), Rating::Again);
+        assert_eq!(rating_from_u8(1), Rating::Hard);
+        assert_eq!(rating_from_u8(2), Rating::Good);
+        assert_eq!(rating_from_u8(3), Rating::Easy);
     }
 
     #[test]
-    fn test_rating_from_str_invalid() {
-        // Для некорректных строк возвращается Good как значение по умолчанию
-        assert_eq!(rating_from_str(""), Rating::Good);
-        assert_eq!(rating_from_str("Unknown"), Rating::Good);
-        assert_eq!(rating_from_str("AGAIN"), Rating::Good); // чувствительность к регистру
+    fn test_rating_from_u8_invalid() {
+        // Для некорректных значений возвращается Good как значение по умолчанию
+        assert_eq!(rating_from_u8(255), Rating::Good);
+        assert_eq!(rating_from_u8(4), Rating::Good);
+        assert_eq!(rating_from_u8(100), Rating::Good);
     }
 
     #[test]

@@ -21,10 +21,11 @@ pub fn get_fsrs_yaml() -> String {
 }
 
 // Функция для обновления карточки FSRS на основе оценки
+/// Обновляет карточку FSRS на основе оценки
 #[wasm_bindgen]
 pub fn review_card(
     card_json: String,
-    rating_str: String,
+    rating: u8,
     now_str: String,
     parameters_json: String,
     default_stability: f64,
@@ -32,7 +33,7 @@ pub fn review_card(
 ) -> String {
     review_functions::review_card(
         card_json,
-        rating_str,
+        rating,
         now_str,
         parameters_json,
         default_stability,
@@ -41,10 +42,11 @@ pub fn review_card(
 }
 
 // Функция для получения YAML строки после повторения карточки
+/// Получает YAML строку после повторения карточки
 #[wasm_bindgen]
 pub fn get_fsrs_yaml_after_review(
     card_json: String,
-    rating_str: String,
+    rating: u8,
     now_str: String,
     parameters_json: String,
     default_stability: f64,
@@ -52,7 +54,7 @@ pub fn get_fsrs_yaml_after_review(
 ) -> String {
     review_functions::get_fsrs_yaml_after_review(
         card_json,
-        rating_str,
+        rating,
         now_str,
         parameters_json,
         default_stability,

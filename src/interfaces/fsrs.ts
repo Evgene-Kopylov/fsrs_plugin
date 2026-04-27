@@ -3,13 +3,38 @@
 // Состояния карточки FSRS
 export type FSRSState = "New" | "Learning" | "Review" | "Relearning";
 
-// Оценки для повторения
+// Оценки для повторения (используется в UI)
 export type FSRSRating = "Again" | "Hard" | "Good" | "Easy";
 
-// Сессия повторения карточки (хранится в истории)
+// Маппинг числового rating (из YAML/JSON) в строковый FSRSRating
+const RATING_MAP: Record<number, FSRSRating> = {
+    0: "Again",
+    1: "Hard",
+    2: "Good",
+    3: "Easy",
+};
+
+const RATING_TO_NUM: Record<FSRSRating, number> = {
+    Again: 0,
+    Hard: 1,
+    Good: 2,
+    Easy: 3,
+};
+
+/** Преобразует число (0-3) в FSRSRating для отображения */
+export function numberToRating(n: number): FSRSRating {
+    return RATING_MAP[n] ?? "Good";
+}
+
+/** Преобразует FSRSRating в число для передачи в WASM */
+export function ratingToNumber(r: FSRSRating): number {
+    return RATING_TO_NUM[r];
+}
+
+// Сессия повторения карточки (хранится в истории/YAML)
 export interface ReviewSession {
     date: string; // ISO 8601 строка
-    rating: FSRSRating;
+    rating: number; // 0=Again, 1=Hard, 2=Good, 3=Easy
 }
 
 // Современная карточка FSRS (новый формат)
@@ -21,7 +46,7 @@ export interface ModernFSRSCard {
 // Историческое состояние карточки после повторения (возвращается из compute_card_history)
 export interface HistoricalState {
     date: string; // ISO 8601 строка
-    rating: FSRSRating | null;
+    rating: number | null; // 0=Again, 1=Hard, 2=Good, 3=Easy
     stability: number;
     difficulty: number;
     state: FSRSState;

@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 /// Сессия повторения карточки
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ReviewSession {
-    pub date: String,   // ISO 8601 строка
-    pub rating: String, // "Again", "Hard", "Good", "Easy"
+    pub date: String, // ISO 8601 строка
+    pub rating: u8,   // 0=Again, 1=Hard, 2=Good, 3=Easy
 }
 
 /// Современная карточка FSRS с reviews
@@ -46,7 +46,7 @@ pub struct HistoricalState {
     /// Дата события (ISO 8601)
     pub date: String,
     /// Рейтинг, если это момент после повторения
-    pub rating: Option<String>,
+    pub rating: Option<u8>,
     /// Стабильность после повторения
     pub stability: f64,
     /// Сложность после повторения
