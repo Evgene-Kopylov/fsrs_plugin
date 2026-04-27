@@ -169,11 +169,11 @@ export class ReviewHistoryModal extends Modal {
         headerRow.insertCell().textContent = i18n.t("history.table.number");
         headerRow.insertCell().textContent = i18n.t("history.table.datetime");
         headerRow.insertCell().textContent = i18n.t("history.table.rating");
+        headerRow.insertCell().textContent = i18n.t("history.table.difficulty");
+        headerRow.insertCell().textContent = i18n.t("history.table.stability");
         headerRow.insertCell().textContent = i18n.t(
             "history.table.retrievability",
         );
-        headerRow.insertCell().textContent = i18n.t("history.table.stability");
-        headerRow.insertCell().textContent = i18n.t("history.table.difficulty");
         headerRow.insertCell().textContent = i18n.t(
             "history.table.days_since_last",
         );
@@ -214,6 +214,14 @@ export class ReviewHistoryModal extends Modal {
                 ratingCell.textContent = "-";
             }
 
+            // Сложность D (округленная)
+            const difficultyCell = row.insertCell();
+            difficultyCell.textContent = state.difficulty.toFixed(1);
+
+            // Стабильность S (округленная)
+            const stabilityCell = row.insertCell();
+            stabilityCell.textContent = state.stability.toFixed(1);
+
             // Извлекаемость R (перед ответом) — значение в процентах
             const retrievabilityCell = row.insertCell();
             if (
@@ -226,14 +234,6 @@ export class ReviewHistoryModal extends Modal {
             } else {
                 retrievabilityCell.textContent = "-";
             }
-
-            // Стабильность (округленная)
-            const stabilityCell = row.insertCell();
-            stabilityCell.textContent = state.stability.toFixed(1);
-
-            // Сложность (округленная)
-            const difficultyCell = row.insertCell();
-            difficultyCell.textContent = state.difficulty.toFixed(1);
 
             // Дней с предыдущего повторения (из HistoricalState)
             const intervalCell = row.insertCell();

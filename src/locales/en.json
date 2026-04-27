@@ -132,7 +132,7 @@
             "heading": "Examples",
             "actual": "### Actual overdue cards (most urgent)\n```fsrs-table\nSELECT file as \"File\", reps as \"Reps\", overdue as \"Overdue\", retrievability as \"Retrievability\"\nLIMIT 20\n```",
             "sort": "### Sorting by field\n```fsrs-table\nSELECT file as \"File\", reps as \"Reps\", due as \"Next review\", state as \"State\"\nORDER BY due DESC\nLIMIT 20\n```",
-            "full": "### Full table (all fields)\n```fsrs-table\nSELECT file as \"🗎\", difficulty as \"D\", due as \"D\", elapsed as \"E\", overdue as \"O\", reps as \"R\", retrievability as \"R\", scheduled as \"S\", stability as \"S\", state as \"S\"\nLIMIT 20\n```"
+            "full": "### Full table (all fields)\n```fsrs-table\nSELECT file as \"🗎\", difficulty as \"D\", stability as \"S\", retrievability as \"R\", due as \"D\", elapsed as \"E\", overdue as \"O\", reps as \"R\", scheduled as \"S\", state as \"S\"\nLIMIT 20\n```"
         },
         "available_fields": {
             "heading": "Available fields (columns)",

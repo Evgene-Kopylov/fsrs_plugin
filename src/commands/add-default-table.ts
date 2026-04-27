@@ -8,7 +8,7 @@ import { extractFrontmatterWithMatch } from "../utils/fsrs/fsrs-frontmatter";
  * Дефолтный блок fsrs-table
  */
 export const DEFAULT_TABLE_BLOCK =
-    '```fsrs-table\nSELECT file as " ", retrievability as "R",\n       stability as "S", difficulty as "D",\n       overdue as "Overdue"\nLIMIT 20\n```\n';
+    '```fsrs-table\nSELECT file as " ", difficulty as "D",\n       stability as "S", retrievability as "R",\n       overdue as "Overdue"\nLIMIT 20\n```\n';
 
 /**
  * Чистая функция: добавляет дефолтный блок fsrs-table в начало содержимого.
