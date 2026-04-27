@@ -130,11 +130,11 @@ FSRS cards are stored in the note's frontmatter under the `reviews` field:
 ---
 reviews:
   - date: "2025-01-15T10:30:00Z"
-    rating: "Good"
+    rating: 2
     stability: 5.21
     difficulty: 0.45
   - date: "2025-01-20T14:15:00Z"
-    rating: "Easy"
+    rating: 3
     stability: 12.5
     difficulty: 0.35
 ---
