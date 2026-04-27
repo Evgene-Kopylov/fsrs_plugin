@@ -37,6 +37,7 @@ import { parseSqlBlock } from "./fsrs-table-params";
  * @returns HTMLDivElement контейнер таблицы
  */
 export async function generateTableDOM(
+    parentEl: HTMLElement,
     cardsWithState: CardWithState[],
     totalCount: number,
     params: TableParams,
@@ -51,6 +52,10 @@ export async function generateTableDOM(
 
     const container = createDiv();
     container.className = "fsrs-table-container";
+
+    // Сразу вставляем в DOM, чтобы браузер отрисовывал строки между чанками
+    parentEl.empty();
+    parentEl.appendChild(container);
 
     // Таблица
     const table = createEl("table");
@@ -140,7 +145,8 @@ export async function generateTableDOM(
 
         // Отдаём управление браузеру между чанками
         if (i + CHUNK_SIZE < cardsToShow.length) {
-            await new Promise((resolve) => activeWindow.setTimeout(resolve, 0));
+            // Отдаём управление браузеру для отрисовки добавленных строк
+            await new Promise((resolve) => setTimeout(resolve, 0));
         }
     }
 
@@ -174,6 +180,7 @@ export async function generateTableDOM(
  */
 
 export async function generateTableDOMFromCards(
+    parentEl: HTMLElement,
     cachedCards: CachedCard[],
     params: TableParams,
     settings: FSRSSettings,
@@ -195,6 +202,7 @@ export async function generateTableDOMFromCards(
     );
 
     const container = await generateTableDOM(
+        parentEl,
         cards,
         totalCount,
         params,
@@ -206,6 +214,7 @@ export async function generateTableDOMFromCards(
 }
 
 export async function generateTableDOMFromSql(
+    parentEl: HTMLElement,
     cards: ModernFSRSCard[],
     sqlSource: string,
     settings: FSRSSettings,
@@ -229,6 +238,7 @@ export async function generateTableDOMFromSql(
     );
 
     const container = await generateTableDOM(
+        parentEl,
         cardsWithState,
         totalCount,
         params,

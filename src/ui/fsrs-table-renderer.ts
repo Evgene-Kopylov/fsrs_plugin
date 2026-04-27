@@ -156,19 +156,18 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 return;
             }
 
-            let container: HTMLDivElement;
             // Генерируем DOM таблицы
             if (this.params) {
                 // Если параметры уже есть (при сортировке), используем их
 
                 const result = await generateTableDOMFromCards(
+                    this.container,
                     allCards,
                     this.params,
                     this.plugin.settings,
                     this.plugin.app,
                     now,
                 );
-                container = result.container;
                 this.cachedCardsWithState = result.cards;
                 this.cachedTotalCount = result.totalCount;
                 if (this.originalCardsWithState === null) {
@@ -183,13 +182,13 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 const sqlParams = parseSqlBlock(this.sourceText);
 
                 const result = await generateTableDOMFromCards(
+                    this.container,
                     allCards.map((c) => ({ card: c.card, state: c.state })),
                     sqlParams,
                     this.plugin.settings,
                     this.plugin.app,
                     now,
                 );
-                container = result.container;
                 this.params = sqlParams;
                 this.cachedCardsWithState = result.cards;
                 this.cachedTotalCount = result.totalCount;
@@ -203,10 +202,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 ".fsrs-table-container",
             );
             const savedScrollLeft = scrollContainer?.scrollLeft ?? 0;
-
-            // Очищаем контейнер и вставляем DOM элементы
-            this.container.empty();
-            this.container.appendChild(container);
 
             // Восстанавливаем позицию прокрутки
             const newScrollContainer = this.container.querySelector(
@@ -557,7 +552,8 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             const savedScrollLeft = scrollContainer?.scrollLeft ?? 0;
 
             // Генерируем DOM таблицы из кэша
-            const container = await generateTableDOM(
+            await generateTableDOM(
+                this.container,
                 this.cachedCardsWithState,
                 this.cachedTotalCount,
                 this.params,
@@ -565,10 +561,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 this.plugin.app,
                 new Date(),
             );
-
-            // Очищаем контейнер и вставляем DOM элементы
-            this.container.empty();
-            this.container.appendChild(container);
 
             // Восстанавливаем позицию прокрутки
             const newScrollContainer = this.container.querySelector(
