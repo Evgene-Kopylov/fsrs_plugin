@@ -27,6 +27,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 
     private params: TableParams | null = null;
     private isFirstLoad = true;
+    private isRendering = false;
     private activeLeafCallback?: () => void;
     private lastVisibilityUpdate = 0;
     private lastAction: "sort" | "refresh" | null = null;
@@ -53,6 +54,9 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         super.onload();
         // Регистрируем рендерер в плагине для уведомлений об обновлениях
         this.plugin.registerFsrsTableRenderer(this);
+
+        // Блокируем active-leaf-change на время первого рендера (дебаунс 2 сек)
+        this.lastVisibilityUpdate = Date.now();
 
         // Регистрируем обработчик для обновления таблицы при возвращении видимости
         this.activeLeafCallback = () => {
@@ -89,6 +93,9 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
      * Основной метод рендеринга контента с поддержкой плавной анимации
      */
     private async renderContent() {
+        // Защита от параллельных вызовов (onload + active-leaf-change)
+        if (this.isRendering) return;
+        this.isRendering = true;
         const start = performance.now();
         try {
             // Убираем класс ошибки при успешном рендере
@@ -231,6 +238,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             const elapsedMs = performance.now() - start;
             const elapsedSec = elapsedMs / 1000;
             verboseLog(`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`);
+            this.isRendering = false;
         }
     }
 
