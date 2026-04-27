@@ -1,12 +1,15 @@
 use wasm_bindgen::prelude::*;
 
 // Объявляем модули
+mod card_history;
 mod conversion;
+mod current_state;
 mod fsrs_logic;
 mod json_parsing;
+mod macros;
+mod next_review;
 mod review_functions;
 mod sort_functions;
-mod state_functions;
 mod table_processing;
 mod types;
 mod yaml_parsing;
@@ -66,7 +69,7 @@ pub fn compute_current_state(
     default_stability: f64,
     default_difficulty: f64,
 ) -> String {
-    state_functions::compute_current_state(
+    current_state::compute_current_state(
         card_json,
         now_str,
         parameters_json,
@@ -84,7 +87,7 @@ pub fn get_next_review_dates(
     default_stability: f64,
     default_difficulty: f64,
 ) -> String {
-    state_functions::get_next_review_dates(
+    next_review::get_next_review_dates(
         card_json,
         now_str,
         parameters_json,
@@ -102,7 +105,7 @@ pub fn compute_card_history(
     default_stability: f64,
     default_difficulty: f64,
 ) -> String {
-    state_functions::compute_card_history(
+    card_history::compute_card_history(
         card_json,
         now_str,
         parameters_json,
@@ -120,7 +123,7 @@ pub fn is_card_due(
     default_stability: f64,
     default_difficulty: f64,
 ) -> String {
-    state_functions::is_card_due(
+    current_state::is_card_due(
         card_json,
         now_str,
         parameters_json,
@@ -138,7 +141,7 @@ pub fn get_retrievability(
     default_stability: f64,
     default_difficulty: f64,
 ) -> String {
-    state_functions::get_retrievability(
+    current_state::get_retrievability(
         card_json,
         now_str,
         parameters_json,

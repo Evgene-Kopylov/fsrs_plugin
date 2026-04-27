@@ -225,7 +225,7 @@ pub fn calculate_retrievability(
     default_stability: f64,
     default_difficulty: f64,
 ) -> Result<f64, CalculationError> {
-    use crate::state_functions::get_retrievability;
+    use crate::current_state::get_retrievability;
 
     log::debug!("Вычисление извлекаемости для карточки");
 
@@ -264,7 +264,7 @@ pub fn calculate_card_state(
     default_stability: f64,
     default_difficulty: f64,
 ) -> Result<String, CalculationError> {
-    use crate::state_functions::compute_current_state;
+    use crate::current_state::compute_current_state;
 
     log::debug!("Вычисление состояния карточки");
 
@@ -314,7 +314,7 @@ pub fn compute_all_fields(
     default_stability: f64,
     default_difficulty: f64,
 ) -> Result<CardWithComputedFields, CalculationError> {
-    use crate::state_functions::compute_current_state;
+    use crate::current_state::compute_current_state;
 
     log::debug!(
         "Вычисление всех полей для карточки: длина JSON={}",
