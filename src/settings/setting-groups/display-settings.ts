@@ -106,9 +106,16 @@ export function renderDisplaySettings(
         );
 
         // Поле для цвета кнопки
+        const defaultColor =
+            getComputedStyle(document.body)
+                .getPropertyValue(`--fsrs-color-${key}`)
+                .trim() || "#cccccc";
+
         setting.addColorPicker((color) =>
             color
-                .setValue(plugin.settings.customButtonColors?.[key] ?? "")
+                .setValue(
+                    plugin.settings.customButtonColors?.[key] || defaultColor,
+                )
                 .onChange(async (value) => {
                     if (!plugin.settings.customButtonColors) {
                         plugin.settings.customButtonColors = {
@@ -118,7 +125,11 @@ export function renderDisplaySettings(
                             easy: "",
                         };
                     }
-                    plugin.settings.customButtonColors[key] = value;
+                    // Если цвет совпадает с дефолтным CSS — стираем (пустая строка → CSS-переменная)
+                    plugin.settings.customButtonColors[key] =
+                        value.toUpperCase() === defaultColor.toUpperCase()
+                            ? ""
+                            : value;
                     await plugin.saveSettings();
                 }),
         );
