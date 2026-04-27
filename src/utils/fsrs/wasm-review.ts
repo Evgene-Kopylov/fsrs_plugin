@@ -5,6 +5,7 @@ import type {
     FSRSRating,
     FSRSSettings,
 } from "../../interfaces/fsrs";
+import { ratingToNumber } from "../../interfaces/fsrs";
 import { prepareCommonArgs } from "./wasm-core";
 import * as wasm from "../../../wasm-lib/pkg/wasm_lib";
 
@@ -25,7 +26,7 @@ export function addReviewSession(
         } = prepareCommonArgs(card, settings, now);
         const updatedJson = wasm.review_card(
             cardJson,
-            rating,
+            ratingToNumber(rating),
             nowStr,
             parametersJson,
             defaultStability,
@@ -65,7 +66,7 @@ export function getCardYamlAfterReview(
         } = prepareCommonArgs(card, settings, now);
         return wasm.get_fsrs_yaml_after_review(
             cardJson,
-            rating,
+            ratingToNumber(rating),
             nowStr,
             parametersJson,
             defaultStability,

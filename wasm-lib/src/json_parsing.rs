@@ -117,9 +117,7 @@ mod tests {
             "reviews": [
                 {
                     "date": "2025-01-01T10:00:00Z",
-                    "rating": "Good",
-                    "stability": 5.0,
-                    "difficulty": 3.0
+                    "rating": 2
                 }
             ]
         }"#;
@@ -127,9 +125,7 @@ mod tests {
         let card = parse_card_from_json(json);
         assert_eq!(card.reviews.len(), 1);
         assert_eq!(card.reviews[0].date, "2025-01-01T10:00:00Z");
-        assert_eq!(card.reviews[0].rating, "Good");
-        assert_eq!(card.reviews[0].stability, 5.0);
-        assert_eq!(card.reviews[0].difficulty, 3.0);
+        assert_eq!(card.reviews[0].rating, 2u8);
     }
 
     #[test]
@@ -229,9 +225,7 @@ mod tests {
         let original_card = ModernFsrsCard {
             reviews: vec![ReviewSession {
                 date: "2025-01-01T10:00:00Z".to_string(),
-                rating: "Good".to_string(),
-                stability: 5.0,
-                difficulty: 3.0,
+                rating: 2u8,
             }],
             file_path: None,
         };
@@ -244,14 +238,6 @@ mod tests {
         assert_eq!(
             parsed_card.reviews[0].rating,
             original_card.reviews[0].rating
-        );
-        assert_eq!(
-            parsed_card.reviews[0].stability,
-            original_card.reviews[0].stability
-        );
-        assert_eq!(
-            parsed_card.reviews[0].difficulty,
-            original_card.reviews[0].difficulty
         );
     }
 

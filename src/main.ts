@@ -73,7 +73,7 @@ export default class FsrsPlugin extends Plugin {
             "fsrs-review-button",
             (_source, el, ctx) => {
                 // Создаем контейнер для кнопки
-                const buttonContainer = document.createElement("div");
+                const buttonContainer = createDiv();
                 buttonContainer.className = "fsrs-review-button-container";
                 el.appendChild(buttonContainer);
 
@@ -92,7 +92,7 @@ export default class FsrsPlugin extends Plugin {
             "fsrs-table",
             (source, el, ctx) => {
                 // Создаем контейнер для рендеринга
-                const renderContainer = document.createElement("div");
+                const renderContainer = createDiv();
                 renderContainer.className = "fsrs-table-render-container";
                 el.appendChild(renderContainer);
 

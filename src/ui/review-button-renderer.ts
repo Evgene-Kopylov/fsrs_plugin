@@ -9,6 +9,7 @@ import {
 } from "../utils/fsrs-helper";
 import type FsrsPlugin from "../main";
 import type { FSRSRating } from "../interfaces/fsrs";
+import { numberToRating } from "../interfaces/fsrs";
 import { ReviewHistoryModal } from "./review-history-modal";
 import { showNotice } from "../utils/notice";
 import { getLocalizedNoun, i18n } from "../utils/i18n";
@@ -40,16 +41,16 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
         super(container);
 
         // Создаем контейнер для кнопок
-        this.buttonsContainer = document.createElement("div");
+        this.buttonsContainer = createDiv();
         this.buttonsContainer.className = "fsrs-buttons-container";
         container.appendChild(this.buttonsContainer);
 
         // Создаем основную кнопку с фиксированной шириной
-        this.mainButton = document.createElement("button");
+        this.mainButton = createEl("button");
         this.mainButton.className = "fsrs-review-button";
 
         // Создаем кнопку истории повторений
-        this.historyButton = document.createElement("button");
+        this.historyButton = createEl("button");
         this.historyButton.className = "fsrs-history-button";
         this.historyButton.textContent = "📊";
         this.historyButton.title = "История повторений";
@@ -124,7 +125,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
                 if (card.reviews.length > 0) {
                     const lastReview = card.reviews[card.reviews.length - 1];
                     if (lastReview) {
-                        this.mainButton.textContent = `Повторение: ${this.translateRating(lastReview.rating)}`;
+                        this.mainButton.textContent = `Повторение: ${this.translateRating(numberToRating(lastReview.rating))}`;
                     } else {
                         this.mainButton.textContent = "Повторение";
                     }

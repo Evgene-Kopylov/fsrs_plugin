@@ -151,23 +151,13 @@ pub fn create_default_parameters() -> FsrsParameters {
 fn validate_review_session(session: &serde_yaml::Value) -> Option<ReviewSession> {
     let date_str = session.get("date")?.as_str()?;
     let date = parse_datetime_flexible(date_str)?;
-    let rating = session.get("rating")?.as_str()?;
-    if !["Again", "Hard", "Good", "Easy"].contains(&rating) {
-        return None;
-    }
-    let stability = session.get("stability")?.as_f64()?;
-    if !(0.0..=1000.0).contains(&stability) {
-        return None;
-    }
-    let difficulty = session.get("difficulty")?.as_f64()?;
-    if !(0.0..=10.0).contains(&difficulty) {
+    let rating = session.get("rating")?.as_i64()?;
+    if !(0..=3).contains(&rating) {
         return None;
     }
     Some(ReviewSession {
         date: date.to_rfc3339(),
-        rating: rating.to_string(),
-        stability,
-        difficulty,
+        rating: rating as u8,
     })
 }
 
@@ -190,25 +180,10 @@ pub fn validate_review_sessions(card: &ModernFsrsCard) -> Vec<String> {
         }
 
         // Проверяем рейтинг
-        if !["Again", "Hard", "Good", "Easy"].contains(&session.rating.as_str()) {
+        if !(0..=3).contains(&session.rating) {
             errors.push(format!(
                 "Session {}: invalid rating '{}'",
                 i, session.rating
-            ));
-        }
-
-        // Проверяем числовые значения
-        if session.stability < 0.0 || session.stability > 1000.0 {
-            errors.push(format!(
-                "Session {}: stability out of range: {}",
-                i, session.stability
-            ));
-        }
-
-        if session.difficulty < 0.0 || session.difficulty > 10.0 {
-            errors.push(format!(
-                "Session {}: difficulty out of range: {}",
-                i, session.difficulty
             ));
         }
     }
@@ -238,27 +213,19 @@ mod tests {
         let yaml = r#"
 reviews:
   - date: "2025-01-01T10:00:00Z"
-    rating: "Good"
-    stability: 5.0
-    difficulty: 3.0
+    rating: 2
   - date: "2025-01-02T14:30:00Z"
-    rating: "Easy"
-    stability: 8.0
-    difficulty: 2.5
+    rating: 3
 "#;
         let card = parse_yaml_to_card(yaml);
 
         assert_eq!(card.reviews.len(), 2);
 
         assert_eq!(card.reviews[0].date, "2025-01-01T10:00:00Z");
-        assert_eq!(card.reviews[0].rating, "Good");
-        assert_eq!(card.reviews[0].stability, 5.0);
-        assert_eq!(card.reviews[0].difficulty, 3.0);
+        assert_eq!(card.reviews[0].rating, 2u8);
 
         assert_eq!(card.reviews[1].date, "2025-01-02T14:30:00Z");
-        assert_eq!(card.reviews[1].rating, "Easy");
-        assert_eq!(card.reviews[1].stability, 8.0);
-        assert_eq!(card.reviews[1].difficulty, 2.5);
+        assert_eq!(card.reviews[1].rating, 3u8);
     }
 
     #[test]
@@ -275,9 +242,7 @@ reviews:
         let original_card = ModernFsrsCard {
             reviews: vec![ReviewSession {
                 date: "2025-01-01T10:00:00Z".to_string(),
-                rating: "Good".to_string(),
-                stability: 5.0,
-                difficulty: 3.0,
+                rating: 2u8,
             }],
             file_path: None,
         };
@@ -290,14 +255,6 @@ reviews:
         assert_eq!(
             parsed_card.reviews[0].rating,
             original_card.reviews[0].rating
-        );
-        assert_eq!(
-            parsed_card.reviews[0].stability,
-            original_card.reviews[0].stability
-        );
-        assert_eq!(
-            parsed_card.reviews[0].difficulty,
-            original_card.reviews[0].difficulty
         );
     }
 
@@ -320,16 +277,14 @@ enable_fuzz: false
         let frontmatter = r#"---
 reviews:
   - date: "2025-01-01T10:00:00Z"
-    rating: "Good"
-    stability: 5.0
-    difficulty: 3.0
+    rating: 2
 ---
 Some content here"#;
 
         let card = extract_fsrs_from_frontmatter(frontmatter).unwrap();
 
         assert_eq!(card.reviews.len(), 1);
-        assert_eq!(card.reviews[0].rating, "Good");
+        assert_eq!(card.reviews[0].rating, 2u8);
     }
 
     #[test]
@@ -358,9 +313,7 @@ Content"#;
         let card = ModernFsrsCard {
             reviews: vec![ReviewSession {
                 date: "2025-01-01T10:00:00Z".to_string(),
-                rating: "Good".to_string(),
-                stability: 5.0,
-                difficulty: 3.0,
+                rating: 2u8,
             }],
             file_path: None,
         };
@@ -370,7 +323,7 @@ Content"#;
         assert!(frontmatter.starts_with("---\n"));
         assert!(frontmatter.ends_with("---"));
         assert!(frontmatter.contains("reviews:"));
-        assert!(frontmatter.contains("rating: Good"));
+        assert!(frontmatter.contains("rating: 2"));
         assert!(!frontmatter.contains("srs:")); // Поле srs больше не должно быть
     }
 
@@ -379,9 +332,7 @@ Content"#;
         let card = ModernFsrsCard {
             reviews: vec![ReviewSession {
                 date: "2025-01-01T10:00:00Z".to_string(),
-                rating: "Good".to_string(),
-                stability: 5.0,
-                difficulty: 3.0,
+                rating: 2u8,
             }],
             file_path: None,
         };
@@ -395,9 +346,7 @@ Content"#;
         let card = ModernFsrsCard {
             reviews: vec![ReviewSession {
                 date: "invalid-date".to_string(),
-                rating: "Good".to_string(),
-                stability: 5.0,
-                difficulty: 3.0,
+                rating: 2u8,
             }],
             file_path: None,
         };
@@ -412,9 +361,7 @@ Content"#;
         let card = ModernFsrsCard {
             reviews: vec![ReviewSession {
                 date: "2025-01-01T10:00:00Z".to_string(),
-                rating: "InvalidRating".to_string(),
-                stability: 5.0,
-                difficulty: 3.0,
+                rating: 255u8,
             }],
             file_path: None,
         };
@@ -425,30 +372,12 @@ Content"#;
     }
 
     #[test]
-    fn test_validate_review_sessions_out_of_range() {
-        let card = ModernFsrsCard {
-            reviews: vec![ReviewSession {
-                date: "2025-01-01T10:00:00Z".to_string(),
-                rating: "Good".to_string(),
-                stability: -5.0,  // отрицательная стабильность
-                difficulty: 15.0, // сложность вне диапазона
-            }],
-            file_path: None,
-        };
-
-        let errors = validate_review_sessions(&card);
-        assert_eq!(errors.len(), 2);
-        assert!(errors[0].contains("stability out of range"));
-        assert!(errors[1].contains("difficulty out of range"));
-    }
-
-    #[test]
     fn test_extract_fsrs_from_frontmatter_real_example() {
         // Реальный пример из тестового файла 04-Высокая-стабильность.md
         let frontmatter = r#"---
 reviews:
   - date: 2026-04-13T09:00:00+02:00
-    rating: Good
+    rating: 2
     stability: 25.8
     difficulty: 2.3
 ---"#;
@@ -457,9 +386,7 @@ reviews:
 
         assert_eq!(card.reviews.len(), 1);
         assert_eq!(card.reviews[0].date, "2026-04-13T07:00:00+00:00");
-        assert_eq!(card.reviews[0].rating, "Good");
-        assert_eq!(card.reviews[0].stability, 25.8);
-        assert_eq!(card.reviews[0].difficulty, 2.3);
+        assert_eq!(card.reviews[0].rating, 2u8);
     }
 
     #[test]
@@ -469,7 +396,7 @@ reviews:
 srs: true
 reviews:
   - date: 2026-04-13T09:00:00+02:00
-    rating: Good
+    rating: 2
     stability: 25.8
     difficulty: 2.3
 ---"#;
@@ -478,9 +405,7 @@ reviews:
 
         assert_eq!(card.reviews.len(), 1);
         assert_eq!(card.reviews[0].date, "2026-04-13T07:00:00+00:00");
-        assert_eq!(card.reviews[0].rating, "Good");
-        assert_eq!(card.reviews[0].stability, 25.8);
-        assert_eq!(card.reviews[0].difficulty, 2.3);
+        assert_eq!(card.reviews[0].rating, 2u8);
     }
 
     #[test]

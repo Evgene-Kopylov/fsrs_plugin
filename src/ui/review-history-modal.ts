@@ -11,6 +11,7 @@ import type {
     FSRSRating,
     HistoricalState,
 } from "../interfaces/fsrs";
+import { numberToRating } from "../interfaces/fsrs";
 import type MyPlugin from "../main";
 import { deleteLastReview } from "../commands/review/delete-last-review";
 import { computeCardHistory } from "../utils/fsrs/wasm-state";
@@ -127,7 +128,7 @@ export class ReviewHistoryModal extends Modal {
         });
 
         // Информация о файле
-        const fileInfo = contentEl.createEl("div", {
+        const fileInfo = contentEl.createDiv({
             cls: "fsrs-history-file-info",
         });
         fileInfo.createEl("small", {
@@ -206,8 +207,10 @@ export class ReviewHistoryModal extends Modal {
 
             // Оценка с переводом
             const ratingCell = row.insertCell();
-            if (state.rating) {
-                ratingCell.textContent = this.translateRating(state.rating);
+            if (state.rating !== null && state.rating !== undefined) {
+                ratingCell.textContent = this.translateRating(
+                    numberToRating(state.rating),
+                );
             } else {
                 ratingCell.textContent = "-";
             }
@@ -254,7 +257,7 @@ export class ReviewHistoryModal extends Modal {
                 if (now < this.deleteCooldownUntil) {
                     deleteBtn.disabled = true;
                     const remaining = this.deleteCooldownUntil - now;
-                    setTimeout(() => {
+                    activeWindow.setTimeout(() => {
                         this.onOpen();
                     }, remaining);
                 }
@@ -359,7 +362,9 @@ export class ReviewHistoryModal extends Modal {
             lastRatingItem.textContent = i18n.t(
                 "history.statistics.last_rating",
                 {
-                    rating: this.translateRating(lastReview.rating),
+                    rating: this.translateRating(
+                        numberToRating(lastReview.rating),
+                    ),
                 },
             );
         }
@@ -374,7 +379,7 @@ export class ReviewHistoryModal extends Modal {
             };
 
             for (const review of this.card.reviews) {
-                ratingCounts[review.rating]++;
+                ratingCounts[numberToRating(review.rating)]++;
             }
 
             const ratingsItem = statsList.createEl("li");

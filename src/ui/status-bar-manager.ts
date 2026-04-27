@@ -2,6 +2,7 @@ import { App, Component, TFile, Menu } from "obsidian";
 import type FsrsPlugin from "../main";
 import type { FsrsPluginSettings } from "../settings";
 import type { FSRSRating } from "../interfaces/fsrs";
+import { numberToRating } from "../interfaces/fsrs";
 import {
     parseModernFsrsFromFrontmatter,
     isCardDue,
@@ -54,9 +55,9 @@ export class StatusBarManager extends Component {
         this.statusBarItem.classList.add("fsrs-status-bar-item");
 
         const icon = this.settings.status_bar_icon || "🔄";
-        this.iconSpan = document.createElement("span");
+        this.iconSpan = createSpan();
         this.iconSpan.textContent = icon;
-        this.textSpan = document.createElement("span");
+        this.textSpan = createSpan();
         this.textSpan.textContent = ` FSRS: ${i18n.t("statusBar.loading")}`;
         this.statusBarItem.appendChild(this.iconSpan);
         this.statusBarItem.appendChild(this.textSpan);
@@ -197,7 +198,7 @@ export class StatusBarManager extends Component {
                         );
                     }
                     if (this.textSpan)
-                        this.textSpan.textContent = ` FSRS: ${this.lastRatingText(card.reviews[card.reviews.length - 1]?.rating ?? "Again")}`;
+                        this.textSpan.textContent = ` FSRS: ${this.lastRatingText(numberToRating(card.reviews[card.reviews.length - 1]?.rating ?? 0))}`;
                     this.statusBarItem.title = i18n.t(
                         "statusBar.tooltip.early_available",
                         {

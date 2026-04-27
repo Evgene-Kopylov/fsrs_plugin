@@ -1,24 +1,14 @@
 use crate::types::FsrsParameters;
 use rs_fsrs::{Parameters, Rating, State};
 
-/// Конвертирует строковый рейтинг в Rating enum
-pub fn rating_from_str(rating: &str) -> Rating {
+/// Конвертирует числовой рейтинг (0-3) в Rating enum
+pub fn rating_from_u8(rating: u8) -> Rating {
     match rating {
-        "Again" => Rating::Again,
-        "Hard" => Rating::Hard,
-        "Good" => Rating::Good,
-        "Easy" => Rating::Easy,
+        0 => Rating::Again,
+        1 => Rating::Hard,
+        2 => Rating::Good,
+        3 => Rating::Easy,
         _ => Rating::Good,
-    }
-}
-
-/// Конвертирует Rating enum в строку
-pub fn rating_to_string(rating: Rating) -> String {
-    match rating {
-        Rating::Again => "Again".to_string(),
-        Rating::Hard => "Hard".to_string(),
-        Rating::Good => "Good".to_string(),
-        Rating::Easy => "Easy".to_string(),
     }
 }
 
@@ -48,27 +38,19 @@ mod tests {
     use rs_fsrs::{Parameters, Rating, State};
 
     #[test]
-    fn test_rating_from_str_valid() {
-        assert_eq!(rating_from_str("Again"), Rating::Again);
-        assert_eq!(rating_from_str("Hard"), Rating::Hard);
-        assert_eq!(rating_from_str("Good"), Rating::Good);
-        assert_eq!(rating_from_str("Easy"), Rating::Easy);
+    fn test_rating_from_u8_valid() {
+        assert_eq!(rating_from_u8(0), Rating::Again);
+        assert_eq!(rating_from_u8(1), Rating::Hard);
+        assert_eq!(rating_from_u8(2), Rating::Good);
+        assert_eq!(rating_from_u8(3), Rating::Easy);
     }
 
     #[test]
-    fn test_rating_from_str_invalid() {
-        // Для некорректных строк возвращается Good как значение по умолчанию
-        assert_eq!(rating_from_str(""), Rating::Good);
-        assert_eq!(rating_from_str("Unknown"), Rating::Good);
-        assert_eq!(rating_from_str("AGAIN"), Rating::Good); // чувствительность к регистру
-    }
-
-    #[test]
-    fn test_rating_to_string() {
-        assert_eq!(rating_to_string(Rating::Again), "Again");
-        assert_eq!(rating_to_string(Rating::Hard), "Hard");
-        assert_eq!(rating_to_string(Rating::Good), "Good");
-        assert_eq!(rating_to_string(Rating::Easy), "Easy");
+    fn test_rating_from_u8_invalid() {
+        // Для некорректных значений возвращается Good как значение по умолчанию
+        assert_eq!(rating_from_u8(255), Rating::Good);
+        assert_eq!(rating_from_u8(4), Rating::Good);
+        assert_eq!(rating_from_u8(100), Rating::Good);
     }
 
     #[test]
@@ -113,18 +95,6 @@ mod tests {
         assert_eq!(fsrs_params.enable_fuzz, true);
         assert_eq!(fsrs_params.maximum_interval, 1000);
         assert_eq!(fsrs_params.request_retention, 0.9);
-    }
-
-    #[test]
-    fn test_rating_conversion_roundtrip() {
-        // Проверяем, что конвертация туда-обратно сохраняет значение
-        let ratings = vec![Rating::Again, Rating::Hard, Rating::Good, Rating::Easy];
-
-        for rating in ratings {
-            let string_repr = rating_to_string(rating);
-            let converted_back = rating_from_str(&string_repr);
-            assert_eq!(converted_back, rating);
-        }
     }
 
     #[test]

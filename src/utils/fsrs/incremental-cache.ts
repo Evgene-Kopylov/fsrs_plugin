@@ -15,7 +15,7 @@ export class IncrementalCache {
     private cardCache = new Map<string, CachedCard>();
     private cacheInitialized = false;
     private scanPromise: Promise<void> | null = null;
-    private pendingUpdates = new Map<string, ReturnType<typeof setTimeout>>();
+    private pendingUpdates = new Map<string, number>();
 
     constructor(
         private app: App,
@@ -98,7 +98,7 @@ export class IncrementalCache {
             }
 
             // Отдаём управление браузеру для обновления UI
-            await new Promise((resolve) => setTimeout(resolve, 0));
+            await new Promise((resolve) => activeWindow.setTimeout(resolve, 0));
         }
 
         verboseLog(`✅ Найдено карточек FSRS: ${this.cardCache.size}`);
@@ -173,10 +173,10 @@ export class IncrementalCache {
     scheduleCardUpdate(filePath: string): void {
         // Отменяем предыдущий таймер для этого файла
         const existingTimer = this.pendingUpdates.get(filePath);
-        if (existingTimer) clearTimeout(existingTimer);
+        if (existingTimer) activeWindow.clearTimeout(existingTimer);
 
         // Создаем новый таймер
-        const timer = setTimeout(() => {
+        const timer = activeWindow.setTimeout(() => {
             void this.updateCard(filePath);
             this.pendingUpdates.delete(filePath);
         }, 500);
@@ -192,7 +192,8 @@ export class IncrementalCache {
         this.cacheInitialized = false;
         this.scanPromise = null;
         // Очищаем все pending таймеры
-        for (const timer of this.pendingUpdates.values()) clearTimeout(timer);
+        for (const timer of this.pendingUpdates.values())
+            activeWindow.clearTimeout(timer);
         this.pendingUpdates.clear();
         this.onCacheUpdated();
     }
@@ -232,7 +233,8 @@ export class IncrementalCache {
      * Очищает все ресурсы (таймеры) перед выгрузкой
      */
     unload(): void {
-        for (const timer of this.pendingUpdates.values()) clearTimeout(timer);
+        for (const timer of this.pendingUpdates.values())
+            activeWindow.clearTimeout(timer);
         this.pendingUpdates.clear();
     }
 }

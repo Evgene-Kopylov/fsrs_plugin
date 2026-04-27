@@ -1,4 +1,4 @@
-import { Setting } from "obsidian";
+import { Setting, TextComponent, ColorComponent } from "obsidian";
 import type MyPlugin from "../../main";
 import { i18n } from "../../utils/i18n";
 import { setVerboseLoggingEnabled } from "../../utils/logger";
@@ -67,7 +67,7 @@ export function renderDisplaySettings(
         .setDesc(i18n.t("settings.display.custom_button_labels.desc"))
         .setHeading();
 
-    const labelsContainer = containerEl.createEl("div");
+    const labelsContainer = containerEl.createDiv();
     labelsContainer.classList.add("fsrs-labels-container");
 
     const buttonKeys: ("again" | "hard" | "good" | "easy")[] = [
@@ -83,8 +83,7 @@ export function renderDisplaySettings(
         );
 
         // Поле для названия кнопки
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let textComponent: any;
+        let textComponent: TextComponent;
         setting.addText((text) => {
             textComponent = text;
             text.setPlaceholder(
@@ -109,12 +108,11 @@ export function renderDisplaySettings(
 
         // Поле для цвета кнопки
         const defaultColor =
-            getComputedStyle(document.body)
+            getComputedStyle(activeDocument.body)
                 .getPropertyValue(`--fsrs-color-${key}`)
                 .trim() || "#cccccc";
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let colorComponent: any;
+        let colorComponent: ColorComponent;
         setting.addColorPicker((color) => {
             colorComponent = color;
             color
@@ -158,7 +156,6 @@ export function renderDisplaySettings(
                         };
                     }
                     plugin.settings.customButtonLabels[key] = "";
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
                     textComponent.setValue("");
 
                     // Сброс цвета
@@ -171,7 +168,6 @@ export function renderDisplaySettings(
                         };
                     }
                     plugin.settings.customButtonColors[key] = "";
-                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
                     colorComponent.setValue(defaultColor);
 
                     await plugin.saveSettings();

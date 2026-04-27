@@ -2,6 +2,7 @@ import tseslint from "typescript-eslint";
 import obsidianmd from "eslint-plugin-obsidianmd";
 import globals from "globals";
 import { globalIgnores } from "eslint/config";
+import eslintComments from "eslint-plugin-eslint-comments";
 
 export default tseslint.config(
     {
@@ -37,10 +38,24 @@ export default tseslint.config(
             ],
         },
     },
+    // Разрешить eslint-plugin-eslint-comments (нужен для require-description)
+    {
+        files: ["package.json"],
+        rules: {
+            "depend/ban-dependencies": [
+                "error",
+                {
+                    presets: ["native", "microutilities", "preferred"],
+                    allowed: ["eslint-plugin-eslint-comments"],
+                },
+            ],
+        },
+    },
     {
         files: ["src/**/*.ts"],
         plugins: {
             "@typescript-eslint": tseslint.plugin,
+            "eslint-comments": eslintComments,
         },
         rules: {
             // Строгие правила типизации
@@ -51,8 +66,15 @@ export default tseslint.config(
             "@typescript-eslint/no-unsafe-member-access": "error",
             "@typescript-eslint/require-await": "error",
 
-            // Запрет console.log (warn, чтобы не ломать сборку)
-            "no-console": "warn",
+            // Правила для eslint-disable директив (как в валидаторе Obsidian)
+            "eslint-comments/require-description": "error",
+            "eslint-comments/no-restricted-disable": [
+                "error",
+                "@typescript-eslint/no-explicit-any",
+            ],
+
+            // no-unsupported-api — off, метаданные ненадёжны, бот не проверяет
+            "obsidianmd/no-unsupported-api": "off",
         },
     },
     globalIgnores([

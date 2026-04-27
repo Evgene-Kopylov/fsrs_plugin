@@ -1,8 +1,8 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
+use crate::current_state::compute_current_state;
 use crate::json_parsing::{parse_datetime_flexible, parse_parameters_from_json};
-use crate::state_functions::compute_current_state;
 use crate::types::{FsrsParameters, ModernFsrsCard};
 
 /// Вспомогательная структура для результатов вычислений

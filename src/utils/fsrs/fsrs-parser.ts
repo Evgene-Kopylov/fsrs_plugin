@@ -1,7 +1,6 @@
 // Парсеры для работы с YAML и FSRS данными
 
 import type {
-    FSRSRating,
     ModernFSRSCard,
     ReviewSession,
     ParseResult,
@@ -35,9 +34,7 @@ export function parseModernFsrsFromFrontmatter(
         interface WasmCardData {
             reviews: Array<{
                 date: string;
-                rating: string;
-                stability: number;
-                difficulty: number;
+                rating: number;
             }>;
         }
 
@@ -70,12 +67,9 @@ export function parseModernFsrsFromFrontmatter(
             if (
                 !session.date ||
                 typeof session.date !== "string" ||
-                !session.rating ||
-                typeof session.rating !== "string" ||
-                typeof session.stability !== "number" ||
-                isNaN(session.stability) ||
-                typeof session.difficulty !== "number" ||
-                isNaN(session.difficulty)
+                typeof session.rating !== "number" ||
+                session.rating < 0 ||
+                session.rating > 3
             ) {
                 console.warn(
                     `Missing or invalid fields in session for ${filePath}, skipping`,
@@ -84,9 +78,7 @@ export function parseModernFsrsFromFrontmatter(
             }
             reviews.push({
                 date: session.date,
-                rating: session.rating as FSRSRating,
-                stability: session.stability,
-                difficulty: session.difficulty,
+                rating: session.rating,
             });
         }
 
