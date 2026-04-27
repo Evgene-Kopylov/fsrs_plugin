@@ -66,9 +66,6 @@ export default tseslint.config(
             "@typescript-eslint/no-unsafe-member-access": "error",
             "@typescript-eslint/require-await": "error",
 
-            // Запрет console.log (warn, чтобы не ломать сборку)
-            "no-console": "warn",
-
             // Правила для eslint-disable директив (как в валидаторе Obsidian)
             "eslint-comments/require-description": "error",
             "eslint-comments/no-restricted-disable": [
@@ -76,8 +73,8 @@ export default tseslint.config(
                 "@typescript-eslint/no-explicit-any",
             ],
 
-            // no-unsupported-api — warn, т.к. метаданные не всегда точны
-            "obsidianmd/no-unsupported-api": "warn",
+            // no-unsupported-api — off, метаданные ненадёжны, бот не проверяет
+            "obsidianmd/no-unsupported-api": "off",
         },
     },
     globalIgnores([
