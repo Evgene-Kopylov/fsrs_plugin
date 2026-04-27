@@ -10,8 +10,6 @@ export type FSRSRating = "Again" | "Hard" | "Good" | "Easy";
 export interface ReviewSession {
     date: string; // ISO 8601 строка
     rating: FSRSRating;
-    stability: number;
-    difficulty: number;
 }
 
 // Современная карточка FSRS (новый формат)

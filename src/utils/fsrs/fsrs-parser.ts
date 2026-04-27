@@ -36,8 +36,6 @@ export function parseModernFsrsFromFrontmatter(
             reviews: Array<{
                 date: string;
                 rating: string;
-                stability: number;
-                difficulty: number;
             }>;
         }
 
@@ -71,11 +69,7 @@ export function parseModernFsrsFromFrontmatter(
                 !session.date ||
                 typeof session.date !== "string" ||
                 !session.rating ||
-                typeof session.rating !== "string" ||
-                typeof session.stability !== "number" ||
-                isNaN(session.stability) ||
-                typeof session.difficulty !== "number" ||
-                isNaN(session.difficulty)
+                typeof session.rating !== "string"
             ) {
                 console.warn(
                     `Missing or invalid fields in session for ${filePath}, skipping`,
@@ -85,8 +79,6 @@ export function parseModernFsrsFromFrontmatter(
             reviews.push({
                 date: session.date,
                 rating: session.rating as FSRSRating,
-                stability: session.stability,
-                difficulty: session.difficulty,
             });
         }
 
