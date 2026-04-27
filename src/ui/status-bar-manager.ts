@@ -55,9 +55,9 @@ export class StatusBarManager extends Component {
         this.statusBarItem.classList.add("fsrs-status-bar-item");
 
         const icon = this.settings.status_bar_icon || "🔄";
-        this.iconSpan = document.createElement("span");
+        this.iconSpan = activeDocument.createSpan();
         this.iconSpan.textContent = icon;
-        this.textSpan = document.createElement("span");
+        this.textSpan = activeDocument.createSpan();
         this.textSpan.textContent = ` FSRS: ${i18n.t("statusBar.loading")}`;
         this.statusBarItem.appendChild(this.iconSpan);
         this.statusBarItem.appendChild(this.textSpan);

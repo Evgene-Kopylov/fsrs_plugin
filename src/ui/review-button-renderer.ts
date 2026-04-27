@@ -41,16 +41,16 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
         super(container);
 
         // Создаем контейнер для кнопок
-        this.buttonsContainer = document.createElement("div");
+        this.buttonsContainer = activeDocument.createDiv();
         this.buttonsContainer.className = "fsrs-buttons-container";
         container.appendChild(this.buttonsContainer);
 
         // Создаем основную кнопку с фиксированной шириной
-        this.mainButton = document.createElement("button");
+        this.mainButton = activeDocument.createEl("button");
         this.mainButton.className = "fsrs-review-button";
 
         // Создаем кнопку истории повторений
-        this.historyButton = document.createElement("button");
+        this.historyButton = activeDocument.createEl("button");
         this.historyButton.className = "fsrs-history-button";
         this.historyButton.textContent = "📊";
         this.historyButton.title = "История повторений";
