@@ -93,6 +93,24 @@ pub fn get_next_review_dates(
     )
 }
 
+// Функция для вычисления истории карточки по всем повторениям
+#[wasm_bindgen]
+pub fn compute_card_history(
+    card_json: String,
+    now_str: String,
+    parameters_json: String,
+    default_stability: f64,
+    default_difficulty: f64,
+) -> String {
+    state_functions::compute_card_history(
+        card_json,
+        now_str,
+        parameters_json,
+        default_stability,
+        default_difficulty,
+    )
+}
+
 // Функция для проверки, готова ли карточка к повторению
 #[wasm_bindgen]
 pub fn is_card_due(

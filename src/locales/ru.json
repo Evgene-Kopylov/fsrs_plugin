@@ -22,8 +22,9 @@
             "number": "#",
             "datetime": "Дата и время",
             "rating": "Оценка",
-            "stability": "Стабильность",
-            "difficulty": "Сложность",
+            "retrievability": "Извлекаемость (R)",
+            "stability": "Стабильность (S)",
+            "difficulty": "Сложность (D)",
             "days_since_last": "Дней с прошлого",
             "actions": ""
         },
@@ -131,7 +132,7 @@
             "heading": "Примеры",
             "actual": "### Актуальная выборка (просроченные карточки)\n\\`\\`\\`fsrs-table\nSELECT file as \"Файл\", reps as \"Повт.\", overdue as \"Просрочка\", retrievability as \"Доступность\"\nLIMIT 20\n\\`\\`\\`",
             "sort": "### Сортировка по полю\n\\`\\`\\`fsrs-table\nSELECT file as \"Файл\", reps as \"Повт.\", due as \"Следующее повторение\", state as \"Состояние\"\nORDER BY due DESC\nLIMIT 20\n\\`\\`\\`",
-            "full": "### Полная таблица (все поля)\n\\`\\`\\`fsrs-table\nSELECT file as \"🗎\", difficulty as \"С\", due as \"С\", elapsed as \"Д\", overdue as \"П\", reps as \"К\", retrievability as \"И\", scheduled as \"Д\", stability as \"С\", state as \"С\"\nLIMIT 20\n\\`\\`\\`"
+            "full": "### Полная таблица (все поля)\n\\`\\`\\`fsrs-table\nSELECT file as \"🗎\", difficulty as \"D\", stability as \"S\", retrievability as \"R\", due as \"Дата\", elapsed as \"Прошло\", overdue as \"Проср.\", reps as \"Повт.\", scheduled as \"Запл.\", state as \"Статус\"\nLIMIT 20\n\\`\\`\\`"
         },
         "available_fields": {
             "heading": "Доступные поля (columns)",

@@ -41,3 +41,28 @@ pub struct ComputedState {
     pub lapses: u64,
     pub retrievability: f64,
 }
+
+/// Историческое состояние карточки (после повторения)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct HistoricalState {
+    /// Дата события (ISO 8601)
+    pub date: String,
+    /// Рейтинг, если это момент после повторения
+    pub rating: Option<String>,
+    /// Стабильность после повторения
+    pub stability: f64,
+    /// Сложность после повторения
+    pub difficulty: f64,
+    /// Состояние карточки после повторения
+    pub state: String,
+    /// Дней, прошедших с предыдущего повторения (0 для первого)
+    pub elapsed_days: u64,
+    /// Запланированный интервал (дней) после этого повторения
+    pub scheduled_days: u64,
+    /// Извлекаемость сразу после ответа (всегда 1.0)
+    pub retrievability: f64,
+    /// Извлекаемость перед ответом (на дату этого повторения)
+    pub retrievability_before: Option<f64>,
+    /// Извлекаемость на момент следующего повторения (если есть)
+    pub retrievability_next: Option<f64>,
+}

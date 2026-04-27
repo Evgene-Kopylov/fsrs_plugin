@@ -16,8 +16,8 @@ macro_rules! log_warn {
 pub fn parse_yaml_to_card(yaml_str: &str) -> ModernFsrsCard {
     match serde_yaml::from_str::<ModernFsrsCard>(yaml_str) {
         Ok(card) => card,
-        Err(e) => {
-            log_warn!("Ошибка парсинга YAML: {}", e);
+        Err(_e) => {
+            log_warn!("Ошибка парсинга YAML: {}", _e);
             create_default_card()
         }
     }
@@ -27,8 +27,8 @@ pub fn parse_yaml_to_card(yaml_str: &str) -> ModernFsrsCard {
 pub fn card_to_yaml(card: &ModernFsrsCard) -> String {
     match serde_yaml::to_string(card) {
         Ok(yaml) => yaml,
-        Err(e) => {
-            log_warn!("Ошибка сериализации карточки в YAML: {}", e);
+        Err(_e) => {
+            log_warn!("Ошибка сериализации карточки в YAML: {}", _e);
             create_default_yaml()
         }
     }
@@ -38,8 +38,8 @@ pub fn card_to_yaml(card: &ModernFsrsCard) -> String {
 pub fn parse_yaml_to_parameters(yaml_str: &str) -> FsrsParameters {
     match serde_yaml::from_str::<FsrsParameters>(yaml_str) {
         Ok(params) => params,
-        Err(e) => {
-            log_warn!("Ошибка парсинга параметров YAML: {}", e);
+        Err(_e) => {
+            log_warn!("Ошибка парсинга параметров YAML: {}", _e);
             // Возвращаем дефолтные параметры
             create_default_parameters()
         }
@@ -65,8 +65,8 @@ pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<ModernFsrsCard
     // Парсим как общее значение YAML
     let yaml_value: serde_yaml::Value = match serde_yaml::from_str(yaml_content) {
         Ok(value) => value,
-        Err(e) => {
-            log_warn!("YAML parsing error: {}", e);
+        Err(_e) => {
+            log_warn!("YAML parsing error: {}", _e);
             return None;
         }
     };
@@ -89,11 +89,11 @@ pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<ModernFsrsCard
                 }
                 // Десериализуем reviews
                 let mut validated_reviews = Vec::new();
-                for (i, session_value) in seq.iter().enumerate() {
+                for (_i, session_value) in seq.iter().enumerate() {
                     if let Some(session) = validate_review_session(session_value) {
                         validated_reviews.push(session);
                     } else {
-                        log_warn!("Invalid review session at index {}, skipping", i);
+                        log_warn!("Invalid review session at index {}, skipping", _i);
                     }
                 }
                 if validated_reviews.is_empty() {
@@ -102,8 +102,8 @@ pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<ModernFsrsCard
                 }
                 validated_reviews
             }
-            other => {
-                log_warn!("reviews is not a sequence, type: {:?}", other);
+            _other => {
+                log_warn!("reviews is not a sequence, type: {:?}", _other);
                 return None;
             }
         }

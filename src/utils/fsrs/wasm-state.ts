@@ -4,6 +4,7 @@ import type {
     ModernFSRSCard,
     FSRSRating,
     ComputedCardState,
+    HistoricalState,
     FSRSSettings,
 } from "../../interfaces/fsrs";
 import { prepareCommonArgs } from "./wasm-core";
@@ -98,6 +99,33 @@ export function getCardRetrievability(
         return JSON.parse(retJson) as number;
     } catch {
         return 1.0;
+    }
+}
+
+/** Возвращает историю состояний карточки по всем повторениям через WASM */
+export function computeCardHistory(
+    card: ModernFSRSCard,
+    settings: FSRSSettings,
+    now: Date = new Date(),
+): HistoricalState[] {
+    try {
+        const {
+            cardJson,
+            nowStr,
+            parametersJson,
+            defaultStability,
+            defaultDifficulty,
+        } = prepareCommonArgs(card, settings, now);
+        const historyJson = wasm.compute_card_history(
+            cardJson,
+            nowStr,
+            parametersJson,
+            defaultStability,
+            defaultDifficulty,
+        );
+        return JSON.parse(historyJson) as HistoricalState[];
+    } catch {
+        return [];
     }
 }
 
