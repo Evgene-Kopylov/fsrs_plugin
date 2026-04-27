@@ -109,6 +109,7 @@
             "number": "#",
             "datetime": "Date and time",
             "rating": "Rating",
+            "retrievability": "Retrievability (R)",
             "stability": "Stability",
             "difficulty": "Difficulty",
             "days_since_last": "Days since last",

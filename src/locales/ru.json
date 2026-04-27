@@ -22,6 +22,7 @@
             "number": "#",
             "datetime": "Дата и время",
             "rating": "Оценка",
+            "retrievability": "Извлекаемость (R)",
             "stability": "Стабильность",
             "difficulty": "Сложность",
             "days_since_last": "Дней с прошлого",

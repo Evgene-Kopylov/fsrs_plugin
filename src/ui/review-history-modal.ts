@@ -6,9 +6,14 @@ import {
     extractFrontmatter,
     formatLocalDate,
 } from "../utils/fsrs-helper";
-import type { ModernFSRSCard, FSRSRating } from "../interfaces/fsrs";
+import type {
+    ModernFSRSCard,
+    FSRSRating,
+    HistoricalState,
+} from "../interfaces/fsrs";
 import type MyPlugin from "../main";
 import { deleteLastReview } from "../commands/review/delete-last-review";
+import { computeCardHistory } from "../utils/fsrs/wasm-state";
 
 /**
  * Модальное окно для просмотра истории повторений карточки FSRS
@@ -16,6 +21,7 @@ import { deleteLastReview } from "../commands/review/delete-last-review";
  */
 export class ReviewHistoryModal extends Modal {
     private card: ModernFSRSCard | null = null;
+    private historyStates: HistoricalState[] = [];
     private filePath: string;
     private deleteCooldownUntil = 0;
 
@@ -78,6 +84,17 @@ export class ReviewHistoryModal extends Modal {
             }
 
             this.card = parseResult.card;
+
+            // Вычисляем историю состояний через WASM
+            if (this.card.reviews.length > 0) {
+                this.historyStates = computeCardHistory(
+                    this.card,
+                    this.plugin.settings,
+                    new Date(),
+                );
+            } else {
+                this.historyStates = [];
+            }
         } catch (error) {
             console.error("Ошибка при загрузке данных карточки:", error);
             showNotice("notices.card_load_error");
@@ -128,7 +145,7 @@ export class ReviewHistoryModal extends Modal {
      * Рендерит таблицу с историей повторений
      */
     private renderHistoryTable(container: HTMLElement): void {
-        if (!this.card || this.card.reviews.length === 0) {
+        if (this.historyStates.length === 0) {
             const emptyMessage = container.createEl("p", {
                 cls: "fsrs-history-empty",
             });
@@ -152,6 +169,9 @@ export class ReviewHistoryModal extends Modal {
         headerRow.insertCell().textContent = i18n.t("history.table.number");
         headerRow.insertCell().textContent = i18n.t("history.table.datetime");
         headerRow.insertCell().textContent = i18n.t("history.table.rating");
+        headerRow.insertCell().textContent = i18n.t(
+            "history.table.retrievability",
+        );
         headerRow.insertCell().textContent = i18n.t("history.table.stability");
         headerRow.insertCell().textContent = i18n.t("history.table.difficulty");
         headerRow.insertCell().textContent = i18n.t(
@@ -162,60 +182,67 @@ export class ReviewHistoryModal extends Modal {
         // Тело таблицы
         const tbody = table.createEl("tbody");
 
-        // Сортируем повторения по дате (сначала самые новые)
-        const sortedReviews = [...this.card.reviews].sort(
+        // Сортируем состояния по дате (сначала самые новые)
+        const sortedStates = [...this.historyStates].sort(
             (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
         );
 
         // Заполняем таблицу данными
-        for (let i = 0; i < sortedReviews.length; i++) {
-            const review = sortedReviews[i]!;
+        for (let i = 0; i < sortedStates.length; i++) {
+            const state = sortedStates[i]!;
             const row = tbody.insertRow();
 
             // Номер повторения (обратный порядок)
-            row.insertCell().textContent = (
-                sortedReviews.length - i
-            ).toString();
+            row.insertCell().textContent = (sortedStates.length - i).toString();
 
             // Дата и время
             const dateCell = row.insertCell();
             try {
-                const date = new Date(review.date);
+                const date = new Date(state.date);
                 dateCell.textContent = formatLocalDate(date, this.app);
             } catch {
-                dateCell.textContent = review.date;
+                dateCell.textContent = state.date;
             }
 
             // Оценка с переводом
             const ratingCell = row.insertCell();
-            ratingCell.textContent = this.translateRating(review.rating);
+            if (state.rating) {
+                ratingCell.textContent = this.translateRating(
+                    state.rating as FSRSRating,
+                );
+            } else {
+                ratingCell.textContent = "-";
+            }
+
+            // Извлекаемость R (перед ответом) — значение в процентах
+            const retrievabilityCell = row.insertCell();
+            if (
+                state.retrievability_before !== null &&
+                state.retrievability_before !== undefined
+            ) {
+                const rVal = state.retrievability_before;
+                retrievabilityCell.textContent =
+                    rVal > 0 ? (rVal * 100).toFixed(1) + "%" : "-";
+            } else {
+                retrievabilityCell.textContent = "-";
+            }
 
             // Стабильность (округленная)
             const stabilityCell = row.insertCell();
-            stabilityCell.textContent = review.stability.toFixed(1);
+            stabilityCell.textContent = state.stability.toFixed(1);
 
             // Сложность (округленная)
             const difficultyCell = row.insertCell();
-            difficultyCell.textContent = review.difficulty.toFixed(1);
+            difficultyCell.textContent = state.difficulty.toFixed(1);
 
-            // Интервал в днях с предыдущего повторения
+            // Дней с предыдущего повторения (из HistoricalState)
             const intervalCell = row.insertCell();
-            if (i < sortedReviews.length - 1) {
-                const prevReview = sortedReviews[i + 1]!;
-                const currentDate = new Date(review.date);
-                const prevDate = new Date(prevReview.date);
-                const intervalDays = Math.round(
-                    (currentDate.getTime() - prevDate.getTime()) /
-                        (1000 * 60 * 60 * 24),
-                );
-                intervalCell.textContent = intervalDays.toString();
-            } else {
-                intervalCell.textContent = "-";
-            }
+            intervalCell.textContent =
+                state.elapsed_days > 0 ? state.elapsed_days.toString() : "-";
 
             // Кнопка удаления — только для последнего повторения (первая строка)
             const actionsCell = row.insertCell();
-            if (i === 0) {
+            if (i === 0 && this.card) {
                 const deleteBtn = actionsCell.createEl("button", {
                     cls: "fsrs-history-delete-btn",
                     text: "✕",
