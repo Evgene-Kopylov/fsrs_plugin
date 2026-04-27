@@ -15,7 +15,7 @@ export class IncrementalCache {
     private cardCache = new Map<string, CachedCard>();
     private cacheInitialized = false;
     private scanPromise: Promise<void> | null = null;
-    private pendingUpdates = new Map<string, ReturnType<typeof setTimeout>>();
+    private pendingUpdates = new Map<string, number>();
 
     constructor(
         private app: App,
@@ -192,7 +192,8 @@ export class IncrementalCache {
         this.cacheInitialized = false;
         this.scanPromise = null;
         // Очищаем все pending таймеры
-        for (const timer of this.pendingUpdates.values()) activeWindow.clearTimeout(timer);
+        for (const timer of this.pendingUpdates.values())
+            activeWindow.clearTimeout(timer);
         this.pendingUpdates.clear();
         this.onCacheUpdated();
     }
@@ -232,7 +233,8 @@ export class IncrementalCache {
      * Очищает все ресурсы (таймеры) перед выгрузкой
      */
     unload(): void {
-        for (const timer of this.pendingUpdates.values()) activeWindow.clearTimeout(timer);
+        for (const timer of this.pendingUpdates.values())
+            activeWindow.clearTimeout(timer);
         this.pendingUpdates.clear();
     }
 }
