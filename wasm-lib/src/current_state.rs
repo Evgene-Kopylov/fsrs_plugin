@@ -48,11 +48,12 @@ pub fn compute_current_state(
 
     // Если есть повторения, обновляем elapsed_days от последнего до now
     if let Some(last_session) = card.reviews.last()
-        && let Some(last_date) = parse_datetime_flexible(&last_session.date) {
-            let elapsed_days = (now - last_date).num_days().max(0);
-            fsrs_card.elapsed_days = elapsed_days;
-            fsrs_card.last_review = last_date;
-        }
+        && let Some(last_date) = parse_datetime_flexible(&last_session.date)
+    {
+        let elapsed_days = (now - last_date).num_days().max(0);
+        fsrs_card.elapsed_days = elapsed_days;
+        fsrs_card.last_review = last_date;
+    }
 
     // Защита от NaN/Inf в значениях карточки после расчёта
     let stability = if fsrs_card.stability.is_finite() && fsrs_card.stability >= 0.0 {
