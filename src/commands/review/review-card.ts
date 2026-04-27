@@ -141,9 +141,7 @@ async function reviewCardByFile(
         const minInterval = plugin.settings.minimum_review_interval_minutes;
 
         if (minutesSinceLastReview >= minInterval) {
-            console.debug(
-                `Карточка не по графику, но разрешено досрочное повторение (прошло ${minutesSinceLastReview} минут, минимум ${minInterval})`,
-            );
+            // досрочное повторение разрешено
         } else {
             const remainingMinutes = minInterval - minutesSinceLastReview;
             const state = computeCardState(card, plugin.settings);
@@ -169,8 +167,6 @@ async function reviewCardByFile(
         }
     }
 
-    console.debug("Карточка для повторения:", card);
-
     const modal = new ReviewModal(
         app,
         card,
@@ -183,10 +179,7 @@ async function reviewCardByFile(
         return null;
     }
 
-    console.debug("Выбранная оценка:", rating);
-
     const updatedCard = addReviewSession(card, rating, plugin.settings);
-    console.debug("Обновленная карточка:", updatedCard);
 
     const updatedYaml = getCardYamlAfterReview(card, rating, plugin.settings);
     const updatedFrontmatter = replaceReviewsInFrontmatter(
@@ -215,14 +208,6 @@ async function reviewCardByFile(
         showNotice("notices.card_reviewed", { rating });
     }
     plugin.notifyFsrsTableRenderers();
-    console.debug("Карточка успешно обновлена");
-
-    console.debug("Следующие даты повторения:");
-    Object.entries(nextDates).forEach(([rating, date]) => {
-        if (date) {
-            console.debug(`  ${rating}: ${new Date(date).toLocaleString()}`);
-        }
-    });
 
     return rating;
 }

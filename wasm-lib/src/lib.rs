@@ -161,32 +161,10 @@ pub fn extract_fsrs_from_frontmatter_wrapped(frontmatter: String) -> String {
     use crate::json_parsing::card_to_json;
     use crate::yaml_parsing::extract_fsrs_from_frontmatter;
 
-    use log;
-
-    log::debug!(
-        "extract_fsrs_from_frontmatter_wrapped called with frontmatter length: {}",
-        frontmatter.len()
-    );
-
-    let result = match extract_fsrs_from_frontmatter(&frontmatter) {
-        Some(card) => {
-            log::debug!(
-                "extract_fsrs_from_frontmatter found card with {} reviews",
-                card.reviews.len()
-            );
-            card_to_json(&card)
-        }
-        None => {
-            log::debug!("extract_fsrs_from_frontmatter returned None, returning null");
-            "null".to_string()
-        }
-    };
-
-    log::debug!(
-        "extract_fsrs_from_frontmatter_wrapped returning JSON length: {}",
-        result.len()
-    );
-    result
+    match extract_fsrs_from_frontmatter(&frontmatter) {
+        Some(card) => card_to_json(&card),
+        None => "null".to_string(),
+    }
 }
 
 // Создает frontmatter с FSRS карточкой

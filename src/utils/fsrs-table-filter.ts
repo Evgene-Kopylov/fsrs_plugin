@@ -13,6 +13,7 @@ import type {
 import type { TableParams } from "./fsrs-table-params";
 
 import * as wasm from "../../wasm-lib/pkg/wasm_lib";
+import { verboseLog } from "./logger";
 
 /**
  * Результат фильтрации и сортировки карточек с состояниями
@@ -91,24 +92,6 @@ function convertWasmStateToFSRSState(wasmState?: string): FSRSState {
 function convertWasmFieldsToComputedState(
     wasmFields: WasmComputedFields,
 ): ComputedCardState {
-    // Логируем все поля wasmFields для отладки
-    console.debug("convertWasmFieldsToComputedState - full structure:", {
-        file: wasmFields.file,
-        reps: wasmFields.reps,
-        overdue: wasmFields.overdue,
-        stability: wasmFields.stability,
-        difficulty: wasmFields.difficulty,
-        retrievability: wasmFields.retrievability,
-        due: wasmFields.due,
-        state: wasmFields.state,
-        elapsed: wasmFields.elapsed,
-        scheduled: wasmFields.scheduled,
-        additional_fields: wasmFields.additional_fields,
-        has_additional_fields: wasmFields.additional_fields
-            ? Object.keys(wasmFields.additional_fields).length
-            : 0,
-    });
-
     // Преобразуем дату из формата Obsidian в ISO
     let dueDate = "";
     if (wasmFields.due) {
@@ -198,15 +181,6 @@ export function filterAndSortCards(
         return { cards: [], totalCount: 0 };
     }
 
-    // Отладочный вывод параметров
-    console.debug("filterAndSortCards parameters:", {
-        cardCount: cards.length,
-        params: JSON.parse(JSON.stringify(params)) as unknown,
-        hasSort: !!params.sort,
-        limit: params.limit,
-        now: now.toISOString(),
-    });
-
     try {
         // Преобразуем параметры сортировки для WASM
         const wasmParams = {
@@ -224,12 +198,6 @@ export function filterAndSortCards(
             where_condition: params.where,
         };
 
-        // Отладочный вывод параметров для WASM
-        console.debug("WASM parameters for filter_and_sort_cards:", {
-            wasmParams: JSON.parse(JSON.stringify(wasmParams)) as unknown,
-            whereCondition: wasmParams.where_condition,
-        });
-
         // Вызываем WASM функцию для фильтрации и сортировки
         const resultJson = wasm.filter_and_sort_cards(
             JSON.stringify(cards),
@@ -238,17 +206,12 @@ export function filterAndSortCards(
             now.toISOString(),
         );
 
-        console.debug(
-            "WASM filter_and_sort_cards result JSON length:",
-            resultJson.length,
-        );
-
         // Парсим результат с явным приведением типов
         const wasmResult: WasmFilterResult = JSON.parse(
             resultJson,
         ) as unknown as WasmFilterResult;
 
-        console.debug("WASM filter result:", {
+        verboseLog("📊 WASM filter result:", {
             totalCards: wasmResult.cards?.length || 0,
             totalCount: wasmResult.total_count,
             errorCount: wasmResult.errors?.length || 0,
@@ -271,13 +234,6 @@ export function filterAndSortCards(
                 const card: ModernFSRSCard = JSON.parse(
                     wasmCard.card_json,
                 ) as unknown as ModernFSRSCard;
-
-                // Отладочная информация о карточке
-                console.debug("Processing card:", {
-                    file: card.filePath,
-                    reviewsCount: card.reviews?.length || 0,
-                    computedFields: wasmCard.computed_fields,
-                });
 
                 // Преобразуем вычисленные поля в состояние
                 const state = convertWasmFieldsToComputedState(
@@ -336,15 +292,6 @@ export function filterAndSortCardsWithStates(
         return { cards: [], totalCount: 0 };
     }
 
-    // Отладочный вывод параметров
-    console.debug("filterAndSortCardsWithStates parameters:", {
-        cachedCardCount: cachedCards.length,
-        params: JSON.parse(JSON.stringify(params)) as unknown,
-        hasSort: !!params.sort,
-        limit: params.limit,
-        now: now.toISOString(),
-    });
-
     try {
         // Преобразуем параметры сортировки для WASM
         const wasmParams = {
@@ -362,15 +309,6 @@ export function filterAndSortCardsWithStates(
             where_condition: params.where,
         };
 
-        // Отладочный вывод параметров для WASM
-        console.debug(
-            "WASM parameters for filter_and_sort_cards_with_states:",
-            {
-                wasmParams: JSON.parse(JSON.stringify(wasmParams)) as unknown,
-                whereCondition: wasmParams.where_condition,
-            },
-        );
-
         // Формируем массив объектов {card_json, state_json} для WASM
         const cardsWithStatesInput = cachedCards.map(({ card, state }) => ({
             card_json: JSON.stringify(card),
@@ -385,21 +323,10 @@ export function filterAndSortCardsWithStates(
             now.toISOString(),
         );
 
-        console.debug(
-            "WASM filter_and_sort_cards_with_states result JSON length:",
-            resultJson.length,
-        );
-
         // Парсим результат с явным приведением типов
         const wasmResult: WasmFilterResult = JSON.parse(
             resultJson,
         ) as unknown as WasmFilterResult;
-
-        console.debug("WASM filter result with states:", {
-            totalCards: wasmResult.cards?.length || 0,
-            totalCount: wasmResult.total_count,
-            errorCount: wasmResult.errors?.length || 0,
-        });
 
         // Обрабатываем ошибки, если есть
         if (wasmResult.errors && wasmResult.errors.length > 0) {
@@ -418,13 +345,6 @@ export function filterAndSortCardsWithStates(
                 const card: ModernFSRSCard = JSON.parse(
                     wasmCard.card_json,
                 ) as unknown as ModernFSRSCard;
-
-                // Отладочная информация о карточке
-                console.debug("Processing card with precomputed state:", {
-                    file: card.filePath,
-                    reviewsCount: card.reviews?.length || 0,
-                    computedFields: wasmCard.computed_fields,
-                });
 
                 // Преобразуем вычисленные поля в состояние
                 const state = convertWasmFieldsToComputedState(

@@ -284,7 +284,7 @@ export default class FsrsPlugin extends Plugin {
      */
     notifyFsrsTableRenderers(): void {
         for (const renderer of this.fsrsTableRenderers) {
-            renderer.refresh().catch((error) => {
+            renderer.refresh(true).catch((error) => {
                 console.error(
                     "Ошибка при обновлении рендерера fsrs-table:",
                     error,
