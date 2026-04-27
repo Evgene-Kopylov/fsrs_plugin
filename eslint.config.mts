@@ -2,6 +2,7 @@ import tseslint from "typescript-eslint";
 import obsidianmd from "eslint-plugin-obsidianmd";
 import globals from "globals";
 import { globalIgnores } from "eslint/config";
+import eslintComments from "eslint-plugin-eslint-comments";
 
 export default tseslint.config(
     {
@@ -41,6 +42,7 @@ export default tseslint.config(
         files: ["src/**/*.ts"],
         plugins: {
             "@typescript-eslint": tseslint.plugin,
+            "eslint-comments": eslintComments,
         },
         rules: {
             // Строгие правила типизации
@@ -53,6 +55,13 @@ export default tseslint.config(
 
             // Запрет console.log (warn, чтобы не ломать сборку)
             "no-console": "warn",
+
+            // Правила для eslint-disable директив (как в валидаторе Obsidian)
+            "eslint-comments/require-description": "error",
+            "eslint-comments/no-restricted-disable": [
+                "error",
+                "@typescript-eslint/no-explicit-any",
+            ],
         },
     },
     globalIgnores([
