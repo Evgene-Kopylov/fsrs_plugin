@@ -207,7 +207,7 @@ export class ReviewHistoryModal extends Modal {
 
             // Оценка с переводом
             const ratingCell = row.insertCell();
-            if (state.rating) {
+            if (state.rating !== null && state.rating !== undefined) {
                 ratingCell.textContent = this.translateRating(
                     numberToRating(state.rating),
                 );

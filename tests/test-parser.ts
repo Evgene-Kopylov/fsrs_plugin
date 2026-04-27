@@ -193,7 +193,7 @@ function parseModernFsrsFromFrontmatter(
         for (const session of parsed.reviews) {
             if (
                 !session.date ||
-                !session.rating ||
+                session.rating == null ||
                 typeof session.stability !== "number" ||
                 typeof session.difficulty !== "number"
             ) {
