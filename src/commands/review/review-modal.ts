@@ -20,6 +20,12 @@ export class ReviewModal extends Modal {
             good: string;
             easy: string;
         },
+        private customColors?: {
+            again: string;
+            hard: string;
+            good: string;
+            easy: string;
+        },
     ) {
         super(app);
         this.card = card;
@@ -80,6 +86,17 @@ export class ReviewModal extends Modal {
                 : i18n.t(`review.buttons.${key}`);
         };
 
+        // Вспомогательная функция: custom цвет или CSS-переменная
+        const colorOrDefault = (
+            key: "again" | "hard" | "good" | "easy",
+        ): string => {
+            const custom = this.customColors?.[key];
+            if (custom && custom.trim() !== "") {
+                return custom;
+            }
+            return `var(--fsrs-color-${key})`;
+        };
+
         // Кнопки оценок
         const ratings: {
             rating: FSRSRating;
@@ -89,22 +106,22 @@ export class ReviewModal extends Modal {
             {
                 rating: "Again",
                 label: labelOrTranslation("again"),
-                color: "var(--fsrs-color-again)",
+                color: colorOrDefault("again"),
             },
             {
                 rating: "Hard",
                 label: labelOrTranslation("hard"),
-                color: "var(--fsrs-color-hard)",
+                color: colorOrDefault("hard"),
             },
             {
                 rating: "Good",
                 label: labelOrTranslation("good"),
-                color: "var(--fsrs-color-good)",
+                color: colorOrDefault("good"),
             },
             {
                 rating: "Easy",
                 label: labelOrTranslation("easy"),
-                color: "var(--fsrs-color-easy)",
+                color: colorOrDefault("easy"),
             },
         ];
 

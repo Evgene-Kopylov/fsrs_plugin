@@ -237,7 +237,8 @@
                 "placeholder_again": "Снова (1)",
                 "placeholder_hard": "Тяжело (2)",
                 "placeholder_good": "Нормально (3)",
-                "placeholder_easy": "Легко (4)"
+                "placeholder_easy": "Легко (4)",
+                "reset_tooltip": "Сбросить название и цвет"
             }
         },
         "early_review": {

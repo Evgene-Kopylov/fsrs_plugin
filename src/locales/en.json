@@ -237,7 +237,8 @@
                 "placeholder_again": "Again (1)",
                 "placeholder_hard": "Hard (2)",
                 "placeholder_good": "Good (3)",
-                "placeholder_easy": "Easy (4)"
+                "placeholder_easy": "Easy (4)",
+                "reset_tooltip": "Reset name and color"
             }
         },
         "early_review": {

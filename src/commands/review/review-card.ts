@@ -171,6 +171,7 @@ async function reviewCardByFile(
         app,
         card,
         plugin.settings.customButtonLabels,
+        plugin.settings.customButtonColors,
     );
     const rating = await modal.show();
 

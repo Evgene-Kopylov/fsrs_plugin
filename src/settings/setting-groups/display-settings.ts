@@ -78,28 +78,104 @@ export function renderDisplaySettings(
     ];
 
     buttonKeys.forEach((key) => {
-        new Setting(labelsContainer)
-            .setName(i18n.t(`settings.display.custom_button_labels.${key}`))
-            .addText((text) =>
-                text
-                    .setPlaceholder(
-                        i18n.t(
-                            `settings.display.custom_button_labels.placeholder_${key}`,
-                        ),
-                    )
-                    .setValue(plugin.settings.customButtonLabels?.[key] ?? "")
-                    .onChange(async (value) => {
-                        if (!plugin.settings.customButtonLabels) {
-                            plugin.settings.customButtonLabels = {
-                                again: "",
-                                hard: "",
-                                good: "",
-                                easy: "",
-                            };
-                        }
-                        plugin.settings.customButtonLabels[key] = value;
-                        await plugin.saveSettings();
-                    }),
-            );
+        const setting = new Setting(labelsContainer).setName(
+            i18n.t(`settings.display.custom_button_labels.${key}`),
+        );
+
+        // Поле для названия кнопки
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let textComponent: any;
+        setting.addText((text) => {
+            textComponent = text;
+            text.setPlaceholder(
+                i18n.t(
+                    `settings.display.custom_button_labels.placeholder_${key}`,
+                ),
+            )
+                .setValue(plugin.settings.customButtonLabels?.[key] ?? "")
+                .onChange(async (value) => {
+                    if (!plugin.settings.customButtonLabels) {
+                        plugin.settings.customButtonLabels = {
+                            again: "",
+                            hard: "",
+                            good: "",
+                            easy: "",
+                        };
+                    }
+                    plugin.settings.customButtonLabels[key] = value;
+                    await plugin.saveSettings();
+                });
+        });
+
+        // Поле для цвета кнопки
+        const defaultColor =
+            getComputedStyle(document.body)
+                .getPropertyValue(`--fsrs-color-${key}`)
+                .trim() || "#cccccc";
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let colorComponent: any;
+        setting.addColorPicker((color) => {
+            colorComponent = color;
+            color
+                .setValue(
+                    plugin.settings.customButtonColors?.[key] || defaultColor,
+                )
+                .onChange(async (value) => {
+                    if (!plugin.settings.customButtonColors) {
+                        plugin.settings.customButtonColors = {
+                            again: "",
+                            hard: "",
+                            good: "",
+                            easy: "",
+                        };
+                    }
+                    // Если цвет совпадает с дефолтным CSS — стираем (пустая строка → CSS-переменная)
+                    plugin.settings.customButtonColors[key] =
+                        value.toUpperCase() === defaultColor.toUpperCase()
+                            ? ""
+                            : value;
+                    await plugin.saveSettings();
+                });
+        });
+
+        // Кнопка сброса имени и цвета
+        setting.addExtraButton((btn) => {
+            btn.setIcon("reset")
+                .setTooltip(
+                    i18n.t(
+                        "settings.display.custom_button_labels.reset_tooltip",
+                    ),
+                )
+                .onClick(async () => {
+                    // Сброс имени
+                    if (!plugin.settings.customButtonLabels) {
+                        plugin.settings.customButtonLabels = {
+                            again: "",
+                            hard: "",
+                            good: "",
+                            easy: "",
+                        };
+                    }
+                    plugin.settings.customButtonLabels[key] = "";
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                    textComponent.setValue("");
+
+                    // Сброс цвета
+                    if (!plugin.settings.customButtonColors) {
+                        plugin.settings.customButtonColors = {
+                            again: "",
+                            hard: "",
+                            good: "",
+                            easy: "",
+                        };
+                    }
+                    plugin.settings.customButtonColors[key] = "";
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+                    colorComponent.setValue(defaultColor);
+
+                    await plugin.saveSettings();
+                });
+        });
     });
 }
