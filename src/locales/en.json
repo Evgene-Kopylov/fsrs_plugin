@@ -110,8 +110,8 @@
             "datetime": "Date and time",
             "rating": "Rating",
             "retrievability": "Retrievability (R)",
-            "stability": "Stability",
-            "difficulty": "Difficulty",
+            "stability": "Stability (S)",
+            "difficulty": "Difficulty (D)",
             "days_since_last": "Days since last",
             "actions": ""
         },
