@@ -12,16 +12,6 @@ pub fn rating_from_str(rating: &str) -> Rating {
     }
 }
 
-/// Конвертирует Rating enum в строку
-pub fn rating_to_string(rating: Rating) -> String {
-    match rating {
-        Rating::Again => "Again".to_string(),
-        Rating::Hard => "Hard".to_string(),
-        Rating::Good => "Good".to_string(),
-        Rating::Easy => "Easy".to_string(),
-    }
-}
-
 /// Конвертирует State enum в строку
 pub fn state_to_string(state: State) -> String {
     match state {
@@ -61,14 +51,6 @@ mod tests {
         assert_eq!(rating_from_str(""), Rating::Good);
         assert_eq!(rating_from_str("Unknown"), Rating::Good);
         assert_eq!(rating_from_str("AGAIN"), Rating::Good); // чувствительность к регистру
-    }
-
-    #[test]
-    fn test_rating_to_string() {
-        assert_eq!(rating_to_string(Rating::Again), "Again");
-        assert_eq!(rating_to_string(Rating::Hard), "Hard");
-        assert_eq!(rating_to_string(Rating::Good), "Good");
-        assert_eq!(rating_to_string(Rating::Easy), "Easy");
     }
 
     #[test]
@@ -113,18 +95,6 @@ mod tests {
         assert_eq!(fsrs_params.enable_fuzz, true);
         assert_eq!(fsrs_params.maximum_interval, 1000);
         assert_eq!(fsrs_params.request_retention, 0.9);
-    }
-
-    #[test]
-    fn test_rating_conversion_roundtrip() {
-        // Проверяем, что конвертация туда-обратно сохраняет значение
-        let ratings = vec![Rating::Again, Rating::Hard, Rating::Good, Rating::Easy];
-
-        for rating in ratings {
-            let string_repr = rating_to_string(rating);
-            let converted_back = rating_from_str(&string_repr);
-            assert_eq!(converted_back, rating);
-        }
     }
 
     #[test]

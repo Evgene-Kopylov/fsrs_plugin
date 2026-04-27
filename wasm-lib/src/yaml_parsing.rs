@@ -155,19 +155,9 @@ fn validate_review_session(session: &serde_yaml::Value) -> Option<ReviewSession>
     if !["Again", "Hard", "Good", "Easy"].contains(&rating) {
         return None;
     }
-    let stability = session.get("stability")?.as_f64()?;
-    if !(0.0..=1000.0).contains(&stability) {
-        return None;
-    }
-    let difficulty = session.get("difficulty")?.as_f64()?;
-    if !(0.0..=10.0).contains(&difficulty) {
-        return None;
-    }
     Some(ReviewSession {
         date: date.to_rfc3339(),
         rating: rating.to_string(),
-        stability,
-        difficulty,
     })
 }
 
@@ -194,21 +184,6 @@ pub fn validate_review_sessions(card: &ModernFsrsCard) -> Vec<String> {
             errors.push(format!(
                 "Session {}: invalid rating '{}'",
                 i, session.rating
-            ));
-        }
-
-        // Проверяем числовые значения
-        if session.stability < 0.0 || session.stability > 1000.0 {
-            errors.push(format!(
-                "Session {}: stability out of range: {}",
-                i, session.stability
-            ));
-        }
-
-        if session.difficulty < 0.0 || session.difficulty > 10.0 {
-            errors.push(format!(
-                "Session {}: difficulty out of range: {}",
-                i, session.difficulty
             ));
         }
     }
@@ -239,12 +214,8 @@ mod tests {
 reviews:
   - date: "2025-01-01T10:00:00Z"
     rating: "Good"
-    stability: 5.0
-    difficulty: 3.0
   - date: "2025-01-02T14:30:00Z"
     rating: "Easy"
-    stability: 8.0
-    difficulty: 2.5
 "#;
         let card = parse_yaml_to_card(yaml);
 
@@ -252,13 +223,9 @@ reviews:
 
         assert_eq!(card.reviews[0].date, "2025-01-01T10:00:00Z");
         assert_eq!(card.reviews[0].rating, "Good");
-        assert_eq!(card.reviews[0].stability, 5.0);
-        assert_eq!(card.reviews[0].difficulty, 3.0);
 
         assert_eq!(card.reviews[1].date, "2025-01-02T14:30:00Z");
         assert_eq!(card.reviews[1].rating, "Easy");
-        assert_eq!(card.reviews[1].stability, 8.0);
-        assert_eq!(card.reviews[1].difficulty, 2.5);
     }
 
     #[test]
@@ -276,8 +243,6 @@ reviews:
             reviews: vec![ReviewSession {
                 date: "2025-01-01T10:00:00Z".to_string(),
                 rating: "Good".to_string(),
-                stability: 5.0,
-                difficulty: 3.0,
             }],
             file_path: None,
         };
@@ -290,14 +255,6 @@ reviews:
         assert_eq!(
             parsed_card.reviews[0].rating,
             original_card.reviews[0].rating
-        );
-        assert_eq!(
-            parsed_card.reviews[0].stability,
-            original_card.reviews[0].stability
-        );
-        assert_eq!(
-            parsed_card.reviews[0].difficulty,
-            original_card.reviews[0].difficulty
         );
     }
 
@@ -321,8 +278,6 @@ enable_fuzz: false
 reviews:
   - date: "2025-01-01T10:00:00Z"
     rating: "Good"
-    stability: 5.0
-    difficulty: 3.0
 ---
 Some content here"#;
 
@@ -359,8 +314,6 @@ Content"#;
             reviews: vec![ReviewSession {
                 date: "2025-01-01T10:00:00Z".to_string(),
                 rating: "Good".to_string(),
-                stability: 5.0,
-                difficulty: 3.0,
             }],
             file_path: None,
         };
@@ -380,8 +333,6 @@ Content"#;
             reviews: vec![ReviewSession {
                 date: "2025-01-01T10:00:00Z".to_string(),
                 rating: "Good".to_string(),
-                stability: 5.0,
-                difficulty: 3.0,
             }],
             file_path: None,
         };
@@ -396,8 +347,6 @@ Content"#;
             reviews: vec![ReviewSession {
                 date: "invalid-date".to_string(),
                 rating: "Good".to_string(),
-                stability: 5.0,
-                difficulty: 3.0,
             }],
             file_path: None,
         };
@@ -413,8 +362,6 @@ Content"#;
             reviews: vec![ReviewSession {
                 date: "2025-01-01T10:00:00Z".to_string(),
                 rating: "InvalidRating".to_string(),
-                stability: 5.0,
-                difficulty: 3.0,
             }],
             file_path: None,
         };
@@ -422,24 +369,6 @@ Content"#;
         let errors = validate_review_sessions(&card);
         assert!(!errors.is_empty());
         assert!(errors[0].contains("invalid rating"));
-    }
-
-    #[test]
-    fn test_validate_review_sessions_out_of_range() {
-        let card = ModernFsrsCard {
-            reviews: vec![ReviewSession {
-                date: "2025-01-01T10:00:00Z".to_string(),
-                rating: "Good".to_string(),
-                stability: -5.0,  // отрицательная стабильность
-                difficulty: 15.0, // сложность вне диапазона
-            }],
-            file_path: None,
-        };
-
-        let errors = validate_review_sessions(&card);
-        assert_eq!(errors.len(), 2);
-        assert!(errors[0].contains("stability out of range"));
-        assert!(errors[1].contains("difficulty out of range"));
     }
 
     #[test]
@@ -458,8 +387,6 @@ reviews:
         assert_eq!(card.reviews.len(), 1);
         assert_eq!(card.reviews[0].date, "2026-04-13T07:00:00+00:00");
         assert_eq!(card.reviews[0].rating, "Good");
-        assert_eq!(card.reviews[0].stability, 25.8);
-        assert_eq!(card.reviews[0].difficulty, 2.3);
     }
 
     #[test]
@@ -479,8 +406,6 @@ reviews:
         assert_eq!(card.reviews.len(), 1);
         assert_eq!(card.reviews[0].date, "2026-04-13T07:00:00+00:00");
         assert_eq!(card.reviews[0].rating, "Good");
-        assert_eq!(card.reviews[0].stability, 25.8);
-        assert_eq!(card.reviews[0].difficulty, 2.3);
     }
 
     #[test]

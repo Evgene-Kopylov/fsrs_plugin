@@ -7,8 +7,6 @@ use serde::{Deserialize, Serialize};
 pub struct ReviewSession {
     pub date: String,   // ISO 8601 строка
     pub rating: String, // "Again", "Hard", "Good", "Easy"
-    pub stability: f64,
-    pub difficulty: f64,
 }
 
 /// Современная карточка FSRS с reviews
