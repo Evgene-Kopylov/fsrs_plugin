@@ -15,6 +15,7 @@ import type { CardWithState } from "./fsrs-table-filter";
 import { formatFieldValue } from "./fsrs-table-format";
 import { i18n } from "./i18n";
 import { parseSqlBlock } from "./fsrs-table-params";
+import { DEFAULT_TABLE_DISPLAY_LIMIT } from "../constants";
 
 /**
  * Генерирует HTML таблицы для блока fsrs-table
@@ -46,7 +47,8 @@ export async function generateTableDOM(
     now: Date = new Date(),
 ): Promise<HTMLDivElement> {
     const CHUNK_SIZE = 50;
-    const effectiveLimit = params.limit > 0 ? params.limit : 200;
+    const effectiveLimit =
+        params.limit > 0 ? params.limit : DEFAULT_TABLE_DISPLAY_LIMIT;
     const cardsToShow = cardsWithState.slice(0, effectiveLimit);
     const totalCards = totalCount;
 
