@@ -120,11 +120,22 @@ LOG_FILE="${LOG_FILE/\$VAULT_PATH/$VAULT_PATH}"
 # Автоматическое определение последнего лог-файла, если не указан или не существует
 AUTO_DETECTED=false
 if [ -z "$LOG_FILE" ] || [ ! -f "$LOG_FILE" ]; then
+    # Сначала ищем в console_logs/ (тестовое хранилище)
     LATEST_LOG=$(find "$VAULT_PATH/console_logs" -name "console-log.*.md" -type f 2>/dev/null | sort | tail -n 1)
     if [ -n "$LATEST_LOG" ]; then
         LOG_FILE="$LATEST_LOG"
         AUTO_DETECTED=true
         verbose_log "Автоопределён лог-файл: $LOG_FILE"
+    fi
+
+    # Если не нашли — ищем в logs/ (основное хранилище)
+    if [ -z "$LOG_FILE" ] || [ ! -f "$LOG_FILE" ]; then
+        LATEST_LOG=$(find "$VAULT_PATH/logs" -name "console-log.*.md" -type f 2>/dev/null | sort | tail -n 1)
+        if [ -n "$LATEST_LOG" ]; then
+            LOG_FILE="$LATEST_LOG"
+            AUTO_DETECTED=true
+            verbose_log "Автоопределён лог-файл: $LOG_FILE"
+        fi
     fi
 fi
 
