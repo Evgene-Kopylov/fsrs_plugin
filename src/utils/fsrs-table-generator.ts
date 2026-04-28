@@ -62,10 +62,6 @@ export function generateTableDOM(
     const container = createDiv();
     container.className = "fsrs-table-container";
 
-    // Сразу вставляем в DOM, чтобы браузер отрисовывал строки между чанками
-    parentEl.empty();
-    parentEl.appendChild(container);
-
     // Таблица
     const table = createEl("table");
     table.className = "fsrs-table";
@@ -157,6 +153,10 @@ export function generateTableDOM(
         infoDiv.appendChild(small);
         container.appendChild(infoDiv);
     }
+
+    // Вставляем в DOM готовую таблицу — все изменения макета за одну операцию
+    parentEl.empty();
+    parentEl.appendChild(container);
 
     return container;
 }
