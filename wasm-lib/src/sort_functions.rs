@@ -1,19 +1,5 @@
-use chrono::{DateTime, Utc};
-
 use crate::json_parsing::parse_datetime_flexible;
 use crate::types::ModernFsrsCard;
-
-/// Рассчитывает оценку приоритета карточки
-fn calculate_priority_score(
-    due_date: DateTime<Utc>,
-    retrievability: f64,
-    now: DateTime<Utc>,
-) -> f64 {
-    // Приоритет: сначала просроченные, затем по извлекаемости (меньше = выше приоритет)
-    let is_overdue = due_date <= now;
-    let priority_base = if is_overdue { 0.0 } else { 1.0 };
-    priority_base * 1_000_000.0 + retrievability * 1_000.0
-}
 
 /// Функции для работы со временем
 /// Рассчитывает время просрочки карточки в часах
@@ -120,32 +106,6 @@ pub fn get_card_age_days(card_json: String, now_iso: String) -> String {
 mod tests {
     use super::*;
     use chrono::Utc;
-
-    #[test]
-    fn test_calculate_priority_score() {
-        let now = Utc::now();
-
-        // Просроченная карточка с низкой извлекаемостью
-        let past = now - chrono::Duration::days(1);
-        let score1 = calculate_priority_score(past, 0.2, now);
-
-        // Просроченная карточка с высокой извлекаемостью
-        let score2 = calculate_priority_score(past, 0.9, now);
-
-        // Непросроченная карточка
-        let future = now + chrono::Duration::days(1);
-        let score3 = calculate_priority_score(future, 0.5, now);
-
-        // Просроченные должны иметь более высокий приоритет (меньший score)
-        assert!(score1 < 1_000_000.0);
-        assert!(score2 < 1_000_000.0);
-
-        // Непросроченные должны иметь более низкий приоритет (больший score)
-        assert!(score3 >= 1_000_000.0);
-
-        // Среди просроченных, карточка с более низкой извлекаемостью должна иметь более высокий приоритет
-        assert!(score1 < score2);
-    }
 
     #[test]
     fn test_is_card_overdue() {
