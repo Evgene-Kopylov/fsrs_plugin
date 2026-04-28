@@ -1,6 +1,5 @@
 import { MarkdownRenderChild } from "obsidian";
 import type FsrsPlugin from "../main";
-import type { ModernFSRSCard } from "../interfaces/fsrs";
 import type { TableParams, CardWithState } from "../utils/fsrs-table-helpers";
 import {
     generateTableDOM,
@@ -8,6 +7,7 @@ import {
 } from "../utils/fsrs-table-helpers";
 import { i18n } from "../utils/i18n";
 import { verboseLog } from "../utils/logger";
+import { sortCards, getNextSortDirection } from "./fsrs-table-sorter";
 
 /**
  * Класс для динамического рендеринга блока fsrs-table
@@ -369,7 +369,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
     private async handleSortClick(field: string) {
         if (!this.params) return;
         // Определяем следующее состояние сортировки
-        const nextDirection = this.getNextSortDirection(field);
+        const nextDirection = getNextSortDirection(this.params.sort, field);
 
         // Обновляем параметры
         if (nextDirection === null) {
@@ -393,11 +393,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 // (включая сортировку из SQL, если она была)
             } else {
                 // Применяем новую сортировку
-                cardsToRender = this.sortCards(
-                    cardsToRender,
-                    field,
-                    nextDirection,
-                );
+                cardsToRender = sortCards(cardsToRender, field, nextDirection);
             }
 
             // Обновляем кэш отсортированными карточками
@@ -409,124 +405,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             // Если кэша нет, выполняем полное обновление
             await this.refresh();
         }
-    }
-
-    /**
-     * Возвращает следующее направление сортировки для поля
-     * Логика: нет параметра → ASC → DESC → нет параметра
-     * @param field Поле для сортировки
-     * @returns Следующее направление сортировки или null для снятия сортировки
-     */
-    private getNextSortDirection(field: string): "ASC" | "DESC" | null {
-        if (!this.params) return null;
-        const currentSort = this.params.sort;
-
-        // Если сортируем по другому полю, начинаем с ASC
-        if (!currentSort || currentSort.field !== field) {
-            return "ASC";
-        }
-
-        // Переключаем направление: ASC → DESC → снять сортировку
-        if (currentSort.direction === "ASC") {
-            return "DESC";
-        } else {
-            // DESC → снять сортировку
-            return null;
-        }
-    }
-
-    /**
-     * Сортирует массив карточек на JavaScript по указанному полю и направлению
-     * @param cards Массив карточек с состояниями
-     * @param field Поле для сортировки
-     * @param direction Направление сортировки
-     * @returns Отсортированный массив
-     */
-    private sortCards(
-        cards: CardWithState[],
-        field: string,
-        direction: "ASC" | "DESC",
-    ): CardWithState[] {
-        return [...cards].sort((a, b) => {
-            let valueA: string | number;
-            let valueB: string | number;
-
-            // Получаем значения в зависимости от поля
-            switch (field) {
-                case "file":
-                    valueA = a.card.filePath.toLowerCase();
-                    valueB = b.card.filePath.toLowerCase();
-                    break;
-                case "reps":
-                    valueA = a.state.reps;
-                    valueB = b.state.reps;
-                    break;
-                case "overdue":
-                    valueA = a.state.overdue ?? 0;
-                    valueB = b.state.overdue ?? 0;
-                    break;
-                case "stability":
-                    valueA = a.state.stability;
-                    valueB = b.state.stability;
-                    break;
-                case "difficulty":
-                    valueA = a.state.difficulty;
-                    valueB = b.state.difficulty;
-                    break;
-                case "retrievability":
-                    valueA = a.state.retrievability;
-                    valueB = b.state.retrievability;
-                    break;
-                case "due":
-                    // Сравниваем строки дат лексикографически (формат YYYY-MM-DD_HH:MM)
-                    valueA = a.state.due;
-                    valueB = b.state.due;
-                    break;
-                case "state":
-                    valueA = a.state.state;
-                    valueB = b.state.state;
-                    break;
-                case "elapsed":
-                    valueA = a.state.elapsed_days;
-                    valueB = b.state.elapsed_days;
-                    break;
-                case "scheduled":
-                    valueA = a.state.scheduled_days;
-                    valueB = b.state.scheduled_days;
-                    break;
-                default: {
-                    // Для неизвестных полей сортируем как строки
-                    const valA = a.card[field as keyof ModernFSRSCard];
-                    valueA =
-                        typeof valA === "string" || typeof valA === "number"
-                            ? String(valA)
-                            : "";
-                    const valB = b.card[field as keyof ModernFSRSCard];
-                    valueB =
-                        typeof valB === "string" || typeof valB === "number"
-                            ? String(valB)
-                            : "";
-                    break;
-                }
-            }
-
-            // Сравниваем значения
-            let comparison = 0;
-            if (typeof valueA === "number" && typeof valueB === "number") {
-                comparison = valueA - valueB;
-            } else if (
-                typeof valueA === "string" &&
-                typeof valueB === "string"
-            ) {
-                comparison = valueA.localeCompare(valueB);
-            } else {
-                // Смешанные типы - преобразуем к строке
-                comparison = String(valueA).localeCompare(String(valueB));
-            }
-
-            // Учитываем направление сортировки
-            return direction === "ASC" ? comparison : -comparison;
-        });
     }
 
     /**
