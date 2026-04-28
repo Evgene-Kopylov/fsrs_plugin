@@ -23,3 +23,5 @@ Aside from allowing the users to easily control their retention, FSRS has some o
 If you want to see how FSRS performs in comparison to other algorithms, read these pages: Benchmark and FSRS vs SM-17, one of the most recent SuperMemo algorithms.
 
 If you want to learn more about spaced repetition algorithms, you can check out Spaced Repetition Algorithm: A Three‐Day Journey from Novice to Expert.
+
+source: https://github.com/open-spaced-repetition/awesome-fsrs/wiki/ABC-of-FSRS
