@@ -23,6 +23,7 @@ describe("fsrs-filter", () => {
                 "images/",
                 "_trash/",
                 ".trash/",
+                "logs/",
                 "*.canvas",
                 "*.excalidraw.md",
             ]);

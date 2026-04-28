@@ -5,16 +5,25 @@
 
 import type { App } from "obsidian";
 import type {
-    ModernFSRSCard,
     FSRSSettings,
-    CachedCard,
+    ModernFSRSCard,
+    ComputedCardState,
 } from "../interfaces/fsrs";
 import type { TableParams } from "./fsrs-table-params";
-import type { CardWithState } from "./fsrs-table-filter";
 
 import { formatFieldValue } from "./fsrs-table-format";
 import { i18n } from "./i18n";
-import { parseSqlBlock } from "./fsrs-table-params";
+import { DEFAULT_TABLE_DISPLAY_LIMIT } from "../constants";
+
+// ---------------------------------------------------------------------------
+// Внутренний тип для карточки с состоянием и признаком просрочки
+// ---------------------------------------------------------------------------
+
+interface CardWithState {
+    card: ModernFSRSCard;
+    state: ComputedCardState;
+    isDue: boolean;
+}
 
 /**
  * Генерирует HTML таблицы для блока fsrs-table
@@ -37,6 +46,7 @@ import { parseSqlBlock } from "./fsrs-table-params";
  * @returns HTMLDivElement контейнер таблицы
  */
 export function generateTableDOM(
+    parentEl: HTMLElement,
     cardsWithState: CardWithState[],
     totalCount: number,
     params: TableParams,
@@ -44,7 +54,9 @@ export function generateTableDOM(
     app: App,
     now: Date = new Date(),
 ): HTMLDivElement {
-    const cardsToShow = cardsWithState; // WASM уже применил лимит
+    const effectiveLimit =
+        params.limit > 0 ? params.limit : DEFAULT_TABLE_DISPLAY_LIMIT;
+    const cardsToShow = cardsWithState.slice(0, effectiveLimit);
     const totalCards = totalCount;
 
     const container = createDiv();
@@ -100,7 +112,6 @@ export function generateTableDOM(
     table.appendChild(tbody);
 
     for (const { card, state, isDue } of cardsToShow) {
-        // Добавляем класс для due карточек
         const row = createEl("tr");
         row.className = isDue
             ? "fsrs-table-row fsrs-due-card"
@@ -113,7 +124,6 @@ export function generateTableDOM(
             const td = createEl("td");
             td.className = `fsrs-col-${column.field}`;
 
-            // Для поля file делаем ссылку
             if (column.field === "file") {
                 const link = createEl("a");
                 link.href = card.filePath;
@@ -130,13 +140,13 @@ export function generateTableDOM(
     }
 
     // Информация о лимите
-    if (totalCards > cardsWithState.length) {
-        const hiddenCount = totalCards - cardsWithState.length;
+    if (totalCards > cardsToShow.length) {
+        const hiddenCount = totalCards - cardsToShow.length;
         const infoDiv = createDiv();
         infoDiv.className = "fsrs-table-info";
         const small = createEl("small");
         small.textContent = i18n.t("table.showing_limit", {
-            shown: cardsWithState.length,
+            shown: cardsToShow.length,
             total: totalCards,
             hidden: hiddenCount,
         });
@@ -144,93 +154,8 @@ export function generateTableDOM(
         container.appendChild(infoDiv);
     }
 
+    // Вставляем в DOM готовую таблицу — один replaceChildren вместо empty+appendChild (меньше reflow)
+    parentEl.replaceChildren(container);
+
     return container;
 }
-
-/**
- * Генерирует HTML таблицу из массива карточек с состояниями и параметров таблицы
- * Выполняет фильтрацию и сортировку перед генерацией HTML
- * @param cachedCards Массив карточек FSRS с кэшированными состояниями
- * @param params Параметры таблицы
- * @param settings Настройки плагина
- * @param app Экземпляр приложения Obsidian
- * @param now Текущее время
- * @returns Promise с HTML строкой таблицы
- */
-
-export async function generateTableDOMFromCards(
-    cachedCards: CachedCard[],
-    params: TableParams,
-    settings: FSRSSettings,
-    app: App,
-    now: Date = new Date(),
-): Promise<{
-    container: HTMLDivElement;
-    cards: CardWithState[];
-    totalCount: number;
-}> {
-    const { filterAndSortCardsWithStates } =
-        await import("./fsrs-table-filter");
-
-    const { cards, totalCount } = filterAndSortCardsWithStates(
-        cachedCards,
-        settings,
-        params,
-        now,
-    );
-
-    const container = generateTableDOM(
-        cards,
-        totalCount,
-        params,
-        settings,
-        app,
-        now,
-    );
-    return { container, cards, totalCount };
-}
-
-export async function generateTableDOMFromSql(
-    cards: ModernFSRSCard[],
-    sqlSource: string,
-    settings: FSRSSettings,
-    app: App,
-    now: Date = new Date(),
-): Promise<{
-    container: HTMLDivElement;
-    params: TableParams;
-    cards: CardWithState[];
-    totalCount: number;
-}> {
-    const params = parseSqlBlock(sqlSource);
-
-    const { filterAndSortCards } = await import("./fsrs-table-filter");
-
-    const { cards: cardsWithState, totalCount } = filterAndSortCards(
-        cards,
-        settings,
-        params,
-        now,
-    );
-
-    const container = generateTableDOM(
-        cardsWithState,
-        totalCount,
-        params,
-        settings,
-        app,
-        now,
-    );
-    return { container, params, cards: cardsWithState, totalCount };
-}
-
-/**
- * Генерирует HTML таблицу из массива карточек и SQL-запроса
- * Выполняет фильтрацию и сортировку перед генерацией HTML
- * @param cards Массив карточек FSRS
- * @param sqlSource SQL-подобный запрос для фильтрации и сортировки
- * @param settings Настройки плагина
- * @param app Экземпляр приложения Obsidian
- * @param now Текущее время
- * @returns Promise с объектом содержащим HTML строку таблицы и параметры
- */

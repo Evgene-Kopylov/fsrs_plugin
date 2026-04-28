@@ -68,9 +68,14 @@ export default tseslint.config(
 
             // Правила для eslint-disable директив (как в валидаторе Obsidian)
             "eslint-comments/require-description": "error",
+            "eslint-comments/disable-enable-pair": "error",
+            "eslint-comments/no-unused-disable": "error",
             "eslint-comments/no-restricted-disable": [
                 "error",
                 "@typescript-eslint/no-explicit-any",
+                "obsidianmd/no-static-styles-assignment",
+                "obsidianmd/hardcoded-config-path",
+                "no-console",
             ],
 
             // no-unsupported-api — off, метаданные ненадёжны, бот не проверяет

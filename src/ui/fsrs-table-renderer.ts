@@ -1,45 +1,41 @@
+/**
+ * Класс для динамического рендеринга блока fsrs-table.
+ *
+ * Запрашивает данные напрямую через plugin.cache.query() (WASM-кэш).
+ * Не хранит собственный кэш карточек — вся фильтрация, сортировка
+ * и ограничение выполняется на стороне Rust.
+ */
+
 import { MarkdownRenderChild } from "obsidian";
 import type FsrsPlugin from "../main";
-import type { ModernFSRSCard } from "../interfaces/fsrs";
-import type { TableParams, CardWithState } from "../utils/fsrs-table-helpers";
-import {
-    generateTableDOM,
-    generateTableDOMFromCards,
-    generateTableDOMFromSql,
-} from "../utils/fsrs-table-helpers";
+import type { TableParams } from "../utils/fsrs-table-params";
+import type {
+    CachedCard,
+    ComputedCardState,
+    ModernFSRSCard,
+} from "../interfaces/fsrs";
+import { generateTableDOM } from "../utils/fsrs-table-helpers";
 import { i18n } from "../utils/i18n";
 import { verboseLog } from "../utils/logger";
 
 /**
- * Класс для динамического рендеринга блока fsrs-table
- * Отображает все карточки
+ * Внутреннее представление карточки для генерации DOM.
+ * Дублирует CardWithState, но не требует импорта из fsrs-table-filter.
  */
-
-interface RendererCacheEntry {
-    cardsWithState: CardWithState[];
-    totalCount: number;
-    params: TableParams | null;
-    sourceText: string;
+interface CardForDisplay {
+    card: ModernFSRSCard;
+    state: ComputedCardState;
+    isDue: boolean;
 }
 
 export class FsrsTableRenderer extends MarkdownRenderChild {
-    private static rendererCache = new Map<string, RendererCacheEntry>();
-
     private params: TableParams | null = null;
-    private isFirstLoad = true;
     private isRendering = false;
-    private activeLeafCallback?: () => void;
-    private lastVisibilityUpdate = 0;
-    private lastAction: "sort" | "refresh" | null = null;
-    private cachedCardsWithState: CardWithState[] | null = null;
-    private cachedTotalCount: number = 0;
-    private originalCardsWithState: CardWithState[] | null = null;
     private sourceText: string;
 
     constructor(
         private plugin: FsrsPlugin,
         private container: HTMLElement,
-        private sourcePath: string,
         source: string,
     ) {
         super(container);
@@ -47,191 +43,103 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         this.sourceText = source;
     }
 
-    /**
-     * Вызывается при загрузке компонента
-     */
+    // -----------------------------------------------------------------------
+    // Жизненный цикл
+    // -----------------------------------------------------------------------
+
     onload(): void {
         super.onload();
-        // Регистрируем рендерер в плагине для уведомлений об обновлениях
+        this.showLoadingIndicator();
         this.plugin.registerFsrsTableRenderer(this);
-
-        // Блокируем active-leaf-change на время первого рендера (дебаунс 2 сек)
-        this.lastVisibilityUpdate = Date.now();
-
-        // Регистрируем обработчик для обновления таблицы при возвращении видимости
-        this.activeLeafCallback = () => {
-            this.updateIfVisible().catch((error) => {
-                console.error(
-                    "Ошибка при обновлении таблицы при возвращении видимости:",
-                    error,
-                );
-            });
-        };
-        this.registerEvent(
-            this.plugin.app.workspace.on(
-                "active-leaf-change",
-                this.activeLeafCallback,
-            ),
-        );
-
-        void (async () => {
-            await this.renderContent();
-            this.isFirstLoad = false;
-        })();
     }
 
-    /**
-     * Вызывается при выгрузке компонента
-     */
     onunload() {
-        // Удаляем рендерер из списка активных
         this.plugin.unregisterFsrsTableRenderer(this);
         super.onunload();
     }
 
+    // -----------------------------------------------------------------------
+    // Основной рендеринг
+    // -----------------------------------------------------------------------
+
     /**
-     * Основной метод рендеринга контента с поддержкой плавной анимации
+     * Запрашивает данные через WASM-кэш и генерирует DOM таблицы.
      */
     private async renderContent() {
-        // Защита от параллельных вызовов (onload + active-leaf-change)
         if (this.isRendering) return;
         this.isRendering = true;
         const start = performance.now();
+
+        // ДИАГНОСТИКА: кто вызывает renderContent
+        verboseLog(
+            "🔄 renderContent вызван:",
+            new Error().stack?.split("\n").slice(2, 5).join(" | "),
+        );
+
         try {
-            // Убираем класс ошибки при успешном рендере
+            // Убираем класс ошибки
             this.container.removeClass("fsrs-table-error");
-            // Также убираем класс ошибки у родительского элемента блока кода
             const codeBlockParent = this.container.closest(
-                ".block-language-fsrs-table, .cm-preview-code-block.block-language-fsrs-table, .cm-embed-block.block-language-fsrs-table",
+                ".block-language-fsrs-table, " +
+                    ".cm-preview-code-block.block-language-fsrs-table, " +
+                    ".cm-embed-block.block-language-fsrs-table",
             );
-            if (codeBlockParent) {
+            if (codeBlockParent)
                 codeBlockParent.removeClass("fsrs-table-error");
-            }
-            // При первом показе используем индикатор загрузки
-            if (this.isFirstLoad) {
-                this.showLoadingIndicator();
-            } else {
-                // При последующих обновлениях применяем плавную анимацию opacity
-                this.container.classList.add("fsrs-table-loading");
+
+            // Показываем loading (перезатирает старый loading из onload при первом вызове)
+            this.showLoadingIndicator();
+            this.container.classList.add("fsrs-table-loading");
+
+            // Парсим SQL блок, если ещё не спарсено
+            if (!this.params) {
+                const { parseSqlBlock } =
+                    await import("../utils/fsrs-table-params");
+                this.params = parseSqlBlock(this.sourceText);
             }
 
-            // Используем кэш (сначала экземпляра, потом статический), чтобы не загружать 20000 карточек
-            if (!this.cachedCardsWithState) {
-                const cached = FsrsTableRenderer.rendererCache.get(
-                    this.sourcePath,
-                );
-                if (cached && cached.sourceText === this.sourceText) {
-                    this.cachedCardsWithState = cached.cardsWithState;
-                    this.cachedTotalCount = cached.totalCount;
-                    this.params = cached.params;
-                }
-            }
-            const allCards = this.cachedCardsWithState
-                ? this.cachedCardsWithState
-                : ((await this.plugin.getCachedCardsWithState()) as CardWithState[]);
             const now = new Date();
 
-            // Отладочный вывод для отслеживания параметров
             verboseLog("📊 FsrsTableRenderer.renderContent:", {
-                cardCount: allCards.length,
-                hasParams: !!this.params,
                 params: this.params
                     ? (JSON.parse(JSON.stringify(this.params)) as unknown)
                     : null,
                 sourceText: this.sourceText,
-                lastAction: this.lastAction,
-                hasSort: this.params?.sort ? true : false,
             });
 
-            if (allCards.length === 0) {
+            // Прямой запрос к WASM-кэшу
+            const result = this.plugin.cache.query(this.params, now);
+
+            verboseLog("📊 Результат WASM query:", {
+                cards: result.cards.length,
+                totalCount: result.total_count,
+                errors: result.errors,
+            });
+
+            if (result.cards.length === 0) {
                 this.renderEmptyState();
                 return;
             }
 
-            // Проверяем на пустой SQL запрос (только при первом рендере)
-            if (
-                !this.params &&
-                (!this.sourceText || this.sourceText.trim() === "")
-            ) {
-                this.renderErrorState(new Error("Пустой блок fsrs-table"));
-                return;
-            }
+            // Преобразуем CachedCard[] → CardForDisplay[] (добавляем isDue)
+            const cardsWithDue = this.addIsDue(result.cards, now);
 
-            let container: HTMLDivElement;
             // Генерируем DOM таблицы
-            if (this.params) {
-                // Если параметры уже есть (при сортировке), используем их
-
-                const result = await generateTableDOMFromCards(
-                    allCards,
-                    this.params,
-                    this.plugin.settings,
-                    this.plugin.app,
-                    now,
-                );
-                container = result.container;
-                this.cachedCardsWithState = result.cards;
-                this.cachedTotalCount = result.totalCount;
-                if (this.originalCardsWithState === null) {
-                    this.originalCardsWithState = result.cards;
-                }
-            } else {
-                // При первом рендере используем SQL напрямую
-
-                const result = await generateTableDOMFromSql(
-                    allCards.map((c) => c.card),
-                    this.sourceText,
-                    this.plugin.settings,
-                    this.plugin.app,
-                    now,
-                );
-                container = result.container;
-                this.params = result.params;
-                this.cachedCardsWithState = result.cards;
-                this.cachedTotalCount = result.totalCount;
-                if (this.originalCardsWithState === null) {
-                    this.originalCardsWithState = result.cards;
-                }
-            }
-
-            // Сохраняем позицию прокрутки перед обновлением
-            const scrollContainer = this.container.querySelector(
-                ".fsrs-table-container",
+            generateTableDOM(
+                this.container,
+                cardsWithDue,
+                result.total_count,
+                this.params,
+                this.plugin.settings,
+                this.plugin.app,
+                now,
             );
-            const savedScrollLeft = scrollContainer?.scrollLeft ?? 0;
 
-            // Очищаем контейнер и вставляем DOM элементы
-            this.container.empty();
-            this.container.appendChild(container);
-
-            // Восстанавливаем позицию прокрутки
-            const newScrollContainer = this.container.querySelector(
-                ".fsrs-table-container",
-            );
-            if (newScrollContainer && savedScrollLeft > 0) {
-                newScrollContainer.scrollLeft = savedScrollLeft;
-            }
-
-            // Добавляем обработчики событий для кликабельных ссылок
+            // Добавляем обработчики событий для сортировки
             this.addEventListeners();
 
             // Восстанавливаем полную прозрачность после обновления
-            if (!this.isFirstLoad) {
-                this.container.classList.remove("fsrs-table-loading");
-            }
-
-            // Обновляем время последнего обновления
-            this.lastVisibilityUpdate = Date.now();
-
-            // Сохраняем результат в статический кэш для быстрого возвращения на заметку
-            if (this.cachedCardsWithState) {
-                FsrsTableRenderer.rendererCache.set(this.sourcePath, {
-                    cardsWithState: this.cachedCardsWithState,
-                    totalCount: this.cachedTotalCount,
-                    params: this.params,
-                    sourceText: this.sourceText,
-                });
-            }
+            this.container.classList.remove("fsrs-table-loading");
         } catch (error) {
             this.renderErrorState(error);
         } finally {
@@ -242,9 +150,10 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         }
     }
 
-    /**
-     * Показывает индикатор загрузки (только при первом отображении)
-     */
+    // -----------------------------------------------------------------------
+    // Состояния отображения
+    // -----------------------------------------------------------------------
+
     private showLoadingIndicator() {
         this.container.empty();
         const loadingDiv = this.container.createDiv({
@@ -255,25 +164,12 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         });
     }
 
-    /**
-     * Отображает состояние "нет карточек"
-     */
     private renderEmptyState() {
-        // При пустом состоянии также применяем анимацию, если это не первый показ
-        if (!this.isFirstLoad) {
-            this.container.classList.add("fsrs-table-loading");
-        }
         this.container.empty();
         const emptyDiv = this.container.createDiv({ cls: "fsrs-table-empty" });
         emptyDiv.createEl("small", { text: i18n.t("table.no_cards") });
-        if (!this.isFirstLoad) {
-            this.container.classList.remove("fsrs-table-loading");
-        }
     }
 
-    /**
-     * Отображает состояние ошибки в виде простого текста без стилей
-     */
     private renderErrorState(error: unknown) {
         const errorMessage =
             error instanceof Error ? error.message : String(error);
@@ -281,27 +177,27 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             `⚠️ Ошибка при рендеринге блока fsrs-table: ${errorMessage}`,
         );
 
-        // Добавляем класс ошибки и очищаем контейнер
-        this.container.addClass("fsrs-table-error");
-        // Также добавляем класс ошибки родительскому элементу блока кода
-        const codeBlockParent = this.container.closest(
-            ".block-language-fsrs-table, .cm-preview-code-block.block-language-fsrs-table, .cm-embed-block.block-language-fsrs-table",
-        );
-        if (codeBlockParent) {
-            codeBlockParent.addClass("fsrs-table-error");
-        }
         this.container.empty();
+        this.container.classList.remove("fsrs-table-loading");
+        this.container.addClass("fsrs-table-error");
+        const codeBlockParent = this.container.closest(
+            ".block-language-fsrs-table, " +
+                ".cm-preview-code-block.block-language-fsrs-table, " +
+                ".cm-embed-block.block-language-fsrs-table",
+        );
+        if (codeBlockParent) codeBlockParent.addClass("fsrs-table-error");
+
         this.container.createEl("pre", {
             text: errorMessage,
             cls: "fsrs-table-error-text",
         });
     }
 
-    /**
-     * Добавляет обработчики событий для кликабельных элементов
-     */
+    // -----------------------------------------------------------------------
+    // Обработчики событий
+    // -----------------------------------------------------------------------
+
     private addEventListeners() {
-        // Обработчик для заголовков сортировки в таблице
         this.container
             .querySelectorAll(".fsrs-sort-header")
             .forEach((button) => {
@@ -316,279 +212,88 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             });
     }
 
-    /**
-     * Обновляет содержимое блока с поддержкой анимации
-     * Может быть вызвано извне для принудительного обновления
-     */
-    /**
-     * Обновляет содержимое блока с поддержкой анимации
-     * @param forceRefresh - если true, сбрасывает кэш и загружает все карточки заново
-     */
-    async refresh(forceRefresh: boolean = false) {
-        if (this.lastAction !== "sort") {
-            this.lastAction = "refresh";
-        }
-        if (forceRefresh) {
-            // Сбрасываем кэш при полном обновлении (например, после ревью)
-            this.cachedCardsWithState = null;
-            this.cachedTotalCount = 0;
-            this.originalCardsWithState = null;
-            FsrsTableRenderer.rendererCache.delete(this.sourcePath);
-        }
-        await this.renderContent();
-        this.lastAction = null;
-    }
+    // -----------------------------------------------------------------------
+    // Сортировка
+    // -----------------------------------------------------------------------
 
     /**
-     * Обновляет таблицу, если файл активен и прошло достаточно времени
-     */
-    private async updateIfVisible(): Promise<void> {
-        const activeFile = this.plugin.app.workspace.getActiveFile();
-        if (!activeFile || activeFile.path !== this.sourcePath) {
-            return;
-        }
-
-        // Дебаунс: обновляем не чаще чем..
-        const now = Date.now();
-        if (now - this.lastVisibilityUpdate > 2000) {
-            this.lastVisibilityUpdate = now;
-            try {
-                await this.refresh();
-            } catch (error) {
-                console.error(
-                    "Ошибка при обновлении таблицы fsrs-table:",
-                    error,
-                );
-            }
-        }
-    }
-
-    /**
-     * Обрабатывает клик на заголовок для сортировки
-     * @param field Поле, по которому нужно сортировать
+     * Обрабатывает клик на заголовок сортировки.
+     * Меняет params.sort и перезапрашивает данные через WASM.
      */
     private async handleSortClick(field: string) {
         if (!this.params) return;
-        // Определяем следующее состояние сортировки
-        const nextDirection = this.getNextSortDirection(field);
 
-        // Обновляем параметры
+        const nextDirection = this.getNextSortDirection(
+            this.params.sort,
+            field,
+        );
+
         if (nextDirection === null) {
-            // Удаляем параметр сортировки
             delete this.params.sort;
         } else {
-            // Устанавливаем или обновляем параметр сортировки
             this.params.sort = { field, direction: nextDirection };
         }
 
-        this.lastAction = "sort";
-
-        verboseLog("📊 handleSortClick:", {
-            field,
-            nextDirection,
-            params: this.params
-                ? (JSON.parse(JSON.stringify(this.params)) as unknown)
-                : null,
-        });
-
-        // Если есть кэшированные карточки, сортируем локально
-        if (this.cachedCardsWithState && this.originalCardsWithState) {
-            let cardsToRender = this.cachedCardsWithState;
-
-            if (nextDirection === null) {
-                // Снятие сортировки: возвращаемся к исходному порядку
-                cardsToRender = [...this.originalCardsWithState];
-                // originalCardsWithState уже содержит правильную сортировку из WASM
-                // (включая сортировку из SQL, если она была)
-            } else {
-                // Применяем новую сортировку
-                cardsToRender = this.sortCards(
-                    cardsToRender,
-                    field,
-                    nextDirection,
-                );
-            }
-
-            // Обновляем кэш отсортированными карточками
-            this.cachedCardsWithState = cardsToRender;
-
-            // Перерисовываем таблицу из кэша
-            await this.renderFromCache();
-        } else {
-            // Если кэша нет, выполняем полное обновление
-            await this.refresh();
-        }
+        await this.renderContent();
     }
 
     /**
-     * Возвращает следующее направление сортировки для поля
-     * Логика: нет параметра → ASC → DESC → нет параметра
-     * @param field Поле для сортировки
-     * @returns Следующее направление сортировки или null для снятия сортировки
+     * Определяет следующее состояние сортировки для поля.
+     * Цикл: ASC → DESC → none
      */
-    private getNextSortDirection(field: string): "ASC" | "DESC" | null {
-        if (!this.params) return null;
-        const currentSort = this.params.sort;
-
-        // Если сортируем по другому полю, начинаем с ASC
+    private getNextSortDirection(
+        currentSort: TableParams["sort"],
+        field: string,
+    ): "ASC" | "DESC" | null {
         if (!currentSort || currentSort.field !== field) {
             return "ASC";
         }
-
-        // Переключаем направление: ASC → DESC → снять сортировку
         if (currentSort.direction === "ASC") {
             return "DESC";
-        } else {
-            // DESC → снять сортировку
-            return null;
         }
+        return null;
+    }
+
+    // -----------------------------------------------------------------------
+    // Обновление (refresh)
+    // -----------------------------------------------------------------------
+
+    /**
+     * Принудительное обновление таблицы.
+     * Всегда запрашивает свежие данные из WASM-кэша.
+     */
+    async refresh() {
+        await this.renderContent();
+    }
+
+    // -----------------------------------------------------------------------
+    // Утилиты
+    // -----------------------------------------------------------------------
+
+    /**
+     * Вычисляет isDue для каждой карточки и возвращает массив CardForDisplay.
+     */
+    private addIsDue(cards: CachedCard[], now: Date): CardForDisplay[] {
+        return cards.map(({ card, state }) => ({
+            card,
+            state,
+            isDue: this.computeIsDue(state, now),
+        }));
     }
 
     /**
-     * Сортирует массив карточек на JavaScript по указанному полю и направлению
-     * @param cards Массив карточек с состояниями
-     * @param field Поле для сортировки
-     * @param direction Направление сортировки
-     * @returns Отсортированный массив
+     * Определяет, является ли карточка просроченной.
      */
-    private sortCards(
-        cards: CardWithState[],
-        field: string,
-        direction: "ASC" | "DESC",
-    ): CardWithState[] {
-        return [...cards].sort((a, b) => {
-            let valueA: string | number;
-            let valueB: string | number;
-
-            // Получаем значения в зависимости от поля
-            switch (field) {
-                case "file":
-                    valueA = a.card.filePath.toLowerCase();
-                    valueB = b.card.filePath.toLowerCase();
-                    break;
-                case "reps":
-                    valueA = a.state.reps;
-                    valueB = b.state.reps;
-                    break;
-                case "overdue":
-                    valueA = a.state.overdue ?? 0;
-                    valueB = b.state.overdue ?? 0;
-                    break;
-                case "stability":
-                    valueA = a.state.stability;
-                    valueB = b.state.stability;
-                    break;
-                case "difficulty":
-                    valueA = a.state.difficulty;
-                    valueB = b.state.difficulty;
-                    break;
-                case "retrievability":
-                    valueA = a.state.retrievability;
-                    valueB = b.state.retrievability;
-                    break;
-                case "due":
-                    // Сравниваем строки дат лексикографически (формат YYYY-MM-DD_HH:MM)
-                    valueA = a.state.due;
-                    valueB = b.state.due;
-                    break;
-                case "state":
-                    valueA = a.state.state;
-                    valueB = b.state.state;
-                    break;
-                case "elapsed":
-                    valueA = a.state.elapsed_days;
-                    valueB = b.state.elapsed_days;
-                    break;
-                case "scheduled":
-                    valueA = a.state.scheduled_days;
-                    valueB = b.state.scheduled_days;
-                    break;
-                default: {
-                    // Для неизвестных полей сортируем как строки
-                    const valA = a.card[field as keyof ModernFSRSCard];
-                    valueA =
-                        typeof valA === "string" || typeof valA === "number"
-                            ? String(valA)
-                            : "";
-                    const valB = b.card[field as keyof ModernFSRSCard];
-                    valueB =
-                        typeof valB === "string" || typeof valB === "number"
-                            ? String(valB)
-                            : "";
-                    break;
-                }
+    private computeIsDue(state: ComputedCardState, now: Date): boolean {
+        if (state.state === "Learning") return true;
+        if (state.state === "Review") {
+            if (!state.due) return false;
+            try {
+                return new Date(state.due).getTime() <= now.getTime();
+            } catch {
+                return false;
             }
-
-            // Сравниваем значения
-            let comparison = 0;
-            if (typeof valueA === "number" && typeof valueB === "number") {
-                comparison = valueA - valueB;
-            } else if (
-                typeof valueA === "string" &&
-                typeof valueB === "string"
-            ) {
-                comparison = valueA.localeCompare(valueB);
-            } else {
-                // Смешанные типы - преобразуем к строке
-                comparison = String(valueA).localeCompare(String(valueB));
-            }
-
-            // Учитываем направление сортировки
-            return direction === "ASC" ? comparison : -comparison;
-        });
-    }
-
-    /**
-     * Перерисовывает таблицу из кэшированных карточек без вызова WASM
-     */
-    private async renderFromCache() {
-        if (!this.cachedCardsWithState || !this.params) return;
-
-        const start = performance.now();
-        try {
-            // Сохраняем позицию прокрутки перед обновлением
-            const scrollContainer = this.container.querySelector(
-                ".fsrs-table-container",
-            );
-            const savedScrollLeft = scrollContainer?.scrollLeft ?? 0;
-
-            // Генерируем DOM таблицы из кэша
-            const container = generateTableDOM(
-                this.cachedCardsWithState,
-                this.cachedTotalCount,
-                this.params,
-                this.plugin.settings,
-                this.plugin.app,
-                new Date(),
-            );
-
-            // Очищаем контейнер и вставляем DOM элементы
-            this.container.empty();
-            this.container.appendChild(container);
-
-            // Восстанавливаем позицию прокрутки
-            const newScrollContainer = this.container.querySelector(
-                ".fsrs-table-container",
-            );
-            if (newScrollContainer && savedScrollLeft > 0) {
-                newScrollContainer.scrollLeft = savedScrollLeft;
-            }
-
-            // Добавляем обработчики событий для кликабельных ссылок
-            this.addEventListeners();
-
-            // Обновляем время последнего обновления
-            this.lastVisibilityUpdate = Date.now();
-        } catch (error) {
-            console.error("Ошибка при перерисовке из кэша:", error);
-            // В случае ошибки выполняем полное обновление
-            await this.refresh();
-        } finally {
-            const elapsedMs = performance.now() - start;
-            const elapsedSec = elapsedMs / 1000;
-            verboseLog(
-                `⏱️ Быстрая сортировка таблицы FSRS: ${elapsedSec.toFixed(2)} с`,
-            );
         }
+        return false;
     }
 }

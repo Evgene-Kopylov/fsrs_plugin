@@ -1,6 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 // Объявляем модули
+mod cache;
 mod card_history;
 mod conversion;
 mod current_state;
@@ -222,30 +223,6 @@ pub fn parse_fsrs_parameters_yaml(yaml: String) -> String {
     parameters_to_json(&params)
 }
 
-// Фильтрация и сортировка карточек
-#[wasm_bindgen]
-pub fn filter_cards_for_review(
-    cards_json: String,
-    settings_json: String,
-    now_iso: String,
-) -> String {
-    sort_functions::filter_cards_for_review(cards_json, settings_json, now_iso)
-}
-
-#[wasm_bindgen]
-pub fn sort_cards_by_priority(
-    cards_json: String,
-    settings_json: String,
-    now_iso: String,
-) -> String {
-    sort_functions::sort_cards_by_priority(cards_json, settings_json, now_iso)
-}
-
-#[wasm_bindgen]
-pub fn group_cards_by_state(cards_json: String, settings_json: String, now_iso: String) -> String {
-    sort_functions::group_cards_by_state(cards_json, settings_json, now_iso)
-}
-
 #[wasm_bindgen]
 pub fn get_overdue_hours(due_iso: String, now_iso: String) -> String {
     sort_functions::get_overdue_hours(due_iso, now_iso)
@@ -291,96 +268,52 @@ pub fn parse_fsrs_table_block(source: &str) -> String {
     }
 }
 
-// Фильтрация и сортировка карточек для таблицы
-#[wasm_bindgen]
-pub fn filter_and_sort_cards(
-    cards_json: &str,
-    params_json: &str,
-    settings_json: &str,
-    now_iso: &str,
-) -> String {
-    crate::table_processing::filtering::filter_and_sort_cards_json(
-        cards_json,
-        params_json,
-        settings_json,
-        now_iso,
-    )
-}
-
-// Фильтрация и сортировка карточек с SQL строкой напрямую
-#[wasm_bindgen]
-pub fn filter_and_sort_cards_with_sql(
-    cards_json: &str,
-    sql_source: &str,
-    settings_json: &str,
-    now_iso: &str,
-) -> String {
-    use crate::table_processing::parsing::parse_fsrs_table_block as parse_block;
-    match parse_block(sql_source) {
-        Ok(parse_result) => {
-            // Преобразуем параметры в JSON для существующей функции
-            let params_json = serde_json::to_string(&parse_result.value)
-                .unwrap_or_else(|_| "{\"error\":\"Failed to serialize params\"}".to_string());
-            // Вызываем существующую функцию фильтрации
-            let filter_result = crate::table_processing::filtering::filter_and_sort_cards_json(
-                cards_json,
-                &params_json,
-                settings_json,
-                now_iso,
-            );
-
-            // Возвращаем объединённый результат с параметрами и отфильтрованными карточками
-            serde_json::to_string(&serde_json::json!({
-                "params": parse_result.value,
-                "cards": serde_json::from_str::<serde_json::Value>(&filter_result)
-                    .unwrap_or_else(|_| serde_json::json!({
-                        "cards": [],
-                        "total_count": 0,
-                        "errors": []
-                    })),
-            }))
-            .unwrap_or_else(|_| "{\"error\":\"Failed to serialize combined result\"}".to_string())
-        }
-        Err(err) => {
-            // Возвращаем JSON с ошибкой
-            serde_json::to_string(&serde_json::json!({
-                "error": err.to_string(),
-                "params": crate::table_processing::types::TableParams::default(),
-                "cards": {
-                    "cards": [],
-                    "total_count": 0,
-                    "errors": []
-                }
-            }))
-            .unwrap_or_else(|_| "{\"error\":\"Failed to serialize error\"}".to_string())
-        }
-    }
-}
-
-// Фильтрация и сортировка карточек с готовыми состояниями
-#[wasm_bindgen]
-pub fn filter_and_sort_cards_with_states(
-    cards_with_states_json: &str,
-    params_json: &str,
-    settings_json: &str,
-    now_iso: &str,
-) -> String {
-    crate::table_processing::filtering::filter_and_sort_cards_with_states_json(
-        cards_with_states_json,
-        params_json,
-        settings_json,
-        now_iso,
-    )
-}
-
 // Проверка валидности поля таблицы
 #[wasm_bindgen]
 pub fn is_valid_table_field(field: &str) -> bool {
     crate::table_processing::types::is_valid_table_field(field)
 }
 
-// Оригинальная функция для обратной совместимости
+// ===================================================================
+// Кэш карточек
+// ===================================================================
+
 #[wasm_bindgen]
-pub fn my_wasm_function(input: String) -> String {
-    format!("Hello from Rust with FSRS! Your input: {}", input)
+pub fn init_cache() {
+    cache::init_cache();
+}
+
+#[wasm_bindgen]
+pub fn clear_cache() {
+    cache::clear_cache();
+}
+
+#[wasm_bindgen]
+pub fn add_or_update_cards(cards_json_array: &str) -> String {
+    cache::add_or_update_cards(cards_json_array)
+}
+
+#[wasm_bindgen]
+pub fn remove_card(file_path: &str) -> String {
+    cache::remove_card(file_path)
+}
+
+#[wasm_bindgen]
+pub fn get_all_cards() -> String {
+    cache::get_all_cards()
+}
+
+#[wasm_bindgen]
+pub fn get_cache_size() -> usize {
+    cache::get_cache_size()
+}
+
+#[wasm_bindgen]
+pub fn query_cards(params_json: &str, now_iso: &str) -> String {
+    cache::query_cards(params_json, now_iso)
+}
+
+#[wasm_bindgen]
+pub fn query_cards_count(params_json: &str, now_iso: &str) -> String {
+    cache::query_cards_count(params_json, now_iso)
 }

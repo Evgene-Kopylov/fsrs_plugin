@@ -15,10 +15,6 @@ export type {
 } from "./fsrs-table-params";
 export { parseSqlBlock, AVAILABLE_FIELDS } from "./fsrs-table-params";
 
-// Фильтрация и сортировка карточек
-export type { CardWithState } from "./fsrs-table-filter";
-export { filterAndSortCards } from "./fsrs-table-filter";
-
 // Форматирование значений
 export {
     formatOverdue,
@@ -29,11 +25,7 @@ export {
 } from "./fsrs-table-format";
 
 // Генерация DOM таблицы
-export {
-    generateTableDOM,
-    generateTableDOMFromCards,
-    generateTableDOMFromSql,
-} from "./fsrs-table-generator";
+export { generateTableDOM } from "./fsrs-table-generator";
 
 // Экспорт типов для удобства
 export type {

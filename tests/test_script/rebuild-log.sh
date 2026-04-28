@@ -8,7 +8,7 @@ set -e  # Прерывать выполнение при ошибках
 # Настройки по умолчанию
 DEFAULT_VAULT_PATH="/home/death/Documents/FSRS-test-Obsidian-Vault"
 DEFAULT_WELCOME_FILE="$DEFAULT_VAULT_PATH/Welcome.md"
-DEFAULT_LOG_FILE="$DEFAULT_VAULT_PATH/console_logs/console-log.death-system.2026-04-19.md"
+DEFAULT_LOG_FILE=""  # автоматически: последний файл в logs/
 DEFAULT_DELAY=5
 
 # Переменные, которые можно переопределить через аргументы
@@ -22,23 +22,28 @@ DRY_RUN=false
 # Функция для вывода справки
 print_help() {
     cat << EOF
-Использование: $0 [ОПЦИИ]
+Использование: $0 [ОПЦИИ] [ПУТЬ_К_ЛОГ_ФАЙЛУ]
 
 Скрипт для пересборки плагина FSRS и сбора логов из тестового хранилища.
 
 Опции:
   -v, --vault-path ПУТЬ   Путь к хранилищу Obsidian (по умолчанию: $DEFAULT_VAULT_PATH)
   -w, --welcome-file ПУТЬ Путь к файлу Welcome.md (по умолчанию: \$VAULT_PATH/Welcome.md)
-  -l, --log-file ПУТЬ     Путь к лог-файлу (по умолчанию: \$VAULT_PATH/console_logs/console-log.death-system.2026-04-19.md)
+  -l, --log-file ПУТЬ     Путь к лог-файлу (по умолчанию: последний в logs/)
   -d, --delay СЕКУНДЫ     Задержка после сборки в секундах (по умолчанию: $DEFAULT_DELAY)
   -V, --verbose           Подробный вывод
   -n, --dry-run           Тестовый режим без фактической пересборки
   -h, --help              Показать эту справку
 
+Позиционный аргумент:
+  ПУТЬ_К_ЛОГ_ФАЙЛУ        Путь к лог-файлу (переопределяет --log-file)
+
 Примеры:
   $0 --vault-path /home/user/my-vault --delay 5
   $0 -v /home/user/my-vault -d 2 -V
   $0 --dry-run
+  $0 /home/user/logs/console-log.system.2026-04-28.md
+  $0 -v /home/user/my-vault /home/user/logs/my-log.md
 
 EOF
 }
@@ -56,12 +61,13 @@ verbose_log() {
 }
 
 # Парсинг аргументов командной строки
+POSITIONAL_ARGS=()
+
 while [[ $# -gt 0 ]]; do
     case $1 in
         -v|--vault-path)
             VAULT_PATH="$2"
             WELCOME_FILE="$VAULT_PATH/Welcome.md"
-            LOG_FILE="$VAULT_PATH/console_logs/console-log.death-system.2026-04-19.md"
             shift 2
             ;;
         -w|--welcome-file)
@@ -88,17 +94,50 @@ while [[ $# -gt 0 ]]; do
             print_help
             exit 0
             ;;
-        *)
+        -*)
             echo "❌ Неизвестный параметр: $1"
             echo "Используйте $0 --help для справки"
             exit 1
             ;;
+        *)
+            # Позиционный аргумент (путь к лог-файлу)
+            POSITIONAL_ARGS+=("$1")
+            shift
+            ;;
     esac
 done
+
+# Используем первый позиционный аргумент как путь к лог-файлу
+if [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]]; then
+    LOG_FILE="${POSITIONAL_ARGS[0]}"
+fi
+
 
 # Обновление путей на основе vault-path
 WELCOME_FILE="${WELCOME_FILE/\$VAULT_PATH/$VAULT_PATH}"
 LOG_FILE="${LOG_FILE/\$VAULT_PATH/$VAULT_PATH}"
+
+# Автоматическое определение последнего лог-файла, если не указан или не существует
+AUTO_DETECTED=false
+if [ -z "$LOG_FILE" ] || [ ! -f "$LOG_FILE" ]; then
+    # Сначала ищем в logs/ (тестовое хранилище)
+    LATEST_LOG=$(find "$VAULT_PATH/logs" -name "console-log.*.md" -type f 2>/dev/null | sort | tail -n 1)
+    if [ -n "$LATEST_LOG" ]; then
+        LOG_FILE="$LATEST_LOG"
+        AUTO_DETECTED=true
+        verbose_log "Автоопределён лог-файл: $LOG_FILE"
+    fi
+
+    # Если не нашли — ищем в logs/ (основное хранилище)
+    if [ -z "$LOG_FILE" ] || [ ! -f "$LOG_FILE" ]; then
+        LATEST_LOG=$(find "$VAULT_PATH/logs" -name "console-log.*.md" -type f 2>/dev/null | sort | tail -n 1)
+        if [ -n "$LATEST_LOG" ]; then
+            LOG_FILE="$LATEST_LOG"
+            AUTO_DETECTED=true
+            verbose_log "Автоопределён лог-файл: $LOG_FILE"
+        fi
+    fi
+fi
 
 log_message "🔧 Запуск пересборки плагина FSRS..."
 verbose_log "Параметры:"
@@ -180,9 +219,13 @@ echo ""
 
 # Проверка и вывод содержимого лог-файла
 if [ -f "$LOG_FILE" ]; then
-    echo "📁 Лог-файл найден: $LOG_FILE"
-    echo "--- Начало лога (последние 50 строк) ---"
-    tail -n 50 "$LOG_FILE"
+    if [ "$AUTO_DETECTED" = true ]; then
+        echo "📁 Лог-файл (автоопределён): $LOG_FILE"
+    else
+        echo "📁 Лог-файл найден: $LOG_FILE"
+    fi
+    echo "--- Начало лога (последние 100 строк) ---"
+    tail -n 100 "$LOG_FILE"
     echo "--- Конец лога ---"
     echo ""
     echo "📊 Информация о логе:"
@@ -200,7 +243,7 @@ if [ -f "$LOG_FILE" ]; then
 else
     echo "⚠️  Лог-файл не найден: $LOG_FILE"
     echo "Поиск альтернативных лог-файлов..."
-    find "$VAULT_PATH/console_logs" -name "console-log.*.md" -type f 2>/dev/null | head -n 5
+    find "$VAULT_PATH/logs" -name "console-log.*.md" -type f 2>/dev/null | head -n 10
 fi
 
 # Шаг 4: Проверка сборки плагина

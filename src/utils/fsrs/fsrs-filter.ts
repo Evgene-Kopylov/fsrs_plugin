@@ -11,6 +11,7 @@ export const DEFAULT_IGNORE_PATTERNS = [
     "images/",
     "_trash/",
     ".trash/",
+    "logs/",
     "*.canvas",
     "*.excalidraw.md",
 ];

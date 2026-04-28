@@ -48,8 +48,8 @@ export {
     removeFrontmatterFromContent,
 } from "./fsrs-frontmatter";
 
-// Экспорт инкрементального кэша
-export { IncrementalCache } from "./incremental-cache";
+// Экспорт нового FsrsCache (обёртка над WASM-кэшем)
+export { FsrsCache } from "./fsrs-cache";
 
 // Реэкспорт типов для удобства
 export type {
