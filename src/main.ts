@@ -470,7 +470,7 @@ export default class FsrsPlugin extends Plugin {
         this.notifyRenderersTimer = window.setTimeout(() => {
             this.notifyRenderersTimer = null;
             for (const renderer of this.fsrsTableRenderers) {
-                renderer.refresh(true).catch((error) => {
+                renderer.refresh().catch((error) => {
                     console.error(
                         "Ошибка при обновлении рендерера fsrs-table:",
                         error,
