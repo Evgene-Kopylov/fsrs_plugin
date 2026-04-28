@@ -30,3 +30,7 @@
 - [x] [startup-empty-table.md](./startup-empty-table.md) — пустая таблица при запуске Obsidian: добавить `.catch()` на `performCacheScan`, чтобы защитить от необработанных ошибок
 - [x] [remove-chunking.md](./remove-chunking.md) — убрать чанкование из performCacheScan
 - [x] [remove-chunking-generate-table.md](./remove-chunking-generate-table.md) — убрать чанкование из generateTableDOM
+
+### Уборка мёртвого кода
+
+- [>] [dead-code-cleanup.md](./dead-code-cleanup.md) — удаление неиспользуемых WASM-функций, файла wasm-date.ts, константы CARD_SCAN_DEBOUNCE_MS и неиспользуемых внутренних функций Rust

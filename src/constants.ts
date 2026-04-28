@@ -32,6 +32,3 @@ export const OVERDUE_HOURS_THRESHOLD = 72;
 
 /** Максимальное количество строк, отображаемых в таблице, если не указан LIMIT в SQL */
 export const DEFAULT_TABLE_DISPLAY_LIMIT = 200;
-
-/** Debounce сканирования одной карточки при изменении файла (мс) */
-export const CARD_SCAN_DEBOUNCE_MS = 1500;
