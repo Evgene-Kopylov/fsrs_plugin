@@ -21,8 +21,8 @@
 ### Перенос кэша в Rust
 
 - [x] [cache-4.1.rust-cache-module.md](./cache-4.1.rust-cache-module.md) — модуль `cache.rs` в Rust: глобальный HashMap, add_or_update_cards, remove_card, clear_cache
-- [ ] [cache-4.2.query-cards.md](./cache-4.2.query-cards.md) — `query_cards` в Rust: интеграция с существующей filter_and_sort_cards_with_states
-- [ ] [cache-4.3.ts-fsrs-cache.md](./cache-4.3.ts-fsrs-cache.md) — класс `FsrsCache` в TS: тонкая обёртка над WASM
+- [x] [cache-4.2.query-cards.md](./cache-4.2.query-cards.md) — `query_cards` в Rust: интеграция с существующей filter_and_sort_cards_with_states
+- [>] [cache-4.3.ts-fsrs-cache.md](./cache-4.3.ts-fsrs-cache.md) — класс `FsrsCache` в TS: тонкая обёртка над WASM
 - [ ] [cache-4.4.integration.md](./cache-4.4.integration.md) — интеграция FsrsCache в main.ts, замена IncrementalCache
 - [ ] [cache-4.5.renderer-update.md](./cache-4.5.renderer-update.md) — обновление FsrsTableRenderer: убрать статический кэш, использовать query_cards
 - [ ] [cache-4.6.cleanup.md](./cache-4.6.cleanup.md) — удаление старого кода: incremental-cache.ts, fsrs-table-filter.ts, rendererCache

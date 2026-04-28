@@ -414,6 +414,16 @@ pub fn get_cache_size() -> usize {
     cache::get_cache_size()
 }
 
+#[wasm_bindgen]
+pub fn query_cards(params_json: &str, now_iso: &str) -> String {
+    cache::query_cards(params_json, now_iso)
+}
+
+#[wasm_bindgen]
+pub fn query_cards_count(params_json: &str, now_iso: &str) -> String {
+    cache::query_cards_count(params_json, now_iso)
+}
+
 // Оригинальная функция для обратной совместимости
 #[wasm_bindgen]
 pub fn my_wasm_function(input: String) -> String {
