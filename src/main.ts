@@ -29,7 +29,6 @@ import type { FSRSRating, CachedCard } from "./interfaces/fsrs";
 import { i18n } from "./utils/i18n";
 import { showNotice } from "./utils/notice";
 import { verboseLog, setVerboseLoggingEnabled } from "./utils/logger";
-import { RENDERER_DEBOUNCE_MS } from "./constants";
 
 // Импорт WASM функций
 import init from "../wasm-lib/pkg/wasm_lib";
@@ -50,8 +49,6 @@ export default class FsrsPlugin extends Plugin {
     private scanCompleted = false;
     // Ожидающие сканирования карточки (debounce)
     private pendingScans = new Map<string, number>();
-    // Таймер debounce для уведомления рендереров (чтобы не перерисовывать 1000 раз)
-    private notifyRenderersTimer: number | null = null;
     public statusBarManager: StatusBarManager | null = null;
 
     /**
@@ -441,12 +438,6 @@ export default class FsrsPlugin extends Plugin {
         this.isWasmInitialized = false;
         this.fsrsTableRenderers.clear();
 
-        // Очищаем таймер debounce уведомлений рендереров
-        if (this.notifyRenderersTimer !== null) {
-            window.clearTimeout(this.notifyRenderersTimer);
-            this.notifyRenderersTimer = null;
-        }
-
         // Очищаем pending таймеры
         for (const timer of this.pendingScans.values()) {
             window.clearTimeout(timer);
@@ -483,27 +474,17 @@ export default class FsrsPlugin extends Plugin {
     }
 
     /**
-     * Уведомляет все активные рендереры fsrs-table об обновлении данных
-     * с debounce — при частых вызовах перерендер происходит не чаще раза в 2 секунды.
+     * Уведомляет все активные рендереры fsrs-table об обновлении данных.
+     * Вызывает refresh немедленно — renderContent() сам защищён флагом isRendering.
      */
     notifyFsrsTableRenderers(): void {
-        console.debug(
-            "🔍 notifyFsrsTableRenderers вызван:",
-            new Error().stack?.split("\n").slice(2, 6).join("\n"),
-        );
-        if (this.notifyRenderersTimer !== null) {
-            window.clearTimeout(this.notifyRenderersTimer);
+        for (const renderer of this.fsrsTableRenderers) {
+            renderer.refresh().catch((error) => {
+                console.error(
+                    "Ошибка при обновлении рендерера fsrs-table:",
+                    error,
+                );
+            });
         }
-        this.notifyRenderersTimer = window.setTimeout(() => {
-            this.notifyRenderersTimer = null;
-            for (const renderer of this.fsrsTableRenderers) {
-                renderer.refresh().catch((error) => {
-                    console.error(
-                        "Ошибка при обновлении рендерера fsrs-table:",
-                        error,
-                    );
-                });
-            }
-        }, RENDERER_DEBOUNCE_MS);
     }
 }

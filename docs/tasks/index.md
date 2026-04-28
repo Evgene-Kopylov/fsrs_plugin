@@ -26,5 +26,5 @@
 - [x] [cache-4.4.integration.md](./cache-4.4.integration.md) — интеграция FsrsCache в main.ts, замена IncrementalCache
 - [x] [cache-4.5.renderer-update.md](./cache-4.5.renderer-update.md) — обновление FsrsTableRenderer: убрать статический кэш, использовать query_cards
 - [x] [cache-4.6.cleanup.md](./cache-4.6.cleanup.md) — удаление старого кода: incremental-cache.ts, fsrs-table-filter.ts, rendererCache
-- [ ] Ситуация: у нас подписка на события измеения фалов от обсидиан. но после просмотра карточки она не обновляется в таблице своевременно. триггер не отрабатывает.
-- [>] [startup-empty-table.md](./startup-empty-table.md) — пустая таблица при запуске Obsidian: добавить `.catch()` на `performCacheScan`, чтобы защитить от необработанных ошибок
+- [>] [renderer-debounce.ru.md](./renderer-debounce.ru.md) — убрать debounce из notifyFsrsTableRenderers, чтобы таблица обновлялась без задержки после просмотра карточки
+- [x] [startup-empty-table.md](./startup-empty-table.md) — пустая таблица при запуске Obsidian: добавить `.catch()` на `performCacheScan`, чтобы защитить от необработанных ошибок
