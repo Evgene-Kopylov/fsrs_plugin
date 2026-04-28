@@ -45,7 +45,7 @@ interface CardWithState {
  * @param now Текущее время
  * @returns HTMLDivElement контейнер таблицы
  */
-export async function generateTableDOM(
+export function generateTableDOM(
     parentEl: HTMLElement,
     cardsWithState: CardWithState[],
     totalCount: number,
@@ -53,8 +53,7 @@ export async function generateTableDOM(
     _settings: FSRSSettings,
     app: App,
     now: Date = new Date(),
-): Promise<HTMLDivElement> {
-    const CHUNK_SIZE = 50;
+): HTMLDivElement {
     const effectiveLimit =
         params.limit > 0 ? params.limit : DEFAULT_TABLE_DISPLAY_LIMIT;
     const cardsToShow = cardsWithState.slice(0, effectiveLimit);
@@ -116,47 +115,31 @@ export async function generateTableDOM(
     const tbody = createEl("tbody");
     table.appendChild(tbody);
 
-    for (let i = 0; i < cardsToShow.length; i += CHUNK_SIZE) {
-        const chunk = cardsToShow.slice(i, i + CHUNK_SIZE);
+    for (const { card, state, isDue } of cardsToShow) {
+        const row = createEl("tr");
+        row.className = isDue
+            ? "fsrs-table-row fsrs-due-card"
+            : "fsrs-table-row";
+        row.dataset.filePath = card.filePath;
+        tbody.appendChild(row);
 
-        for (const { card, state, isDue } of chunk) {
-            const row = createEl("tr");
-            row.className = isDue
-                ? "fsrs-table-row fsrs-due-card"
-                : "fsrs-table-row";
-            row.dataset.filePath = card.filePath;
-            tbody.appendChild(row);
+        for (const column of params.columns) {
+            const value = formatFieldValue(column.field, card, state, app, now);
+            const td = createEl("td");
+            td.className = `fsrs-col-${column.field}`;
 
-            for (const column of params.columns) {
-                const value = formatFieldValue(
-                    column.field,
-                    card,
-                    state,
-                    app,
-                    now,
-                );
-                const td = createEl("td");
-                td.className = `fsrs-col-${column.field}`;
-
-                if (column.field === "file") {
-                    const link = createEl("a");
-                    link.href = card.filePath;
-                    link.dataset.filePath = card.filePath;
-                    link.className = "internal-link";
-                    link.textContent = value;
-                    td.appendChild(link);
-                } else {
-                    td.textContent = value;
-                }
-
-                row.appendChild(td);
+            if (column.field === "file") {
+                const link = createEl("a");
+                link.href = card.filePath;
+                link.dataset.filePath = card.filePath;
+                link.className = "internal-link";
+                link.textContent = value;
+                td.appendChild(link);
+            } else {
+                td.textContent = value;
             }
-        }
 
-        // Отдаём управление браузеру между чанками
-        if (i + CHUNK_SIZE < cardsToShow.length) {
-            // Отдаём управление браузеру для отрисовки добавленных строк
-            await new Promise((resolve) => setTimeout(resolve, 0));
+            row.appendChild(td);
         }
     }
 

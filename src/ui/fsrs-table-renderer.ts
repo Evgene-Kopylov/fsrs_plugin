@@ -125,7 +125,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             const cardsWithDue = this.addIsDue(result.cards, now);
 
             // Генерируем DOM таблицы
-            await generateTableDOM(
+            generateTableDOM(
                 this.container,
                 cardsWithDue,
                 result.total_count,
