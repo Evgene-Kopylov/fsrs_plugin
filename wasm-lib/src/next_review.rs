@@ -90,7 +90,7 @@ mod tests {
     #[test]
     fn test_get_next_review_dates() {
         let card_json = create_empty_card_json();
-        let now = "2025-01-01T12:00:00Z".to_string();
+        let now = "2026-01-01T12:00:00Z".to_string();
         let params_json = create_test_parameters_json();
         let default_stability = 2.5;
         let default_difficulty = 5.0;

@@ -212,19 +212,19 @@ mod tests {
     fn test_parse_yaml_to_card_with_reviews() {
         let yaml = r#"
 reviews:
-  - date: "2025-01-01T10:00:00Z"
+  - date: "2026-01-01T10:00:00Z"
     rating: 2
-  - date: "2025-01-02T14:30:00Z"
+  - date: "2026-01-02T14:30:00Z"
     rating: 3
 "#;
         let card = parse_yaml_to_card(yaml);
 
         assert_eq!(card.reviews.len(), 2);
 
-        assert_eq!(card.reviews[0].date, "2025-01-01T10:00:00Z");
+        assert_eq!(card.reviews[0].date, "2026-01-01T10:00:00Z");
         assert_eq!(card.reviews[0].rating, 2u8);
 
-        assert_eq!(card.reviews[1].date, "2025-01-02T14:30:00Z");
+        assert_eq!(card.reviews[1].date, "2026-01-02T14:30:00Z");
         assert_eq!(card.reviews[1].rating, 3u8);
     }
 
@@ -241,7 +241,7 @@ reviews:
     fn test_card_to_yaml_and_back() {
         let original_card = ModernFsrsCard {
             reviews: vec![ReviewSession {
-                date: "2025-01-01T10:00:00Z".to_string(),
+                date: "2026-01-01T10:00:00Z".to_string(),
                 rating: 2u8,
             }],
             file_path: None,
@@ -276,7 +276,7 @@ enable_fuzz: false
     fn test_extract_fsrs_from_frontmatter() {
         let frontmatter = r#"---
 reviews:
-  - date: "2025-01-01T10:00:00Z"
+  - date: "2026-01-01T10:00:00Z"
     rating: 2
 ---
 Some content here"#;
@@ -312,7 +312,7 @@ Content"#;
     fn test_create_frontmatter_with_fsrs() {
         let card = ModernFsrsCard {
             reviews: vec![ReviewSession {
-                date: "2025-01-01T10:00:00Z".to_string(),
+                date: "2026-01-01T10:00:00Z".to_string(),
                 rating: 2u8,
             }],
             file_path: None,
@@ -331,7 +331,7 @@ Content"#;
     fn test_validate_review_sessions_valid() {
         let card = ModernFsrsCard {
             reviews: vec![ReviewSession {
-                date: "2025-01-01T10:00:00Z".to_string(),
+                date: "2026-01-01T10:00:00Z".to_string(),
                 rating: 2u8,
             }],
             file_path: None,
@@ -360,7 +360,7 @@ Content"#;
     fn test_validate_review_sessions_invalid_rating() {
         let card = ModernFsrsCard {
             reviews: vec![ReviewSession {
-                date: "2025-01-01T10:00:00Z".to_string(),
+                date: "2026-01-01T10:00:00Z".to_string(),
                 rating: 255u8,
             }],
             file_path: None,

@@ -116,7 +116,7 @@ mod tests {
         let json = r#"{
             "reviews": [
                 {
-                    "date": "2025-01-01T10:00:00Z",
+                    "date": "2026-01-01T10:00:00Z",
                     "rating": 2
                 }
             ]
@@ -124,7 +124,7 @@ mod tests {
 
         let card = parse_card_from_json(json);
         assert_eq!(card.reviews.len(), 1);
-        assert_eq!(card.reviews[0].date, "2025-01-01T10:00:00Z");
+        assert_eq!(card.reviews[0].date, "2026-01-01T10:00:00Z");
         assert_eq!(card.reviews[0].rating, 2u8);
     }
 
@@ -201,10 +201,10 @@ mod tests {
     #[test]
     fn test_parse_datetime_flexible_with_z_suffix() {
         // Тест с 'Z' на конце
-        let date_str = "2025-01-01T10:00:00Z";
+        let date_str = "2026-01-01T10:00:00Z";
         let dt = parse_datetime_flexible(date_str).expect("Should parse with Z suffix");
 
-        assert_eq!(dt.year(), 2025);
+        assert_eq!(dt.year(), 2026);
         assert_eq!(dt.month(), 1);
         assert_eq!(dt.day(), 1);
         assert_eq!(dt.hour(), 10);
@@ -224,7 +224,7 @@ mod tests {
     fn test_card_to_json_and_back() {
         let original_card = ModernFsrsCard {
             reviews: vec![ReviewSession {
-                date: "2025-01-01T10:00:00Z".to_string(),
+                date: "2026-01-01T10:00:00Z".to_string(),
                 rating: 2u8,
             }],
             file_path: None,

@@ -249,11 +249,11 @@ const testYamlCases = [
     {
         name: "Multiple reviews",
         yaml: `reviews:
-  - date: 2025-05-14T10:00:00
+  - date: 2026-05-14T10:00:00
     rating: Good
     stability: 6.5
     difficulty: 3.2
-  - date: 2025-05-07T09:00:00
+  - date: 2026-05-07T09:00:00
     rating: Easy
     stability: 3.2
     difficulty: 3.0`,
