@@ -139,7 +139,7 @@ reviews:
 **Fields of each review session:**
 
 - **`date`** — date/time in ISO 8601
-- **`rating`** — `"Again"`, `"Hard"`, `"Good"`, or `"Easy"`
+- **`rating`** — `0` (Again), `1` (Hard), `2` (Good), or `3` (Easy)
 
 **Notes:**
 
