@@ -7,6 +7,7 @@ import {
 } from "../utils/fsrs-table-helpers";
 import { i18n } from "../utils/i18n";
 import { verboseLog } from "../utils/logger";
+import { RENDERER_DEBOUNCE_MS } from "../constants";
 import { sortCards, getNextSortDirection } from "./fsrs-table-sorter";
 
 /**
@@ -143,6 +144,10 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             });
 
             if (allCards.length === 0) {
+                if (this.isFirstLoad) {
+                    // При первом рендере кэш ещё может заполняться — оставляем loading
+                    return;
+                }
                 this.renderEmptyState();
                 return;
             }
@@ -328,10 +333,15 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             this.lastAction = "refresh";
         }
         if (forceRefresh) {
-            // Сбрасываем кэш при полном обновлении (например, после ревью)
-            this.cachedCardsWithState = null;
-            this.cachedTotalCount = 0;
-            this.originalCardsWithState = null;
+            // Проверяем, изменилось ли количество карточек в кэше
+            const currentSize = this.plugin.cache.size();
+            if (
+                this.cachedCardsWithState &&
+                currentSize === this.cachedTotalCount
+            ) {
+                // Данные не изменились — пропускаем перерисовку
+                return;
+            }
             FsrsTableRenderer.rendererCache.delete(this.sourcePath);
         }
         await this.renderContent();
@@ -349,7 +359,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 
         // Дебаунс: обновляем не чаще чем..
         const now = Date.now();
-        if (now - this.lastVisibilityUpdate > 2000) {
+        if (now - this.lastVisibilityUpdate > RENDERER_DEBOUNCE_MS) {
             this.lastVisibilityUpdate = now;
             try {
                 await this.refresh();

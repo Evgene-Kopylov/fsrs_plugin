@@ -108,8 +108,8 @@ pub fn add_or_update_cards(cards_json_array: &str) -> String {
         let mut map = cache.lock().unwrap();
 
         for item in &items {
-            // Парсим карточку
-            let card: ModernFsrsCard = match serde_json::from_str(&item.card_json) {
+            // Парсим карточку и проставляем file_path (он передаётся отдельно)
+            let mut card: ModernFsrsCard = match serde_json::from_str(&item.card_json) {
                 Ok(c) => c,
                 Err(e) => {
                     errors.push(format!(
@@ -119,6 +119,7 @@ pub fn add_or_update_cards(cards_json_array: &str) -> String {
                     continue;
                 }
             };
+            card.file_path = Some(item.file_path.clone());
 
             // Парсим состояние
             let state: ComputedState = match serde_json::from_str(&item.state_json) {

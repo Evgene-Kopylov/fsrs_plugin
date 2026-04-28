@@ -61,6 +61,8 @@ verbose_log() {
 }
 
 # Парсинг аргументов командной строки
+POSITIONAL_ARGS=()
+
 while [[ $# -gt 0 ]]; do
     case $1 in
         -v|--vault-path)
@@ -92,19 +94,24 @@ while [[ $# -gt 0 ]]; do
             print_help
             exit 0
             ;;
-        *)
+        -*)
             echo "❌ Неизвестный параметр: $1"
             echo "Используйте $0 --help для справки"
             exit 1
             ;;
+        *)
+            # Позиционный аргумент (путь к лог-файлу)
+            POSITIONAL_ARGS+=("$1")
+            shift
+            ;;
     esac
 done
 
-# Позиционный аргумент: путь к лог-файлу (первый аргумент без флага)
-if [[ $# -gt 0 && "$1" != -* ]]; then
-    LOG_FILE="$1"
-    shift
+# Используем первый позиционный аргумент как путь к лог-файлу
+if [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]]; then
+    LOG_FILE="${POSITIONAL_ARGS[0]}"
 fi
+
 
 # Обновление путей на основе vault-path
 WELCOME_FILE="${WELCOME_FILE/\$VAULT_PATH/$VAULT_PATH}"

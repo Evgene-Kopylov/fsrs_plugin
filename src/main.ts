@@ -1,4 +1,4 @@
-import { Plugin } from "obsidian";
+import { Plugin, TFile } from "obsidian";
 import { registerCommands } from "./commands/index";
 import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from "./commands/add-fsrs-fields";
 import { findFsrsCards } from "./commands/find-fsrs-cards";
@@ -16,12 +16,20 @@ import { StatusBarManager } from "./ui/status-bar-manager";
 import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings";
 import { FsrsSettingTab } from "./settings";
 
-import { IncrementalCache } from "./utils/fsrs";
-import { base64ToBytes } from "./utils/fsrs-helper";
+import { FsrsCache } from "./utils/fsrs/fsrs-cache";
+import type { CacheCardInput } from "./utils/fsrs/fsrs-cache";
+import {
+    base64ToBytes,
+    shouldIgnoreFileWithSettings,
+    extractFrontmatter,
+    parseModernFsrsFromFrontmatter,
+    computeCardState,
+} from "./utils/fsrs";
 import type { FSRSRating, CachedCard } from "./interfaces/fsrs";
 import { i18n } from "./utils/i18n";
 import { showNotice } from "./utils/notice";
 import { verboseLog, setVerboseLoggingEnabled } from "./utils/logger";
+import { RENDERER_DEBOUNCE_MS } from "./constants";
 
 // Импорт WASM функций
 import init from "../wasm-lib/pkg/wasm_lib";
@@ -36,8 +44,12 @@ export default class FsrsPlugin extends Plugin {
     private isWasmInitialized = false;
 
     private fsrsTableRenderers = new Set<FsrsTableRenderer>();
-    // Инкрементальный кэш карточек
-    private cardCache!: IncrementalCache;
+    // Кэш карточек в WASM
+    public cache!: FsrsCache;
+    // Ожидающие сканирования карточки (debounce)
+    private pendingScans = new Map<string, number>();
+    // Таймер debounce для уведомления рендереров (чтобы не перерисовывать 1000 раз)
+    private notifyRenderersTimer: number | null = null;
     public statusBarManager: StatusBarManager | null = null;
 
     /**
@@ -63,10 +75,15 @@ export default class FsrsPlugin extends Plugin {
         );
         this.statusBarManager.init();
 
-        // Инициализация инкрементального кэша карточек
-        this.cardCache = new IncrementalCache(this.app, this.settings, () =>
-            this.notifyFsrsTableRenderers(),
-        );
+        // Инициализация кэша в WASM
+        this.cache = new FsrsCache();
+        this.cache.init();
+
+        // Запуск прогрессивного сканирования хранилища
+        void this.performCacheScan().then(() => {
+            verboseLog("Сканирование хранилища завершено");
+            this.notifyFsrsTableRenderers();
+        });
 
         // Регистрация процессора для кнопки повторения карточки
         this.registerMarkdownCodeBlockProcessor(
@@ -107,20 +124,23 @@ export default class FsrsPlugin extends Plugin {
             },
         );
 
-        // Регистрация обработчиков изменений файлов для инкрементального кэша
-        this.registerEvent(
-            this.app.vault.on("modify", (file) => {
-                if (file.path) this.cardCache.scheduleCardUpdate(file.path);
-            }),
-        );
+        // Регистрация обработчиков изменений файлов для кэша WASM
         this.registerEvent(
             this.app.vault.on("delete", (file) => {
-                this.cardCache.handleFileDelete(file);
+                this.cache.removeCard(file.path);
+                this.notifyFsrsTableRenderers();
             }),
         );
         this.registerEvent(
             this.app.vault.on("rename", (file, oldPath) => {
-                this.cardCache.handleFileRename(file, oldPath);
+                this.cache.removeCard(oldPath);
+                this.notifyFsrsTableRenderers();
+                this.scheduleCardScan(file.path);
+            }),
+        );
+        this.registerEvent(
+            this.app.vault.on("modify", (file) => {
+                if (file.path) this.scheduleCardScan(file.path);
             }),
         );
 
@@ -152,19 +172,166 @@ export default class FsrsPlugin extends Plugin {
      * Кэш инвалидируется при изменении файлов или настроек.
      */
     async getCachedCardsWithState(): Promise<CachedCard[]> {
-        return await this.cardCache.getCachedCardsWithState();
+        return this.cache.getAll();
     }
 
     /**
-     * Инвалидирует кэш карточек.
-     * Вызывается при изменении файлов или настроек.
+     * Прогрессивное сканирование всех markdown-файлов хранилища.
+     * Читает файлы чанками по 100, парсит frontmatter, вычисляет состояния
+     * и отправляет в WASM-кэш через addOrUpdateCards.
      */
-    private invalidateCache(): void {
-        this.cardCache.invalidateCache();
+    async performCacheScan(
+        onProgress?: (current: number, total: number) => void,
+    ): Promise<void> {
+        const start = performance.now();
+        const files = this.app.vault
+            .getMarkdownFiles()
+            .sort((a, b) => a.path.localeCompare(b.path));
+
+        // Очищаем кэш перед сканированием
+        this.cache.clear();
+
+        let brokenCount = 0;
+        const CHUNK_SIZE = 100;
+
+        for (let i = 0; i < files.length; i += CHUNK_SIZE) {
+            const chunk = files.slice(i, i + CHUNK_SIZE);
+            const batch: CacheCardInput[] = [];
+
+            for (const file of chunk) {
+                if (
+                    shouldIgnoreFileWithSettings(
+                        file.path,
+                        this.settings,
+                        this.app.vault.configDir,
+                    )
+                ) {
+                    continue;
+                }
+                try {
+                    const content = await this.app.vault.read(file);
+                    const frontmatter = extractFrontmatter(content);
+                    if (!frontmatter) continue;
+                    const parseResult = parseModernFsrsFromFrontmatter(
+                        frontmatter,
+                        file.path,
+                    );
+                    if (parseResult.success && parseResult.card) {
+                        const state = computeCardState(
+                            parseResult.card,
+                            this.settings,
+                        );
+                        batch.push({
+                            filePath: file.path,
+                            card: parseResult.card,
+                            state,
+                        });
+                    } else {
+                        brokenCount++;
+                    }
+                } catch {
+                    brokenCount++;
+                }
+            }
+
+            // Отправляем чанк в WASM
+            if (batch.length > 0) {
+                const result = this.cache.addOrUpdateCards(batch);
+                if (result.errors.length > 0) {
+                    verboseLog(
+                        `Ошибки при добавлении карточек: ${result.errors.join(", ")}`,
+                    );
+                }
+            }
+
+            // Прогресс
+            onProgress?.(Math.min(i + CHUNK_SIZE, files.length), files.length);
+
+            // Отдаём управление браузеру
+            await new Promise((resolve) => window.setTimeout(resolve, 0));
+        }
+
+        verboseLog(`✅ Найдено карточек FSRS: ${this.cache.size()}`);
+        if (brokenCount > 0) {
+            verboseLog(`⚠️ Пропущено битых карточек: ${brokenCount}`);
+        }
+        const elapsed = (performance.now() - start) / 1000;
+        verboseLog(`⏱️ Сканирование всего хранилища: ${elapsed.toFixed(2)} с`);
+    }
+
+    /**
+     * Планирует сканирование одной карточки с debounce (500 мс).
+     * При повторном вызове для того же пути сбрасывает таймер.
+     */
+    private scheduleCardScan(filePath: string): void {
+        const existing = this.pendingScans.get(filePath);
+        if (existing) window.clearTimeout(existing);
+
+        const timer = window.setTimeout(() => {
+            void this.scanSingleCard(filePath);
+            this.pendingScans.delete(filePath);
+        }, 500);
+
+        this.pendingScans.set(filePath, timer);
+    }
+
+    /**
+     * Сканирует одну карточку по пути файла.
+     * Читает файл, парсит frontmatter, вычисляет состояние и обновляет кэш.
+     * Если карточка не содержит FSRS-данных — удаляет из кэша.
+     */
+    private async scanSingleCard(filePath: string): Promise<void> {
+        if (
+            shouldIgnoreFileWithSettings(
+                filePath,
+                this.settings,
+                this.app.vault.configDir,
+            )
+        ) {
+            this.cache.removeCard(filePath);
+            this.notifyFsrsTableRenderers();
+            return;
+        }
+
+        try {
+            const file = this.app.vault.getAbstractFileByPath(filePath);
+            if (!file || !(file instanceof TFile)) return;
+
+            const content = await this.app.vault.read(file);
+            const frontmatter = extractFrontmatter(content);
+            if (!frontmatter) {
+                this.cache.removeCard(filePath);
+                this.notifyFsrsTableRenderers();
+                return;
+            }
+
+            const parseResult = parseModernFsrsFromFrontmatter(
+                frontmatter,
+                filePath,
+            );
+            if (parseResult.success && parseResult.card) {
+                const state = computeCardState(parseResult.card, this.settings);
+                this.cache.addOrUpdateCards([
+                    { filePath, card: parseResult.card, state },
+                ]);
+                this.notifyFsrsTableRenderers();
+            } else {
+                this.cache.removeCard(filePath);
+                this.notifyFsrsTableRenderers();
+            }
+        } catch (error) {
+            console.warn(
+                `Ошибка при сканировании карточки ${filePath}:`,
+                error,
+            );
+            this.cache.removeCard(filePath);
+            this.notifyFsrsTableRenderers();
+        }
     }
 
     /**
      * Добавляет поля FSRS в текущий файл
+</｜DSML｜parameter>
      * Реализация для команды плагина
      */
     async addFsrsFieldsToCurrentFile(): Promise<void> {
@@ -235,8 +402,9 @@ export default class FsrsPlugin extends Plugin {
     async saveSettings() {
         setVerboseLoggingEnabled(this.settings.verbose_logging);
         await this.saveData(this.settings);
-        // Инвалидируем кэш при изменении настроек
-        this.invalidateCache();
+        // Очищаем кэш при изменении настроек (состояния изменятся)
+        this.cache?.clear();
+        this.notifyFsrsTableRenderers();
         // Обновляем статус-бар
         void this.statusBarManager?.updateStatusBar();
     }
@@ -255,10 +423,22 @@ export default class FsrsPlugin extends Plugin {
         verboseLog("Выгрузка FSRS плагина");
         this.isWasmInitialized = false;
         this.fsrsTableRenderers.clear();
-        // Очищаем все ресурсы инкрементального кэша
-        if (this.cardCache) {
-            this.cardCache.unload();
+
+        // Очищаем таймер debounce уведомлений рендереров
+        if (this.notifyRenderersTimer !== null) {
+            window.clearTimeout(this.notifyRenderersTimer);
+            this.notifyRenderersTimer = null;
         }
+
+        // Очищаем pending таймеры
+        for (const timer of this.pendingScans.values()) {
+            window.clearTimeout(timer);
+        }
+        this.pendingScans.clear();
+
+        // Очищаем кэш в WASM
+        this.cache?.clear();
+
         if (this.statusBarManager) {
             this.statusBarManager.unload();
             this.statusBarManager = null;
@@ -281,15 +461,22 @@ export default class FsrsPlugin extends Plugin {
 
     /**
      * Уведомляет все активные рендереры fsrs-table об обновлении данных
+     * с debounce — при частых вызовах перерендер происходит не чаще раза в 2 секунды.
      */
     notifyFsrsTableRenderers(): void {
-        for (const renderer of this.fsrsTableRenderers) {
-            renderer.refresh(true).catch((error) => {
-                console.error(
-                    "Ошибка при обновлении рендерера fsrs-table:",
-                    error,
-                );
-            });
+        if (this.notifyRenderersTimer !== null) {
+            window.clearTimeout(this.notifyRenderersTimer);
         }
+        this.notifyRenderersTimer = window.setTimeout(() => {
+            this.notifyRenderersTimer = null;
+            for (const renderer of this.fsrsTableRenderers) {
+                renderer.refresh(true).catch((error) => {
+                    console.error(
+                        "Ошибка при обновлении рендерера fsrs-table:",
+                        error,
+                    );
+                });
+            }
+        }, RENDERER_DEBOUNCE_MS);
     }
 }
