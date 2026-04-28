@@ -20,7 +20,7 @@
 
 ### Этап 0. Подготовительные рефакторинги
 
-- [ ] [chanks-0.1.rename-limit.md](./chanks-0.1.rename-limit.md) — переименовать константу `LIMIT` отображения, вынести в `constants`
+- [x] [chanks-0.1.rename-limit.md](./chanks-0.1.rename-limit.md) — переименовать константу `LIMIT` отображения, вынести в `constants`
 - [ ] [chanks-0.2.refactor-files.md](./chanks-0.2.refactor-files.md) — рефакторинг больших файлов (если превысят 350 строк)
 
 ### Этап 1. Прогрессивное сканирование
