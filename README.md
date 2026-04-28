@@ -43,7 +43,7 @@ The plugin turns your notes into FSRS-based flashcards for effective memorizatio
 ## 🐌 Quick Start
 
 1. **Create a card** – open a note → run the command `Add FSRS fields to file header` (Ctrl/Cmd+P).
-2. **Add a review button** – insert a ` ```fsrs-review-button``` ` block in your note (or enable auto-adding in settings).
+2. **Add a review button** – use the command `FSRS: Insert review button` (Ctrl/Cmd+P), or insert a ` ```fsrs-review-button``` ` block manually, or enable auto-adding in settings.
 3. **Insert a table** – use the command `Insert default fsrs-table` (Ctrl/Cmd+P), or create a ` ```fsrs-table ...``` ` block manually.
 4. **Start reviewing** – open the table, hover over a file name, and click a rating.
 
@@ -151,6 +151,7 @@ reviews:
 - **FSRS: Review current card**
 - **FSRS: Remove last card review**
 - **FSRS: Show review history**
+- **FSRS: Insert review button**
 - **FSRS: Insert default fsrs-table**
 - **FSRS: Show fsrs-table syntax help**
 
@@ -164,7 +165,7 @@ reviews:
 
 | Setting | Description | Default |
 |---------|-------------|---------|
-| **Request Retention** | Target retention level | 0.92 (92%) |
+| **Request Retention** | Target retention level | 0.9 (90%) |
 | **Maximum Interval** | Max interval (days) | 36500 (~100 years) |
 | **Enable Interval Fuzz** | Randomize intervals (±5%) | Enabled |
 
@@ -180,12 +181,6 @@ reviews:
 | Setting | Description | Default |
 |---------|-------------|---------|
 | **Auto Add Review Button** | Automatically add review button | Disabled |
-
-### Early Review Settings
-
-| Setting | Description | Default |
-|---------|-------------|---------|
-| **Minimum Early Review Interval** | Minimum minutes before review | 40 |
 
 ### Filter Settings
 

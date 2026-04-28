@@ -36,7 +36,7 @@
         "wasm_not_ready": "FSRS component not ready. Please restart Obsidian.",
         "file_not_found": "File not found: {path}",
         "card_not_due": "Card already reviewed. Next scheduled review: {date}",
-        "early_review_blocked": "Early review available in {minutes} {noun}. Next scheduled: {date}",
+        "early_review_blocked": "Early review can be counted no earlier than in {minutes} {noun}. Next scheduled: {date}",
         "review_button_exists": "Review button block already exists in this file"
     },
     "commands": {
@@ -242,12 +242,7 @@
             }
         },
         "early_review": {
-            "heading": "Early review",
-            "minimum_interval": {
-                "name": "Minimum early review interval",
-                "desc": "Minimum minutes before a card can be reviewed early. Set to 0 to allow immediate review.",
-                "placeholder": "40"
-            }
+            "heading": "Early review"
         },
         "filtering": {
             "heading": "File filtering",

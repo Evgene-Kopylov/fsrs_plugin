@@ -2,10 +2,15 @@ import type { FSRSParameters, FSRSSettings } from "./interfaces/fsrs";
 
 // Параметры алгоритма FSRS по умолчанию (совместимые с rs-fsrs)
 export const DEFAULT_PARAMETERS: FSRSParameters = {
-    request_retention: 0.92, // целевой уровень запоминания 92%
+    request_retention: 0.9, // целевой уровень запоминания 90%
     maximum_interval: 36500, // максимальный интервал 100 лет
     enable_fuzz: true, // включить случайное изменение интервалов
 };
+
+// Минимальный интервал для досрочного повторения
+// 1440 минут = 24 часа, алгоритм не учитывает повторения
+// если прошло менее одного полного дня.
+export const MINIMUM_REVIEW_INTERVAL_MINUTES = 1440;
 
 // Настройки плагина по умолчанию
 export const DEFAULT_SETTINGS: FSRSSettings = {
@@ -20,7 +25,7 @@ export const DEFAULT_SETTINGS: FSRSSettings = {
     auto_add_review_button: false,
 
     // Минимальный интервал для досрочного повторения
-    minimum_review_interval_minutes: 40,
+    minimum_review_interval_minutes: MINIMUM_REVIEW_INTERVAL_MINUTES,
 
     // Паттерны игнорирования файлов и папок
     ignore_patterns: [],
