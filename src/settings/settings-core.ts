@@ -75,7 +75,7 @@ export class FsrsSettingTab extends PluginSettingTab {
         containerEl.createEl("hr");
 
         // Рендеринг настроек досрочного повторения
-        renderEarlyReviewSettings(containerEl, this.plugin);
+        renderEarlyReviewSettings(containerEl);
 
         // Разделитель
         containerEl.createEl("hr");
