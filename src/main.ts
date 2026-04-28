@@ -117,7 +117,6 @@ export default class FsrsPlugin extends Plugin {
                 const renderer = new FsrsTableRenderer(
                     this,
                     renderContainer,
-                    ctx.sourcePath,
                     source,
                 );
                 ctx.addChild(renderer);

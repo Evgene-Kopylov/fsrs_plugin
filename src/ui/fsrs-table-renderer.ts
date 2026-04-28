@@ -17,7 +17,6 @@ import type {
 import { generateTableDOM } from "../utils/fsrs-table-helpers";
 import { i18n } from "../utils/i18n";
 import { verboseLog } from "../utils/logger";
-import { RENDERER_DEBOUNCE_MS } from "../constants";
 
 /**
  * Внутреннее представление карточки для генерации DOM.
@@ -33,14 +32,11 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
     private params: TableParams | null = null;
     private isFirstLoad = true;
     private isRendering = false;
-    private activeLeafCallback?: () => void;
-    private lastVisibilityUpdate = 0;
     private sourceText: string;
 
     constructor(
         private plugin: FsrsPlugin,
         private container: HTMLElement,
-        private sourcePath: string,
         source: string,
     ) {
         super(container);
@@ -55,24 +51,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
     onload(): void {
         super.onload();
         this.plugin.registerFsrsTableRenderer(this);
-
-        // Блокируем active-leaf-change на время первого рендера
-        this.lastVisibilityUpdate = Date.now();
-
-        this.activeLeafCallback = () => {
-            this.updateIfVisible().catch((error) => {
-                console.error(
-                    "Ошибка при обновлении таблицы при возвращении видимости:",
-                    error,
-                );
-            });
-        };
-        this.registerEvent(
-            this.plugin.app.workspace.on(
-                "active-leaf-change",
-                this.activeLeafCallback,
-            ),
-        );
 
         void (async () => {
             await this.renderContent();
@@ -170,8 +148,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             if (!this.isFirstLoad) {
                 this.container.classList.remove("fsrs-table-loading");
             }
-
-            this.lastVisibilityUpdate = Date.now();
         } catch (error) {
             this.renderErrorState(error);
         } finally {
@@ -301,27 +277,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
      */
     async refresh() {
         await this.renderContent();
-    }
-
-    /**
-     * Обновляет таблицу, если файл активен и прошло достаточно времени.
-     */
-    private async updateIfVisible(): Promise<void> {
-        const activeFile = this.plugin.app.workspace.getActiveFile();
-        if (!activeFile || activeFile.path !== this.sourcePath) return;
-
-        const now = Date.now();
-        if (now - this.lastVisibilityUpdate > RENDERER_DEBOUNCE_MS) {
-            this.lastVisibilityUpdate = now;
-            try {
-                await this.refresh();
-            } catch (error) {
-                console.error(
-                    "Ошибка при обновлении таблицы fsrs-table:",
-                    error,
-                );
-            }
-        }
     }
 
     // -----------------------------------------------------------------------

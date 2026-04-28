@@ -25,4 +25,4 @@
 - [x] [cache-4.3.ts-fsrs-cache.md](./cache-4.3.ts-fsrs-cache.md) — класс `FsrsCache` в TS: тонкая обёртка над WASM
 - [x] [cache-4.4.integration.md](./cache-4.4.integration.md) — интеграция FsrsCache в main.ts, замена IncrementalCache
 - [x] [cache-4.5.renderer-update.md](./cache-4.5.renderer-update.md) — обновление FsrsTableRenderer: убрать статический кэш, использовать query_cards
-- [>] [cache-4.6.cleanup.md](./cache-4.6.cleanup.md) — удаление старого кода: incremental-cache.ts, fsrs-table-filter.ts, rendererCache
+- [x] [cache-4.6.cleanup.md](./cache-4.6.cleanup.md) — удаление старого кода: incremental-cache.ts, fsrs-table-filter.ts, rendererCache
