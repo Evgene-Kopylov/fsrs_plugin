@@ -47,10 +47,10 @@ export default class FsrsPlugin extends Plugin {
     public cache!: FsrsCache;
     // Флаг: завершено ли начальное сканирование хранилища
     private scanCompleted = false;
-    // Ожидающие сканирования карточки (debounce)
-    private pendingScans = new Map<string, number>();
-    // Таймер debounce для уведомления рендереров (чтобы не перерисовывать 1000 раз)
-    private notifyRenderersTimer: number | null = null;
+    // Ожидающие сканирования карточки
+    private pendingScans = new Set<string>();
+    // Флаг: запланировано ли уведомление рендереров (чтобы не перерисовывать 1000 раз)
+    private notifyRenderersScheduled = false;
     public statusBarManager: StatusBarManager | null = null;
 
     /**
@@ -285,19 +285,17 @@ export default class FsrsPlugin extends Plugin {
     }
 
     /**
-     * Планирует сканирование одной карточки с debounce (500 мс).
-     * При повторном вызове для того же пути сбрасывает таймер.
+     * Планирует сканирование одной карточки.
+     * При повторном вызове для того же пути игнорируется (уже в очереди).
      */
     private scheduleCardScan(filePath: string): void {
-        const existing = this.pendingScans.get(filePath);
-        if (existing) window.clearTimeout(existing);
+        if (this.pendingScans.has(filePath)) return;
+        this.pendingScans.add(filePath);
 
-        const timer = window.setTimeout(() => {
-            void this.scanSingleCard(filePath);
+        queueMicrotask(() => {
             this.pendingScans.delete(filePath);
-        }, 500);
-
-        this.pendingScans.set(filePath, timer);
+            void this.scanSingleCard(filePath);
+        });
     }
 
     /**
@@ -449,16 +447,10 @@ export default class FsrsPlugin extends Plugin {
         this.isWasmInitialized = false;
         this.fsrsTableRenderers.clear();
 
-        // Очищаем таймер debounce уведомлений рендереров
-        if (this.notifyRenderersTimer !== null) {
-            window.clearTimeout(this.notifyRenderersTimer);
-            this.notifyRenderersTimer = null;
-        }
+        // Сбрасываем флаг уведомлений рендереров
+        this.notifyRenderersScheduled = false;
 
-        // Очищаем pending таймеры
-        for (const timer of this.pendingScans.values()) {
-            window.clearTimeout(timer);
-        }
+        // Очищаем pending сканирования
         this.pendingScans.clear();
 
         // Очищаем кэш в WASM
@@ -491,20 +483,15 @@ export default class FsrsPlugin extends Plugin {
     }
 
     /**
-     * Уведомляет все активные рендереры fsrs-table об обновлении данных
-     * с минимальным debounce (setTimeout 0) — при массовых изменениях
-     * рендер происходит один раз, а не на каждый чих.
-     *
-     * renderContent() сам защищён флагом isRendering, но debounce здесь
-     * нужен чтобы не запускать 10+ последовательных refresh при старте
-     * (когда Obsidian генерирует modify для каждого открытого файла).
+     * Уведомляет все активные рендереры fsrs-table об обновлении данных.
+     * Использует queueMicrotask — при массовых изменениях рендер происходит
+     * один раз, а не на каждый чих.
      */
     notifyFsrsTableRenderers(): void {
-        if (this.notifyRenderersTimer !== null) {
-            window.clearTimeout(this.notifyRenderersTimer);
-        }
-        this.notifyRenderersTimer = window.setTimeout(() => {
-            this.notifyRenderersTimer = null;
+        if (this.notifyRenderersScheduled) return;
+        this.notifyRenderersScheduled = true;
+        queueMicrotask(() => {
+            this.notifyRenderersScheduled = false;
             for (const renderer of this.fsrsTableRenderers) {
                 renderer.refresh().catch((error) => {
                     console.error(
@@ -513,6 +500,6 @@ export default class FsrsPlugin extends Plugin {
                     );
                 });
             }
-        }, 0);
+        });
     }
 }
