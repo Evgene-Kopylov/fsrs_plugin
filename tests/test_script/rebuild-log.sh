@@ -8,7 +8,7 @@ set -e  # Прерывать выполнение при ошибках
 # Настройки по умолчанию
 DEFAULT_VAULT_PATH="/home/death/Documents/FSRS-test-Obsidian-Vault"
 DEFAULT_WELCOME_FILE="$DEFAULT_VAULT_PATH/Welcome.md"
-DEFAULT_LOG_FILE=""  # автоматически: последний файл в console_logs/
+DEFAULT_LOG_FILE=""  # автоматически: последний файл в logs/
 DEFAULT_DELAY=5
 
 # Переменные, которые можно переопределить через аргументы
@@ -29,7 +29,7 @@ print_help() {
 Опции:
   -v, --vault-path ПУТЬ   Путь к хранилищу Obsidian (по умолчанию: $DEFAULT_VAULT_PATH)
   -w, --welcome-file ПУТЬ Путь к файлу Welcome.md (по умолчанию: \$VAULT_PATH/Welcome.md)
-  -l, --log-file ПУТЬ     Путь к лог-файлу (по умолчанию: последний в console_logs/)
+  -l, --log-file ПУТЬ     Путь к лог-файлу (по умолчанию: последний в logs/)
   -d, --delay СЕКУНДЫ     Задержка после сборки в секундах (по умолчанию: $DEFAULT_DELAY)
   -V, --verbose           Подробный вывод
   -n, --dry-run           Тестовый режим без фактической пересборки
@@ -120,8 +120,8 @@ LOG_FILE="${LOG_FILE/\$VAULT_PATH/$VAULT_PATH}"
 # Автоматическое определение последнего лог-файла, если не указан или не существует
 AUTO_DETECTED=false
 if [ -z "$LOG_FILE" ] || [ ! -f "$LOG_FILE" ]; then
-    # Сначала ищем в console_logs/ (тестовое хранилище)
-    LATEST_LOG=$(find "$VAULT_PATH/console_logs" -name "console-log.*.md" -type f 2>/dev/null | sort | tail -n 1)
+    # Сначала ищем в logs/ (тестовое хранилище)
+    LATEST_LOG=$(find "$VAULT_PATH/logs" -name "console-log.*.md" -type f 2>/dev/null | sort | tail -n 1)
     if [ -n "$LATEST_LOG" ]; then
         LOG_FILE="$LATEST_LOG"
         AUTO_DETECTED=true
@@ -243,7 +243,7 @@ if [ -f "$LOG_FILE" ]; then
 else
     echo "⚠️  Лог-файл не найден: $LOG_FILE"
     echo "Поиск альтернативных лог-файлов..."
-    find "$VAULT_PATH/console_logs" -name "console-log.*.md" -type f 2>/dev/null | head -n 10
+    find "$VAULT_PATH/logs" -name "console-log.*.md" -type f 2>/dev/null | head -n 10
 fi
 
 # Шаг 4: Проверка сборки плагина
