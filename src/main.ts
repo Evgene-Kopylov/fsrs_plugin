@@ -81,14 +81,26 @@ export default class FsrsPlugin extends Plugin {
         this.cache = new FsrsCache();
         this.cache.init();
 
-        // Запуск прогрессивного сканирования хранилища
-        void this.performCacheScan().then(() => {
-            verboseLog("Сканирование хранилища завершено");
-            this.scanCompleted = true;
-            // Уведомляем все существующие рендереры напрямую (без debounce)
-            for (const renderer of this.fsrsTableRenderers) {
-                renderer.refresh().catch(console.error);
-            }
+        // Запуск прогрессивного сканирования хранилища после полной инициализации
+        // onLayoutReady гарантирует, что все файлы хранилища проиндексированы
+        this.app.workspace.onLayoutReady(() => {
+            this.performCacheScan()
+                .then(() => {
+                    verboseLog("Сканирование хранилища завершено");
+                    this.scanCompleted = true;
+                    // Уведомляем все существующие рендереры напрямую (без debounce)
+                    for (const renderer of this.fsrsTableRenderers) {
+                        renderer.refresh().catch(console.error);
+                    }
+                })
+                .catch((error) => {
+                    console.error("Ошибка при сканировании хранилища:", error);
+                    this.scanCompleted = true;
+                    // Даже при ошибке — даём рендерерам шанс (кэш мог быть частично заполнен)
+                    for (const renderer of this.fsrsTableRenderers) {
+                        renderer.refresh().catch(console.error);
+                    }
+                });
         });
 
         // Регистрация процессора для кнопки повторения карточки
