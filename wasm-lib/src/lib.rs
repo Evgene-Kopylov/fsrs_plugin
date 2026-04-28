@@ -1,6 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 // Объявляем модули
+mod cache;
 mod card_history;
 mod conversion;
 mod current_state;
@@ -377,6 +378,40 @@ pub fn filter_and_sort_cards_with_states(
 #[wasm_bindgen]
 pub fn is_valid_table_field(field: &str) -> bool {
     crate::table_processing::types::is_valid_table_field(field)
+}
+
+// ===================================================================
+// Кэш карточек
+// ===================================================================
+
+#[wasm_bindgen]
+pub fn init_cache() {
+    cache::init_cache();
+}
+
+#[wasm_bindgen]
+pub fn clear_cache() {
+    cache::clear_cache();
+}
+
+#[wasm_bindgen]
+pub fn add_or_update_cards(cards_json_array: &str) -> String {
+    cache::add_or_update_cards(cards_json_array)
+}
+
+#[wasm_bindgen]
+pub fn remove_card(file_path: &str) -> String {
+    cache::remove_card(file_path)
+}
+
+#[wasm_bindgen]
+pub fn get_all_cards() -> String {
+    cache::get_all_cards()
+}
+
+#[wasm_bindgen]
+pub fn get_cache_size() -> usize {
+    cache::get_cache_size()
 }
 
 // Оригинальная функция для обратной совместимости

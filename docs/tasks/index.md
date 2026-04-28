@@ -18,27 +18,11 @@
 
 ## Задачи
 
-### Этап 0. Подготовительные рефакторинги
+### Перенос кэша в Rust
 
-- [x] [chanks-0.1.rename-limit.md](./chanks-0.1.rename-limit.md) — переименовать константу `LIMIT` отображения, вынести в `constants`
-- [ ] [chanks-0.2.refactor-files.md](./chanks-0.2.refactor-files.md) — рефакторинг больших файлов (если превысят 350 строк)
-
-### Этап 1. Прогрессивное сканирование
-
-- [ ] [chanks-1.1.progressive-scan-cache.md](./chanks-1.1.progressive-scan-cache.md) — модификация `IncrementalCache`: `startProgressiveScan`
-- [ ] [chanks-1.2.table-renderer.md](./chanks-1.2.table-renderer.md) — модификация `FsrsTableRenderer`: чанковый рендеринг
-- [ ] [chanks-1.3.generate-table-dom.md](./chanks-1.3.generate-table-dom.md) — адаптация `generateTableDOM`: сообщение о прогрессе
-- [ ] [chanks-1.4.stop-handling.md](./chanks-1.4.stop-handling.md) — обработка досрочной остановки сканирования
-
-### Этап 2. Тестирование
-
-- [ ] [chanks-2.testing.md](./chanks-2.testing.md) — ручное тестирование прогрессивного сканирования
-
-### Этап 3. Оформление результатов
-
-- [ ] [chanks-3.results.md](./chanks-3.results.md) — оформление коммитов, критерий готовности
-
-### Сопутствующие
-
-- [ ] [task-scanning.ru.md](./task-scanning.ru.md) — общая задача: сканирование хранилища FSRS-карточек (проблема + решение)
-- [ ] [1.md](./1.md) — гипотеза: таблица не обновляется до завершения всех чанков
+- [x] [cache-4.1.rust-cache-module.md](./cache-4.1.rust-cache-module.md) — модуль `cache.rs` в Rust: глобальный HashMap, add_or_update_cards, remove_card, clear_cache
+- [ ] [cache-4.2.query-cards.md](./cache-4.2.query-cards.md) — `query_cards` в Rust: интеграция с существующей filter_and_sort_cards_with_states
+- [ ] [cache-4.3.ts-fsrs-cache.md](./cache-4.3.ts-fsrs-cache.md) — класс `FsrsCache` в TS: тонкая обёртка над WASM
+- [ ] [cache-4.4.integration.md](./cache-4.4.integration.md) — интеграция FsrsCache в main.ts, замена IncrementalCache
+- [ ] [cache-4.5.renderer-update.md](./cache-4.5.renderer-update.md) — обновление FsrsTableRenderer: убрать статический кэш, использовать query_cards
+- [ ] [cache-4.6.cleanup.md](./cache-4.6.cleanup.md) — удаление старого кода: incremental-cache.ts, fsrs-table-filter.ts, rendererCache
