@@ -71,7 +71,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         const start = performance.now();
 
         // ДИАГНОСТИКА: кто вызывает renderContent
-        console.debug(
+        verboseLog(
             "🔄 renderContent вызван:",
             new Error().stack?.split("\n").slice(2, 5).join(" | "),
         );

@@ -154,9 +154,8 @@ export function generateTableDOM(
         container.appendChild(infoDiv);
     }
 
-    // Вставляем в DOM готовую таблицу — все изменения макета за одну операцию
-    parentEl.empty();
-    parentEl.appendChild(container);
+    // Вставляем в DOM готовую таблицу — один replaceChildren вместо empty+appendChild (меньше reflow)
+    parentEl.replaceChildren(container);
 
     return container;
 }
