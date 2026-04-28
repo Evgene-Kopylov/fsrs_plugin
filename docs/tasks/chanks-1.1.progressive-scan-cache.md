@@ -30,7 +30,7 @@ async startProgressiveScan(
         throw new Error("Полное сканирование уже выполняется");
     }
 
-    const CHUNK_SIZE = 500; // можно вынести в constants
+    const PROGRESSIVE_SCAN_BATCH_SIZE = 1000; // вынести в constants
     let collectedCards: CachedCard[] = [];
     let stopRequested = false;
     let files = this.app.vault.getMarkdownFiles();
@@ -41,8 +41,8 @@ async startProgressiveScan(
     // Функция для проверки, нужно ли остановиться досрочно
     const shouldStop = () => stopRequested || collectedCards.length >= limitHint;
 
-    for (let i = 0; i < files.length && !shouldStop(); i += CHUNK_SIZE) {
-        const chunk = files.slice(i, i + CHUNK_SIZE);
+    for (let i = 0; i < files.length && !shouldStop(); i += PROGRESSIVE_SCAN_BATCH_SIZE) {
+        const chunk = files.slice(i, i + PROGRESSIVE_SCAN_BATCH_SIZE);
         const newCards: CachedCard[] = [];
 
         for (const file of chunk) {
@@ -74,7 +74,7 @@ async startProgressiveScan(
 
 - `processFile` – вынести из `performFullScan` отдельный метод, который читает файл, парсит, вычисляет состояние и возвращает `CachedCard | null`.
 - `shouldIgnoreFileWithSettings` – уже есть в `fsrs-filter.ts`, импортировать.
-- `CHUNK_SIZE` вынести в `constants.ts` при необходимости.
+- `PROGRESSIVE_SCAN_BATCH_SIZE` вынести в `constants.ts` при необходимости.
 
 ### Примечания
 
