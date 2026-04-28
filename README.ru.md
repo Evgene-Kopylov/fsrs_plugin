@@ -133,12 +133,8 @@ LIMIT 100
 reviews:
   - date: "2025-01-15T10:30:00Z"
     rating: 2
-    stability: 5.21
-    difficulty: 0.45
   - date: "2025-01-20T14:15:00Z"
     rating: 3
-    stability: 12.5
-    difficulty: 0.35
 ---
 ```
 
@@ -146,8 +142,6 @@ reviews:
 
 - **`date`** — дата/время в ISO 8601
 - **`rating`** — `"Again"`, `"Hard"`, `"Good"` или `"Easy"`
-- **`stability`** — S, стабильность (дни)
-- **`difficulty`** — D, сложность (0.0–1.0)
 
 **Особенности:**
 
