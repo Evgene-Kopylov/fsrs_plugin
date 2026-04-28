@@ -40,7 +40,7 @@ npm version patch && git push --tags && git push
 
 ```bash
 git fetch origin main:main && git switch main \
-&& branch_name="dev/$(date +%d-%b_%H%M)" \
+&& branch_name="dev/$(date +%Y-%m-%d)/$(date +%H-%M)" \
 && git checkout -b "$branch_name" \
 && git push -u origin "$branch_name"
 ```

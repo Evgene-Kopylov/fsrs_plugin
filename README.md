@@ -28,12 +28,6 @@ The plugin turns your notes into FSRS-based flashcards for effective memorizatio
 
 ## 📦 Installation
 
-### Via Obsidian Community Plugins (recommended)
-
-1. Go to **Settings** → **Community plugins** → **Browse**
-Search for "FSRS"
-3. Click **Install**, then **Enable**
-
 ### Via BRAT (for beta testing)
 
 1. Install the [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin in Obsidian
@@ -131,21 +125,15 @@ FSRS cards are stored in the note's frontmatter under the `reviews` field:
 reviews:
   - date: "2025-01-15T10:30:00Z"
     rating: 2
-    stability: 5.21
-    difficulty: 0.45
   - date: "2025-01-20T14:15:00Z"
     rating: 3
-    stability: 12.5
-    difficulty: 0.35
 ---
 ```
 
 **Fields of each review session:**
 
 - **`date`** — date/time in ISO 8601
-- **`rating`** — `"Again"`, `"Hard"`, `"Good"`, or `"Easy"`
-- **`stability`** — S, stability (days)
-- **`difficulty`** — D, difficulty (0.0–1.0)
+- **`rating`** — `0` (Again), `1` (Hard), `2` (Good), or `3` (Easy)
 
 **Notes:**
 
