@@ -10,7 +10,7 @@ import { createDefaultTableBlock } from "../utils/fsrs-table-helpers";
 export async function findFsrsCards(plugin: FsrsPlugin): Promise<void> {
     try {
         // Получаем карточки для повторения (асинхронно, до process)
-        const cachedCardsWithState = await plugin.getCachedCardsWithState();
+        const cachedCardsWithState = plugin.getCachedCardsWithState();
         const cardsForReview = cachedCardsWithState.map((c) => c.card);
 
         // Показываем уведомление о количестве найденных карточек

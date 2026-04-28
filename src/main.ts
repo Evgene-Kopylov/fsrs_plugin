@@ -196,7 +196,7 @@ export default class FsrsPlugin extends Plugin {
      * Получает карточки с кэшированными состояниями.
      * Кэш инвалидируется при изменении файлов или настроек.
      */
-    async getCachedCardsWithState(): Promise<CachedCard[]> {
+    getCachedCardsWithState(): CachedCard[] {
         return this.cache.getAll();
     }
 
