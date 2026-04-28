@@ -28,12 +28,6 @@ The plugin turns your notes into FSRS-based flashcards for effective memorizatio
 
 ## 📦 Installation
 
-### Via Obsidian Community Plugins (recommended)
-
-1. Go to **Settings** → **Community plugins** → **Browse**
-Search for "FSRS"
-3. Click **Install**, then **Enable**
-
 ### Via BRAT (for beta testing)
 
 1. Install the [BRAT](https://github.com/TfTHacker/obsidian42-brat) plugin in Obsidian
