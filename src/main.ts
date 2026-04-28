@@ -156,7 +156,16 @@ export default class FsrsPlugin extends Plugin {
         );
         this.registerEvent(
             this.app.vault.on("modify", (file) => {
-                if (file.path) this.scheduleCardScan(file.path);
+                if (
+                    file.path &&
+                    !shouldIgnoreFileWithSettings(
+                        file.path,
+                        this.settings,
+                        this.app.vault.configDir,
+                    )
+                ) {
+                    this.scheduleCardScan(file.path);
+                }
             }),
         );
 
