@@ -30,7 +30,6 @@ interface CardForDisplay {
 
 export class FsrsTableRenderer extends MarkdownRenderChild {
     private params: TableParams | null = null;
-    private isFirstLoad = true;
     private isRendering = false;
     private sourceText: string;
 
@@ -50,12 +49,8 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 
     onload(): void {
         super.onload();
+        this.showLoadingIndicator();
         this.plugin.registerFsrsTableRenderer(this);
-
-        void (async () => {
-            await this.renderContent();
-            this.isFirstLoad = false;
-        })();
     }
 
     onunload() {
@@ -75,6 +70,12 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         this.isRendering = true;
         const start = performance.now();
 
+        // ДИАГНОСТИКА: кто вызывает renderContent
+        console.debug(
+            "🔄 renderContent вызван:",
+            new Error().stack?.split("\n").slice(2, 5).join(" | "),
+        );
+
         try {
             // Убираем класс ошибки
             this.container.removeClass("fsrs-table-error");
@@ -86,12 +87,9 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             if (codeBlockParent)
                 codeBlockParent.removeClass("fsrs-table-error");
 
-            // Показываем loading
-            if (this.isFirstLoad) {
-                this.showLoadingIndicator();
-            } else {
-                this.container.classList.add("fsrs-table-loading");
-            }
+            // Показываем loading (перезатирает старый loading из onload при первом вызове)
+            this.showLoadingIndicator();
+            this.container.classList.add("fsrs-table-loading");
 
             // Парсим SQL блок, если ещё не спарсено
             if (!this.params) {
@@ -119,10 +117,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             });
 
             if (result.cards.length === 0) {
-                if (this.isFirstLoad) {
-                    // При первом рендере кэш ещё может заполняться — оставляем loading
-                    return;
-                }
                 this.renderEmptyState();
                 return;
             }
@@ -145,9 +139,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             this.addEventListeners();
 
             // Восстанавливаем полную прозрачность после обновления
-            if (!this.isFirstLoad) {
-                this.container.classList.remove("fsrs-table-loading");
-            }
+            this.container.classList.remove("fsrs-table-loading");
         } catch (error) {
             this.renderErrorState(error);
         } finally {
@@ -173,15 +165,9 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
     }
 
     private renderEmptyState() {
-        if (!this.isFirstLoad) {
-            this.container.classList.add("fsrs-table-loading");
-        }
         this.container.empty();
         const emptyDiv = this.container.createDiv({ cls: "fsrs-table-empty" });
         emptyDiv.createEl("small", { text: i18n.t("table.no_cards") });
-        if (!this.isFirstLoad) {
-            this.container.classList.remove("fsrs-table-loading");
-        }
     }
 
     private renderErrorState(error: unknown) {
@@ -191,6 +177,8 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             `⚠️ Ошибка при рендеринге блока fsrs-table: ${errorMessage}`,
         );
 
+        this.container.empty();
+        this.container.classList.remove("fsrs-table-loading");
         this.container.addClass("fsrs-table-error");
         const codeBlockParent = this.container.closest(
             ".block-language-fsrs-table, " +
@@ -199,7 +187,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         );
         if (codeBlockParent) codeBlockParent.addClass("fsrs-table-error");
 
-        this.container.empty();
         this.container.createEl("pre", {
             text: errorMessage,
             cls: "fsrs-table-error-text",

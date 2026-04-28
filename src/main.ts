@@ -46,6 +46,8 @@ export default class FsrsPlugin extends Plugin {
     private fsrsTableRenderers = new Set<FsrsTableRenderer>();
     // Кэш карточек в WASM
     public cache!: FsrsCache;
+    // Флаг: завершено ли начальное сканирование хранилища
+    private scanCompleted = false;
     // Ожидающие сканирования карточки (debounce)
     private pendingScans = new Map<string, number>();
     // Таймер debounce для уведомления рендереров (чтобы не перерисовывать 1000 раз)
@@ -82,7 +84,11 @@ export default class FsrsPlugin extends Plugin {
         // Запуск прогрессивного сканирования хранилища
         void this.performCacheScan().then(() => {
             verboseLog("Сканирование хранилища завершено");
-            this.notifyFsrsTableRenderers();
+            this.scanCompleted = true;
+            // Уведомляем все существующие рендереры напрямую (без debounce)
+            for (const renderer of this.fsrsTableRenderers) {
+                renderer.refresh().catch(console.error);
+            }
         });
 
         // Регистрация процессора для кнопки повторения карточки
@@ -449,6 +455,12 @@ export default class FsrsPlugin extends Plugin {
      */
     registerFsrsTableRenderer(renderer: FsrsTableRenderer): void {
         this.fsrsTableRenderers.add(renderer);
+        // Если сканирование уже завершено — запускаем рендер сразу.
+        // Если нет — сканирование само уведомит все зарегистрированные рендереры
+        // через refresh() в .then().
+        if (this.scanCompleted) {
+            renderer.refresh().catch(console.error);
+        }
     }
 
     /**
@@ -463,6 +475,10 @@ export default class FsrsPlugin extends Plugin {
      * с debounce — при частых вызовах перерендер происходит не чаще раза в 2 секунды.
      */
     notifyFsrsTableRenderers(): void {
+        console.debug(
+            "🔍 notifyFsrsTableRenderers вызван:",
+            new Error().stack?.split("\n").slice(2, 6).join("\n"),
+        );
         if (this.notifyRenderersTimer !== null) {
             window.clearTimeout(this.notifyRenderersTimer);
         }
