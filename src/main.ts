@@ -201,8 +201,8 @@ export default class FsrsPlugin extends Plugin {
     }
 
     /**
-     * Прогрессивное сканирование всех markdown-файлов хранилища.
-     * Читает файлы чанками по 100, парсит frontmatter, вычисляет состояния
+     * Сканирование всех markdown-файлов хранилища.
+     * Читает файлы, парсит frontmatter, вычисляет состояния
      * и отправляет в WASM-кэш через addOrUpdateCards.
      */
     async performCacheScan(
@@ -217,64 +217,56 @@ export default class FsrsPlugin extends Plugin {
         this.cache.clear();
 
         let brokenCount = 0;
-        const CHUNK_SIZE = 100;
+        const batch: CacheCardInput[] = [];
 
-        for (let i = 0; i < files.length; i += CHUNK_SIZE) {
-            const chunk = files.slice(i, i + CHUNK_SIZE);
-            const batch: CacheCardInput[] = [];
-
-            for (const file of chunk) {
-                if (
-                    shouldIgnoreFileWithSettings(
-                        file.path,
+        for (const file of files) {
+            if (
+                shouldIgnoreFileWithSettings(
+                    file.path,
+                    this.settings,
+                    this.app.vault.configDir,
+                )
+            ) {
+                continue;
+            }
+            try {
+                const content = await this.app.vault.read(file);
+                const frontmatter = extractFrontmatter(content);
+                if (!frontmatter) continue;
+                const parseResult = parseModernFsrsFromFrontmatter(
+                    frontmatter,
+                    file.path,
+                );
+                if (parseResult.success && parseResult.card) {
+                    const state = computeCardState(
+                        parseResult.card,
                         this.settings,
-                        this.app.vault.configDir,
-                    )
-                ) {
-                    continue;
-                }
-                try {
-                    const content = await this.app.vault.read(file);
-                    const frontmatter = extractFrontmatter(content);
-                    if (!frontmatter) continue;
-                    const parseResult = parseModernFsrsFromFrontmatter(
-                        frontmatter,
-                        file.path,
                     );
-                    if (parseResult.success && parseResult.card) {
-                        const state = computeCardState(
-                            parseResult.card,
-                            this.settings,
-                        );
-                        batch.push({
-                            filePath: file.path,
-                            card: parseResult.card,
-                            state,
-                        });
-                    } else {
-                        brokenCount++;
-                    }
-                } catch {
+                    batch.push({
+                        filePath: file.path,
+                        card: parseResult.card,
+                        state,
+                    });
+                } else {
                     brokenCount++;
                 }
+            } catch {
+                brokenCount++;
             }
-
-            // Отправляем чанк в WASM
-            if (batch.length > 0) {
-                const result = this.cache.addOrUpdateCards(batch);
-                if (result.errors.length > 0) {
-                    verboseLog(
-                        `Ошибки при добавлении карточек: ${result.errors.join(", ")}`,
-                    );
-                }
-            }
-
-            // Прогресс
-            onProgress?.(Math.min(i + CHUNK_SIZE, files.length), files.length);
-
-            // Отдаём управление браузеру
-            await new Promise((resolve) => window.setTimeout(resolve, 0));
         }
+
+        // Отправляем все карточки в WASM
+        if (batch.length > 0) {
+            const result = this.cache.addOrUpdateCards(batch);
+            if (result.errors.length > 0) {
+                verboseLog(
+                    `Ошибки при добавлении карточек: ${result.errors.join(", ")}`,
+                );
+            }
+        }
+
+        // Прогресс: сканирование завершено
+        onProgress?.(files.length, files.length);
 
         verboseLog(`✅ Найдено карточек FSRS: ${this.cache.size()}`);
         if (brokenCount > 0) {

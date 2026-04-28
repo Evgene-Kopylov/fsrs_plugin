@@ -28,3 +28,5 @@
 - [x] [cache-4.6.cleanup.md](./cache-4.6.cleanup.md) — удаление старого кода: incremental-cache.ts, fsrs-table-filter.ts, rendererCache
 - [x] [renderer-debounce.ru.md](./renderer-debounce.ru.md) — убрать debounce из notifyFsrsTableRenderers, чтобы таблица обновлялась без задержки после просмотра карточки
 - [x] [startup-empty-table.md](./startup-empty-table.md) — пустая таблица при запуске Obsidian: добавить `.catch()` на `performCacheScan`, чтобы защитить от необработанных ошибок
+- [>] [remove-chunking.md](./remove-chunking.md) — убрать чанкование из performCacheScan
+- [ ] [remove-chunking-generate-table.md](./remove-chunking-generate-table.md) — убрать чанкование из generateTableDOM
