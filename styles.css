@@ -29,6 +29,7 @@
     table-layout: auto !important;
     font-size: 0.85em !important;
     line-height: 1.4 !important;
+    margin: 0 !important;
 }
 
 .fsrs-table th,
