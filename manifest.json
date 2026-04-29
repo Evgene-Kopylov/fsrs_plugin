@@ -1,7 +1,7 @@
 {
 	"id": "fsrs",
 	"name": "FSRS",
-	"version": "0.6.7",
+	"version": "0.6.8",
 	"minAppVersion": "1.12.7",
 	"description": "Free Spaced Repetition Scheduler integration. Implements FSRS algorithm for spaced repetition flashcards directly in your notes.",
 	"author": "Evgene Kopylov",
