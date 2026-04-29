@@ -225,9 +225,6 @@ export default class FsrsPlugin extends Plugin {
             .getMarkdownFiles()
             .sort((a, b) => a.path.localeCompare(b.path));
 
-        // Очищаем кэш перед сканированием
-        this.cache.clear();
-
         let filteredCount = 0;
         let noFrontmatterCount = 0;
         let skippedCount = 0;
