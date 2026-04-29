@@ -3,7 +3,6 @@ import type MyPlugin from "../main";
 import { renderFsrsParameters } from "./setting-groups/fsrs-parameters";
 import { renderCardDefaults } from "./setting-groups/card-defaults";
 import { renderDisplaySettings } from "./setting-groups/display-settings";
-import { renderEarlyReviewSettings } from "./setting-groups/early-review-settings";
 import { renderFilteringSettings } from "./setting-groups/filtering-settings";
 import { i18n } from "../utils/i18n";
 import { updateCommandNames } from "../commands/index";
@@ -70,12 +69,6 @@ export class FsrsSettingTab extends PluginSettingTab {
 
         // Рендеринг настроек отображения
         renderDisplaySettings(containerEl, this.plugin);
-
-        // Разделитель
-        containerEl.createEl("hr");
-
-        // Рендеринг настроек досрочного повторения
-        renderEarlyReviewSettings(containerEl);
 
         // Разделитель
         containerEl.createEl("hr");
