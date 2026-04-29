@@ -40,4 +40,4 @@
 
 ### Лимиты выборки
 
-- [>] [query-limits.md](./query-limits.md) — проверить и задокументировать, как работают LIMIT в fsrs-table
+- [x] [query-limits.md](./query-limits.md) — проверить и задокументировать, как работают LIMIT в fsrs-table
