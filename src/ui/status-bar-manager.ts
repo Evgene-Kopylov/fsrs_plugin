@@ -12,6 +12,7 @@ import {
     extractFrontmatter,
 } from "../utils/fsrs-helper";
 import { i18n, getLocalizedNoun } from "../utils/i18n";
+import { MINIMUM_REVIEW_INTERVAL_MINUTES } from "../constants";
 
 /**
  * Менеджер статус-бара FSRS для управления отображением статуса текущей карточки
@@ -172,8 +173,7 @@ export class StatusBarManager extends Component {
 
                 // Проверяем, была ли карточка повторена сегодня
                 const minutesSinceLastReview = getMinutesSinceLastReview(card);
-                const minInterval =
-                    this.settings.minimum_review_interval_minutes;
+                const minInterval = MINIMUM_REVIEW_INTERVAL_MINUTES;
 
                 if (
                     card.reviews.length > 0 &&

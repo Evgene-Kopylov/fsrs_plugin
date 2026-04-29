@@ -24,9 +24,6 @@ export const DEFAULT_SETTINGS: FSRSSettings = {
     // Настройка для автоматического добавления кнопки повторения
     auto_add_review_button: false,
 
-    // Минимальный интервал для досрочного повторения
-    minimum_review_interval_minutes: MINIMUM_REVIEW_INTERVAL_MINUTES,
-
     // Паттерны игнорирования файлов и папок
     ignore_patterns: [],
     status_bar_icon: "🔄",
