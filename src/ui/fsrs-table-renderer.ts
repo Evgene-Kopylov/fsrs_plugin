@@ -67,6 +67,14 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
      */
     private async renderContent() {
         if (this.isRendering) return;
+
+        if (!this.plugin.isWasmReady()) {
+            this.showLoadingIndicator();
+            this.container.classList.add("fsrs-table-loading");
+            this.isRendering = false;
+            return;
+        }
+
         this.isRendering = true;
         const start = performance.now();
 
