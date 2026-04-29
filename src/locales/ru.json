@@ -131,9 +131,9 @@
         "intro": "Используйте эту справку для настройки блоков fsrs-table в ваших заметках",
         "examples": {
             "heading": "Примеры",
-            "actual": "### Актуальная выборка (просроченные карточки)\n\\`\\`\\`fsrs-table\nSELECT file as \"Файл\", reps as \"Повт.\", overdue as \"Просрочка\", retrievability as \"Доступность\"\nLIMIT 20\n\\`\\`\\`",
-            "sort": "### Сортировка по полю\n\\`\\`\\`fsrs-table\nSELECT file as \"Файл\", reps as \"Повт.\", due as \"Следующее повторение\", state as \"Состояние\"\nORDER BY due DESC\nLIMIT 20\n\\`\\`\\`",
-            "full": "### Полная таблица (все поля)\n\\`\\`\\`fsrs-table\nSELECT file as \"🗎\", difficulty as \"D\", stability as \"S\", retrievability as \"R\", due as \"Дата\", elapsed as \"Прошло\", overdue as \"Проср.\", reps as \"Повт.\", scheduled as \"Запл.\", state as \"Статус\"\nLIMIT 20\n\\`\\`\\`"
+            "actual": "### Актуальная выборка (просроченные карточки)\n```fsrs-table\nSELECT file as \"Файл\", difficulty as \"D\",\n       stability as \"S\", retrievability as \"R\",\n       reps as \"Повт.\", overdue as \"Просрочка\"\nLIMIT 20\n```",
+            "sort": "### Сортировка по полю\n```fsrs-table\nSELECT file as \"Файл\", reps as \"Повт.\", due as \"Следующее повторение\", state as \"Состояние\"\nORDER BY due DESC\nLIMIT 20\n```",
+            "full": "### Полная таблица (все поля)\n```fsrs-table\nSELECT file as \"🗎\", difficulty as \"D\", stability as \"S\", retrievability as \"R\", due as \"Дата\", elapsed as \"Прошло\", overdue as \"Проср.\", reps as \"Повт.\", scheduled as \"Запл.\", state as \"Статус\"\nLIMIT 20\n```"
         },
         "available_fields": {
             "heading": "Доступные поля (columns)",
@@ -156,8 +156,8 @@
             "select_star": "**`SELECT *`** — выбор всех доступных полей",
             "order_by": "**`ORDER BY поле ASC|DESC`** — сортировка по указанному полю (ASC - по возрастанию, DESC - по убыванию)",
             "limit": "**`LIMIT число`** — ограничение количества строк (0 = используется значение из настроек плагина, обычно 30)",
-            "select_format": "### Формат параметра `SELECT`\n\\`\\`\\`\nSELECT file, reps as \"Повторений\", stability, difficulty as \"Сложность\"\nSELECT *\n\\`\\`\\`",
-            "order_by_format": "### Формат параметра `ORDER BY`\n\\`\\`\\`\nORDER BY due DESC\nORDER BY file ASC\n\\`\\`\\`",
+            "select_format": "### Формат параметра `SELECT`\n```\nSELECT file, difficulty as \"D\", stability as \"S\", reps as \"Повторений\"\nSELECT *\n```",
+            "order_by_format": "### Формат параметра `ORDER BY`\n```\nORDER BY due DESC\nORDER BY file ASC\n```",
             "notes": "**Примечание:** Если ORDER BY не указан, используется сортировка по умолчанию ORDER BY overdue DESC. Пользовательская сортировка переопределяет сортировку по умолчанию.",
             "select_desc": "Поля перечисляются через запятую после ключевого слова SELECT.\n- Можно использовать `*` для выбора всех доступных полей.\n- Можно задать кастомный заголовок с помощью `as \"Заголовок\"`.\n- Если заголовок не указан, используется заголовок по умолчанию.\n- Порядок колонок соответствует порядку в параметре SELECT.",
             "order_by_desc": "Поле для сортировки должно быть одним из доступных полей.\n- Направление сортировки: ASC (по возрастанию) или DESC (по убыванию).\n- Если параметр ORDER BY не указан, используется сортировка по умолчанию ORDER BY overdue DESC.\n- Пользовательская сортировка переопределяет сортировку по умолчанию."
