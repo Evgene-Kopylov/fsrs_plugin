@@ -36,7 +36,7 @@
         "wasm_not_ready": "FSRS component not ready. Please restart Obsidian.",
         "file_not_found": "File not found: {path}",
         "card_not_due": "Card already reviewed. Next scheduled review: {date}",
-        "early_review_blocked": "Early review can be counted no earlier than in {minutes} {noun}. Next scheduled: {date}",
+        "early_review_blocked": "Only one review per day is counted. Next review available in {minutes} {noun}. Scheduled: {date}",
         "review_button_exists": "Review button block already exists in this file"
     },
     "commands": {
