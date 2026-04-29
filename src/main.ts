@@ -225,6 +225,7 @@ export default class FsrsPlugin extends Plugin {
         let filteredCount = 0;
         let noFrontmatterCount = 0;
         let skippedCount = 0;
+        let timeIo = 0;
         const batch: CacheCardInput[] = [];
 
         for (const file of files) {
@@ -239,9 +240,23 @@ export default class FsrsPlugin extends Plugin {
                 continue;
             }
             try {
+                // Быстрая проверка frontmatter через metadataCache — без чтения файла
+                const fileCache = this.app.metadataCache.getFileCache(file);
+                if (!fileCache?.frontmatter) {
+                    noFrontmatterCount++;
+                    continue;
+                }
+
+                const t1 = performance.now();
                 const content = await this.app.vault.read(file);
+                timeIo += performance.now() - t1;
+
                 const frontmatter = extractFrontmatter(content);
                 if (!frontmatter) {
+                    console.warn(
+                        `Расхождение metadataCache и реального содержимого файла: ${file.path} — ` +
+                            `metadataCache сообщает о frontmatter, но extractFrontmatter вернул null`,
+                    );
                     noFrontmatterCount++;
                     continue;
                 }
@@ -288,6 +303,8 @@ export default class FsrsPlugin extends Plugin {
         verboseLog(`📄 Найдено карточек FSRS: ${fsrsCount}`);
         const elapsed = (performance.now() - start) / 1000;
         verboseLog(`⏱️ Сканирование всего хранилища: ${elapsed.toFixed(2)} с`);
+
+        verboseLog(`⏱️  Из них I/O (чтение файлов): ${timeIo.toFixed(0)} ms`);
     }
 
     /**

@@ -108,6 +108,15 @@ export class StatusBarManager extends Component {
     public async updateStatusBar(): Promise<void> {
         if (!this.statusBarItem) return;
 
+        // Если WASM ещё не инициализирован — ждём и обновимся после готовности
+        if (!this.plugin.isWasmReady()) {
+            this.showLoadingState();
+            this.plugin.onWasmReady(() => {
+                void this.updateStatusBar();
+            });
+            return;
+        }
+
         const file = this.app.workspace.getActiveFile();
 
         if (!file) {
@@ -227,6 +236,21 @@ export class StatusBarManager extends Component {
                 this.iconSpan.classList.remove("fsrs-status-bar-icon-dimmed");
             console.debug("Status bar: error updating");
         }
+    }
+
+    /**
+     * Показывает состояние загрузки (WASM ещё не готов)
+     */
+    private showLoadingState(): void {
+        if (!this.statusBarItem) return;
+        const icon = this.settings.status_bar_icon || "🔄";
+        if (this.iconSpan) {
+            this.iconSpan.textContent = icon;
+            this.iconSpan.classList.add("fsrs-status-bar-icon-dimmed");
+        }
+        if (this.textSpan)
+            this.textSpan.textContent = ` FSRS: ${i18n.t("statusBar.loading")}`;
+        this.statusBarItem.title = i18n.t("statusBar.tooltip.default");
     }
 
     /**
