@@ -10,7 +10,7 @@ mod sorter;
 pub use calculator::CardWithComputedFields;
 pub use sorter::FilterError;
 
-use crate::table_processing::types::{SortDirection, TableParams};
+use crate::table_processing::types::{SortDirection, SortParam, TableParams};
 use crate::types::{ComputedState, ModernFsrsCard};
 use serde::{Deserialize, Serialize};
 
@@ -144,21 +144,26 @@ pub fn filter_and_sort_cards_with_states(
         );
     }
 
-    // Применяем сортировку если указана
-    if let Some(sort) = &params.sort {
-        debug!(
-            "Применение сортировки по полю '{}' для карточек с готовыми состояниями",
-            sort.field
-        );
-        computed_cards.sort_by(|a, b| {
-            compare_computed_fields(
-                &a.computed_fields,
-                &b.computed_fields,
-                &sort.field,
-                sort.direction,
-            )
-        });
-    }
+    // Применяем сортировку
+    // Если ORDER BY не указан, сортируем по retrievability ASC (самые забытые сверху)
+    let default_sort = SortParam {
+        field: "retrievability".to_string(),
+        direction: SortDirection::Asc,
+    };
+    let sort = params.sort.as_ref().unwrap_or(&default_sort);
+
+    debug!(
+        "Применение сортировки по полю '{}' для карточек с готовыми состояниями",
+        sort.field
+    );
+    computed_cards.sort_by(|a, b| {
+        compare_computed_fields(
+            &a.computed_fields,
+            &b.computed_fields,
+            &sort.field,
+            sort.direction,
+        )
+    });
 
     let total_count = computed_cards.len();
 
