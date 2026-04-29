@@ -25,7 +25,7 @@ export const DEFAULT_SETTINGS: FSRSSettings = {
     auto_add_review_button: false,
 
     // Паттерны игнорирования файлов и папок
-    ignore_patterns: [],
+    ignore_patterns: [".obsidian/", "templates/", "*.excalidraw.md"],
     status_bar_icon: "🔄",
 };
 
