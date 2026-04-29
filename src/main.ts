@@ -216,6 +216,7 @@ export default class FsrsPlugin extends Plugin {
     async performCacheScan(
         onProgress?: (current: number, total: number) => void,
     ): Promise<void> {
+        verboseLog("🔍 Начинаю сканирование хранилища...");
         const start = performance.now();
         const files = this.app.vault
             .getMarkdownFiles()
