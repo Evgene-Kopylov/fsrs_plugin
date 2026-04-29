@@ -2,6 +2,7 @@ import { Setting, TextComponent, ColorComponent } from "obsidian";
 import type MyPlugin from "../../main";
 import { i18n } from "../../utils/i18n";
 import { setVerboseLoggingEnabled } from "../../utils/logger";
+import { DEFAULT_SETTINGS } from "../types";
 
 /**
  * Рендерит группу настроек отображения.
@@ -17,49 +18,91 @@ export function renderDisplaySettings(
         .setHeading();
 
     // auto_add_review_button
-    new Setting(containerEl)
+    const autoAddSetting = new Setting(containerEl)
         .setName(i18n.t("settings.display.auto_add_button.name"))
-        .setDesc(i18n.t("settings.display.auto_add_button.desc"))
-        .addToggle((toggle) =>
-            toggle
-                .setValue(plugin.settings.auto_add_review_button)
-                .onChange(async (value) => {
-                    plugin.settings.auto_add_review_button = value;
-                    await plugin.saveSettings();
-                }),
-        );
+        .setDesc(i18n.t("settings.display.auto_add_button.desc"));
+
+    let autoAddToggle: import("obsidian").ToggleComponent;
+    autoAddSetting.addToggle((toggle) => {
+        autoAddToggle = toggle;
+        toggle
+            .setValue(plugin.settings.auto_add_review_button)
+            .onChange(async (value) => {
+                plugin.settings.auto_add_review_button = value;
+                await plugin.saveSettings();
+            });
+    });
+
+    autoAddSetting.addExtraButton((btn) => {
+        btn.setIcon("reset")
+            .setTooltip("Сбросить")
+            .onClick(async () => {
+                plugin.settings.auto_add_review_button =
+                    DEFAULT_SETTINGS.auto_add_review_button;
+                autoAddToggle.setValue(DEFAULT_SETTINGS.auto_add_review_button);
+                await plugin.saveSettings();
+            });
+    });
 
     // status_bar_icon
-    new Setting(containerEl)
+    const iconSetting = new Setting(containerEl)
         .setName(i18n.t("settings.display.status_bar_icon.name"))
-        .setDesc(i18n.t("settings.display.status_bar_icon.desc"))
-        .addText((text) =>
-            text
-                .setPlaceholder(
-                    i18n.t("settings.display.status_bar_icon.placeholder"),
-                )
-                .setValue(plugin.settings.status_bar_icon)
-                .onChange(async (value) => {
-                    plugin.settings.status_bar_icon = value.trim() || "🔄";
-                    await plugin.saveSettings();
-                    // Обновить статус-бар
-                    void plugin.statusBarManager?.updateStatusBar();
-                }),
-        );
+        .setDesc(i18n.t("settings.display.status_bar_icon.desc"));
+
+    let iconText: TextComponent;
+    iconSetting.addText((text) => {
+        iconText = text;
+        text.setPlaceholder(
+            i18n.t("settings.display.status_bar_icon.placeholder"),
+        )
+            .setValue(plugin.settings.status_bar_icon)
+            .onChange(async (value) => {
+                plugin.settings.status_bar_icon = value.trim() || "🔄";
+                await plugin.saveSettings();
+                void plugin.statusBarManager?.updateStatusBar();
+            });
+    });
+
+    iconSetting.addExtraButton((btn) => {
+        btn.setIcon("reset")
+            .setTooltip("Сбросить")
+            .onClick(async () => {
+                plugin.settings.status_bar_icon =
+                    DEFAULT_SETTINGS.status_bar_icon;
+                iconText.setValue(DEFAULT_SETTINGS.status_bar_icon);
+                await plugin.saveSettings();
+                void plugin.statusBarManager?.updateStatusBar();
+            });
+    });
 
     // verbose_logging
-    new Setting(containerEl)
+    const verboseSetting = new Setting(containerEl)
         .setName(i18n.t("settings.display.verbose_logging.name"))
-        .setDesc(i18n.t("settings.display.verbose_logging.desc"))
-        .addToggle((toggle) =>
-            toggle
-                .setValue(plugin.settings.verbose_logging)
-                .onChange(async (value) => {
-                    plugin.settings.verbose_logging = value;
-                    setVerboseLoggingEnabled(value);
-                    await plugin.saveSettings();
-                }),
-        );
+        .setDesc(i18n.t("settings.display.verbose_logging.desc"));
+
+    let verboseToggle: import("obsidian").ToggleComponent;
+    verboseSetting.addToggle((toggle) => {
+        verboseToggle = toggle;
+        toggle
+            .setValue(plugin.settings.verbose_logging)
+            .onChange(async (value) => {
+                plugin.settings.verbose_logging = value;
+                setVerboseLoggingEnabled(value);
+                await plugin.saveSettings();
+            });
+    });
+
+    verboseSetting.addExtraButton((btn) => {
+        btn.setIcon("reset")
+            .setTooltip("Сбросить")
+            .onClick(async () => {
+                plugin.settings.verbose_logging =
+                    DEFAULT_SETTINGS.verbose_logging;
+                verboseToggle.setValue(DEFAULT_SETTINGS.verbose_logging);
+                setVerboseLoggingEnabled(DEFAULT_SETTINGS.verbose_logging);
+                await plugin.saveSettings();
+            });
+    });
 
     // custom_button_labels
     new Setting(containerEl)

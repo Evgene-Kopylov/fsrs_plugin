@@ -29,3 +29,7 @@
 ### Настройка перезагрузки при изменении FSRS-параметров
 
 - [x] [reload-notice-on-param-change.md](./reload-notice-on-param-change.md) — notice перезагрузки вместо точечной очистки кэша при изменении `parameters`
+
+### Кнопки сброса для всех настроек
+
+- [>] [add-reset-buttons.md](./add-reset-buttons.md) — кнопка сброса к default у каждой настройки
