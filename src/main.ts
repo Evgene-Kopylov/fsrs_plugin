@@ -453,9 +453,6 @@ export default class FsrsPlugin extends Plugin {
         // Очищаем pending сканирования
         this.pendingScans.clear();
 
-        // Очищаем кэш в WASM
-        this.cache?.clear();
-
         if (this.statusBarManager) {
             this.statusBarManager.unload();
             this.statusBarManager = null;
