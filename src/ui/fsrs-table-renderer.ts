@@ -51,6 +51,8 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         super.onload();
         this.showLoadingIndicator();
         this.plugin.registerFsrsTableRenderer(this);
+        // Запускаем первый рендер (ленивое сканирование запустится внутри)
+        this.refresh().catch(console.error);
     }
 
     onunload() {
@@ -71,9 +73,16 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         if (!this.plugin.isWasmReady()) {
             this.showLoadingIndicator();
             this.container.classList.add("fsrs-table-loading");
+            // Когда WASM будет готов — перезапустим рендер
+            this.plugin.onWasmReady(() => {
+                this.refresh().catch(console.error);
+            });
             this.isRendering = false;
             return;
         }
+
+        // Убеждаемся, что кэш просканирован (запускает сканирование, если ещё не запущено)
+        await this.plugin.ensureCacheScanned();
 
         this.isRendering = true;
         const start = performance.now();
