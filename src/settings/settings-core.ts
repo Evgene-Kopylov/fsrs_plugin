@@ -22,7 +22,6 @@ export class FsrsSettingTab extends PluginSettingTab {
     display(): void {
         const { containerEl } = this;
         containerEl.empty();
-        const configDir = this.plugin.app.vault.configDir;
 
         // Рендеринг раздела выбора языка (наверху)
         new Setting(containerEl)
@@ -74,6 +73,6 @@ export class FsrsSettingTab extends PluginSettingTab {
         containerEl.createEl("hr");
 
         // Рендеринг настроек фильтрации файлов
-        renderFilteringSettings(containerEl, this.plugin, configDir);
+        renderFilteringSettings(containerEl, this.plugin);
     }
 }

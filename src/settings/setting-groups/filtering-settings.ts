@@ -14,7 +14,6 @@ import { DEFAULT_SETTINGS } from "../types";
 export function renderFilteringSettings(
     containerEl: HTMLElement,
     plugin: MyPlugin,
-    configDir: string,
 ): void {
     // Настройки фильтрации файлов
     new Setting(containerEl)
