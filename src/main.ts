@@ -25,7 +25,12 @@ import {
     parseModernFsrsFromFrontmatter,
     computeCardState,
 } from "./utils/fsrs";
-import type { FSRSRating, CachedCard } from "./interfaces/fsrs";
+import type {
+    FSRSRating,
+    CachedCard,
+    ReviewSession,
+    ModernFSRSCard,
+} from "./interfaces/fsrs";
 import { i18n } from "./utils/i18n";
 import { showNotice } from "./utils/notice";
 import { verboseLog, setVerboseLoggingEnabled } from "./utils/logger";
@@ -213,9 +218,9 @@ export default class FsrsPlugin extends Plugin {
      * Читает файлы, парсит frontmatter, вычисляет состояния
      * и отправляет в WASM-кэш через addOrUpdateCards.
      */
-    async performCacheScan(
+    performCacheScan(
         onProgress?: (current: number, total: number) => void,
-    ): Promise<void> {
+    ): void {
         verboseLog("🔍 Начинаю сканирование хранилища...");
         const start = performance.now();
         const files = this.app.vault
@@ -225,7 +230,7 @@ export default class FsrsPlugin extends Plugin {
         let filteredCount = 0;
         let noFrontmatterCount = 0;
         let skippedCount = 0;
-        let timeIo = 0;
+
         const batch: CacheCardInput[] = [];
 
         for (const file of files) {
@@ -246,37 +251,52 @@ export default class FsrsPlugin extends Plugin {
                     noFrontmatterCount++;
                     continue;
                 }
-
-                const t1 = performance.now();
-                const content = await this.app.vault.read(file);
-                timeIo += performance.now() - t1;
-
-                const frontmatter = extractFrontmatter(content);
-                if (!frontmatter) {
-                    console.warn(
-                        `Расхождение metadataCache и реального содержимого файла: ${file.path} — ` +
-                            `metadataCache сообщает о frontmatter, но extractFrontmatter вернул null`,
-                    );
-                    noFrontmatterCount++;
+                // Используем данные reviews из metadataCache — без чтения файла
+                const cachedFrontmatter = fileCache.frontmatter as Record<
+                    string,
+                    unknown
+                >;
+                if (!cachedFrontmatter.reviews) {
+                    skippedCount++;
                     continue;
                 }
-                const parseResult = parseModernFsrsFromFrontmatter(
-                    frontmatter,
-                    file.path,
-                );
-                if (parseResult.success && parseResult.card) {
-                    const state = computeCardState(
-                        parseResult.card,
-                        this.settings,
-                    );
-                    batch.push({
-                        filePath: file.path,
-                        card: parseResult.card,
-                        state,
-                    });
-                } else {
+
+                const rawReviews = cachedFrontmatter.reviews;
+                if (!Array.isArray(rawReviews)) {
                     skippedCount++;
+                    continue;
                 }
+
+                // Нормализуем даты и рейтинги из кэша Obsidian
+                const reviews: ReviewSession[] = [];
+                for (const session of rawReviews) {
+                    if (!session || typeof session !== "object") continue;
+                    const s = session as Record<string, unknown>;
+                    let date: string;
+                    if (typeof s.date === "string") {
+                        date = s.date;
+                    } else if (s.date instanceof Date) {
+                        date = s.date.toISOString();
+                    } else {
+                        continue;
+                    }
+                    const rating =
+                        typeof s.rating === "number" &&
+                        s.rating >= 0 &&
+                        s.rating <= 3
+                            ? s.rating
+                            : undefined;
+                    if (rating === undefined) continue;
+                    reviews.push({ date, rating });
+                }
+
+                const card: ModernFSRSCard = { reviews, filePath: file.path };
+                const state = computeCardState(card, this.settings);
+                batch.push({
+                    filePath: file.path,
+                    card,
+                    state,
+                });
             } catch {
                 skippedCount++;
             }
@@ -303,8 +323,6 @@ export default class FsrsPlugin extends Plugin {
         verboseLog(`📄 Найдено карточек FSRS: ${fsrsCount}`);
         const elapsed = (performance.now() - start) / 1000;
         verboseLog(`⏱️ Сканирование всего хранилища: ${elapsed.toFixed(2)} с`);
-
-        verboseLog(`⏱️  Из них I/O (чтение файлов): ${timeIo.toFixed(0)} ms`);
     }
 
     /**
@@ -405,18 +423,13 @@ export default class FsrsPlugin extends Plugin {
             return;
         }
 
-        this.scanPromise = this.performCacheScan()
-            .then(() => {
-                this.initialScanCompleted = true;
-                this.scanPromise = null;
-            })
-            .catch((error) => {
-                console.error("Ошибка при сканировании хранилища:", error);
-                this.initialScanCompleted = true;
-                this.scanPromise = null;
-            });
-
-        await this.scanPromise;
+        try {
+            this.performCacheScan();
+        } catch (error) {
+            console.error("Ошибка при сканировании хранилища:", error);
+        }
+        this.initialScanCompleted = true;
+        this.scanPromise = null;
     }
 
     /**
