@@ -29,8 +29,7 @@ export function renderFilteringSettings(
     ignoreSetting.addTextArea((text) => {
         ignoreTextArea = text;
         text.setPlaceholder(
-            `${configDir}/
-templates/
+            `templates/
 *.excalidraw.md`,
         )
             .setValue(formatIgnorePatterns(plugin.settings.ignore_patterns))
