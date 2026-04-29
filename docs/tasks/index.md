@@ -33,3 +33,7 @@
 ### Кнопки сброса для всех настроек
 
 - [x] [add-reset-buttons.md](./add-reset-buttons.md) — кнопка сброса к default у каждой настройки
+
+### Уборка вывода сборки
+
+- [>] [build-output-cleanup.md](./build-output-cleanup.md) — убрать лишний WASM-билд из `build`, сократить лог encode-wasm, понизить logLevel esbuild

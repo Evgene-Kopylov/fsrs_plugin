@@ -62,7 +62,6 @@ try {
     }
 
     // Читаем WASM файл как бинарные данные
-    console.log(`Чтение WASM файла: ${wasmFilePath}`);
     const wasmBuffer = fs.readFileSync(wasmFilePath);
 
     // Кодируем в base64
@@ -80,10 +79,7 @@ try {
     // Записываем файл
     fs.writeFileSync(outputFilePath, tsContent);
 
-    console.log(`Файл создан: ${outputFilePath}`);
-    console.log(`Размер WASM: ${wasmBuffer.length} байт`);
-    console.log(`Размер base64: ${base64String.length} символов`);
-    console.log(`Чанков: ${Math.ceil(base64String.length / 4096)}`);
+    console.log("WASM encoded ✅");
 } catch (error) {
     console.error("Ошибка при кодировании WASM:", error.message);
     process.exit(1);
