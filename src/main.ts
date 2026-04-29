@@ -275,12 +275,11 @@ export default class FsrsPlugin extends Plugin {
         onProgress?.(files.length, files.length);
 
         const fsrsCount = this.cache.size();
-        verboseLog(`📊 Статистика сканирования:`);
-        verboseLog(`   Всего файлов .md: ${files.length}`);
-        verboseLog(`   Отфильтровано (игнор-список): ${filteredCount}`);
-        verboseLog(`   Без frontmatter: ${noFrontmatterCount}`);
-        verboseLog(`   С frontmatter, без FSRS-полей: ${skippedCount}`);
-        verboseLog(`   Найдено карточек FSRS: ${fsrsCount}`);
+        verboseLog(`🗃️ Всего файлов .md: ${files.length}`);
+        verboseLog(`➖ Отфильтровано (игнор-список): ${filteredCount}`);
+        verboseLog(`➖ Без frontmatter: ${noFrontmatterCount}`);
+        verboseLog(`➖ С frontmatter, без FSRS-полей: ${skippedCount}`);
+        verboseLog(`📄 Найдено карточек FSRS: ${fsrsCount}`);
         const elapsed = (performance.now() - start) / 1000;
         verboseLog(`⏱️ Сканирование всего хранилища: ${elapsed.toFixed(2)} с`);
     }
