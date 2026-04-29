@@ -41,6 +41,7 @@ import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
 export default class FsrsPlugin extends Plugin {
     settings: FsrsPluginSettings;
     private isWasmInitialized = false;
+    private lastReloadNoticeTime = 0;
 
     private fsrsTableRenderers = new Set<FsrsTableRenderer>();
     // Кэш карточек в WASM
@@ -431,7 +432,11 @@ export default class FsrsPlugin extends Plugin {
         await this.saveData(this.settings);
 
         if (oldSettings && fsrsParamsChanged(oldSettings, this.settings)) {
-            new Notice(i18n.t("notices.settings_changed_reload"));
+            const now = Date.now();
+            if (now - this.lastReloadNoticeTime > 7000) {
+                this.lastReloadNoticeTime = now;
+                new Notice(i18n.t("notices.settings_changed_reload"));
+            }
         }
     }
 
