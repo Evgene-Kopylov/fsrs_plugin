@@ -177,7 +177,6 @@ async function reviewCardByFile(
     const rating = await modal.show();
 
     if (!rating) {
-        showNotice("notices.review_cancelled");
         return null;
     }
 
