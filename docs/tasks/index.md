@@ -36,4 +36,12 @@
 
 ### Уборка вывода сборки
 
-- [>] [build-output-cleanup.md](./build-output-cleanup.md) — убрать лишний WASM-билд из `build`, сократить лог encode-wasm, понизить logLevel esbuild
+- [x] [build-output-cleanup.md](./build-output-cleanup.md) — убрать лишний WASM-билд из `build`, сократить лог encode-wasm, понизить logLevel esbuild
+
+### Ленивое сканирование
+
+- [>] [lazy-scan.md](./lazy-scan.md) — сканировать хранилище только по первому запросу, а не при загрузке плагина
+
+### Лимиты выборки
+
+- [x] [query-limits.md](./query-limits.md) — проверить и задокументировать, как работают LIMIT в fsrs-table

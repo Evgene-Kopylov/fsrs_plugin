@@ -51,6 +51,8 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         super.onload();
         this.showLoadingIndicator();
         this.plugin.registerFsrsTableRenderer(this);
+        // Запускаем первый рендер (ленивое сканирование запустится внутри)
+        this.refresh().catch(console.error);
     }
 
     onunload() {
@@ -67,6 +69,21 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
      */
     private async renderContent() {
         if (this.isRendering) return;
+
+        if (!this.plugin.isWasmReady()) {
+            this.showLoadingIndicator();
+            this.container.classList.add("fsrs-table-loading");
+            // Когда WASM будет готов — перезапустим рендер
+            this.plugin.onWasmReady(() => {
+                this.refresh().catch(console.error);
+            });
+            this.isRendering = false;
+            return;
+        }
+
+        // Убеждаемся, что кэш просканирован (запускает сканирование, если ещё не запущено)
+        await this.plugin.ensureCacheScanned();
+
         this.isRendering = true;
         const start = performance.now();
 
@@ -79,13 +96,12 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         try {
             // Убираем класс ошибки
             this.container.removeClass("fsrs-table-error");
-            const codeBlockParent = this.container.closest(
-                ".block-language-fsrs-table, " +
-                    ".cm-preview-code-block.block-language-fsrs-table, " +
-                    ".cm-embed-block.block-language-fsrs-table",
-            );
+            const codeBlockParent = this.getCodeBlockParent();
             if (codeBlockParent)
                 codeBlockParent.removeClass("fsrs-table-error");
+
+            // Убираем класс «загружено» — блок снова выглядит как обычный code block
+            this.removeLoadedClass();
 
             // Показываем loading (перезатирает старый loading из onload при первом вызове)
             this.showLoadingIndicator();
@@ -140,6 +156,9 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 
             // Восстанавливаем полную прозрачность после обновления
             this.container.classList.remove("fsrs-table-loading");
+
+            // Отключаем фон code block — таблица уже отрендерена
+            this.addLoadedClass();
         } catch (error) {
             this.renderErrorState(error);
         } finally {
@@ -154,8 +173,29 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
     // Состояния отображения
     // -----------------------------------------------------------------------
 
+    /** Находит родительский code block (предок с классом block-language-fsrs-table) */
+    private getCodeBlockParent(): Element | null {
+        return this.container.closest(
+            ".block-language-fsrs-table, " +
+                ".cm-preview-code-block.block-language-fsrs-table, " +
+                ".cm-embed-block.block-language-fsrs-table",
+        );
+    }
+
+    /** Добавляет класс fsrs-table-loaded на родительский code block */
+    private addLoadedClass() {
+        this.getCodeBlockParent()?.addClass("fsrs-table-loaded");
+    }
+
+    /** Убирает класс fsrs-table-loaded с родительского code block */
+    private removeLoadedClass() {
+        this.getCodeBlockParent()?.removeClass("fsrs-table-loaded");
+    }
+
     private showLoadingIndicator() {
         this.container.empty();
+        // Пока загружаемся — убираем «загруженный» стиль, блок выглядит как обычный code block
+        this.removeLoadedClass();
         const loadingDiv = this.container.createDiv({
             cls: "fsrs-table-loading",
         });
@@ -166,6 +206,8 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 
     private renderEmptyState() {
         this.container.empty();
+        // Пустое состояние — тоже загружено, фон code block не нужен
+        this.addLoadedClass();
         const emptyDiv = this.container.createDiv({ cls: "fsrs-table-empty" });
         emptyDiv.createEl("small", { text: i18n.t("table.no_cards") });
     }
@@ -180,12 +222,10 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         this.container.empty();
         this.container.classList.remove("fsrs-table-loading");
         this.container.addClass("fsrs-table-error");
-        const codeBlockParent = this.container.closest(
-            ".block-language-fsrs-table, " +
-                ".cm-preview-code-block.block-language-fsrs-table, " +
-                ".cm-embed-block.block-language-fsrs-table",
-        );
+        const codeBlockParent = this.getCodeBlockParent();
         if (codeBlockParent) codeBlockParent.addClass("fsrs-table-error");
+        // Ошибка — тоже загружено (отображаем сообщение об ошибке)
+        this.addLoadedClass();
 
         this.container.createEl("pre", {
             text: errorMessage,

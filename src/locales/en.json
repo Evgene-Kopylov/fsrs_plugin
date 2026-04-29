@@ -72,7 +72,7 @@
         }
     },
     "table": {
-        "loading": "Loading FSRS cards...",
+        "loading": "Scanning vault...",
         "no_cards": "No FSRS cards found",
         "showing_limit": "Showing: {shown} of {total} cards ({hidden} hidden)",
         "error_prefix": "FSRS: Error:\n-- PARSING FAILED --------------------------------------------------\n\n",

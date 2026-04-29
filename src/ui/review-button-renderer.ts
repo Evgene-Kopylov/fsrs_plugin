@@ -71,6 +71,11 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
         void this.updateButtonState();
         this.setupClickHandlers();
         this.setupFileWatcher();
+
+        // Если WASM ещё не инициализирован — обновим кнопку после готовности
+        this.plugin.onWasmReady(() => {
+            void this.updateButtonState();
+        });
     }
 
     /**
@@ -86,6 +91,13 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
      */
     private async updateButtonState(): Promise<void> {
         try {
+            if (!this.plugin.isWasmReady()) {
+                this.mainButton.textContent = "Загрузка...";
+                this.mainButton.disabled = true;
+                this.updateButtonClass("loading");
+                return;
+            }
+
             const file = this.plugin.app.vault.getFileByPath(this.sourcePath);
             if (!file) {
                 this.mainButton.textContent = "Файл не найден";

@@ -1,6 +1,15 @@
+/* Дефолтный стиль — как у обычного code block Obsidian */
 .markdown-rendered .block-language-fsrs-table,
 .cm-preview-code-block.block-language-fsrs-table,
 .cm-embed-block.block-language-fsrs-table {
+    background: var(--background-secondary);
+    padding: 10px 16px;
+}
+
+/* После загрузки таблицы — убираем фон, рамку, отступы */
+.markdown-rendered .block-language-fsrs-table.fsrs-table-loaded,
+.cm-preview-code-block.block-language-fsrs-table.fsrs-table-loaded,
+.cm-embed-block.block-language-fsrs-table.fsrs-table-loaded {
     border: none !important;
     background: transparent !important;
     padding: 0 !important;
@@ -20,6 +29,7 @@
     table-layout: auto !important;
     font-size: 0.85em !important;
     line-height: 1.4 !important;
+    margin: 0 !important;
 }
 
 .fsrs-table th,

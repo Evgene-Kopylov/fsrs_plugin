@@ -258,7 +258,7 @@ export class ReviewHistoryModal extends Modal {
                     deleteBtn.disabled = true;
                     const remaining = this.deleteCooldownUntil - now;
                     activeWindow.setTimeout(() => {
-                        this.onOpen();
+                        deleteBtn.disabled = false;
                     }, remaining);
                 }
 

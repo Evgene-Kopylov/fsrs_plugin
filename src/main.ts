@@ -46,12 +46,16 @@ export default class FsrsPlugin extends Plugin {
     private fsrsTableRenderers = new Set<FsrsTableRenderer>();
     // Кэш карточек в WASM
     public cache!: FsrsCache;
+    // Промис сканирования хранилища (запускается по первому запросу)
+    private scanPromise: Promise<void> | null = null;
     // Флаг: завершено ли начальное сканирование хранилища
-    private scanCompleted = false;
+    private initialScanCompleted = false;
     // Ожидающие сканирования карточки
     private pendingScans = new Set<string>();
     // Флаг: запланировано ли уведомление рендереров (чтобы не перерисовывать 1000 раз)
     private notifyRenderersScheduled = false;
+    // Колбэки, ожидающие инициализации WASM
+    private wasmReadyCallbacks = new Set<() => void>();
     public statusBarManager: StatusBarManager | null = null;
 
     /**
@@ -62,9 +66,6 @@ export default class FsrsPlugin extends Plugin {
         this.addSettingTab(new FsrsSettingTab(this.app, this));
 
         verboseLog("=== Загрузка FSRS плагина с WASM ===");
-
-        // Инициализация WASM модуля
-        await this.initializeWasm();
 
         // Регистрация команд плагина
         registerCommands(this);
@@ -77,31 +78,8 @@ export default class FsrsPlugin extends Plugin {
         );
         this.statusBarManager.init();
 
-        // Инициализация кэша в WASM
+        // Создание объекта кэша (без инициализации WASM — она в onLayoutReady)
         this.cache = new FsrsCache();
-        this.cache.init();
-
-        // Запуск прогрессивного сканирования хранилища после полной инициализации
-        // onLayoutReady гарантирует, что все файлы хранилища проиндексированы
-        this.app.workspace.onLayoutReady(() => {
-            this.performCacheScan()
-                .then(() => {
-                    verboseLog("Сканирование хранилища завершено");
-                    this.scanCompleted = true;
-                    // Уведомляем все существующие рендереры напрямую (без debounce)
-                    for (const renderer of this.fsrsTableRenderers) {
-                        renderer.refresh().catch(console.error);
-                    }
-                })
-                .catch((error) => {
-                    console.error("Ошибка при сканировании хранилища:", error);
-                    this.scanCompleted = true;
-                    // Даже при ошибке — даём рендерерам шанс (кэш мог быть частично заполнен)
-                    for (const renderer of this.fsrsTableRenderers) {
-                        renderer.refresh().catch(console.error);
-                    }
-                });
-        });
 
         // Регистрация процессора для кнопки повторения карточки
         this.registerMarkdownCodeBlockProcessor(
@@ -142,14 +120,19 @@ export default class FsrsPlugin extends Plugin {
         );
 
         // Регистрация обработчиков изменений файлов для кэша WASM
+        // Проверка isWasmReady защищает от вызовов до инициализации WASM
         this.registerEvent(
             this.app.vault.on("delete", (file) => {
+                if (!this.isWasmReady()) return;
+                if (!this.initialScanCompleted) return;
                 this.cache.removeCard(file.path);
                 this.notifyFsrsTableRenderers();
             }),
         );
         this.registerEvent(
             this.app.vault.on("rename", (file, oldPath) => {
+                if (!this.isWasmReady()) return;
+                if (!this.initialScanCompleted) return;
                 this.cache.removeCard(oldPath);
                 this.notifyFsrsTableRenderers();
                 this.scheduleCardScan(file.path);
@@ -157,6 +140,8 @@ export default class FsrsPlugin extends Plugin {
         );
         this.registerEvent(
             this.app.vault.on("modify", (file) => {
+                if (!this.isWasmReady()) return;
+                if (!this.initialScanCompleted) return;
                 if (
                     file.path &&
                     !shouldIgnoreFileWithSettings(
@@ -169,6 +154,16 @@ export default class FsrsPlugin extends Plugin {
                 }
             }),
         );
+
+        // Инициализация WASM — после полной загрузки UI,
+        // чтобы не блокировать onload() тяжёлыми операциями (base64 → bytes, компиляция WASM).
+        // Сканирование хранилища — ленивое, запускается по первому запросу к кэшу.
+        this.app.workspace.onLayoutReady(async () => {
+            await this.initializeWasm();
+            verboseLog(
+                "WASM инициализирован, кэш готов. Сканирование — по запросу.",
+            );
+        });
 
         verboseLog("FSRS плагин успешно загружен");
     }
@@ -185,7 +180,19 @@ export default class FsrsPlugin extends Plugin {
             verboseLog("3. Вызываем init...");
             await init({ module_or_path: wasmBytes });
             verboseLog("4. WASM инициализирован");
+
+            // Инициализируем кэш сразу после WASM (чтобы isWasmReady подразумевал
+            // и готовность кэша)
+            this.cache.init();
+            verboseLog("5. Кэш инициализирован");
+
             this.isWasmInitialized = true;
+
+            // Оповещаем всех, кто ждал инициализации WASM
+            for (const cb of this.wasmReadyCallbacks) {
+                cb();
+            }
+            this.wasmReadyCallbacks.clear();
         } catch (error) {
             console.error("Ошибка загрузки WASM модуля:", error);
             showNotice("notices.wasm_not_ready");
@@ -209,13 +216,11 @@ export default class FsrsPlugin extends Plugin {
     async performCacheScan(
         onProgress?: (current: number, total: number) => void,
     ): Promise<void> {
+        verboseLog("🔍 Начинаю сканирование хранилища...");
         const start = performance.now();
         const files = this.app.vault
             .getMarkdownFiles()
             .sort((a, b) => a.path.localeCompare(b.path));
-
-        // Очищаем кэш перед сканированием
-        this.cache.clear();
 
         let filteredCount = 0;
         let noFrontmatterCount = 0;
@@ -364,10 +369,45 @@ export default class FsrsPlugin extends Plugin {
     }
 
     /**
+     * Обеспечивает готовность кэша: запускает сканирование хранилища,
+     * если оно ещё не было запущено, и ждёт его завершения.
+     *
+     * Безопасно вызывать многократно — повторный вызов во время сканирования
+     * дожидается текущего, а после завершения возвращается мгновенно.
+     */
+    async ensureCacheScanned(): Promise<void> {
+        // Ждём инициализации WASM (если ещё не готова)
+        // isWasmReady() подразумевает и готовность кэша после перемещения cache.init()
+        if (!this.isWasmReady()) {
+            await new Promise<void>((resolve) => this.onWasmReady(resolve));
+        }
+
+        if (this.initialScanCompleted) return;
+        if (this.scanPromise) {
+            await this.scanPromise;
+            return;
+        }
+
+        this.scanPromise = this.performCacheScan()
+            .then(() => {
+                this.initialScanCompleted = true;
+                this.scanPromise = null;
+            })
+            .catch((error) => {
+                console.error("Ошибка при сканировании хранилища:", error);
+                this.initialScanCompleted = true;
+                this.scanPromise = null;
+            });
+
+        await this.scanPromise;
+    }
+
+    /**
      * Находит карточки для повторения
      * Реализация для команды плагина
      */
     async findCardsForReview(): Promise<void> {
+        await this.ensureCacheScanned();
         await findFsrsCards(this);
     }
 
@@ -448,6 +488,18 @@ export default class FsrsPlugin extends Plugin {
     }
 
     /**
+     * Регистрирует колбэк, который будет вызван после инициализации WASM.
+     * Если WASM уже готов — вызывает сразу.
+     */
+    onWasmReady(callback: () => void): void {
+        if (this.isWasmReady()) {
+            callback();
+        } else {
+            this.wasmReadyCallbacks.add(callback);
+        }
+    }
+
+    /**
      * Выгрузка плагина
      */
     onunload() {
@@ -455,7 +507,9 @@ export default class FsrsPlugin extends Plugin {
         this.isWasmInitialized = false;
         this.fsrsTableRenderers.clear();
 
-        // Сбрасываем флаг уведомлений рендереров
+        // Сбрасываем флаги ленивого сканирования
+        this.scanPromise = null;
+        this.initialScanCompleted = false;
         this.notifyRenderersScheduled = false;
 
         // Очищаем pending сканирования
@@ -468,16 +522,11 @@ export default class FsrsPlugin extends Plugin {
     }
 
     /**
-     * Регистрирует активный рендерер fsrs-table для уведомлений об обновлениях
+     * Регистрирует активный рендерер fsrs-table для уведомлений об обновлениях.
+     * Первый рендер запускается самим рендерером в onload() через refresh().
      */
     registerFsrsTableRenderer(renderer: FsrsTableRenderer): void {
         this.fsrsTableRenderers.add(renderer);
-        // Если сканирование уже завершено — запускаем рендер сразу.
-        // Если нет — сканирование само уведомит все зарегистрированные рендереры
-        // через refresh() в .then().
-        if (this.scanCompleted) {
-            renderer.refresh().catch(console.error);
-        }
     }
 
     /**
