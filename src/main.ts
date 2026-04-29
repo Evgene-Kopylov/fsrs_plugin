@@ -52,6 +52,8 @@ export default class FsrsPlugin extends Plugin {
     private pendingScans = new Set<string>();
     // Флаг: запланировано ли уведомление рендереров (чтобы не перерисовывать 1000 раз)
     private notifyRenderersScheduled = false;
+    // Колбэки, ожидающие инициализации WASM
+    private wasmReadyCallbacks = new Set<() => void>();
     public statusBarManager: StatusBarManager | null = null;
 
     /**
@@ -189,6 +191,12 @@ export default class FsrsPlugin extends Plugin {
             await init({ module_or_path: wasmBytes });
             verboseLog("4. WASM инициализирован");
             this.isWasmInitialized = true;
+
+            // Оповещаем всех, кто ждал инициализации WASM
+            for (const cb of this.wasmReadyCallbacks) {
+                cb();
+            }
+            this.wasmReadyCallbacks.clear();
         } catch (error) {
             console.error("Ошибка загрузки WASM модуля:", error);
             showNotice("notices.wasm_not_ready");
@@ -448,6 +456,18 @@ export default class FsrsPlugin extends Plugin {
      */
     isWasmReady(): boolean {
         return this.isWasmInitialized;
+    }
+
+    /**
+     * Регистрирует колбэк, который будет вызван после инициализации WASM.
+     * Если WASM уже готов — вызывает сразу.
+     */
+    onWasmReady(callback: () => void): void {
+        if (this.isWasmReady()) {
+            callback();
+        } else {
+            this.wasmReadyCallbacks.add(callback);
+        }
     }
 
     /**

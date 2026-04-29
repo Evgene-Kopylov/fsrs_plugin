@@ -72,17 +72,10 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
         this.setupClickHandlers();
         this.setupFileWatcher();
 
-        // Если WASM ещё не инициализирован — ждём и обновляем кнопку после готовности
-        if (!this.plugin.isWasmReady()) {
-            const checkInterval = window.setInterval(() => {
-                if (this.plugin.isWasmReady() || !this.plugin) {
-                    window.clearInterval(checkInterval);
-                    if (this.plugin) {
-                        void this.updateButtonState();
-                    }
-                }
-            }, 200);
-        }
+        // Если WASM ещё не инициализирован — обновим кнопку после готовности
+        this.plugin.onWasmReady(() => {
+            void this.updateButtonState();
+        });
     }
 
     /**
