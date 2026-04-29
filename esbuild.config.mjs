@@ -31,7 +31,7 @@ const context = await esbuild.context({
     ],
     format: "cjs",
     target: "esnext",
-    logLevel: "info",
+    logLevel: "warning",
     logOverride: {
         "empty-import-meta": "silent",
     },
