@@ -17,10 +17,19 @@ use serde::{Deserialize, Serialize};
 // ---------------------------------------------------------------------------
 
 /// Карточка, хранящаяся в кэше вместе с её вычисленным состоянием
+///
+/// Хранит предварительно сериализованные JSON-строки (`card_json`, `state_json`),
+/// чтобы при запросах не тратить время на повторную сериализацию структур.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CachedCard {
     pub card: ModernFsrsCard,
     pub state: ComputedState,
+    /// Предварительно сериализованная JSON-строка карточки (избегает повторной сериализации)
+    #[serde(skip)]
+    pub card_json: String,
+    /// Предварительно сериализованная JSON-строка состояния (избегает повторной сериализации)
+    #[serde(skip)]
+    pub state_json: String,
 }
 
 /// Элемент входного массива для `add_or_update_cards`
@@ -134,7 +143,22 @@ pub fn add_or_update_cards(cards_json_array: &str) -> String {
             };
 
             // Вставляем или обновляем в кэше
-            map.insert(item.file_path.clone(), CachedCard { card, state });
+            // Сохраняем исходные JSON-строки, чтобы при query не пере-сериализовывать.
+            // В card_json добавляем filePath, т.к. TS ожидает его при парсинге.
+            let card_json_with_path = serde_json::json!({
+                "reviews": card.reviews,
+                "filePath": item.file_path,
+            })
+            .to_string();
+            map.insert(
+                item.file_path.clone(),
+                CachedCard {
+                    card,
+                    state,
+                    card_json: card_json_with_path,
+                    state_json: item.state_json.clone(),
+                },
+            );
             updated += 1;
         }
     }
@@ -251,13 +275,13 @@ pub fn query_cards(params_json: &str, now_iso: &str) -> String {
         .unwrap_or_else(|_| r#"{"cards":[],"total_count":0,"errors":[]}"#.to_string());
     }
 
-    // Преобразуем в формат, ожидаемый filter_and_sort_cards_with_states
+    // Используем готовые JSON-строки из кэша, без повторной сериализации структур
     let pairs: Vec<serde_json::Value> = all_cards
         .iter()
         .map(|(_, cached)| {
             serde_json::json!({
-                "card_json": serde_json::to_value(&cached.card).unwrap_or_default(),
-                "state_json": serde_json::to_value(&cached.state).unwrap_or_default(),
+                "card_json": &cached.card_json,
+                "state_json": &cached.state_json,
             })
         })
         .collect();
