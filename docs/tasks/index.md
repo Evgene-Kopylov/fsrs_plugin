@@ -25,3 +25,7 @@
 ### Уборка мёртвого кода
 
 - [x] [dead-code-cleanup.md](./dead-code-cleanup.md) — удаление неиспользуемых WASM-функций, файла wasm-date.ts, константы CARD_SCAN_DEBOUNCE_MS и неиспользуемых внутренних функций Rust
+
+### Настройка перезагрузки при изменении FSRS-параметров
+
+- [>] [reload-notice-on-param-change.md](./reload-notice-on-param-change.md) — notice перезагрузки вместо точечной очистки кэша при изменении `parameters`

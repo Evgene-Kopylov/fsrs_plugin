@@ -58,7 +58,8 @@
         "card_processing_error": "Ошибка при обработке карточки",
         "review_history_error": "Ошибка при открытии истории повторений",
         "card_load_error": "Ошибка при загрузке данных карточки",
-        "wasm_not_ready": "WASM компонент FSRS не загружен. Перезапустите Obsidian.",
+        "wasm_not_ready": "Компонент FSRS не готов. Перезапустите Obsidian.",
+        "settings_changed_reload": "Настройки FSRS изменены. Перезагрузите плагин для применения.",
         "file_not_found": "Файл не найден: {path}",
         "card_not_due": "Карточка уже повторена. Следующее повторение по графику: {date}",
         "early_review_blocked": "Учитываются не более одного повторения в сутки. Следующее возможно через {minutes} {noun}. Планово: {date}",
@@ -240,9 +241,6 @@
                 "placeholder_easy": "Легко (4)",
                 "reset_tooltip": "Сбросить название и цвет"
             }
-        },
-        "early_review": {
-            "heading": "Досрочное повторение"
         },
         "filtering": {
             "heading": "Фильтрация файлов",

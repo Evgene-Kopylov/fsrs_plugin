@@ -1,4 +1,4 @@
-import { Plugin, TFile } from "obsidian";
+import { Plugin, TFile, Notice } from "obsidian";
 import { registerCommands } from "./commands/index";
 import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from "./commands/add-fsrs-fields";
 import { findFsrsCards } from "./commands/find-fsrs-cards";
@@ -424,12 +424,15 @@ export default class FsrsPlugin extends Plugin {
      */
     async saveSettings() {
         setVerboseLoggingEnabled(this.settings.verbose_logging);
+
+        const oldSettings =
+            (await this.loadData()) as FsrsPluginSettings | null;
+
         await this.saveData(this.settings);
-        // Очищаем кэш при изменении настроек (состояния изменятся)
-        this.cache?.clear();
-        this.notifyFsrsTableRenderers();
-        // Обновляем статус-бар
-        void this.statusBarManager?.updateStatusBar();
+
+        if (oldSettings && fsrsParamsChanged(oldSettings, this.settings)) {
+            new Notice(i18n.t("notices.settings_changed_reload"));
+        }
     }
 
     /**
@@ -499,4 +502,26 @@ export default class FsrsPlugin extends Plugin {
             }
         });
     }
+}
+
+/**
+ * Сравнивает старые и новые настройки FSRS.
+ * Возвращает true, если хотя бы один параметр, влияющий на пересчёт состояний, изменился.
+ */
+function fsrsParamsChanged(
+    oldSettings: FsrsPluginSettings,
+    newSettings: FsrsPluginSettings,
+): boolean {
+    return (
+        oldSettings.parameters.request_retention !==
+            newSettings.parameters.request_retention ||
+        oldSettings.parameters.maximum_interval !==
+            newSettings.parameters.maximum_interval ||
+        oldSettings.parameters.enable_fuzz !==
+            newSettings.parameters.enable_fuzz ||
+        oldSettings.default_initial_stability !==
+            newSettings.default_initial_stability ||
+        oldSettings.default_initial_difficulty !==
+            newSettings.default_initial_difficulty
+    );
 }

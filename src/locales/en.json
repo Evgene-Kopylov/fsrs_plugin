@@ -34,6 +34,7 @@
         "review_history_error": "Error opening review history",
         "card_load_error": "Failed to load card data",
         "wasm_not_ready": "FSRS component not ready. Please restart Obsidian.",
+        "settings_changed_reload": "FSRS settings changed. Reload plugin to apply.",
         "file_not_found": "File not found: {path}",
         "card_not_due": "Card already reviewed. Next scheduled review: {date}",
         "early_review_blocked": "Only one review per day is counted. Next review available in {minutes} {noun}. Scheduled: {date}",
@@ -240,9 +241,6 @@
                 "placeholder_easy": "Easy (4)",
                 "reset_tooltip": "Reset name and color"
             }
-        },
-        "early_review": {
-            "heading": "Early review"
         },
         "filtering": {
             "heading": "File filtering",
