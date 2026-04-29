@@ -105,9 +105,6 @@ export interface FSRSSettings {
     // Настройка для автоматического добавления кнопки повторения
     auto_add_review_button: boolean;
 
-    // Минимальный интервал для досрочного повторения
-    minimum_review_interval_minutes: number;
-
     // Паттерны игнорирования файлов и папок
     ignore_patterns: string[];
 

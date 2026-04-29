@@ -6,5 +6,4 @@ export { FsrsSettingTab } from "./settings-core";
 export { renderFsrsParameters } from "./setting-groups/fsrs-parameters";
 export { renderCardDefaults } from "./setting-groups/card-defaults";
 export { renderDisplaySettings } from "./setting-groups/display-settings";
-export { renderEarlyReviewSettings } from "./setting-groups/early-review-settings";
 export { renderFilteringSettings } from "./setting-groups/filtering-settings";

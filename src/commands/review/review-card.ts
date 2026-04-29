@@ -15,6 +15,7 @@ import {
 import type { FSRSRating } from "../../interfaces/fsrs";
 import type MyPlugin from "../../main";
 import { ReviewModal } from "./review-modal";
+import { MINIMUM_REVIEW_INTERVAL_MINUTES } from "../../constants";
 
 /**
  * Заменяет поле reviews в frontmatter на новое содержимое YAML
@@ -138,7 +139,7 @@ async function reviewCardByFile(
 
     if (!isDue) {
         const minutesSinceLastReview = getMinutesSinceLastReview(card);
-        const minInterval = plugin.settings.minimum_review_interval_minutes;
+        const minInterval = MINIMUM_REVIEW_INTERVAL_MINUTES;
 
         if (minutesSinceLastReview >= minInterval) {
             // досрочное повторение разрешено

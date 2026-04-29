@@ -12,6 +12,7 @@ import type { FSRSRating } from "../interfaces/fsrs";
 import { numberToRating } from "../interfaces/fsrs";
 import { ReviewHistoryModal } from "./review-history-modal";
 import { showNotice } from "../utils/notice";
+import { MINIMUM_REVIEW_INTERVAL_MINUTES } from "../constants";
 import { getLocalizedNoun, i18n } from "../utils/i18n";
 
 /**
@@ -277,8 +278,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             if (!isDue) {
                 // Карточка не готова к повторению - проверяем возможность досрочного повторения
                 const minutesSinceLastReview = getMinutesSinceLastReview(card);
-                const minInterval =
-                    this.plugin.settings.minimum_review_interval_minutes;
+                const minInterval = MINIMUM_REVIEW_INTERVAL_MINUTES;
 
                 if (minutesSinceLastReview >= minInterval) {
                     // Достаточно времени прошло - разрешаем досрочное повторение

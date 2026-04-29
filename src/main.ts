@@ -1,4 +1,4 @@
-import { Plugin, TFile } from "obsidian";
+import { Plugin, TFile, Notice } from "obsidian";
 import { registerCommands } from "./commands/index";
 import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from "./commands/add-fsrs-fields";
 import { findFsrsCards } from "./commands/find-fsrs-cards";
@@ -41,6 +41,7 @@ import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
 export default class FsrsPlugin extends Plugin {
     settings: FsrsPluginSettings;
     private isWasmInitialized = false;
+    private lastReloadNoticeTime = 0;
 
     private fsrsTableRenderers = new Set<FsrsTableRenderer>();
     // Кэш карточек в WASM
@@ -216,7 +217,9 @@ export default class FsrsPlugin extends Plugin {
         // Очищаем кэш перед сканированием
         this.cache.clear();
 
-        let brokenCount = 0;
+        let filteredCount = 0;
+        let noFrontmatterCount = 0;
+        let skippedCount = 0;
         const batch: CacheCardInput[] = [];
 
         for (const file of files) {
@@ -227,12 +230,16 @@ export default class FsrsPlugin extends Plugin {
                     this.app.vault.configDir,
                 )
             ) {
+                filteredCount++;
                 continue;
             }
             try {
                 const content = await this.app.vault.read(file);
                 const frontmatter = extractFrontmatter(content);
-                if (!frontmatter) continue;
+                if (!frontmatter) {
+                    noFrontmatterCount++;
+                    continue;
+                }
                 const parseResult = parseModernFsrsFromFrontmatter(
                     frontmatter,
                     file.path,
@@ -248,10 +255,10 @@ export default class FsrsPlugin extends Plugin {
                         state,
                     });
                 } else {
-                    brokenCount++;
+                    skippedCount++;
                 }
             } catch {
-                brokenCount++;
+                skippedCount++;
             }
         }
 
@@ -268,10 +275,12 @@ export default class FsrsPlugin extends Plugin {
         // Прогресс: сканирование завершено
         onProgress?.(files.length, files.length);
 
-        verboseLog(`✅ Найдено карточек FSRS: ${this.cache.size()}`);
-        if (brokenCount > 0) {
-            verboseLog(`⚠️ Пропущено битых карточек: ${brokenCount}`);
-        }
+        const fsrsCount = this.cache.size();
+        verboseLog(`🗃️ Всего файлов .md: ${files.length}`);
+        verboseLog(`➖ Отфильтровано (игнор-список): ${filteredCount}`);
+        verboseLog(`➖ Без frontmatter: ${noFrontmatterCount}`);
+        verboseLog(`➖ С frontmatter, без FSRS-полей: ${skippedCount}`);
+        verboseLog(`📄 Найдено карточек FSRS: ${fsrsCount}`);
         const elapsed = (performance.now() - start) / 1000;
         verboseLog(`⏱️ Сканирование всего хранилища: ${elapsed.toFixed(2)} с`);
     }
@@ -416,12 +425,19 @@ export default class FsrsPlugin extends Plugin {
      */
     async saveSettings() {
         setVerboseLoggingEnabled(this.settings.verbose_logging);
+
+        const oldSettings =
+            (await this.loadData()) as FsrsPluginSettings | null;
+
         await this.saveData(this.settings);
-        // Очищаем кэш при изменении настроек (состояния изменятся)
-        this.cache?.clear();
-        this.notifyFsrsTableRenderers();
-        // Обновляем статус-бар
-        void this.statusBarManager?.updateStatusBar();
+
+        if (oldSettings && fsrsParamsChanged(oldSettings, this.settings)) {
+            const now = Date.now();
+            if (now - this.lastReloadNoticeTime > 7000) {
+                this.lastReloadNoticeTime = now;
+                new Notice(i18n.t("notices.settings_changed_reload"));
+            }
+        }
     }
 
     /**
@@ -444,9 +460,6 @@ export default class FsrsPlugin extends Plugin {
 
         // Очищаем pending сканирования
         this.pendingScans.clear();
-
-        // Очищаем кэш в WASM
-        this.cache?.clear();
 
         if (this.statusBarManager) {
             this.statusBarManager.unload();
@@ -494,4 +507,26 @@ export default class FsrsPlugin extends Plugin {
             }
         });
     }
+}
+
+/**
+ * Сравнивает старые и новые настройки FSRS.
+ * Возвращает true, если хотя бы один параметр, влияющий на пересчёт состояний, изменился.
+ */
+function fsrsParamsChanged(
+    oldSettings: FsrsPluginSettings,
+    newSettings: FsrsPluginSettings,
+): boolean {
+    return (
+        oldSettings.parameters.request_retention !==
+            newSettings.parameters.request_retention ||
+        oldSettings.parameters.maximum_interval !==
+            newSettings.parameters.maximum_interval ||
+        oldSettings.parameters.enable_fuzz !==
+            newSettings.parameters.enable_fuzz ||
+        oldSettings.default_initial_stability !==
+            newSettings.default_initial_stability ||
+        oldSettings.default_initial_difficulty !==
+            newSettings.default_initial_difficulty
+    );
 }
