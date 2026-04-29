@@ -123,9 +123,9 @@ FSRS cards are stored in the note's frontmatter under the `reviews` field:
 ```yaml
 ---
 reviews:
-  - date: "2025-01-15T10:30:00Z"
+  - date: "2026-01-15T10:30:00Z"
     rating: 2
-  - date: "2025-01-20T14:15:00Z"
+  - date: "2026-01-20T14:15:00Z"
     rating: 3
 ---
 ```

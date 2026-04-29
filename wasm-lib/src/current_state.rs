@@ -208,7 +208,7 @@ mod tests {
         r#"{
             "reviews": [
                 {
-                    "date": "2025-01-01T10:00:00Z",
+                    "date": "2026-01-01T10:00:00Z",
                     "rating": 2,
                     "stability": 5.0,
                     "difficulty": 3.0
@@ -221,7 +221,7 @@ mod tests {
     #[test]
     fn test_compute_current_state_empty_card() {
         let card_json = create_empty_card_json();
-        let now = "2025-01-01T12:00:00Z".to_string();
+        let now = "2026-01-01T12:00:00Z".to_string();
         let params_json = create_test_parameters_json();
         let default_stability = 2.5;
         let default_difficulty = 5.0;
@@ -249,7 +249,7 @@ mod tests {
     #[test]
     fn test_compute_current_state_with_reviews() {
         let card_json = create_card_with_reviews_json();
-        let now = "2025-01-02T14:00:00Z".to_string();
+        let now = "2026-01-02T14:00:00Z".to_string();
         let params_json = create_test_parameters_json();
         let default_stability = 2.5;
         let default_difficulty = 5.0;
@@ -269,7 +269,7 @@ mod tests {
         assert!(state.stability > 0.0);
         assert!(state.difficulty > 0.0);
         // Проверяем, что due позже последней сессии
-        let last_review_date: DateTime<Utc> = "2025-01-01T10:00:00Z".parse().unwrap();
+        let last_review_date: DateTime<Utc> = "2026-01-01T10:00:00Z".parse().unwrap();
         let due_date: DateTime<Utc> = state.due.parse().unwrap();
         assert!(due_date > last_review_date);
     }
@@ -278,7 +278,7 @@ mod tests {
     fn test_is_card_due() {
         // Тест для карточки без сессий (новая)
         let card_json = create_empty_card_json();
-        let now = "2025-01-01T12:00:00Z".to_string();
+        let now = "2026-01-01T12:00:00Z".to_string();
         let params_json = create_test_parameters_json();
         let default_stability = 2.5;
         let default_difficulty = 5.0;
@@ -302,7 +302,7 @@ mod tests {
         let card_json = r#"{
             "reviews": [
                 {
-                    "date": "2025-01-01T10:00:00Z",
+                    "date": "2026-01-01T10:00:00Z",
                     "rating": 2,
                     "stability": 2.0,
                     "difficulty": 3.0
@@ -311,7 +311,7 @@ mod tests {
         }"#
         .to_string();
 
-        let now = "2025-01-01T10:00:01Z".to_string(); // Сразу после повторения — due ещё в будущем
+        let now = "2026-01-01T10:00:01Z".to_string(); // Сразу после повторения — due ещё в будущем
         let params_json = create_test_parameters_json();
         let default_stability = 2.5;
         let default_difficulty = 5.0;
@@ -347,7 +347,7 @@ mod tests {
     #[test]
     fn test_get_retrievability() {
         let card_json = create_card_with_reviews_json();
-        let now = "2025-01-01T11:00:00Z".to_string(); // Через час после повторения
+        let now = "2026-01-01T11:00:00Z".to_string(); // Через час после повторения
         let params_json = create_test_parameters_json();
         let default_stability = 2.5;
         let default_difficulty = 5.0;
@@ -369,7 +369,7 @@ mod tests {
     #[test]
     fn test_compute_current_state_invalid_json() {
         let invalid_json = r#"{invalid json}"#.to_string();
-        let now = "2025-01-01T12:00:00Z".to_string();
+        let now = "2026-01-01T12:00:00Z".to_string();
         let params_json = create_test_parameters_json();
         let default_stability = 2.5;
         let default_difficulty = 5.0;

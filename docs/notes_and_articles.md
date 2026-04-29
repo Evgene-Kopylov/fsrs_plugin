@@ -23,7 +23,7 @@ I decided to make one post where I compile all of the useful links that I can th
 1) If you have never heard about FSRS before, start here: <https://github.com/open-spaced-repetition/fsrs4anki/wiki/ABC-of-FSRS>
 2) AnKing's video about FSRS (old): <https://youtu.be/OqRLqVRyIzc>
 
-New 2025 video: <https://youtu.be/uo-qQvOZDfg>
+New 2026 video: <https://youtu.be/uo-qQvOZDfg>
 
 1) FSRS section of the manual, please read it before making a post/comment with a question: <https://docs.ankiweb.net/deck-options.html#fsrs>
 

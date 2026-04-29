@@ -12,7 +12,7 @@ describe("fsrs-frontmatter", () => {
         it("should extract frontmatter content at file start", () => {
             const content = `---
 reviews:
-  - date: "2025-01-01"
+  - date: "2026-01-01"
     rating: Good
 tags: test
 ---
@@ -21,7 +21,7 @@ Some markdown content`;
             const result = extractFrontmatter(content);
             expect(result).toBe(`
 reviews:
-  - date: "2025-01-01"
+  - date: "2026-01-01"
     rating: Good
 tags: test
 `);
@@ -80,7 +80,7 @@ This is indented, not a real frontmatter.`;
 \`\`\`yaml
 ---
 reviews:
-  - date: "2025-01-01"
+  - date: "2026-01-01"
     rating: Good
 ---
 \`\`\`

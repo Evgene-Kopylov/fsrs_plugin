@@ -222,6 +222,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
      */
     private async handleSortClick(field: string) {
         if (!this.params) return;
+        if (this.isRendering) return; // игнорируем клики во время рендеринга
 
         const nextDirection = this.getNextSortDirection(
             this.params.sort,

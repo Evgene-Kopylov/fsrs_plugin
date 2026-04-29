@@ -119,7 +119,7 @@ mod tests {
     #[test]
     fn test_compute_card_history_empty_card() {
         let card_json = r#"{"reviews": []}"#.to_string();
-        let now = "2025-01-01T10:00:00Z".to_string();
+        let now = "2026-01-01T10:00:00Z".to_string();
         let params_json =
             r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": false}"#
                 .to_string();
@@ -140,11 +140,11 @@ mod tests {
     fn test_compute_card_history_single_review() {
         let card_json = r#"{
             "reviews": [
-                {"date": "2025-01-01T10:00:00Z", "rating": 2, "stability": 0.0, "difficulty": 0.0}
+                {"date": "2026-01-01T10:00:00Z", "rating": 2, "stability": 0.0, "difficulty": 0.0}
             ]
         }"#
         .to_string();
-        let now = "2025-01-10T10:00:00Z".to_string();
+        let now = "2026-01-10T10:00:00Z".to_string();
         let params_json =
             r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": false}"#
                 .to_string();
@@ -164,7 +164,7 @@ mod tests {
         assert_eq!(history.len(), 1, "Должна быть одна запись");
 
         let entry = &history[0];
-        assert_eq!(entry.date, "2025-01-01T10:00:00+00:00");
+        assert_eq!(entry.date, "2026-01-01T10:00:00+00:00");
         assert_eq!(entry.rating, Some(2u8));
         assert_eq!(entry.state, "Learning");
         assert_eq!(entry.elapsed_days, 0);
@@ -192,12 +192,12 @@ mod tests {
     fn test_compute_card_history_two_reviews() {
         let card_json = r#"{
             "reviews": [
-                {"date": "2025-01-01T10:00:00Z", "rating": 2, "stability": 0.0, "difficulty": 0.0},
-                {"date": "2025-01-10T10:00:00Z", "rating": 2, "stability": 0.0, "difficulty": 0.0}
+                {"date": "2026-01-01T10:00:00Z", "rating": 2, "stability": 0.0, "difficulty": 0.0},
+                {"date": "2026-01-10T10:00:00Z", "rating": 2, "stability": 0.0, "difficulty": 0.0}
             ]
         }"#
         .to_string();
-        let now = "2025-01-20T10:00:00Z".to_string();
+        let now = "2026-01-20T10:00:00Z".to_string();
         let params_json =
             r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": false}"#
                 .to_string();
@@ -218,7 +218,7 @@ mod tests {
 
         // Проверяем первую запись
         let first = &history[0];
-        assert_eq!(first.date, "2025-01-01T10:00:00+00:00");
+        assert_eq!(first.date, "2026-01-01T10:00:00+00:00");
         assert_eq!(first.rating, Some(2u8));
         assert_eq!(
             first.elapsed_days, 0,
@@ -239,7 +239,7 @@ mod tests {
 
         // Проверяем вторую запись
         let second = &history[1];
-        assert_eq!(second.date, "2025-01-10T10:00:00+00:00");
+        assert_eq!(second.date, "2026-01-10T10:00:00+00:00");
         assert_eq!(second.rating, Some(2u8));
         assert_eq!(second.elapsed_days, 9, "Между повторениями 9 дней");
         assert_eq!(second.retrievability, 1.0);
@@ -274,13 +274,13 @@ mod tests {
     fn test_compute_card_history_invalid_date_skipped() {
         let card_json = r#"{
             "reviews": [
-                {"date": "2025-01-01T10:00:00Z", "rating": 2, "stability": 0.0, "difficulty": 0.0},
+                {"date": "2026-01-01T10:00:00Z", "rating": 2, "stability": 0.0, "difficulty": 0.0},
                 {"date": "invalid-date", "rating": 1, "stability": 0.0, "difficulty": 0.0},
-                {"date": "2025-01-10T10:00:00Z", "rating": 2, "stability": 0.0, "difficulty": 0.0}
+                {"date": "2026-01-10T10:00:00Z", "rating": 2, "stability": 0.0, "difficulty": 0.0}
             ]
         }"#
         .to_string();
-        let now = "2025-01-20T10:00:00Z".to_string();
+        let now = "2026-01-20T10:00:00Z".to_string();
         let params_json =
             r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": false}"#
                 .to_string();

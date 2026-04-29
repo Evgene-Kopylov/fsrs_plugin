@@ -17,10 +17,19 @@ use serde::{Deserialize, Serialize};
 // ---------------------------------------------------------------------------
 
 /// Карточка, хранящаяся в кэше вместе с её вычисленным состоянием
+///
+/// Хранит предварительно сериализованные JSON-строки (`card_json`, `state_json`),
+/// чтобы при запросах не тратить время на повторную сериализацию структур.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CachedCard {
     pub card: ModernFsrsCard,
     pub state: ComputedState,
+    /// Предварительно сериализованная JSON-строка карточки (избегает повторной сериализации)
+    #[serde(skip)]
+    pub card_json: String,
+    /// Предварительно сериализованная JSON-строка состояния (избегает повторной сериализации)
+    #[serde(skip)]
+    pub state_json: String,
 }
 
 /// Элемент входного массива для `add_or_update_cards`
@@ -134,7 +143,22 @@ pub fn add_or_update_cards(cards_json_array: &str) -> String {
             };
 
             // Вставляем или обновляем в кэше
-            map.insert(item.file_path.clone(), CachedCard { card, state });
+            // Сохраняем исходные JSON-строки, чтобы при query не пере-сериализовывать.
+            // В card_json добавляем filePath, т.к. TS ожидает его при парсинге.
+            let card_json_with_path = serde_json::json!({
+                "reviews": card.reviews,
+                "filePath": item.file_path,
+            })
+            .to_string();
+            map.insert(
+                item.file_path.clone(),
+                CachedCard {
+                    card,
+                    state,
+                    card_json: card_json_with_path,
+                    state_json: item.state_json.clone(),
+                },
+            );
             updated += 1;
         }
     }
@@ -251,13 +275,13 @@ pub fn query_cards(params_json: &str, now_iso: &str) -> String {
         .unwrap_or_else(|_| r#"{"cards":[],"total_count":0,"errors":[]}"#.to_string());
     }
 
-    // Преобразуем в формат, ожидаемый filter_and_sort_cards_with_states
+    // Используем готовые JSON-строки из кэша, без повторной сериализации структур
     let pairs: Vec<serde_json::Value> = all_cards
         .iter()
         .map(|(_, cached)| {
             serde_json::json!({
-                "card_json": serde_json::to_value(&cached.card).unwrap_or_default(),
-                "state_json": serde_json::to_value(&cached.state).unwrap_or_default(),
+                "card_json": &cached.card_json,
+                "state_json": &cached.state_json,
             })
         })
         .collect();
@@ -348,7 +372,7 @@ mod tests {
     fn make_test_item(file_path: &str, rating: u8, due: &str) -> CardInputItem {
         let card = ModernFsrsCard {
             reviews: vec![crate::types::ReviewSession {
-                date: "2025-01-01T10:00:00Z".to_string(),
+                date: "2026-01-01T10:00:00Z".to_string(),
                 rating,
             }],
             file_path: Some(file_path.to_string()),
@@ -379,7 +403,7 @@ mod tests {
         assert_eq!(get_cache_size(), 0);
 
         // Добавляем что-то, потом очищаем
-        let item = make_test_item("t_init_clear.md", 2, "2025-06-01T10:00:00Z");
+        let item = make_test_item("t_init_clear.md", 2, "2026-06-01T10:00:00Z");
         let input = serde_json::to_string(&vec![item]).unwrap();
         add_or_update_cards(&input);
         assert_eq!(get_cache_size(), 1);
@@ -395,8 +419,8 @@ mod tests {
 
         // Добавляем две карточки
         let items = vec![
-            make_test_item("t_add_a.md", 2, "2025-06-01T10:00:00Z"),
-            make_test_item("t_add_b.md", 3, "2025-06-05T10:00:00Z"),
+            make_test_item("t_add_a.md", 2, "2026-06-01T10:00:00Z"),
+            make_test_item("t_add_b.md", 3, "2026-06-05T10:00:00Z"),
         ];
         let input = serde_json::to_string(&items).unwrap();
         let result = add_or_update_cards(&input);
@@ -418,7 +442,7 @@ mod tests {
         init_cache();
 
         // Добавляем карточку
-        let item = make_test_item("t_update_original.md", 2, "2025-06-01T10:00:00Z");
+        let item = make_test_item("t_update_original.md", 2, "2026-06-01T10:00:00Z");
         let input = serde_json::to_string(&vec![item]).unwrap();
         add_or_update_cards(&input);
         assert_eq!(get_cache_size(), 1);
@@ -427,18 +451,18 @@ mod tests {
         let card = ModernFsrsCard {
             reviews: vec![
                 crate::types::ReviewSession {
-                    date: "2025-01-01T10:00:00Z".to_string(),
+                    date: "2026-01-01T10:00:00Z".to_string(),
                     rating: 2,
                 },
                 crate::types::ReviewSession {
-                    date: "2025-02-01T10:00:00Z".to_string(),
+                    date: "2026-02-01T10:00:00Z".to_string(),
                     rating: 3,
                 },
             ],
             file_path: Some("t_update_original.md".to_string()),
         };
         let state = ComputedState {
-            due: "2025-07-01T10:00:00Z".to_string(),
+            due: "2026-07-01T10:00:00Z".to_string(),
             stability: 10.0,
             difficulty: 2.5,
             state: "Review".to_string(),
@@ -485,7 +509,7 @@ mod tests {
         assert_eq!(parsed["reason"].as_str().unwrap(), "not_found");
 
         // Добавляем и удаляем
-        let item = make_test_item("t_remove_target.md", 2, "2025-06-01T10:00:00Z");
+        let item = make_test_item("t_remove_target.md", 2, "2026-06-01T10:00:00Z");
         let input = serde_json::to_string(&vec![item]).unwrap();
         add_or_update_cards(&input);
         assert_eq!(get_cache_size(), 1);
@@ -506,7 +530,7 @@ mod tests {
         assert_eq!(all, "[]");
 
         // Добавляем одну карточку
-        let item = make_test_item("t_getall_1.md", 2, "2025-06-01T10:00:00Z");
+        let item = make_test_item("t_getall_1.md", 2, "2026-06-01T10:00:00Z");
         let input = serde_json::to_string(&vec![item]).unwrap();
         add_or_update_cards(&input);
 
@@ -550,7 +574,7 @@ mod tests {
         init_cache();
 
         // Одна хорошая, одна плохая
-        let good_item = make_test_item("t_mixed_good.md", 2, "2025-06-01T10:00:00Z");
+        let good_item = make_test_item("t_mixed_good.md", 2, "2026-06-01T10:00:00Z");
         let bad_item = CardInputItem {
             file_path: "t_mixed_bad.md".to_string(),
             card_json: "{{{invalid}}}".to_string(),
@@ -573,8 +597,8 @@ mod tests {
         init_cache();
 
         let items = vec![
-            make_test_item("t_internal_a.md", 2, "2025-06-01T10:00:00Z"),
-            make_test_item("t_internal_b.md", 3, "2025-06-05T10:00:00Z"),
+            make_test_item("t_internal_a.md", 2, "2026-06-01T10:00:00Z"),
+            make_test_item("t_internal_b.md", 3, "2026-06-05T10:00:00Z"),
         ];
         let input = serde_json::to_string(&items).unwrap();
         add_or_update_cards(&input);
@@ -603,7 +627,7 @@ mod tests {
             where_condition: None,
         };
         let params_json = serde_json::to_string(&params).unwrap();
-        let result = query_cards(&params_json, "2025-06-10T12:00:00Z");
+        let result = query_cards(&params_json, "2026-06-10T12:00:00Z");
 
         let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
         assert_eq!(parsed["total_count"].as_u64().unwrap(), 0);
@@ -617,9 +641,9 @@ mod tests {
         init_cache();
 
         let items = vec![
-            make_test_item("t_qdata_a.md", 2, "2025-06-01T10:00:00Z"),
-            make_test_item("t_qdata_b.md", 3, "2025-06-05T10:00:00Z"),
-            make_test_item("t_qdata_c.md", 1, "2025-06-10T10:00:00Z"),
+            make_test_item("t_qdata_a.md", 2, "2026-06-01T10:00:00Z"),
+            make_test_item("t_qdata_b.md", 3, "2026-06-05T10:00:00Z"),
+            make_test_item("t_qdata_c.md", 1, "2026-06-10T10:00:00Z"),
         ];
         let input = serde_json::to_string(&items).unwrap();
         add_or_update_cards(&input);
@@ -635,7 +659,7 @@ mod tests {
             where_condition: None,
         };
         let params_json = serde_json::to_string(&params).unwrap();
-        let result = query_cards(&params_json, "2025-06-10T12:00:00Z");
+        let result = query_cards(&params_json, "2026-06-10T12:00:00Z");
 
         let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
         assert_eq!(parsed["total_count"].as_u64().unwrap(), 3);
@@ -648,10 +672,10 @@ mod tests {
         init_cache();
 
         let items = vec![
-            make_test_item("t_qlimit_a.md", 2, "2025-06-01T10:00:00Z"),
-            make_test_item("t_qlimit_b.md", 3, "2025-06-05T10:00:00Z"),
-            make_test_item("t_qlimit_c.md", 1, "2025-06-10T10:00:00Z"),
-            make_test_item("t_qlimit_d.md", 2, "2025-06-15T10:00:00Z"),
+            make_test_item("t_qlimit_a.md", 2, "2026-06-01T10:00:00Z"),
+            make_test_item("t_qlimit_b.md", 3, "2026-06-05T10:00:00Z"),
+            make_test_item("t_qlimit_c.md", 1, "2026-06-10T10:00:00Z"),
+            make_test_item("t_qlimit_d.md", 2, "2026-06-15T10:00:00Z"),
         ];
         let input = serde_json::to_string(&items).unwrap();
         add_or_update_cards(&input);
@@ -663,7 +687,7 @@ mod tests {
             where_condition: None,
         };
         let params_json = serde_json::to_string(&params).unwrap();
-        let result = query_cards(&params_json, "2025-06-10T12:00:00Z");
+        let result = query_cards(&params_json, "2026-06-10T12:00:00Z");
 
         let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
         assert_eq!(parsed["total_count"].as_u64().unwrap(), 4);
@@ -677,13 +701,13 @@ mod tests {
 
         let card_a = ModernFsrsCard {
             reviews: vec![crate::types::ReviewSession {
-                date: "2025-01-01T10:00:00Z".to_string(),
+                date: "2026-01-01T10:00:00Z".to_string(),
                 rating: 2,
             }],
             file_path: Some("t_qsort_a.md".to_string()),
         };
         let state_a = ComputedState {
-            due: "2025-06-01T10:00:00Z".to_string(),
+            due: "2026-06-01T10:00:00Z".to_string(),
             stability: 5.0,
             difficulty: 3.0,
             state: "Review".to_string(),
@@ -695,13 +719,13 @@ mod tests {
         };
         let card_b = ModernFsrsCard {
             reviews: vec![crate::types::ReviewSession {
-                date: "2025-01-01T10:00:00Z".to_string(),
+                date: "2026-01-01T10:00:00Z".to_string(),
                 rating: 3,
             }],
             file_path: Some("t_qsort_b.md".to_string()),
         };
         let state_b = ComputedState {
-            due: "2025-06-05T10:00:00Z".to_string(),
+            due: "2026-06-05T10:00:00Z".to_string(),
             stability: 10.0,
             difficulty: 2.5,
             state: "Review".to_string(),
@@ -713,13 +737,13 @@ mod tests {
         };
         let card_c = ModernFsrsCard {
             reviews: vec![crate::types::ReviewSession {
-                date: "2025-01-01T10:00:00Z".to_string(),
+                date: "2026-01-01T10:00:00Z".to_string(),
                 rating: 2,
             }],
             file_path: Some("t_qsort_c.md".to_string()),
         };
         let state_c = ComputedState {
-            due: "2025-06-10T10:00:00Z".to_string(),
+            due: "2026-06-10T10:00:00Z".to_string(),
             stability: 2.0,
             difficulty: 4.0,
             state: "Review".to_string(),
@@ -760,7 +784,7 @@ mod tests {
             where_condition: None,
         };
         let params_json = serde_json::to_string(&params).unwrap();
-        let result = query_cards(&params_json, "2025-06-10T12:00:00Z");
+        let result = query_cards(&params_json, "2026-06-10T12:00:00Z");
 
         let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
         assert_eq!(parsed["total_count"].as_u64().unwrap(), 3);
@@ -783,8 +807,8 @@ mod tests {
         init_cache();
 
         let items = vec![
-            make_test_item("t_qcount_a.md", 2, "2025-06-01T10:00:00Z"),
-            make_test_item("t_qcount_b.md", 3, "2025-06-05T10:00:00Z"),
+            make_test_item("t_qcount_a.md", 2, "2026-06-01T10:00:00Z"),
+            make_test_item("t_qcount_b.md", 3, "2026-06-05T10:00:00Z"),
         ];
         let input = serde_json::to_string(&items).unwrap();
         add_or_update_cards(&input);
@@ -796,7 +820,7 @@ mod tests {
             where_condition: None,
         };
         let params_json = serde_json::to_string(&params).unwrap();
-        let result = query_cards_count(&params_json, "2025-06-10T12:00:00Z");
+        let result = query_cards_count(&params_json, "2026-06-10T12:00:00Z");
 
         let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
         assert_eq!(parsed["total_count"].as_u64().unwrap(), 2);
@@ -815,7 +839,7 @@ mod tests {
             where_condition: None,
         };
         let params_json = serde_json::to_string(&params).unwrap();
-        let result = query_cards_count(&params_json, "2025-06-10T12:00:00Z");
+        let result = query_cards_count(&params_json, "2026-06-10T12:00:00Z");
 
         let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
         assert_eq!(parsed["total_count"].as_u64().unwrap(), 0);
@@ -826,7 +850,7 @@ mod tests {
         let _lock = acquire_test_lock();
         init_cache();
 
-        let result = query_cards("not valid json", "2025-06-10T12:00:00Z");
+        let result = query_cards("not valid json", "2026-06-10T12:00:00Z");
         let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
         assert_eq!(parsed["total_count"].as_u64().unwrap(), 0);
         assert!(!parsed["errors"].as_array().unwrap().is_empty());
