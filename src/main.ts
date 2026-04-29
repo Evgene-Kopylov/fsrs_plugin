@@ -63,9 +63,6 @@ export default class FsrsPlugin extends Plugin {
 
         verboseLog("=== Загрузка FSRS плагина с WASM ===");
 
-        // Инициализация WASM модуля
-        await this.initializeWasm();
-
         // Регистрация команд плагина
         registerCommands(this);
 
@@ -77,31 +74,8 @@ export default class FsrsPlugin extends Plugin {
         );
         this.statusBarManager.init();
 
-        // Инициализация кэша в WASM
+        // Создание объекта кэша (без инициализации WASM — она в onLayoutReady)
         this.cache = new FsrsCache();
-        this.cache.init();
-
-        // Запуск прогрессивного сканирования хранилища после полной инициализации
-        // onLayoutReady гарантирует, что все файлы хранилища проиндексированы
-        this.app.workspace.onLayoutReady(() => {
-            this.performCacheScan()
-                .then(() => {
-                    verboseLog("Сканирование хранилища завершено");
-                    this.scanCompleted = true;
-                    // Уведомляем все существующие рендереры напрямую (без debounce)
-                    for (const renderer of this.fsrsTableRenderers) {
-                        renderer.refresh().catch(console.error);
-                    }
-                })
-                .catch((error) => {
-                    console.error("Ошибка при сканировании хранилища:", error);
-                    this.scanCompleted = true;
-                    // Даже при ошибке — даём рендерерам шанс (кэш мог быть частично заполнен)
-                    for (const renderer of this.fsrsTableRenderers) {
-                        renderer.refresh().catch(console.error);
-                    }
-                });
-        });
 
         // Регистрация процессора для кнопки повторения карточки
         this.registerMarkdownCodeBlockProcessor(
@@ -142,14 +116,17 @@ export default class FsrsPlugin extends Plugin {
         );
 
         // Регистрация обработчиков изменений файлов для кэша WASM
+        // Проверка isWasmReady защищает от вызовов до инициализации WASM
         this.registerEvent(
             this.app.vault.on("delete", (file) => {
+                if (!this.isWasmReady()) return;
                 this.cache.removeCard(file.path);
                 this.notifyFsrsTableRenderers();
             }),
         );
         this.registerEvent(
             this.app.vault.on("rename", (file, oldPath) => {
+                if (!this.isWasmReady()) return;
                 this.cache.removeCard(oldPath);
                 this.notifyFsrsTableRenderers();
                 this.scheduleCardScan(file.path);
@@ -157,6 +134,7 @@ export default class FsrsPlugin extends Plugin {
         );
         this.registerEvent(
             this.app.vault.on("modify", (file) => {
+                if (!this.isWasmReady()) return;
                 if (
                     file.path &&
                     !shouldIgnoreFileWithSettings(
@@ -169,6 +147,31 @@ export default class FsrsPlugin extends Plugin {
                 }
             }),
         );
+
+        // Инициализация WASM и сканирование — после полной загрузки UI,
+        // чтобы не блокировать onload() тяжёлыми операциями (base64 → bytes, компиляция WASM)
+        this.app.workspace.onLayoutReady(async () => {
+            await this.initializeWasm();
+            this.cache.init();
+
+            this.performCacheScan()
+                .then(() => {
+                    verboseLog("Сканирование хранилища завершено");
+                    this.scanCompleted = true;
+                    // Уведомляем все существующие рендереры напрямую (без debounce)
+                    for (const renderer of this.fsrsTableRenderers) {
+                        renderer.refresh().catch(console.error);
+                    }
+                })
+                .catch((error) => {
+                    console.error("Ошибка при сканировании хранилища:", error);
+                    this.scanCompleted = true;
+                    // Даже при ошибке — даём рендерерам шанс (кэш мог быть частично заполнен)
+                    for (const renderer of this.fsrsTableRenderers) {
+                        renderer.refresh().catch(console.error);
+                    }
+                });
+        });
 
         verboseLog("FSRS плагин успешно загружен");
     }
