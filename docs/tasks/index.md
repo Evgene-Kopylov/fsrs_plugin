@@ -28,4 +28,4 @@
 
 ### Настройка перезагрузки при изменении FSRS-параметров
 
-- [>] [reload-notice-on-param-change.md](./reload-notice-on-param-change.md) — notice перезагрузки вместо точечной очистки кэша при изменении `parameters`
+- [x] [reload-notice-on-param-change.md](./reload-notice-on-param-change.md) — notice перезагрузки вместо точечной очистки кэша при изменении `parameters`
