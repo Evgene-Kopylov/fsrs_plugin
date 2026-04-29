@@ -246,6 +246,13 @@ export default class FsrsPlugin extends Plugin {
                     noFrontmatterCount++;
                     continue;
                 }
+                // Проверяем наличие поля reviews — если его нет, файл точно не содержит FSRS
+                if (
+                    !(fileCache.frontmatter as Record<string, unknown>).reviews
+                ) {
+                    skippedCount++;
+                    continue;
+                }
 
                 const t1 = performance.now();
                 const content = await this.app.vault.read(file);
