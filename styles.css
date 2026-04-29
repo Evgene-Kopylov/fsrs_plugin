@@ -487,6 +487,16 @@
     border-color: transparent;
 }
 
+/* Кнопка сброса в настройках — бледная, проявляется при наведении */
+.setting-item .clickable-icon svg.lucide-rotate-ccw {
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.setting-item .clickable-icon:hover svg.lucide-rotate-ccw {
+    opacity: 0.85;
+}
+
 /* Стили для статус-бара FSRS */
 .fsrs-status-bar-item {
     padding: 0 6px;

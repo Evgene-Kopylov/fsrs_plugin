@@ -32,4 +32,4 @@
 
 ### Кнопки сброса для всех настроек
 
-- [>] [add-reset-buttons.md](./add-reset-buttons.md) — кнопка сброса к default у каждой настройки
+- [x] [add-reset-buttons.md](./add-reset-buttons.md) — кнопка сброса к default у каждой настройки
