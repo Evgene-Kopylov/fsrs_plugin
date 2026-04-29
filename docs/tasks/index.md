@@ -36,4 +36,8 @@
 
 ### Уборка вывода сборки
 
-- [>] [build-output-cleanup.md](./build-output-cleanup.md) — убрать лишний WASM-билд из `build`, сократить лог encode-wasm, понизить logLevel esbuild
+- [x] [build-output-cleanup.md](./build-output-cleanup.md) — убрать лишний WASM-билд из `build`, сократить лог encode-wasm, понизить logLevel esbuild
+
+### Лимиты выборки
+
+- [>] [query-limits.md](./query-limits.md) — проверить и задокументировать, как работают LIMIT в fsrs-table

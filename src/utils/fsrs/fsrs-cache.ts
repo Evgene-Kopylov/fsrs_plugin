@@ -18,6 +18,7 @@ import type {
     FSRSState,
 } from "../../interfaces/fsrs";
 import type { TableParams } from "../../utils/fsrs-table-params";
+import { DEFAULT_TABLE_DISPLAY_LIMIT } from "../../constants";
 import * as wasm from "../../../wasm-lib/pkg/wasm_lib";
 
 // ---------------------------------------------------------------------------
@@ -254,9 +255,14 @@ export class FsrsCache {
      * в Rust — `where_condition` (через serde rename).
      */
     private toRustParams(params: TableParams): Record<string, unknown> {
+        // При limit=0 (не указан в SQL) подставляем лимит отображения,
+        // чтобы Rust не возвращал все карточки без необходимости
+        const effectiveLimit =
+            params.limit > 0 ? params.limit : DEFAULT_TABLE_DISPLAY_LIMIT;
+
         const rustParams: Record<string, unknown> = {
             columns: params.columns,
-            limit: params.limit,
+            limit: effectiveLimit,
         };
 
         if (params.sort) {
