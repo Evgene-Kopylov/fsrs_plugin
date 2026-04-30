@@ -77,14 +77,6 @@ export interface CachedCard {
     state: ComputedCardState;
 }
 
-// Полная карточка для внутреннего использования
-export interface FSRSCard {
-    // Хранимые данные
-    modernCard: ModernFSRSCard;
-    // Вычисляемые поля
-    computedState: ComputedCardState;
-}
-
 // Интерфейс для параметров алгоритма FSRS
 export interface FSRSParameters {
     // Параметры алгоритма (используются фиксированные веса из библиотеки rs-fsrs)
@@ -110,35 +102,6 @@ export interface FSRSSettings {
 
     // Значок статус-бара
     status_bar_icon: string;
-}
-
-// Интерфейс для результатов повторения карточки
-export interface FSRSReviewResult {
-    card: FSRSCard;
-    rating: FSRSRating;
-    review_time: string; // ISO 8601 строка
-    next_review_dates: {
-        again?: string;
-        hard?: string;
-        good?: string;
-        easy?: string;
-    };
-}
-
-// Интерфейс для статистики FSRS
-export interface FSRSStatistics {
-    total_cards: number;
-    cards_for_review: number;
-    cards_by_state: {
-        new: number;
-        learning: number;
-        review: number;
-        relearning: number;
-    };
-    average_stability: number;
-    average_difficulty: number;
-    average_retrievability: number;
-    completion_rate: number;
 }
 
 // Результат парсинга frontmatter

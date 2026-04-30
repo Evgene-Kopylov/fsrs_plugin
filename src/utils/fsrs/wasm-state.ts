@@ -75,33 +75,6 @@ export function isCardDue(
     }
 }
 
-/** Получает извлекаемость карточки через WASM */
-export function getCardRetrievability(
-    card: ModernFSRSCard,
-    settings: FSRSSettings,
-    now: Date = new Date(),
-): number {
-    try {
-        const {
-            cardJson,
-            nowStr,
-            parametersJson,
-            defaultStability,
-            defaultDifficulty,
-        } = prepareCommonArgs(card, settings, now);
-        const retJson = wasm.get_retrievability(
-            cardJson,
-            nowStr,
-            parametersJson,
-            defaultStability,
-            defaultDifficulty,
-        );
-        return JSON.parse(retJson) as number;
-    } catch {
-        return 1.0;
-    }
-}
-
 /** Возвращает историю состояний карточки по всем повторениям через WASM */
 export function computeCardHistory(
     card: ModernFSRSCard,

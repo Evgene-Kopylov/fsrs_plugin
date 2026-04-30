@@ -4,16 +4,18 @@ import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from
 import {
     reviewCurrentCard,
     reviewCardByPath,
+} from "./commands/review/review-card";
+import {
     deleteLastReview,
     deleteLastReviewCurrentCard,
-} from "./commands/review";
+} from "./commands/review/delete-last-review";
 
 import { ReviewButtonRenderer } from "./ui/review-button-renderer";
 import { FsrsTableRenderer } from "./ui/fsrs-table-renderer";
 import { StatusBarManager } from "./ui/status-bar-manager";
 
-import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings";
-import { FsrsSettingTab } from "./settings";
+import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings/types";
+import { FsrsSettingTab } from "./settings/settings-core";
 
 import { FsrsCache } from "./utils/fsrs/fsrs-cache";
 import type { CacheCardInput } from "./utils/fsrs/fsrs-cache";
@@ -204,26 +206,30 @@ export default class FsrsPlugin extends Plugin {
     }
 
     /**
-     * Сканирование всех markdown-файлов хранилища.
+     * Сканирование всех markdown-файлов хранилища с отдачей управления event loop.
      * Читает файлы, парсит frontmatter, вычисляет состояния
      * и отправляет в WASM-кэш через addOrUpdateCards.
+     *
+     * Обрабатывает файлы порциями (CHUNK_SIZE) и между порциями
+     * отдаёт управление через setTimeout(0), чтобы не блокировать event loop.
      */
-    performCacheScan(
+    private async performCacheScanAsync(
         onProgress?: (current: number, total: number) => void,
-    ): void {
+    ): Promise<void> {
         verboseLog("🔍 Начинаю сканирование хранилища...");
         const start = performance.now();
-        const files = this.app.vault
-            .getMarkdownFiles()
-            .sort((a, b) => a.path.localeCompare(b.path));
+        const files = this.app.vault.getMarkdownFiles();
 
         let filteredCount = 0;
         let noFrontmatterCount = 0;
         let skippedCount = 0;
 
+        const CHUNK_SIZE = 500;
         const batch: CacheCardInput[] = [];
 
-        for (const file of files) {
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (!file) continue;
             if (
                 shouldIgnoreFileWithSettings(
                     file.path,
@@ -290,9 +296,26 @@ export default class FsrsPlugin extends Plugin {
             } catch {
                 skippedCount++;
             }
+
+            // Каждые CHUNK_SIZE файлов — отправляем в WASM и отдаём управление event loop
+            if (batch.length >= CHUNK_SIZE) {
+                const result = this.cache.addOrUpdateCards(batch);
+                if (result.errors.length > 0) {
+                    verboseLog(
+                        `Ошибки при добавлении карточек: ${result.errors.join(", ")}`,
+                    );
+                }
+                batch.length = 0;
+                onProgress?.(i + 1, files.length);
+
+                // Отдаём управление, чтобы Obsidian не ругался на долгий setTimeout
+                await new Promise<void>((resolve) =>
+                    activeWindow.setTimeout(resolve, 0),
+                );
+            }
         }
 
-        // Отправляем все карточки в WASM
+        // Отправляем оставшиеся карточки в WASM
         if (batch.length > 0) {
             const result = this.cache.addOrUpdateCards(batch);
             if (result.errors.length > 0) {
@@ -414,7 +437,7 @@ export default class FsrsPlugin extends Plugin {
         }
 
         try {
-            this.performCacheScan();
+            await this.performCacheScanAsync();
         } catch (error) {
             console.error("Ошибка при сканировании хранилища:", error);
         }
