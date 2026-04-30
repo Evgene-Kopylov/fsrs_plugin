@@ -123,8 +123,8 @@ export function registerCommands(plugin: FsrsPlugin): void {
     plugin.addCommand({
         id: "insert-default-table",
         name: commandEmojiText("commands.insert_default_table"),
-        callback: async () => {
-            await insertDefaultTable(plugin.app, plugin);
+        editorCallback: async (editor) => {
+            await insertDefaultTable(plugin.app, plugin, editor);
         },
     });
 }
