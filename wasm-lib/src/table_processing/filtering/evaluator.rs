@@ -179,7 +179,6 @@ mod tests {
     }
 
     #[test]
-
     #[test]
     fn test_evaluate_comparison_less() {
         let card = create_test_card();
@@ -255,5 +254,4 @@ mod tests {
         let result = evaluate_condition(&expr, &card);
         assert!(matches!(result, Err(EvaluationError::UnknownField(_))));
     }
-
 }

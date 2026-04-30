@@ -99,7 +99,7 @@ mod tests {
     fn test_is_valid_table_field() {
         assert!(is_valid_table_field("file"));
         assert!(is_valid_table_field("reps"));
-                assert!(is_valid_table_field("stability"));
+        assert!(is_valid_table_field("stability"));
         assert!(!is_valid_table_field("unknown_field"));
     }
 

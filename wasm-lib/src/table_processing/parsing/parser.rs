@@ -535,7 +535,8 @@ mod tests {
     #[test]
     fn test_parse_mixed_aliases() {
         let result =
-            parse_sql_block(r#"SELECT file as "Имя файла", stability, difficulty as "Задержка""#).unwrap();
+            parse_sql_block(r#"SELECT file as "Имя файла", stability, difficulty as "Задержка""#)
+                .unwrap();
         let params = result.value;
 
         assert_eq!(params.columns.len(), 3);
@@ -796,8 +797,7 @@ mod tests {
     fn test_parse_where_with_order_and_limit() {
         // Комбинация WHERE, ORDER BY и LIMIT
         let result =
-            parse_sql_block("SELECT file, reps WHERE reps > 0 ORDER BY due DESC LIMIT 10")
-                .unwrap();
+            parse_sql_block("SELECT file, reps WHERE reps > 0 ORDER BY due DESC LIMIT 10").unwrap();
         let params = result.value;
 
         assert_eq!(params.columns.len(), 2);
@@ -835,10 +835,9 @@ mod tests {
 #[test]
 fn test_parse_where_after_limit() {
     // WHERE после LIMIT (порядок не должен иметь значения)
-    let result = parse_sql_block(
-        "SELECT file as \"Файл\", reps as \"oDue\", reps LIMIT 10 WHERE reps < 0",
-    )
-    .unwrap();
+    let result =
+        parse_sql_block("SELECT file as \"Файл\", reps as \"oDue\", reps LIMIT 10 WHERE reps < 0")
+            .unwrap();
     let params = result.value;
 
     // Проверяем колонки
