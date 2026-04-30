@@ -1,7 +1,7 @@
 // Модуль для фильтрации файлов FSRS плагина
 // Оптимизирует производительность путем исключения служебных файлов и папок
 
-import type { FsrsPluginSettings } from "../../settings";
+import type { FsrsPluginSettings } from "../../settings/types";
 
 // Паттерны игнорирования файлов и папок по умолчанию (без .obsidian/ — передаётся через configDir)
 export const DEFAULT_IGNORE_PATTERNS = [

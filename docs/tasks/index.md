@@ -60,7 +60,11 @@
 
 ### Уборка мёртвого кода
 
-- [ ] [dead-code-cleanup-2.md](./dead-code-cleanup-2.md) — удаление неиспользуемых функций (вторая волна)
+- [x] [dead-code-cleanup-2.md](./dead-code-cleanup-2.md) — удаление неиспользуемых функций (вторая волна)
+
+### Архитектура
+
+- [x] [remove-barrel-indexes.md](./remove-barrel-indexes.md) — убрать barrel-файлы (index.ts-реэкспорты)
 
 ### Оптимизация
 

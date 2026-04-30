@@ -4,16 +4,18 @@ import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from
 import {
     reviewCurrentCard,
     reviewCardByPath,
+} from "./commands/review/review-card";
+import {
     deleteLastReview,
     deleteLastReviewCurrentCard,
-} from "./commands/review";
+} from "./commands/review/delete-last-review";
 
 import { ReviewButtonRenderer } from "./ui/review-button-renderer";
 import { FsrsTableRenderer } from "./ui/fsrs-table-renderer";
 import { StatusBarManager } from "./ui/status-bar-manager";
 
-import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings";
-import { FsrsSettingTab } from "./settings";
+import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings/types";
+import { FsrsSettingTab } from "./settings/settings-core";
 
 import { FsrsCache } from "./utils/fsrs/fsrs-cache";
 import type { CacheCardInput } from "./utils/fsrs/fsrs-cache";

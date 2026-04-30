@@ -4,7 +4,7 @@ import {
     getNewCardYaml,
     extractFrontmatterWithMatch,
 } from "../utils/fsrs-helper";
-import type { FsrsPluginSettings } from "../settings";
+import type { FsrsPluginSettings } from "../settings/types";
 
 /**
  * Добавляет поля FSRS в новом формате (с reviews) в текущий активный файл

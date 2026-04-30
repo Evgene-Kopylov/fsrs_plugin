@@ -1,6 +1,6 @@
 import { App, Component, TFile, Menu } from "obsidian";
 import type FsrsPlugin from "../main";
-import type { FsrsPluginSettings } from "../settings";
+import type { FsrsPluginSettings } from "../settings/types";
 import type { FSRSRating } from "../interfaces/fsrs";
 import { numberToRating } from "../interfaces/fsrs";
 import {
