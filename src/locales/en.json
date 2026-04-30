@@ -46,27 +46,6 @@
         "insert_review_button": "Insert review button block",
         "insert_default_table": "Insert default fsrs-table"
     },
-    "statusBar": {
-        "loading": "loading...",
-        "no_file": "no file",
-        "not_fsrs": "not FSRS",
-        "due": "due!",
-        "error": "error",
-
-        "next_review": "{date}",
-        "tooltip": {
-            "no_file": "FSRS plugin - no active file",
-            "not_fsrs": "FSRS plugin - current file is not a FSRS card",
-            "due": "FSRS plugin - card is due for review. Click to review.",
-            "error": "FSRS plugin - error updating status",
-            "default": "FSRS plugin - left-click to review, right-click for menu",
-            "next_scheduled": "FSRS Plugin - Next review: {date}",
-            "early_available": "FSRS Plugin - Early review available in {minutes} {noun}. Next scheduled review: {date}"
-        },
-        "menu": {
-            "add_fields": "Add FSRS fields to frontmatter"
-        }
-    },
     "table": {
         "loading": "Scanning vault...",
         "no_cards": "No FSRS cards found",
@@ -214,11 +193,6 @@
             "auto_add_button": {
                 "name": "Auto add review button block under frontmatter",
                 "desc": "Automatically insert review button block after frontmatter when adding FSRS fields. Example: ```fsrs-review-button```"
-            },
-            "status_bar_icon": {
-                "name": "Status bar icon",
-                "desc": "Emoji or icon shown in status bar (e.g., 🔄, 📚, ⏰).",
-                "placeholder": "🔄"
             },
             "verbose_logging": {
                 "name": "Verbose logging",

@@ -12,7 +12,7 @@ import { insertDefaultTable } from "./add-default-table";
 
 /** Карта эмодзи для каждой команды (не зависят от локали) */
 const COMMAND_EMOJIS: Record<string, string> = {
-    add_fsrs_fields: "➕",
+    add_fsrs_fields: "＋",
     review_current_card: "✓",
     delete_last_review: "X",
     show_fsrs_help: "?",
