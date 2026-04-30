@@ -66,14 +66,14 @@
         "review_button_exists": "Блок кнопки повторения уже существует в этом файле"
     },
     "commands": {
-        "add_fsrs_fields": "Добавить поля FSRS в шапку файла",
-        "find_fsrs_cards": "Найти карточки для повторения",
-        "review_current_card": "Повторить текущую карточку",
-        "delete_last_review": "Удалить последнее повторение карточки",
-        "show_fsrs_help": "Показать справку по синтаксису fsrs-table",
-        "show_review_history": "Показать историю повторений",
-        "insert_review_button": "Вставить блок кнопки повторения",
-        "insert_default_table": "Вставить таблицу fsrs-table по умолчанию"
+        "add_fsrs_fields": "✏️ Добавить поля FSRS в шапку файла",
+        "find_fsrs_cards": "🔍 Найти карточки для повторения",
+        "review_current_card": "✅ Повторить текущую карточку",
+        "delete_last_review": "🗑️ Удалить последнее повторение карточки",
+        "show_fsrs_help": "❓ Показать справку по синтаксису fsrs-table",
+        "show_review_history": "📜 Показать историю повторений",
+        "insert_review_button": "➕ Вставить блок кнопки повторения",
+        "insert_default_table": "📊 Вставить таблицу fsrs-table по умолчанию"
     },
     "statusBar": {
         "loading": "загрузка...",

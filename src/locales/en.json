@@ -41,14 +41,14 @@
         "review_button_exists": "Review button block already exists in this file"
     },
     "commands": {
-        "add_fsrs_fields": "Add FSRS fields to frontmatter",
-        "find_fsrs_cards": "Find cards due for review",
-        "review_current_card": "Review current card",
-        "delete_last_review": "Delete last review",
-        "show_fsrs_help": "Show fsrs-table syntax help",
-        "show_review_history": "Show review history",
-        "insert_review_button": "Insert review button block",
-        "insert_default_table": "Insert default fsrs-table"
+        "add_fsrs_fields": "✏️ Add FSRS fields to frontmatter",
+        "find_fsrs_cards": "🔍 Find cards due for review",
+        "review_current_card": "✅ Review current card",
+        "delete_last_review": "🗑️ Delete last review",
+        "show_fsrs_help": "❓ Show fsrs-table syntax help",
+        "show_review_history": "📜 Show review history",
+        "insert_review_button": "➕ Insert review button block",
+        "insert_default_table": "📊 Insert default fsrs-table"
     },
     "statusBar": {
         "loading": "loading...",

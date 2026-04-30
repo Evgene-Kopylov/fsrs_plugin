@@ -49,3 +49,7 @@
 ### Оптимизация
 
 - [x] [optimize-file-filtering.md](./optimize-file-filtering.md) — оптимизация отсева файлов
+
+### UI
+
+- [>] [command-emoji.md](./command-emoji.md) — эмодзи в начале названий команд
