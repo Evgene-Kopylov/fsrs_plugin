@@ -43,7 +43,7 @@ describe("fsrs-table-format pure functions", () => {
     });
 
     describe("createDefaultTableBlock", () => {
-        it("returns correct fsrs-table block without overdue", () => {
+        it("returns correct fsrs-table block", () => {
             const result = createDefaultTableBlock();
             expect(result).toBe(`\`\`\`fsrs-table
 SELECT file, reps, state, due

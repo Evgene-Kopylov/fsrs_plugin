@@ -8,7 +8,7 @@ use std::collections::HashSet;
 /// Колонка таблицы с полем и заголовком
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TableColumn {
-    /// Идентификатор поля (file, reps, overdue, и т.д.)
+    /// Идентификатор поля (file, reps, stability, и т.д.)
     pub field: String,
     /// Заголовок колонки для отображения
     pub title: String,
