@@ -52,4 +52,4 @@
 
 ### UI
 
-- [>] [command-emoji.md](./command-emoji.md) — эмодзи в начале названий команд
+- [x] [command-emoji.md](./command-emoji.md) — эмодзи в начале названий команд
