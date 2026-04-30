@@ -192,7 +192,7 @@ reviews:
 
 ## 🧠 The FSRS Algorithm
 
-**FSRS** is a modern spaced repetition algorithm by Jarrett Ye. Compared to SM-2:
+**FSRS** is a modern spaced repetition algorithm by Jarrett Ye. Implements [FSRS-5](https://github.com/open-spaced-repetition/awesome-fsrs/wiki/The-Algorithm) ([rs-fsrs](https://github.com/open-spaced-repetition/fsrs-rs) v1.2.1). Compared to SM-2:
 
 - Learns memory patterns via machine learning
 - Adapts to your memory speed

@@ -195,6 +195,7 @@ reviews:
 ## 🧠 Алгоритм FSRS
 
 **FSRS** — современный алгоритм интервального повторения от Jarrett Ye.
+Реализация [FSRS-5](https://github.com/open-spaced-repetition/awesome-fsrs/wiki/The-Algorithm) ([rs-fsrs](https://github.com/open-spaced-repetition/fsrs-rs) v1.2.1).
 Отличие от SM-2:
 
 - Изучает паттерны памяти через ML

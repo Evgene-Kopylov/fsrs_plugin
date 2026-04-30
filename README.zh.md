@@ -186,7 +186,7 @@ reviews:
 
 ## 🧠 FSRS 算法
 
-**FSRS** — Jarrett Ye 开发的现代间隔重复算法。
+**FSRS** — Jarrett Ye 开发的现代间隔重复算法。基于 [FSRS-5](https://github.com/open-spaced-repetition/awesome-fsrs/wiki/The-Algorithm) 实现（[rs-fsrs](https://github.com/open-spaced-repetition/fsrs-rs) v1.2.1）。
 与 SM-2 的区别：
 
 - 通过机器学习学习记忆模式
