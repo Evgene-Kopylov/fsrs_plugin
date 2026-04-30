@@ -232,44 +232,44 @@ mod tests {
 
     #[test]
     fn test_expression_comparison() {
-        let expr = Expression::comparison("overdue", ComparisonOp::Greater, Value::Number(0.0));
+        let expr = Expression::comparison("reps", ComparisonOp::Greater, Value::Number(0.0));
 
         assert!(expr.is_comparison());
-        assert_eq!(expr.get_comparison_field(), Some("overdue"));
+        assert_eq!(expr.get_comparison_field(), Some("reps"));
         assert_eq!(expr.get_comparison_operator(), Some(ComparisonOp::Greater));
         assert_eq!(expr.get_comparison_value(), Some(&Value::Number(0.0)));
-        assert_eq!(expr.to_string(), "overdue > 0");
+        assert_eq!(expr.to_string(), "reps > 0");
     }
 
     #[test]
     fn test_expression_logical() {
-        let left = Expression::comparison("overdue", ComparisonOp::Greater, Value::Number(0.0));
+        let left = Expression::comparison("reps", ComparisonOp::Greater, Value::Number(0.0));
         let right = Expression::comparison("reps", ComparisonOp::Less, Value::Number(10.0));
         let expr = Expression::and(left.clone(), right.clone());
 
         assert!(expr.is_logical());
-        assert_eq!(expr.to_string(), "(overdue > 0 AND reps < 10)");
+        assert_eq!(expr.to_string(), "(reps > 0 AND reps < 10)");
     }
 
     #[test]
     fn test_expression_or() {
-        let left = Expression::comparison("overdue", ComparisonOp::Greater, Value::Number(24.0));
+        let left = Expression::comparison("reps", ComparisonOp::Greater, Value::Number(24.0));
         let right =
             Expression::comparison("retrievability", ComparisonOp::Less, Value::Number(0.2));
         let expr = Expression::or(left, right);
 
-        assert_eq!(expr.to_string(), "(overdue > 24 OR retrievability < 0.2)");
+        assert_eq!(expr.to_string(), "(reps > 24 OR retrievability < 0.2)");
     }
 
     #[test]
     fn test_expression_serialization() {
-        let expr = Expression::comparison("overdue", ComparisonOp::Greater, Value::Number(24.5));
+        let expr = Expression::comparison("reps", ComparisonOp::Greater, Value::Number(24.5));
 
         let json = serde_json::to_string(&expr).unwrap();
         let parsed: Expression = serde_json::from_str(&json).unwrap();
 
         assert_eq!(expr, parsed);
-        assert!(json.contains("overdue"));
+        assert!(json.contains("reps"));
         assert!(json.contains(">"));
         assert!(json.contains("24.5"));
     }
@@ -277,7 +277,7 @@ mod tests {
     #[test]
     fn test_complex_expression_serialization() {
         let expr = Expression::and(
-            Expression::comparison("overdue", ComparisonOp::Greater, Value::Number(0.0)),
+            Expression::comparison("reps", ComparisonOp::Greater, Value::Number(0.0)),
             Expression::or(
                 Expression::comparison("retrievability", ComparisonOp::Less, Value::Number(0.3)),
                 Expression::comparison("stability", ComparisonOp::Greater, Value::Number(0.5)),

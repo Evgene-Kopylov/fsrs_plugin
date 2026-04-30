@@ -506,7 +506,7 @@ mod tests {
 
     #[test]
     fn test_parse_simple_select() {
-        let result = parse_sql_block("SELECT file, reps, overdue").unwrap();
+        let result = parse_sql_block("SELECT file, reps, state").unwrap();
         let params = result.value;
 
         assert_eq!(params.columns.len(), 3);
@@ -514,8 +514,8 @@ mod tests {
         assert_eq!(params.columns[0].title, "file");
         assert_eq!(params.columns[1].field, "reps");
         assert_eq!(params.columns[1].title, "reps");
-        assert_eq!(params.columns[2].field, "overdue");
-        assert_eq!(params.columns[2].title, "overdue");
+        assert_eq!(params.columns[2].field, "state");
+        assert_eq!(params.columns[2].title, "state");
         assert_eq!(params.limit, 0);
         assert!(params.sort.is_none());
     }
@@ -535,15 +535,15 @@ mod tests {
     #[test]
     fn test_parse_mixed_aliases() {
         let result =
-            parse_sql_block(r#"SELECT file as "Имя файла", reps, overdue as "Задержка""#).unwrap();
+            parse_sql_block(r#"SELECT file as "Имя файла", stability, difficulty as "Задержка""#).unwrap();
         let params = result.value;
 
         assert_eq!(params.columns.len(), 3);
         assert_eq!(params.columns[0].field, "file");
         assert_eq!(params.columns[0].title, "Имя файла");
-        assert_eq!(params.columns[1].field, "reps");
-        assert_eq!(params.columns[1].title, "reps"); // заголовок по умолчанию
-        assert_eq!(params.columns[2].field, "overdue");
+        assert_eq!(params.columns[1].field, "stability");
+        assert_eq!(params.columns[1].title, "stability"); // заголовок по умолчанию
+        assert_eq!(params.columns[2].field, "difficulty");
         assert_eq!(params.columns[2].title, "Задержка");
     }
 
@@ -701,7 +701,7 @@ mod tests {
 
     #[test]
     fn test_parse_where_simple() {
-        let result = parse_sql_block("SELECT file WHERE overdue > 0").unwrap();
+        let result = parse_sql_block("SELECT file WHERE reps > 0").unwrap();
         let params = result.value;
 
         assert_eq!(params.columns.len(), 1);
@@ -709,7 +709,7 @@ mod tests {
 
         let condition = params.where_condition.unwrap();
         assert!(condition.is_comparison());
-        assert_eq!(condition.get_comparison_field(), Some("overdue"));
+        assert_eq!(condition.get_comparison_field(), Some("reps"));
         assert_eq!(
             condition.get_comparison_operator(),
             Some(ComparisonOp::Greater)
@@ -718,7 +718,7 @@ mod tests {
 
     #[test]
     fn test_parse_where_and() {
-        let result = parse_sql_block("SELECT file WHERE overdue > 0 AND reps < 10").unwrap();
+        let result = parse_sql_block("SELECT file WHERE reps > 0 AND reps < 10").unwrap();
         let params = result.value;
 
         assert!(params.where_condition.is_some());
@@ -743,7 +743,7 @@ mod tests {
     #[test]
     fn test_parse_where_or() {
         let result =
-            parse_sql_block("SELECT file WHERE overdue > 24 OR retrievability < 0.2").unwrap();
+            parse_sql_block("SELECT file WHERE reps > 24 OR retrievability < 0.2").unwrap();
         let params = result.value;
 
         assert!(params.where_condition.is_some());
@@ -768,14 +768,14 @@ mod tests {
     fn test_parse_where_complex_priority() {
         // Проверяем приоритет AND перед OR
         let result =
-            parse_sql_block("SELECT file WHERE overdue > 0 AND reps < 10 OR retrievability < 0.3")
+            parse_sql_block("SELECT file WHERE reps > 0 AND reps < 10 OR retrievability < 0.3")
                 .unwrap();
         let params = result.value;
 
         assert!(params.where_condition.is_some());
         let condition = params.where_condition.unwrap();
 
-        // Должно быть: ((overdue > 0 AND reps < 10) OR retrievability < 0.3)
+        // Должно быть: ((reps > 0 AND reps < 10) OR retrievability < 0.3)
         if let Expression::Logical {
             left,
             operator,
@@ -796,7 +796,7 @@ mod tests {
     fn test_parse_where_with_order_and_limit() {
         // Комбинация WHERE, ORDER BY и LIMIT
         let result =
-            parse_sql_block("SELECT file, reps WHERE overdue > 0 ORDER BY due DESC LIMIT 10")
+            parse_sql_block("SELECT file, reps WHERE reps > 0 ORDER BY due DESC LIMIT 10")
                 .unwrap();
         let params = result.value;
 
@@ -819,14 +819,14 @@ mod tests {
 
     #[test]
     fn test_parse_where_error_invalid_operator() {
-        let result = parse_sql_block("SELECT file WHERE overdue @ 0");
+        let result = parse_sql_block("SELECT file WHERE reps @ 0");
         // Должна быть ошибка синтаксиса из-за неверного оператора
         assert!(result.is_err());
     }
 
     #[test]
     fn test_parse_where_error_missing_value() {
-        let result = parse_sql_block("SELECT file WHERE overdue >");
+        let result = parse_sql_block("SELECT file WHERE reps >");
         // Должна быть ошибка синтаксиса из-за отсутствия значения
         assert!(result.is_err());
     }
@@ -836,7 +836,7 @@ mod tests {
 fn test_parse_where_after_limit() {
     // WHERE после LIMIT (порядок не должен иметь значения)
     let result = parse_sql_block(
-        "SELECT file as \"Файл\", overdue as \"oDue\", reps LIMIT 10 WHERE overdue < 0",
+        "SELECT file as \"Файл\", reps as \"oDue\", reps LIMIT 10 WHERE reps < 0",
     )
     .unwrap();
     let params = result.value;
@@ -845,7 +845,7 @@ fn test_parse_where_after_limit() {
     assert_eq!(params.columns.len(), 3);
     assert_eq!(params.columns[0].field, "file");
     assert_eq!(params.columns[0].title, "Файл");
-    assert_eq!(params.columns[1].field, "overdue");
+    assert_eq!(params.columns[1].field, "reps");
     assert_eq!(params.columns[1].title, "oDue");
     assert_eq!(params.columns[2].field, "reps");
 
@@ -863,7 +863,7 @@ fn test_parse_where_after_limit() {
             operator,
             value,
         } => {
-            assert_eq!(field, "overdue");
+            assert_eq!(field, "reps");
             assert_eq!(operator, ComparisonOp::Less);
             match value {
                 Value::Number(n) => assert_eq!(n, 0.0),
