@@ -66,12 +66,16 @@ pub enum Value {
     /// Числовое значение (целое или с плавающей точкой)
     #[serde(rename = "number")]
     Number(f64),
+    /// Строковое значение (для полей due, state, file)
+    #[serde(rename = "string")]
+    String(String),
 }
 
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Value::Number(n) => write!(f, "{}", n),
+            Value::String(s) => write!(f, "\"{}\"", s),
         }
     }
 }
@@ -82,11 +86,18 @@ impl Value {
         Value::Number(value)
     }
 
+    /// Создает строковое значение
+    #[allow(dead_code)]
+    pub fn string(value: String) -> Self {
+        Value::String(value)
+    }
+
     /// Получает числовое значение, если оно есть (только для тестов)
     #[cfg(test)]
     pub fn as_number(&self) -> Option<f64> {
         match self {
             Value::Number(n) => Some(*n),
+            Value::String(_) => None,
         }
     }
 }
