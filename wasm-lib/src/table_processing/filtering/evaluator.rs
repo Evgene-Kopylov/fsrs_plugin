@@ -166,7 +166,7 @@ fn evaluate_numeric_comparison(
 
 /// Получает числовое значение поля из карточки
 fn get_field_value(field: &str, card: &CardWithComputedFields) -> Result<f64, EvaluationError> {
-    let result = match field {
+    match field {
         "reps" => card
             .reps
             .ok_or_else(|| EvaluationError::MissingField("reps".to_string()))
@@ -187,9 +187,7 @@ fn get_field_value(field: &str, card: &CardWithComputedFields) -> Result<f64, Ev
             .scheduled
             .ok_or_else(|| EvaluationError::MissingField("scheduled".to_string())),
         _ => Err(EvaluationError::UnknownField(field.to_string())),
-    };
-
-    result
+    }
 }
 
 /// Получает строковое значение поля из карточки
@@ -197,7 +195,7 @@ fn get_string_field_value(
     field: &str,
     card: &CardWithComputedFields,
 ) -> Result<String, EvaluationError> {
-    let result = match field {
+    match field {
         "due" => card
             .due
             .clone()
@@ -211,9 +209,7 @@ fn get_string_field_value(
             .clone()
             .ok_or_else(|| EvaluationError::MissingField("file".to_string())),
         _ => Err(EvaluationError::UnknownField(field.to_string())),
-    };
-
-    result
+    }
 }
 
 #[cfg(test)]
