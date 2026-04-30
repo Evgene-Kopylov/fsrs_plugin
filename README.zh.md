@@ -96,7 +96,7 @@ LIMIT 30
 ```fsrs-table
 SELECT file as " ", difficulty as "D",
        stability as "S", retrievability as "R",
-       overdue as "逾期"
+       due as "下次复习"
 LIMIT 20
 ```
 ````

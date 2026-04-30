@@ -116,7 +116,7 @@
         "intro": "Используйте эту справку для настройки блоков fsrs-table в ваших заметках",
         "examples": {
             "heading": "Примеры",
-            "actual": "### Актуальная выборка (просроченные карточки)\n```fsrs-table\nSELECT file as \"Файл\", difficulty as \"D\",\n       stability as \"S\", retrievability as \"R\",\n       reps as \"Повт.\", overdue as \"Просрочка\"\nLIMIT 20\n```",
+            "actual": "### Актуальная выборка (просроченные карточки)",
             "sort": "### Сортировка по полю\n```fsrs-table\nSELECT file as \"Файл\", reps as \"Повт.\", due as \"Следующее повторение\", state as \"Состояние\"\nORDER BY due DESC\nLIMIT 20\n```",
             "full": "### Полная таблица (все поля)\n```fsrs-table\nSELECT file as \"🗎\", difficulty as \"D\", stability as \"S\", retrievability as \"R\", due as \"Дата\", elapsed as \"Прошло\", overdue as \"Проср.\", reps as \"Повт.\", scheduled as \"Запл.\", state as \"Статус\"\nLIMIT 20\n```"
         },

@@ -99,7 +99,7 @@ LIMIT 30
 ```fsrs-table
 SELECT file as " ", difficulty as "D",
        stability as "S", retrievability as "R",
-       overdue as "Проср."
+       due as "Следующее"
 LIMIT 20
 ```
 ````

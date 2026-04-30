@@ -1,6 +1,7 @@
 import { Modal, App, MarkdownRenderer, Component } from "obsidian";
 import { AVAILABLE_FIELDS } from "../utils/fsrs-table-params";
 import { i18n } from "../utils/i18n";
+import { DEFAULT_TABLE_BLOCK } from "../commands/add-default-table";
 
 /**
  * Собирает локализованный текст справки из файлов локализации
@@ -22,6 +23,8 @@ function getLocalizedHelpText(): string {
 ## ${i18n.t("help.examples.heading")}
 
 ${i18n.t("help.examples.actual")}
+
+${DEFAULT_TABLE_BLOCK.trim()}
 
 ${i18n.t("help.examples.sort")}
 
