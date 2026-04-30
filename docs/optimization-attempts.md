@@ -33,3 +33,11 @@
 Та же идея, но в Rust выделена внутренняя функция `compute_card_state_inner`, работающая с уже распарсенными `ModernFsrsCard` и `FsrsParameters`. `compute_cards_state` парсит массив один раз и вызывает inner для каждой карточки без промежуточной сериализации.
 
 **Результат:** Сканирование 3.30-3.32 с — без изменений относительно baseline (3.3 с). Bottleneck не в FFI/сериализации, а в 105k итерациях цикла по файлам (проверка metadataCache).
+
+## 6. Чтение metadataCache из внутреннего Map вместо getFileCache
+
+Вместо 105k вызовов `app.metadataCache.getFileCache(file)` — читать из `(app.metadataCache as any).metadataCache` (внутренний `Map<string, CachedMetadata>`).
+
+**Результат:** Первая попытка — каст в `Map` (сломало). Вторая — каст в `Record`, доступ по `[file.path]` (105k без frontmatter). Третья — `Object.entries`, фильтр .md, итерация по entries (0 карточек). Внутренняя структура `metadataCache` не соответствует публичному API `getFileCache`. Откачено.
+
+**Вывод:** Оптимизация через обход внутренней структуры metadataCache ненадёжна — формат ключей/значений может отличаться в разных версиях Obsidian.
