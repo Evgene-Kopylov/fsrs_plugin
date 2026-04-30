@@ -10,13 +10,34 @@ import { showReviewHistoryForCurrentFile } from "../ui/review-history-modal";
 import { insertReviewButton } from "./add-review-button";
 import { insertDefaultTable } from "./add-default-table";
 
+/** Карта эмодзи для каждой команды (не зависят от локали) */
+const COMMAND_EMOJIS: Record<string, string> = {
+    add_fsrs_fields: "✏️",
+    review_current_card: "✅",
+    delete_last_review: "🗑️",
+    show_fsrs_help: "❓",
+    show_review_history: "📜",
+    insert_review_button: "➕",
+    insert_default_table: "📊",
+};
+
+/**
+ * Собирает полное имя команды из эмодзи и локализованного текста.
+ * @param key — путь в JSON локализации, например "commands.add_fsrs_fields"
+ */
+function commandEmojiText(key: string): string {
+    const cmdKey = key.split(".").pop()!;
+    const emoji = COMMAND_EMOJIS[cmdKey] ?? "";
+    const name = i18n.t(key);
+    return `${emoji} ${name}`;
+}
+
 /**
  * Обновляет имена команд при смене языка без перезагрузки плагина
  */
 export function updateCommandNames(app: App): void {
     const commands = [
         { id: "add-fields", key: "commands.add_fsrs_fields" },
-        { id: "find-cards", key: "commands.find_fsrs_cards" },
         { id: "review-current-card", key: "commands.review_current_card" },
         { id: "delete-last-review", key: "commands.delete_last_review" },
         { id: "show-help", key: "commands.show_fsrs_help" },
@@ -30,7 +51,7 @@ export function updateCommandNames(app: App): void {
         const key = `fsrs:${cmd.id}`;
         const command = commandMap?.get(key);
         if (command) {
-            command.name = i18n.t(cmd.key);
+            command.name = commandEmojiText(cmd.key);
         }
     }
 }
@@ -42,25 +63,16 @@ export function registerCommands(plugin: FsrsPlugin): void {
     // Команда для добавления полей FSRS в текущий файл
     plugin.addCommand({
         id: "add-fields",
-        name: i18n.t("commands.add_fsrs_fields"),
+        name: commandEmojiText("commands.add_fsrs_fields"),
         callback: async () => {
             await plugin.addFsrsFieldsToCurrentFile();
-        },
-    });
-
-    // Команда для поиска карточек, готовых к повторению
-    plugin.addCommand({
-        id: "find-cards",
-        name: i18n.t("commands.find_fsrs_cards"),
-        callback: async () => {
-            await plugin.findCardsForReview();
         },
     });
 
     // Команда для повторения текущей карточки
     plugin.addCommand({
         id: "review-current-card",
-        name: i18n.t("commands.review_current_card"),
+        name: commandEmojiText("commands.review_current_card"),
         callback: async () => {
             await plugin.reviewCurrentCard();
         },
@@ -69,7 +81,7 @@ export function registerCommands(plugin: FsrsPlugin): void {
     // Команда для удаления последнего повторения текущей карточки
     plugin.addCommand({
         id: "delete-last-review",
-        name: i18n.t("commands.delete_last_review"),
+        name: commandEmojiText("commands.delete_last_review"),
         callback: async () => {
             const success = await plugin.deleteLastReviewForCurrentFile();
             if (success) {
@@ -82,7 +94,7 @@ export function registerCommands(plugin: FsrsPlugin): void {
     // Команда для открытия справки по синтаксису fsrs-table
     plugin.addCommand({
         id: "show-help",
-        name: i18n.t("commands.show_fsrs_help"),
+        name: commandEmojiText("commands.show_fsrs_help"),
         callback: () => {
             const modal = new FsrsHelpModal(plugin.app);
             modal.show();
@@ -92,7 +104,7 @@ export function registerCommands(plugin: FsrsPlugin): void {
     // Команда для просмотра истории повторений текущей карточки
     plugin.addCommand({
         id: "show-review-history",
-        name: i18n.t("commands.show_review_history"),
+        name: commandEmojiText("commands.show_review_history"),
         callback: async () => {
             await showReviewHistoryForCurrentFile(plugin);
         },
@@ -101,7 +113,7 @@ export function registerCommands(plugin: FsrsPlugin): void {
     // Команда для вставки блока кнопки повторения после frontmatter
     plugin.addCommand({
         id: "insert-review-button",
-        name: i18n.t("commands.insert_review_button"),
+        name: commandEmojiText("commands.insert_review_button"),
         callback: async () => {
             await insertReviewButton(plugin.app, plugin);
         },
@@ -110,7 +122,7 @@ export function registerCommands(plugin: FsrsPlugin): void {
     // Команда для вставки дефолтного fsrs-table
     plugin.addCommand({
         id: "insert-default-table",
-        name: i18n.t("commands.insert_default_table"),
+        name: commandEmojiText("commands.insert_default_table"),
         callback: async () => {
             await insertDefaultTable(plugin.app, plugin);
         },

@@ -1,7 +1,6 @@
 import { Plugin, TFile, Notice } from "obsidian";
 import { registerCommands } from "./commands/index";
 import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from "./commands/add-fsrs-fields";
-import { findFsrsCards } from "./commands/find-fsrs-cards";
 import {
     reviewCurrentCard,
     reviewCardByPath,
@@ -27,7 +26,6 @@ import {
 } from "./utils/fsrs";
 import type {
     FSRSRating,
-    CachedCard,
     ReviewSession,
     ModernFSRSCard,
 } from "./interfaces/fsrs";
@@ -203,14 +201,6 @@ export default class FsrsPlugin extends Plugin {
             showNotice("notices.wasm_not_ready");
             this.isWasmInitialized = false;
         }
-    }
-
-    /**
-     * Получает карточки с кэшированными состояниями.
-     * Кэш инвалидируется при изменении файлов или настроек.
-     */
-    getCachedCardsWithState(): CachedCard[] {
-        return this.cache.getAll();
     }
 
     /**
@@ -430,15 +420,6 @@ export default class FsrsPlugin extends Plugin {
         }
         this.initialScanCompleted = true;
         this.scanPromise = null;
-    }
-
-    /**
-     * Находит карточки для повторения
-     * Реализация для команды плагина
-     */
-    async findCardsForReview(): Promise<void> {
-        await this.ensureCacheScanned();
-        await findFsrsCards(this);
     }
 
     /**
