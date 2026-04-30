@@ -1,5 +1,6 @@
 import en from "../locales/en.json";
 import ru from "../locales/ru.json";
+import zh from "../locales/zh.json";
 
 interface TranslationObject {
     [key: string]: string | TranslationObject;
@@ -22,6 +23,7 @@ class I18n {
         try {
             const locale = window.moment.locale();
             if (locale === "ru") return "ru";
+            if (locale.startsWith("zh")) return "zh";
             return "en";
         } catch {
             return "en";
@@ -32,6 +34,8 @@ class I18n {
         const resolved = this.resolveLocale(this.currentLocale);
         if (resolved === "ru") {
             this.translations = ru;
+        } else if (resolved === "zh") {
+            this.translations = zh;
         } else {
             this.translations = en;
         }
@@ -62,7 +66,7 @@ class I18n {
      * Первый элемент — "system" (автоопределение из Obsidian).
      */
     static getAvailableLocales(): string[] {
-        return ["system", "en", "ru"];
+        return ["system", "en", "ru", "zh"];
     }
 
     public t(

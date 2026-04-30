@@ -13,6 +13,16 @@
             "cancel": "Cancel"
         }
     },
+    "reviewButton": {
+        "loading": "Loading...",
+        "file_not_found": "File not found",
+        "no_frontmatter": "No frontmatter",
+        "review": "Review",
+        "review_with_rating": "Review: {rating}",
+        "review_card": "Review card",
+        "error_loading": "Loading error",
+        "history_tooltip": "Review history"
+    },
     "notices": {
         "no_active_file": "No active file",
         "no_frontmatter": "File has no frontmatter",
@@ -158,7 +168,8 @@
             "desc": "Select interface language",
             "system": "System (Obsidian language)",
             "en": "English",
-            "ru": "Russian"
+            "ru": "Russian",
+            "zh": "Chinese"
         },
         "fsrs_algorithm": {
             "heading": "FSRS Algorithm",

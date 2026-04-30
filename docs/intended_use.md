@@ -2,6 +2,7 @@
 
 - [🇷🇺](intended_use.ru.md)
 - [🇺🇸](intended_use.md) <
+- [🇨🇳](intended_use.zh.md)
 
 This guide shows how to start using the plugin after installation.
 Everything works inside Obsidian — no external services needed.

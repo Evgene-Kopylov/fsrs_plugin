@@ -13,6 +13,16 @@
             "cancel": "Отмена"
         }
     },
+    "reviewButton": {
+        "loading": "Загрузка...",
+        "file_not_found": "Файл не найден",
+        "no_frontmatter": "Нет frontmatter",
+        "review": "Повторение",
+        "review_with_rating": "Повторение: {rating}",
+        "review_card": "Повторить карточку",
+        "error_loading": "Ошибка загрузки",
+        "history_tooltip": "История повторений"
+    },
     "history": {
         "title": "История повторений: {file}",
         "file_label": "Файл:",
@@ -158,7 +168,8 @@
             "desc": "Выберите язык интерфейса",
             "system": "Системный (язык Obsidian)",
             "en": "Английский",
-            "ru": "Русский"
+            "ru": "Русский",
+            "zh": "Китайский"
         },
         "fsrs_algorithm": {
             "heading": "Алгоритм FSRS",
