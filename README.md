@@ -11,6 +11,7 @@ The plugin turns your notes into FSRS-based flashcards for effective memorizatio
 [![Rust](https://img.shields.io/badge/Rust-000000.svg?&logo=Rust&logoColor=white)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?)](LICENSE)
 [![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
+[![DeepSeek](https://img.shields.io/badge/AI-DeepSeek-536DFE.svg)](https://deepseek.com)
 
 ## 📋 Table of Contents
 
@@ -295,6 +296,7 @@ Full text: [LICENSE](LICENSE)
 - **Jarrett Ye** — author of the FSRS algorithm
 - **Obsidian Community** — inspiration and support
 - **Rust Community** — WASM tooling
+- **DeepSeek** — a powerful and convenient development tool (code, refactoring, localization)
 - **All contributors** — improvements and bug reports
 
 ## 📚 Additional Resources
