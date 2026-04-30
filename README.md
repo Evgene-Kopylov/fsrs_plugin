@@ -294,7 +294,7 @@ Full text: [LICENSE](LICENSE)
 
 ## 🙏 Acknowledgements
 
-- **Jarrett Ye** — author of the FSRS algorithm
+- **Jarrett Ye (叶峻峣)** — author of the FSRS algorithm
 - **Obsidian Community** — inspiration and support
 - **Rust Community** — WASM tooling
 - **DeepSeek** — a powerful and convenient development tool (code, refactoring, localization)

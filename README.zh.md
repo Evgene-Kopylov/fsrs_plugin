@@ -295,7 +295,7 @@ npm run build
 
 ## 🙏 致谢
 
-- **Jarrett Ye** — FSRS 算法作者
+- **Jarrett Ye (叶峻峣)** — FSRS 算法作者
 - **Obsidian 社区** — 灵感与支持
 - **Rust 社区** — WASM 工具
 - **DeepSeek** — 强大且便捷的开发工具（代码、重构、本地化）
