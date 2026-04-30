@@ -36,8 +36,9 @@ export class FsrsSettingTab extends PluginSettingTab {
                     .addOption("system", i18n.t("settings.language.system"))
                     .addOption("en", i18n.t("settings.language.en"))
                     .addOption("ru", i18n.t("settings.language.ru"))
+                    .addOption("zh", i18n.t("settings.language.zh"))
                     .setValue(this.plugin.settings.language || "system")
-                    .onChange(async (value: "system" | "en" | "ru") => {
+                    .onChange(async (value: "system" | "en" | "ru" | "zh") => {
                         this.plugin.settings.language = value;
                         await this.plugin.saveSettings();
                         if (value === "system") {
