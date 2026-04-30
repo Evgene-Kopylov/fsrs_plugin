@@ -13,7 +13,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?&logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/)
 [![Rust](https://img.shields.io/badge/Rust-000000.svg?&logo=Rust&logoColor=white)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?)](LICENSE)
-[![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
+[![pipeline status](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/badges/main/pipeline.svg)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/commits/main)
 [![DeepSeek](https://img.shields.io/badge/AI-DeepSeek-536DFE.svg)](https://deepseek.com)
 
 ## 📋 Содержание
@@ -242,7 +242,7 @@ reviews:
 
 Проект использует GitLab CI/CD для автоматической сборки, тестирования и релиза:
 
-[![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
+[![pipeline status](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/badges/main/pipeline.svg)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/commits/main)
 
 ### Сборка из исходников
 
