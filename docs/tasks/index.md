@@ -18,54 +18,6 @@
 
 ## Задачи
 
-### Перенос кэша в Rust
-
-- [x] [remove-chunking-generate-table.md](./remove-chunking-generate-table.md) — убрать чанкование из generateTableDOM
-
-### Уборка мёртвого кода
-
-- [x] [dead-code-cleanup.md](./dead-code-cleanup.md) — удаление неиспользуемых WASM-функций, файла wasm-date.ts, константы CARD_SCAN_DEBOUNCE_MS и неиспользуемых внутренних функций Rust
-
-### Настройка перезагрузки при изменении FSRS-параметров
-
-- [x] [reload-notice-on-param-change.md](./reload-notice-on-param-change.md) — notice перезагрузки вместо точечной очистки кэша при изменении `parameters`
-
-### Кнопки сброса для всех настроек
-
-- [x] [add-reset-buttons.md](./add-reset-buttons.md) — кнопка сброса к default у каждой настройки
-
-### Уборка вывода сборки
-
-- [x] [build-output-cleanup.md](./build-output-cleanup.md) — убрать лишний WASM-билд из `build`, сократить лог encode-wasm, понизить logLevel esbuild
-
-### Ленивое сканирование
-
-- [x] [lazy-scan.md](./lazy-scan.md) — сканировать хранилище только по первому запросу, а не при загрузке плагина
-
-### Лимиты выборки
-
-- [x] [query-limits.md](./query-limits.md) — проверить и задокументировать, как работают LIMIT в fsrs-table
-
-### Оптимизация
-
-- [x] [optimize-file-filtering.md](./optimize-file-filtering.md) — оптимизация отсева файлов
-
-### UI
-
-- [x] [command-emoji.md](./command-emoji.md) — эмодзи в начале названий команд
-
-### Диагностика
-
-- [x] [logging-card-diagnostics.md](./logging-card-diagnostics.md) — логирование диагностики карточки
-
-### Уборка мёртвого кода
-
-- [x] [dead-code-cleanup-2.md](./dead-code-cleanup-2.md) — удаление неиспользуемых функций (вторая волна)
-
-### Архитектура
-
-- [x] [remove-barrel-indexes.md](./remove-barrel-indexes.md) — убрать barrel-файлы (index.ts-реэкспорты)
-
 ### Оптимизация
 
 - [ ] [optimize-prepare-common-args.md](./optimize-prepare-common-args.md) — кеширование parametersToJson в prepareCommonArgs
