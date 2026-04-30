@@ -158,7 +158,8 @@
             "desc": "Select interface language",
             "system": "System (Obsidian language)",
             "en": "English",
-            "ru": "Russian"
+            "ru": "Russian",
+            "zh": "Chinese"
         },
         "fsrs_algorithm": {
             "heading": "FSRS Algorithm",

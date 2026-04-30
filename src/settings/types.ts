@@ -2,7 +2,7 @@ import type { FSRSSettings } from "../interfaces/fsrs";
 import { DEFAULT_SETTINGS as DEFAULT_SETTINGS_FROM_CONSTANTS } from "../constants";
 
 export interface FsrsPluginSettings extends FSRSSettings {
-    language: "system" | "en" | "ru";
+    language: "system" | "en" | "ru" | "zh";
     verbose_logging: boolean;
     customButtonLabels?: {
         again: string;
