@@ -13,6 +13,7 @@
 [![Rust](https://img.shields.io/badge/Rust-000000.svg?&logo=Rust&logoColor=white)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?)](LICENSE)
 [![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
+[![DeepSeek](https://img.shields.io/badge/AI-DeepSeek-536DFE.svg)](https://deepseek.com)
 
 ## 📋 Содержание
 
@@ -307,6 +308,7 @@ npm run build
 - **Jarrett Ye** — автор алгоритма FSRS
 - **Сообщество Obsidian** — вдохновение и поддержка
 - **Сообщество Rust** — инструменты WASM
+- **DeepSeek** — мощный и удобный инструмент разработки (код, рефакторинг, локализация)
 - **Все контрибьюторы** — улучшения и баг-репорты
 
 ## 📚 Дополнительные ресурсы
