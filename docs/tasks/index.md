@@ -45,3 +45,7 @@
 ### Лимиты выборки
 
 - [x] [query-limits.md](./query-limits.md) — проверить и задокументировать, как работают LIMIT в fsrs-table
+
+### Оптимизация
+
+- [>] [optimize-file-filtering.md](./optimize-file-filtering.md) — оптимизация отсева файлов

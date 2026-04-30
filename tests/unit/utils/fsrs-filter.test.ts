@@ -5,7 +5,6 @@ import {
     shouldIgnoreFileWithSettings,
     formatIgnorePatterns,
     parseIgnorePatterns,
-    getAllIgnorePatterns,
 } from "../../../src/utils/fsrs/fsrs-filter";
 
 // Mock settings type
@@ -130,21 +129,6 @@ describe("fsrs-filter", () => {
                 ".obsidian/",
                 "*.pdf",
                 "templates/",
-            ]);
-        });
-    });
-
-    describe("getAllIgnorePatterns", () => {
-        it("should combine default, config dir and user patterns", () => {
-            const settings: MockSettings = {
-                ignore_patterns: ["*.pdf", "backup/"],
-            };
-            const all = getAllIgnorePatterns(settings as any, ".obsidian");
-            expect(all).toEqual([
-                ".obsidian/",
-                ...DEFAULT_IGNORE_PATTERNS,
-                "*.pdf",
-                "backup/",
             ]);
         });
     });
