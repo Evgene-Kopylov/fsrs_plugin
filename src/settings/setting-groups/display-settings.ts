@@ -6,7 +6,7 @@ import { DEFAULT_SETTINGS } from "../types";
 
 /**
  * Рендерит группу настроек отображения.
- * Включает настройки: auto_add_review_button, status_bar_icon, verbose_logging.
+ * Включает настройки: auto_add_review_button, verbose_logging.
  */
 export function renderDisplaySettings(
     containerEl: HTMLElement,
@@ -41,37 +41,6 @@ export function renderDisplaySettings(
                     DEFAULT_SETTINGS.auto_add_review_button;
                 autoAddToggle.setValue(DEFAULT_SETTINGS.auto_add_review_button);
                 await plugin.saveSettings();
-            });
-    });
-
-    // status_bar_icon
-    const iconSetting = new Setting(containerEl)
-        .setName(i18n.t("settings.display.status_bar_icon.name"))
-        .setDesc(i18n.t("settings.display.status_bar_icon.desc"));
-
-    let iconText: TextComponent;
-    iconSetting.addText((text) => {
-        iconText = text;
-        text.setPlaceholder(
-            i18n.t("settings.display.status_bar_icon.placeholder"),
-        )
-            .setValue(plugin.settings.status_bar_icon)
-            .onChange(async (value) => {
-                plugin.settings.status_bar_icon = value.trim() || "🔄";
-                await plugin.saveSettings();
-                void plugin.statusBarManager?.updateStatusBar();
-            });
-    });
-
-    iconSetting.addExtraButton((btn) => {
-        btn.setIcon("reset")
-            .setTooltip("Сбросить")
-            .onClick(async () => {
-                plugin.settings.status_bar_icon =
-                    DEFAULT_SETTINGS.status_bar_icon;
-                iconText.setValue(DEFAULT_SETTINGS.status_bar_icon);
-                await plugin.saveSettings();
-                void plugin.statusBarManager?.updateStatusBar();
             });
     });
 

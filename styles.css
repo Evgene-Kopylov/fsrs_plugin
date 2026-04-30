@@ -507,18 +507,6 @@
     opacity: 0.85;
 }
 
-/* Стили для статус-бара FSRS */
-.fsrs-status-bar-item {
-    padding: 0 6px;
-    cursor: pointer;
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
-}
-
-.fsrs-status-bar-item:hover {
-    background-color: var(--background-modifier-hover);
-}
-
 /* Контейнер для кастомных меток кнопок в настройках */
 .fsrs-labels-container {
     display: flex;

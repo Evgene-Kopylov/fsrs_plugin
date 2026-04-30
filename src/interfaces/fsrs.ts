@@ -99,9 +99,6 @@ export interface FSRSSettings {
 
     // Паттерны игнорирования файлов и папок
     ignore_patterns: string[];
-
-    // Значок статус-бара
-    status_bar_icon: string;
 }
 
 // Результат парсинга frontmatter
