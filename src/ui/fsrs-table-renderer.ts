@@ -94,17 +94,20 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         );
 
         try {
+            // Кешируем родительский code block один раз, чтобы избежать forced reflow
+            // при многократных вызовах closest() после мутаций DOM
+            const codeBlockParent = this.getCodeBlockParent();
+
             // Убираем класс ошибки
             this.container.removeClass("fsrs-table-error");
-            const codeBlockParent = this.getCodeBlockParent();
             if (codeBlockParent)
                 codeBlockParent.removeClass("fsrs-table-error");
 
             // Убираем класс «загружено» — блок снова выглядит как обычный code block
-            this.removeLoadedClass();
+            this.removeLoadedClass(codeBlockParent);
 
-            // Показываем loading (перезатирает старый loading из onload при первом вызове)
-            this.showLoadingIndicator();
+            // Показываем loading — очищает контейнер и добавляет индикатор
+            this.showLoadingIndicator(codeBlockParent);
             this.container.classList.add("fsrs-table-loading");
 
             // Парсим SQL блок, если ещё не спарсено
@@ -133,7 +136,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             });
 
             if (result.cards.length === 0) {
-                this.renderEmptyState();
+                this.renderEmptyState(codeBlockParent);
                 return;
             }
 
@@ -158,12 +161,14 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             this.container.classList.remove("fsrs-table-loading");
 
             // Отключаем фон code block — таблица уже отрендерена
-            this.addLoadedClass();
+            this.addLoadedClass(codeBlockParent);
         } catch (error) {
             this.renderErrorState(error);
         } finally {
             const elapsedMs = performance.now() - start;
             const elapsedSec = elapsedMs / 1000;
+            verboseLog(`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`);
+            this.isRendering = false;
             verboseLog(`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`);
             this.isRendering = false;
         }
@@ -183,19 +188,21 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
     }
 
     /** Добавляет класс fsrs-table-loaded на родительский code block */
-    private addLoadedClass() {
-        this.getCodeBlockParent()?.addClass("fsrs-table-loaded");
+    private addLoadedClass(codeBlockParent?: Element | null) {
+        const parent = codeBlockParent ?? this.getCodeBlockParent();
+        parent?.addClass("fsrs-table-loaded");
     }
 
     /** Убирает класс fsrs-table-loaded с родительского code block */
-    private removeLoadedClass() {
-        this.getCodeBlockParent()?.removeClass("fsrs-table-loaded");
+    private removeLoadedClass(codeBlockParent?: Element | null) {
+        const parent = codeBlockParent ?? this.getCodeBlockParent();
+        parent?.removeClass("fsrs-table-loaded");
     }
 
-    private showLoadingIndicator() {
+    private showLoadingIndicator(codeBlockParent?: Element | null) {
         this.container.empty();
         // Пока загружаемся — убираем «загруженный» стиль, блок выглядит как обычный code block
-        this.removeLoadedClass();
+        this.removeLoadedClass(codeBlockParent);
         const loadingDiv = this.container.createDiv({
             cls: "fsrs-table-loading",
         });
@@ -204,10 +211,10 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         });
     }
 
-    private renderEmptyState() {
+    private renderEmptyState(codeBlockParent?: Element | null) {
         this.container.empty();
         // Пустое состояние — тоже загружено, фон code block не нужен
-        this.addLoadedClass();
+        this.addLoadedClass(codeBlockParent);
         const emptyDiv = this.container.createDiv({ cls: "fsrs-table-empty" });
         emptyDiv.createEl("small", { text: i18n.t("table.no_cards") });
     }
