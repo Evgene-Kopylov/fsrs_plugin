@@ -58,7 +58,6 @@ interface WasmParseResult {
 export const AVAILABLE_FIELDS = new Set([
     "file",
     "reps",
-    "overdue",
     "stability",
     "difficulty",
     "retrievability",

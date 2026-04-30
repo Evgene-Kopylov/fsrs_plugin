@@ -17,7 +17,6 @@ export { parseSqlBlock, AVAILABLE_FIELDS } from "./fsrs-table-params";
 
 // Форматирование значений
 export {
-    formatOverdue,
     extractDisplayName,
     translateState,
     formatFieldValue,

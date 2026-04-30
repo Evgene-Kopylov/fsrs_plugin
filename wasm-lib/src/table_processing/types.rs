@@ -8,7 +8,7 @@ use std::collections::HashSet;
 /// Колонка таблицы с полем и заголовком
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TableColumn {
-    /// Идентификатор поля (file, reps, overdue, и т.д.)
+    /// Идентификатор поля (file, reps, stability, и т.д.)
     pub field: String,
     /// Заголовок колонки для отображения
     pub title: String,
@@ -64,10 +64,9 @@ impl Default for TableParams {
 }
 
 /// Доступные поля для отображения в таблице
-pub static AVAILABLE_FIELDS: [&str; 10] = [
+pub static AVAILABLE_FIELDS: [&str; 9] = [
     "file",
     "reps",
-    "overdue",
     "stability",
     "difficulty",
     "retrievability",
@@ -100,7 +99,6 @@ mod tests {
     fn test_is_valid_table_field() {
         assert!(is_valid_table_field("file"));
         assert!(is_valid_table_field("reps"));
-        assert!(is_valid_table_field("overdue"));
         assert!(is_valid_table_field("stability"));
         assert!(!is_valid_table_field("unknown_field"));
     }

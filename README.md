@@ -11,7 +11,7 @@ The plugin turns your notes into FSRS-based flashcards for effective memorizatio
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?&logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/)
 [![Rust](https://img.shields.io/badge/Rust-000000.svg?&logo=Rust&logoColor=white)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?)](LICENSE)
-[![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
+[![pipeline status](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/badges/main/pipeline.svg)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin)
 [![DeepSeek](https://img.shields.io/badge/AI-DeepSeek-536DFE.svg)](https://deepseek.com)
 
 ## 📋 Table of Contents
@@ -73,7 +73,6 @@ LIMIT 30
 |-------|-------------|-------|
 | `file` | card file name | clickable link |
 | `reps` | number of repetitions completed | |
-| `overdue` | hours overdue | |
 | `stability` | card stability (S) | FSRS parameter |
 | `difficulty` | card difficulty (D) | value from 0 to 10 |
 | `retrievability` | retrievability (R) | probability of correct recall |
@@ -90,13 +89,13 @@ LIMIT 30
 
 **Examples:**
 
-1. Overdue cards with priority:
+1. Urgent cards (by due date):
 
 ````markdown
 ```fsrs-table
 SELECT file as " ", retrievability as "R",
        stability as "S", difficulty as "D",
-       overdue as "Overdue"
+       due as "Next review"
 LIMIT 20
 ```
 ````
@@ -192,7 +191,7 @@ reviews:
 
 ## 🧠 The FSRS Algorithm
 
-**FSRS** is a modern spaced repetition algorithm by Jarrett Ye. Compared to SM-2:
+**FSRS** is a modern spaced repetition algorithm by Jarrett Ye. Implements [FSRS-5](https://github.com/open-spaced-repetition/awesome-fsrs/wiki/The-Algorithm) ([rs-fsrs](https://github.com/open-spaced-repetition/fsrs-rs) v1.2.1). Compared to SM-2:
 
 - Learns memory patterns via machine learning
 - Adapts to your memory speed
@@ -228,8 +227,6 @@ The GitHub repository is a mirror.
 ### Release Pipeline
 
 The project uses GitLab CI/CD for automated build, test, and release:
-
-[![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
 
 ### Building from Source
 

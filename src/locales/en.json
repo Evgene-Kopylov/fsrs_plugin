@@ -64,7 +64,6 @@
         "column_defaults": {
             "file": "File",
             "reps": "Reps",
-            "overdue": "Overdue",
             "stability": "Stability",
             "difficulty": "Difficulty",
             "retrievability": "Retrievability",
@@ -113,19 +112,14 @@
     },
     "help": {
         "title": "Syntax help for fsrs-table",
-        "intro": "Use this help to configure fsrs-table blocks in your notes.",
         "examples": {
-            "heading": "Examples",
-            "actual": "### Actual overdue cards (most urgent)\n```fsrs-table\nSELECT file as \"File\", difficulty as \"D\",\n       stability as \"S\", retrievability as \"R\",\n       reps as \"Reps\", overdue as \"Overdue\"\nLIMIT 20\n```",
-            "sort": "### Sorting by field\n```fsrs-table\nSELECT file as \"File\", reps as \"Reps\", due as \"Next review\", state as \"State\"\nORDER BY due DESC\nLIMIT 20\n```",
-            "full": "### Full table (all fields)\n```fsrs-table\nSELECT file as \"🗎\", difficulty as \"D\", stability as \"S\", retrievability as \"R\", due as \"D\", elapsed as \"E\", overdue as \"O\", reps as \"R\", scheduled as \"S\", state as \"S\"\nLIMIT 20\n```"
+            "actual": "### Default table (most urgent first)"
         },
         "available_fields": {
             "heading": "Available fields (columns)",
             "descriptions": {
                 "file": "File name (clickable link)",
                 "reps": "Number of completed reviews",
-                "overdue": "Hours overdue",
                 "stability": "Stability (S) — FSRS parameter determining growth interval",
                 "difficulty": "Difficulty (D) — value from 0 to 10",
                 "retrievability": "Retrievability (R) — probability of correct answer at this moment",
@@ -141,16 +135,12 @@
             "select_star": "**`SELECT *`** — select all available fields",
             "order_by": "**`ORDER BY field ASC|DESC`** — sort by specified field (ASC - ascending, DESC - descending)",
             "limit": "**`LIMIT number`** — limit number of rows (0 = use plugin default, usually 30)",
-            "select_format": "### SELECT format\n```\nSELECT file, difficulty as \"D\", stability as \"S\", reps as \"Repetitions\"\nSELECT *\n```",
-            "order_by_format": "### ORDER BY format\n```\nORDER BY due DESC\nORDER BY file ASC\n```",
-            "notes": "**Note:** If ORDER BY is not specified, default sorting ORDER BY retrievability ASC is used. Custom ORDER BY overrides default.",
-            "select_desc": "Fields are listed separated by commas after the SELECT keyword.\n- You can use `*` to select all available fields.\n- You can set a custom title using `as \"Title\"`.\n- If no title is specified, the default field name is used.\n- Column order matches the order in the SELECT parameter.",
-            "order_by_desc": "Sort field must be one of the available fields.\n- Sort direction: ASC (ascending) or DESC (descending).\n- If ORDER BY is not specified, default ORDER BY retrievability ASC is used.\n- Custom sort overrides the default sort."
+            "notes": "**Note:** If ORDER BY is not specified, default sorting ORDER BY retrievability ASC is used. Custom ORDER BY overrides default."
         },
         "general": {
             "heading": "General information",
             "description": "The `fsrs-table` block displays a table of FSRS cards with customizable columns and sorting.",
-            "update_note": "Data updates automatically when opening the file.",
+            "update_note": "Data updates automatically.",
             "notes": {
                 "heading": "Notes",
                 "cache": "Table data is cached and refreshed when opening the file.",

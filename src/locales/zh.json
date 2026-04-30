@@ -64,7 +64,6 @@
         "column_defaults": {
             "file": "文件",
             "reps": "复习次数",
-            "overdue": "逾期",
             "stability": "稳定性",
             "difficulty": "难度",
             "retrievability": "可提取性",
@@ -113,19 +112,14 @@
     },
     "help": {
         "title": "fsrs-table 语法帮助",
-        "intro": "使用此帮助来配置笔记中的 fsrs-table 块。",
         "examples": {
-            "heading": "示例",
-            "actual": "### 实际逾期卡片（最紧急）\n```fsrs-table\nSELECT file as \"文件\", difficulty as \"D\",\n       stability as \"S\", retrievability as \"R\",\n       reps as \"复习次数\", overdue as \"逾期\"\nLIMIT 20\n```",
-            "sort": "### 按字段排序\n```fsrs-table\nSELECT file as \"文件\", reps as \"复习次数\", due as \"下次复习\", state as \"状态\"\nORDER BY due DESC\nLIMIT 20\n```",
-            "full": "### 完整表格（所有字段）\n```fsrs-table\nSELECT file as \"🗎\", difficulty as \"D\", stability as \"S\", retrievability as \"R\", due as \"D\", elapsed as \"E\", overdue as \"O\", reps as \"R\", scheduled as \"S\", state as \"S\"\nLIMIT 20\n```"
+            "actual": "### 默认表格（最紧急的在前）"
         },
         "available_fields": {
             "heading": "可用字段（列）",
             "descriptions": {
                 "file": "文件名（可点击链接）",
                 "reps": "已完成的复习次数",
-                "overdue": "逾期小时数",
                 "stability": "稳定性 (S) — FSRS 参数，决定间隔增长",
                 "difficulty": "难度 (D) — 值从 0 到 10",
                 "retrievability": "可提取性 (R) — 当前正确回答的概率",
@@ -141,16 +135,12 @@
             "select_star": "**`SELECT *`** — 选择所有可用字段",
             "order_by": "**`ORDER BY 字段 ASC|DESC`** — 按指定字段排序（ASC - 升序，DESC - 降序）",
             "limit": "**`LIMIT 数字`** — 限制行数（0 = 使用插件默认值，通常为 30）",
-            "select_format": "### SELECT 格式\n```\nSELECT file, difficulty as \"D\", stability as \"S\", reps as \"复习次数\"\nSELECT *\n```",
-            "order_by_format": "### ORDER BY 格式\n```\nORDER BY due DESC\nORDER BY file ASC\n```",
-            "notes": "**注意：** 如果未指定 ORDER BY，默认使用 ORDER BY retrievability ASC 排序。自定义排序会覆盖默认排序。",
-            "select_desc": "字段在 SELECT 关键字后以逗号分隔。\n- 可使用 `*` 选择所有可用字段。\n- 可使用 `as \"标题\"` 设置自定义标题。\n- 如未指定标题，使用默认字段名称。\n- 列顺序与 SELECT 参数中的顺序一致。",
-            "order_by_desc": "排序字段必须是可用字段之一。\n- 排序方向：ASC（升序）或 DESC（降序）。\n- 如果未指定 ORDER BY，默认使用 ORDER BY retrievability ASC 排序。\n- 自定义排序会覆盖默认排序。"
+            "notes": "**注意：** 如果未指定 ORDER BY，默认使用 ORDER BY retrievability ASC 排序。自定义排序会覆盖默认排序。"
         },
         "general": {
             "heading": "基本信息",
             "description": "`fsrs-table` 块显示可自定义列和排序的 FSRS 卡片表格。",
-            "update_note": "打开文件时数据自动更新。",
+            "update_note": "数据自动更新。",
             "notes": {
                 "heading": "备注",
                 "cache": "表格数据已缓存，打开文件时刷新。",

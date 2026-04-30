@@ -224,21 +224,6 @@ pub fn parse_fsrs_parameters_yaml(yaml: String) -> String {
 }
 
 #[wasm_bindgen]
-pub fn get_overdue_hours(due_iso: String, now_iso: String) -> String {
-    sort_functions::get_overdue_hours(due_iso, now_iso)
-}
-
-#[wasm_bindgen]
-pub fn get_hours_until_due(due_iso: String, now_iso: String) -> String {
-    sort_functions::get_hours_until_due(due_iso, now_iso)
-}
-
-#[wasm_bindgen]
-pub fn is_card_overdue(due_iso: String, now_iso: String) -> String {
-    sort_functions::is_card_overdue(due_iso, now_iso)
-}
-
-#[wasm_bindgen]
 pub fn get_card_age_days(card_json: String, now_iso: String) -> String {
     sort_functions::get_card_age_days(card_json, now_iso)
 }

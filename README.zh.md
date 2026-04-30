@@ -11,7 +11,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?&logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/)
 [![Rust](https://img.shields.io/badge/Rust-000000.svg?&logo=Rust&logoColor=white)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?)](LICENSE)
-[![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
+[![pipeline status](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/badges/main/pipeline.svg)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin)
 [![DeepSeek](https://img.shields.io/badge/AI-DeepSeek-536DFE.svg)](https://deepseek.com)
 
 ## 📋 目录
@@ -73,7 +73,6 @@ LIMIT 30
 | ------ | ---------- | ------------ |
 | `file` | 卡片文件名 | 可点击链接 |
 | `reps` | 已完成复习次数 | |
-| `overdue` | 逾期小时数 | |
 | `stability` | 稳定性 (S) | FSRS 参数 |
 | `difficulty` | 难度 (D) | 值从 0 到 10 |
 | `retrievability` | 可提取性 (R) | 正确回答的概率 |
@@ -96,7 +95,7 @@ LIMIT 30
 ```fsrs-table
 SELECT file as " ", difficulty as "D",
        stability as "S", retrievability as "R",
-       overdue as "逾期"
+       due as "下次复习"
 LIMIT 20
 ```
 ````
@@ -186,7 +185,7 @@ reviews:
 
 ## 🧠 FSRS 算法
 
-**FSRS** — Jarrett Ye 开发的现代间隔重复算法。
+**FSRS** — Jarrett Ye 开发的现代间隔重复算法。基于 [FSRS-5](https://github.com/open-spaced-repetition/awesome-fsrs/wiki/The-Algorithm) 实现（[rs-fsrs](https://github.com/open-spaced-repetition/fsrs-rs) v1.2.1）。
 与 SM-2 的区别：
 
 - 通过机器学习学习记忆模式
@@ -229,8 +228,6 @@ GitHub 仓库为镜像。
 ### 发布流水线
 
 项目使用 GitLab CI/CD 进行自动化构建、测试和发布：
-
-[![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
 
 ### 从源码构建
 

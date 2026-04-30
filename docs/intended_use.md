@@ -67,13 +67,13 @@ SELECT file as "Card",
        retrievability as "R",
        stability as "S",
        difficulty as "D",
-       overdue as "Overdue"
+       due as "Due"
 LIMIT 20
 ```
 ````
 
 In reading mode the block renders as a table with all your cards,
-sorted by default (most overdue first). If you have no overdue cards, that column is empty.
+sorted by default (by due date ascending — most urgent first).
 
 ![rendered fsrs-table with cards](gifs/fsrs-table.gif)
 
@@ -97,14 +97,14 @@ This lets you:
 - **Preview** the card content — without opening the note.
 - **Rate** the card (Again / Hard / Good / Easy) —
   right from the popover.
-- **Go through** all overdue cards in minutes —
+- **Go through** all cards in minutes —
   opening them one by one from the table.
 
 The main usage workflow:
 
 1. Open a note with the table (e.g., your daily note).
 2. The table shows all cards and their status.
-3. Hover over an overdue card — the content pops up.
+3. Hover over a card — the content pops up.
 4. Click a rating — the card updates.
 5. Move on to the next one.
 

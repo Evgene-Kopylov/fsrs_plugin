@@ -67,7 +67,6 @@ export interface CountResult {
 interface WasmComputedFields {
     file?: string;
     reps?: number;
-    overdue?: number;
     stability?: number;
     difficulty?: number;
     retrievability?: number;
@@ -221,7 +220,6 @@ export class FsrsCache {
 
         return {
             due: dueDate,
-            overdue: fields.overdue ?? 0,
             stability: fields.stability || 0,
             difficulty: fields.difficulty || 0,
             state: this.normalizeState(fields.state),

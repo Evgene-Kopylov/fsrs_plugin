@@ -358,13 +358,13 @@ mod tests {
 
     #[test]
     fn test_lexer_identifiers() {
-        let mut lexer = SqlLexer::new("file reps overdue stability");
+        let mut lexer = SqlLexer::new("file stability difficulty retrievability");
 
         let tokens = vec![
             ("file", TokenType::Identifier),
-            ("reps", TokenType::Identifier),
-            ("overdue", TokenType::Identifier),
             ("stability", TokenType::Identifier),
+            ("difficulty", TokenType::Identifier),
+            ("retrievability", TokenType::Identifier),
         ];
 
         for (expected_value, expected_type) in tokens {

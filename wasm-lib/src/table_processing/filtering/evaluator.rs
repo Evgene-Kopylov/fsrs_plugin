@@ -112,11 +112,6 @@ fn get_field_value(field: &str, card: &CardWithComputedFields) -> Result<f64, Ev
     log::debug!("get_field_value: field={}", field);
 
     let result = match field {
-        "overdue" => {
-            log::debug!("overdue value: {:?}", card.overdue);
-            card.overdue
-                .ok_or_else(|| EvaluationError::MissingField("overdue".to_string()))
-        }
         "reps" => {
             // reps хранится как Option<u32>, преобразуем в f64
             log::debug!("reps value: {:?}", card.reps);
@@ -172,7 +167,6 @@ mod tests {
         CardWithComputedFields {
             file: Some("test.md".to_string()),
             reps: Some(5),
-            overdue: Some(24.5),
             stability: Some(0.7),
             difficulty: Some(0.3),
             retrievability: Some(0.4),
@@ -185,14 +179,6 @@ mod tests {
     }
 
     #[test]
-    fn test_evaluate_comparison_greater() {
-        let card = create_test_card();
-        let expr = Expression::comparison("overdue", ComparisonOp::Greater, Value::Number(20.0));
-
-        let result = evaluate_condition(&expr, &card).unwrap();
-        assert!(result); // 24.5 > 20.0
-    }
-
     #[test]
     fn test_evaluate_comparison_less() {
         let card = create_test_card();
@@ -224,31 +210,31 @@ mod tests {
     fn test_evaluate_logical_and() {
         let card = create_test_card();
         let expr = Expression::and(
-            Expression::comparison("overdue", ComparisonOp::Greater, Value::Number(20.0)),
+            Expression::comparison("retrievability", ComparisonOp::Greater, Value::Number(0.0)),
             Expression::comparison("reps", ComparisonOp::Less, Value::Number(10.0)),
         );
 
         let result = evaluate_condition(&expr, &card).unwrap();
-        assert!(result); // overdue > 20 AND reps < 10
+        assert!(result); // retrievability > 0 AND reps < 10
     }
 
     #[test]
     fn test_evaluate_logical_or() {
         let card = create_test_card();
         let expr = Expression::or(
-            Expression::comparison("overdue", ComparisonOp::Greater, Value::Number(30.0)),
+            Expression::comparison("stability", ComparisonOp::Greater, Value::Number(1.0)),
             Expression::comparison("retrievability", ComparisonOp::Less, Value::Number(0.5)),
         );
 
         let result = evaluate_condition(&expr, &card).unwrap();
-        assert!(result); // overdue > 30 OR retrievability < 0.5 (второе истинно)
+        assert!(result); // stability > 1 OR retrievability < 0.5 (второе истинно)
     }
 
     #[test]
     fn test_evaluate_complex_expression() {
         let card = create_test_card();
         let expr = Expression::and(
-            Expression::comparison("overdue", ComparisonOp::Greater, Value::Number(0.0)),
+            Expression::comparison("reps", ComparisonOp::Greater, Value::Number(0.0)),
             Expression::or(
                 Expression::comparison("retrievability", ComparisonOp::Less, Value::Number(0.3)),
                 Expression::comparison("stability", ComparisonOp::Greater, Value::Number(0.5)),
@@ -256,7 +242,7 @@ mod tests {
         );
 
         let result = evaluate_condition(&expr, &card).unwrap();
-        assert!(result); // overdue > 0 AND (retrievability < 0.3 OR stability > 0.5)
+        assert!(result); // reps > 0 AND (retrievability < 0.3 OR stability > 0.5)
     }
 
     #[test]
@@ -267,16 +253,5 @@ mod tests {
 
         let result = evaluate_condition(&expr, &card);
         assert!(matches!(result, Err(EvaluationError::UnknownField(_))));
-    }
-
-    #[test]
-    fn test_evaluate_missing_field() {
-        let mut card = create_test_card();
-        card.overdue = None; // Удаляем значение
-
-        let expr = Expression::comparison("overdue", ComparisonOp::Greater, Value::Number(0.0));
-
-        let result = evaluate_condition(&expr, &card);
-        assert!(matches!(result, Err(EvaluationError::MissingField(_))));
     }
 }

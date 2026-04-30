@@ -201,7 +201,6 @@ fn compare_computed_fields(
         "state" => compare_string_fields(a.state.as_ref(), b.state.as_ref()),
         "due" => compare_string_fields(a.due.as_ref(), b.due.as_ref()),
         "reps" => compare_u32_fields(a.reps, b.reps),
-        "overdue" => compare_f64_fields(a.overdue, b.overdue),
         "stability" => compare_f64_fields(a.stability, b.stability),
         "difficulty" => compare_f64_fields(a.difficulty, b.difficulty),
         "retrievability" => compare_f64_fields(a.retrievability, b.retrievability),

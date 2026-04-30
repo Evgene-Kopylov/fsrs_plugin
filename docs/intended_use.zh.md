@@ -66,7 +66,7 @@ SELECT file as "卡片",
        retrievability as "R",
        stability as "S",
        difficulty as "D",
-       overdue as "逾期"
+       due as "下次复习"
 LIMIT 20
 ```
 ````

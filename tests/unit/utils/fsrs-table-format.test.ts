@@ -1,7 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { OVERDUE_HOURS_THRESHOLD } from "../../../src/constants";
 import {
-    formatOverdue,
     extractDisplayName,
     translateState,
     createDefaultTableBlock,
@@ -9,45 +7,6 @@ import {
 } from "../../../src/utils/fsrs-table-format";
 
 describe("fsrs-table-format pure functions", () => {
-    describe("formatOverdue", () => {
-        it('returns "—" for zero or negative hours', () => {
-            expect(formatOverdue(0)).toBe("—");
-            expect(formatOverdue(-5)).toBe("—");
-        });
-
-        it("formats minutes for less than 1 hour", () => {
-            expect(formatOverdue(0.1)).toBe("6 m"); // 0.1 * 60 = 6
-            expect(formatOverdue(0.5)).toBe("30 m");
-            expect(formatOverdue(0.9)).toBe("54 m");
-        });
-
-        it("formats hours for 1 to 72 hours", () => {
-            expect(formatOverdue(1)).toBe("1 h");
-            expect(formatOverdue(2.5)).toBe("3 h"); // округление до целого
-            expect(formatOverdue(12)).toBe("12 h");
-            expect(formatOverdue(23.9)).toBe("24 h"); // округление до целого
-            expect(formatOverdue(48)).toBe("48 h");
-            expect(formatOverdue(72)).toBe("72 h");
-        });
-
-        it("formats hours just below threshold", () => {
-            // ровно на границе, но всё ещё часы (<= порога)
-            expect(formatOverdue(OVERDUE_HOURS_THRESHOLD)).toBe("72 h");
-            expect(formatOverdue(OVERDUE_HOURS_THRESHOLD - 0.1)).toBe("72 h"); // 71.9 → 72 h
-        });
-
-        it("formats days just above threshold", () => {
-            // чуть больше порога — переключаемся на дни
-            expect(formatOverdue(OVERDUE_HOURS_THRESHOLD + 0.1)).toBe("3 d"); // 72.1/24 = 3.004... → 3
-            expect(formatOverdue(OVERDUE_HOURS_THRESHOLD + 1)).toBe("3 d"); // 73/24 = 3.04... → 3
-        });
-
-        it("formats days for more than 72 hours", () => {
-            expect(formatOverdue(100)).toBe("4 d"); // 100/24 = 4.166... → 4
-            expect(formatOverdue(168)).toBe("7 d"); // ровно неделя
-        });
-    });
-
     describe("extractDisplayName", () => {
         it("removes .md extension", () => {
             expect(extractDisplayName("note.md")).toBe("note");
@@ -87,7 +46,7 @@ describe("fsrs-table-format pure functions", () => {
         it("returns correct fsrs-table block", () => {
             const result = createDefaultTableBlock();
             expect(result).toBe(`\`\`\`fsrs-table
-SELECT file, reps, overdue, state, due
+SELECT file, reps, state, due
 LIMIT 20
 \`\`\``);
         });

@@ -28,8 +28,5 @@ export const DEFAULT_SETTINGS: FSRSSettings = {
     ignore_patterns: [],
 };
 
-/** Порог переключения часов → дни: <= порога — часы, > порога — дни */
-export const OVERDUE_HOURS_THRESHOLD = 72;
-
 /** Максимальное количество строк, отображаемых в таблице, если не указан LIMIT в SQL */
 export const DEFAULT_TABLE_DISPLAY_LIMIT = 200;

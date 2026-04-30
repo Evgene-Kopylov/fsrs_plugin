@@ -1,6 +1,7 @@
 import { Modal, App, MarkdownRenderer, Component } from "obsidian";
 import { AVAILABLE_FIELDS } from "../utils/fsrs-table-params";
 import { i18n } from "../utils/i18n";
+import { DEFAULT_TABLE_BLOCK } from "../commands/add-default-table";
 
 /**
  * Собирает локализованный текст справки из файлов локализации
@@ -17,15 +18,11 @@ function getLocalizedHelpText(): string {
         })
         .join("\n");
 
-    return `# ${i18n.t("help.title")}
+    return `${i18n.t("help.examples.actual")}
 
-## ${i18n.t("help.examples.heading")}
-
-${i18n.t("help.examples.actual")}
-
-${i18n.t("help.examples.sort")}
-
-${i18n.t("help.examples.full")}
+\`\`\`\`markdown
+${DEFAULT_TABLE_BLOCK.trim()}
+\`\`\`\`
 
 ## ${i18n.t("help.available_fields.heading")}
 ${fieldsList}
@@ -36,12 +33,6 @@ ${fieldsList}
 - ${i18n.t("help.parameters.select_star")}
 - ${i18n.t("help.parameters.order_by")}
 - ${i18n.t("help.parameters.limit")}
-
-${i18n.t("help.parameters.select_format")}
-${i18n.t("help.parameters.select_desc")}
-
-${i18n.t("help.parameters.order_by_format")}
-${i18n.t("help.parameters.order_by_desc")}
 
 ${i18n.t("help.parameters.notes")}
 
@@ -95,13 +86,6 @@ export class FsrsHelpModal extends Modal {
             cls: "fsrs-help-title",
         });
 
-        // Информационная строка
-        const info = contentEl.createDiv({ cls: "fsrs-help-info" });
-        info.createEl("small", {
-            text: i18n.t("help.intro"),
-        });
-
-        // Контейнер для Markdown контента с прокруткой
         const contentContainer = contentEl.createDiv({
             cls: "fsrs-help-content-container",
         });

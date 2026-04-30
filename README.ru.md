@@ -13,7 +13,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?&logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/)
 [![Rust](https://img.shields.io/badge/Rust-000000.svg?&logo=Rust&logoColor=white)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?)](LICENSE)
-[![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
+[![pipeline status](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/badges/main/pipeline.svg)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin)
 [![DeepSeek](https://img.shields.io/badge/AI-DeepSeek-536DFE.svg)](https://deepseek.com)
 
 ## 📋 Содержание
@@ -76,7 +76,6 @@ LIMIT 30
 | ------ | ---------- | ------------ |
 | `file` | имя файла карточки | кликабельная ссылка |
 | `reps` | количество выполненных повторений | |
-| `overdue` | часов просрочки | |
 | `stability` | стабильность карточки (S) | параметр FSRS |
 | `difficulty` | сложность карточки (D) | значение от 0 до 10 |
 | `retrievability` | извлекаемость (R) | вероятность правильного ответа |
@@ -93,13 +92,13 @@ LIMIT 30
 
 **Примеры:**
 
-1. Просроченные карточки с приоритетом:
+1. Срочные карточки (по дате):
 
 ````markdown
 ```fsrs-table
 SELECT file as " ", difficulty as "D",
        stability as "S", retrievability as "R",
-       overdue as "Проср."
+       due as "Следующее"
 LIMIT 20
 ```
 ````
@@ -195,6 +194,7 @@ reviews:
 ## 🧠 Алгоритм FSRS
 
 **FSRS** — современный алгоритм интервального повторения от Jarrett Ye.
+Реализация [FSRS-5](https://github.com/open-spaced-repetition/awesome-fsrs/wiki/The-Algorithm) ([rs-fsrs](https://github.com/open-spaced-repetition/fsrs-rs) v1.2.1).
 Отличие от SM-2:
 
 - Изучает паттерны памяти через ML
@@ -240,8 +240,6 @@ reviews:
 ### Пайплайн релиза
 
 Проект использует GitLab CI/CD для автоматической сборки, тестирования и релиза:
-
-[![GitLab CI](https://img.shields.io/gitlab/pipeline-status/Evgene-Kopylov/FSRS-plugin?branch=main&)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/pipelines)
 
 ### Сборка из исходников
 

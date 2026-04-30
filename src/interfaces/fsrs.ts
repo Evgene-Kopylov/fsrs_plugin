@@ -60,7 +60,6 @@ export interface HistoricalState {
 // Вычисляемое текущее состояние карточки (не хранится, вычисляется)
 export interface ComputedCardState {
     due: string; // ISO 8601 строка (следующая дата повторения)
-    overdue?: number; // количество часов просрочки (положительное - просрочка)
     stability: number;
     difficulty: number;
     state: FSRSState;
