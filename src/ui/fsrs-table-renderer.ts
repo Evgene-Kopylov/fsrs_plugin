@@ -145,7 +145,8 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 `показано ${shownCount}`,
                 `скрыто ${hiddenCount}`,
             ];
-            if (this.params.where) parts.push(`WHERE ${this.params.where}`);
+            if (this.params.where)
+                parts.push(`WHERE ${JSON.stringify(this.params.where)}`);
             if (this.params.sort)
                 parts.push(
                     `ORDER BY ${this.params.sort.field} ${this.params.sort.direction}`,
