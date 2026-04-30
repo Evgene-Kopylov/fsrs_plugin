@@ -8,7 +8,6 @@ export {
     parametersToJson,
     computeCardState,
     isCardDue,
-    getCardRetrievability,
     addReviewSession,
     getNewCardYaml,
     getCardYamlAfterReview,

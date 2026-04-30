@@ -77,14 +77,6 @@ export interface CachedCard {
     state: ComputedCardState;
 }
 
-// Полная карточка для внутреннего использования
-export interface FSRSCard {
-    // Хранимые данные
-    modernCard: ModernFSRSCard;
-    // Вычисляемые поля
-    computedState: ComputedCardState;
-}
-
 // Интерфейс для параметров алгоритма FSRS
 export interface FSRSParameters {
     // Параметры алгоритма (используются фиксированные веса из библиотеки rs-fsrs)

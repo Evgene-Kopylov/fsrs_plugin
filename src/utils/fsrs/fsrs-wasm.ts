@@ -1,8 +1,14 @@
 // Точка входа для WASM функций FSRS плагина
-// Реэкспортирует все публичные функции из модулей
+// Явные реэкспорты — только то, что используется внешними модулями
 
-export * from "./wasm-core";
-export * from "./wasm-state";
-export * from "./wasm-review";
+export { parametersToJson } from "./wasm-core";
 
-export * from "./wasm-utils";
+export { computeCardState, isCardDue, getNextReviewDates } from "./wasm-state";
+
+export {
+    addReviewSession,
+    getNewCardYaml,
+    getCardYamlAfterReview,
+} from "./wasm-review";
+
+export { base64ToBytes, cardToFsrsYaml } from "./wasm-utils";
