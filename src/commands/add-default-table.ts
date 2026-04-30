@@ -13,7 +13,7 @@ export const DEFAULT_TABLE_BLOCK =
  * Ищет пустую строку ниже курсора (строка из пробелов/табов тоже пустая).
  * Если не найдено — возвращает lines.length (вставка в конец файла).
  */
-function findInsertLine(lines: string[], cursorLine: number): number {
+export function findInsertLine(lines: string[], cursorLine: number): number {
     for (let i = cursorLine; i < lines.length; i++) {
         if (lines[i]?.trim() === "") return i;
     }
