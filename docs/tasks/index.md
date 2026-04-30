@@ -53,3 +53,7 @@
 ### UI
 
 - [x] [command-emoji.md](./command-emoji.md) — эмодзи в начале названий команд
+
+### Диагностика
+
+- [>] [logging-card-diagnostics.md](./logging-card-diagnostics.md) — логирование диагностики карточки

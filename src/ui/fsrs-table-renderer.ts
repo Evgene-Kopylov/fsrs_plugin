@@ -135,6 +135,24 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 errors: result.errors,
             });
 
+            // Диагностика: формируем строку для самоконтроля
+            const effectiveLimit =
+                this.params.limit > 0 ? this.params.limit : 20;
+            const shownCount = Math.min(result.cards.length, effectiveLimit);
+            const hiddenCount = result.total_count - shownCount;
+            const parts: string[] = [
+                `всего ${result.total_count}`,
+                `показано ${shownCount}`,
+                `скрыто ${hiddenCount}`,
+            ];
+            if (this.params.where) parts.push(`WHERE ${this.params.where}`);
+            if (this.params.sort)
+                parts.push(
+                    `ORDER BY ${this.params.sort.field} ${this.params.sort.direction}`,
+                );
+            if (this.params.limit > 0) parts.push(`LIMIT ${this.params.limit}`);
+            verboseLog(`📊 Выборка: ${parts.join(" | ")}`);
+
             if (result.cards.length === 0) {
                 this.renderEmptyState(codeBlockParent);
                 return;
@@ -167,8 +185,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         } finally {
             const elapsedMs = performance.now() - start;
             const elapsedSec = elapsedMs / 1000;
-            verboseLog(`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`);
-            this.isRendering = false;
             verboseLog(`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`);
             this.isRendering = false;
         }
