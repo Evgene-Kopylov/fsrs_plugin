@@ -51,6 +51,69 @@
 - **Heredoc в shell запрещён.** Оболочка /bin/sh не поддерживает << EOF. Для многострочных скриптов использовать python3 -c, либо писать временный .py файл.
 - Обратная совместимость не важна.
 
+## File editing rules (Zed + DeepSeek)
+
+CRITICAL: When using `edit_file` tool:
+
+- NEVER rewrite entire file. Do targeted SEARCH and REPLACE only.
+- `old_string` must include 3-5 lines of surrounding code to ensure uniqueness.
+- `new_string` identical to `old_string` except the exact change.
+- No markdown code blocks, no extra text like "Here is the updated code" inside `new_string`.
+- Multiple unrelated changes → separate `edit_file` calls.
+
+Example:
+
+Task: change `const port = 3000;` to `const port = 8080;`
+
+✅ Correct `old_string`:
+```
+const express = require('express');
+const app = express();
+const port = 3000;
+
+app.listen(port, () => {
+  console.log(`Listening on port ${port}`);
+});
+```
+
+✅ Correct `new_string`:
+```
+const express = require('express');
+const app = express();
+const port = 8080;
+
+app.listen(port, () => {
+  console.log(`Listening on port ${port}`);
+});
+```
+
+❌ Wrong: replacing whole file content.
+
+Если edit_file или любая файловая операция завершается с ошибкой доступа, блокировки или похожей:
+
+Пошаговое восстановление, строго по порядку:
+
+1. Сохранить файл и повторить медленно
+Попробуй ту же самую операцию ещё один раз. 
+Часто блокировка снимается к моменту второй попытки.
+
+2. Подождать и повторить с задержками
+Если вторая попытка тоже провалилась — жди и пробуй снова (до 3 попыток):
+
+- Подождать 2 секунды, повторить.
+
+- Подождать 4 секунды, повторить.
+
+- Подождать 8 секунд, повторить.
+После каждого неудачного раза кратко сообщай: «Файл выглядит заблокированным, повторяю через N секунд…»
+
+Если все повторные попытки исчерпаны, выведи:
+```text
+ОШИБКА: Не удаётся получить доступ к <файл> после нескольких попыток. 
+Вероятно он заблокирован другим процессом. 
+Я прекращаю работу и жду разрешения ситуации.
+```
+
 ## 🔥 Строгое отношение к неиспользуемому коду
 
 - Запрещён код «для обратной совместимости».
