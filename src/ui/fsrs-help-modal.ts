@@ -34,12 +34,6 @@ ${fieldsList}
 - ${i18n.t("help.parameters.order_by")}
 - ${i18n.t("help.parameters.limit")}
 
-${i18n.t("help.parameters.select_format")}
-${i18n.t("help.parameters.select_desc")}
-
-${i18n.t("help.parameters.order_by_format")}
-${i18n.t("help.parameters.order_by_desc")}
-
 ${i18n.t("help.parameters.notes")}
 
 ## ${i18n.t("help.general.heading")}
@@ -92,13 +86,6 @@ export class FsrsHelpModal extends Modal {
             cls: "fsrs-help-title",
         });
 
-        // Информационная строка
-        const info = contentEl.createDiv({ cls: "fsrs-help-info" });
-        info.createEl("small", {
-            text: i18n.t("help.intro"),
-        });
-
-        // Контейнер для Markdown контента с прокруткой
         const contentContainer = contentEl.createDiv({
             cls: "fsrs-help-content-container",
         });

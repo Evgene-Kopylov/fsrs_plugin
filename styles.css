@@ -160,36 +160,13 @@
     background: var(--interactive-accent-hover);
 }
 
-.fsrs-table-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 6px;
-}
-
 .fsrs-header-text {
     font-size: 0.9em;
     font-weight: 600;
     color: var(--text-muted);
 }
 
-.fsrs-help-toggle {
-    /* Отодвигаем от края на 2.5 ширины буквы 'M' текущего шрифта */
-    margin-right: 2.5em;
 
-    /* Делаем максимально бледным */
-    color: var(--text-faint) !important;
-    opacity: 0.5;
-
-    /* Уменьшаем размер относительно родительского текста */
-    font-size: 0.75em;
-    transition: opacity 0.3s ease;
-}
-
-.fsrs-help-toggle:hover {
-    opacity: 0.7;
-    color: var(--text-muted) !important;
-}
 
 /* Стили для модального окна справки */
 .fsrs-help-title {
@@ -197,12 +174,6 @@
     font-weight: 600;
     margin-bottom: 0.5em;
     color: var(--text-normal);
-}
-
-.fsrs-help-info {
-    font-size: 0.9em;
-    color: var(--text-muted);
-    margin-bottom: 1.5em;
 }
 
 .fsrs-help-content-container {
