@@ -116,9 +116,7 @@
         "intro": "使用此帮助来配置笔记中的 fsrs-table 块。",
         "examples": {
             "heading": "示例",
-            "actual": "### 实际逾期卡片（最紧急）",
-            "sort": "### 按字段排序\n```fsrs-table\nSELECT file as \"文件\", reps as \"复习次数\", due as \"下次复习\", state as \"状态\"\nORDER BY due DESC\nLIMIT 20\n```",
-            "full": "### 完整表格（所有字段）\n```fsrs-table\nSELECT file as \"🗎\", difficulty as \"D\", stability as \"S\", retrievability as \"R\", due as \"D\", elapsed as \"E\", overdue as \"O\", reps as \"R\", scheduled as \"S\", state as \"S\"\nLIMIT 20\n```"
+            "actual": "### 实际逾期卡片（最紧急）"
         },
         "available_fields": {
             "heading": "可用字段（列）",

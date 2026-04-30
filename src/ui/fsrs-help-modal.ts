@@ -18,17 +18,11 @@ function getLocalizedHelpText(): string {
         })
         .join("\n");
 
-    return `# ${i18n.t("help.title")}
+    return `${i18n.t("help.examples.actual")}
 
-## ${i18n.t("help.examples.heading")}
-
-${i18n.t("help.examples.actual")}
-
+\`\`\`\`markdown
 ${DEFAULT_TABLE_BLOCK.trim()}
-
-${i18n.t("help.examples.sort")}
-
-${i18n.t("help.examples.full")}
+\`\`\`\`
 
 ## ${i18n.t("help.available_fields.heading")}
 ${fieldsList}

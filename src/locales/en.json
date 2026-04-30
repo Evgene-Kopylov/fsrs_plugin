@@ -116,9 +116,7 @@
         "intro": "Use this help to configure fsrs-table blocks in your notes.",
         "examples": {
             "heading": "Examples",
-            "actual": "### Actual overdue cards (most urgent)",
-            "sort": "### Sorting by field\n```fsrs-table\nSELECT file as \"File\", reps as \"Reps\", due as \"Next review\", state as \"State\"\nORDER BY due DESC\nLIMIT 20\n```",
-            "full": "### Full table (all fields)\n```fsrs-table\nSELECT file as \"🗎\", difficulty as \"D\", stability as \"S\", retrievability as \"R\", due as \"D\", elapsed as \"E\", overdue as \"O\", reps as \"R\", scheduled as \"S\", state as \"S\"\nLIMIT 20\n```"
+            "actual": "### Actual overdue cards (most urgent)"
         },
         "available_fields": {
             "heading": "Available fields (columns)",
