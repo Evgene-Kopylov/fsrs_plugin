@@ -56,4 +56,12 @@
 
 ### Диагностика
 
-- [>] [logging-card-diagnostics.md](./logging-card-diagnostics.md) — логирование диагностики карточки
+- [x] [logging-card-diagnostics.md](./logging-card-diagnostics.md) — логирование диагностики карточки
+
+### Уборка мёртвого кода
+
+- [ ] [dead-code-cleanup-2.md](./dead-code-cleanup-2.md) — удаление неиспользуемых функций (вторая волна)
+
+### Оптимизация
+
+- [ ] [optimize-prepare-common-args.md](./optimize-prepare-common-args.md) — кеширование parametersToJson в prepareCommonArgs

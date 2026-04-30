@@ -13,6 +13,7 @@
         "build:wasm": "npm run wasm",
         "build:skip-wasm": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
         "version": "node version-bump.mjs && git add manifest.json versions.json",
+        "find-dead-exports": "ts-prune -p tsconfig.json | grep '^src/' || true",
         "lint": "eslint .",
         "test": "vitest --run",
         "test:watch": "vitest --watch",
