@@ -20,4 +20,4 @@
 
 ### Оптимизация
 
-- [ ] [optimize-prepare-common-args.md](./optimize-prepare-common-args.md) — кеширование parametersToJson в prepareCommonArgs
+- [ ] [batch-card-state.md](./batch-card-state.md) — батчевый computeCardState в WASM (один FFI-вызов вместо 5000)
