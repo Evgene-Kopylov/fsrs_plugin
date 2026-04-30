@@ -216,9 +216,7 @@ export default class FsrsPlugin extends Plugin {
     ): Promise<void> {
         verboseLog("🔍 Начинаю сканирование хранилища...");
         const start = performance.now();
-        const files = this.app.vault
-            .getMarkdownFiles()
-            .sort((a, b) => a.path.localeCompare(b.path));
+        const files = this.app.vault.getMarkdownFiles();
 
         let filteredCount = 0;
         let noFrontmatterCount = 0;
