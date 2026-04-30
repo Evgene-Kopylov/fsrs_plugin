@@ -13,6 +13,16 @@
             "cancel": "取消"
         }
     },
+    "reviewButton": {
+        "loading": "加载中...",
+        "file_not_found": "文件未找到",
+        "no_frontmatter": "没有 frontmatter",
+        "review": "复习",
+        "review_with_rating": "复习：{rating}",
+        "review_card": "复习卡片",
+        "error_loading": "加载错误",
+        "history_tooltip": "复习历史"
+    },
     "notices": {
         "no_active_file": "没有打开的文件",
         "no_frontmatter": "文件没有 frontmatter",

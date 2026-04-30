@@ -54,7 +54,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
         this.historyButton = createEl("button");
         this.historyButton.className = "fsrs-history-button";
         this.historyButton.textContent = "📊";
-        this.historyButton.title = "История повторений";
+        this.historyButton.title = i18n.t("reviewButton.history_tooltip");
 
         // Добавляем кнопки в контейнер
         this.buttonsContainer.appendChild(this.mainButton);
@@ -92,7 +92,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
     private async updateButtonState(): Promise<void> {
         try {
             if (!this.plugin.isWasmReady()) {
-                this.mainButton.textContent = "Загрузка...";
+                this.mainButton.textContent = i18n.t("reviewButton.loading");
                 this.mainButton.disabled = true;
                 this.updateButtonClass("loading");
                 return;
@@ -100,7 +100,9 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 
             const file = this.plugin.app.vault.getFileByPath(this.sourcePath);
             if (!file) {
-                this.mainButton.textContent = "Файл не найден";
+                this.mainButton.textContent = i18n.t(
+                    "reviewButton.file_not_found",
+                );
                 this.mainButton.disabled = true;
                 this.updateButtonClass("error");
                 return;
@@ -110,7 +112,9 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             const frontmatterMatch = extractFrontmatterWithMatch(content);
 
             if (!frontmatterMatch) {
-                this.mainButton.textContent = "Нет frontmatter";
+                this.mainButton.textContent = i18n.t(
+                    "reviewButton.no_frontmatter",
+                );
                 this.mainButton.disabled = true;
                 this.updateButtonClass("error");
                 return;
@@ -138,24 +142,35 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
                 if (card.reviews.length > 0) {
                     const lastReview = card.reviews[card.reviews.length - 1];
                     if (lastReview) {
-                        this.mainButton.textContent = `Повторение: ${this.translateRating(numberToRating(lastReview.rating))}`;
+                        this.mainButton.textContent = i18n.t(
+                            "reviewButton.review_with_rating",
+                            {
+                                rating: this.translateRating(
+                                    numberToRating(lastReview.rating),
+                                ),
+                            },
+                        );
                     } else {
-                        this.mainButton.textContent = "Повторение";
+                        this.mainButton.textContent = i18n.t(
+                            "reviewButton.review",
+                        );
                     }
                 } else {
-                    this.mainButton.textContent = "Повторение";
+                    this.mainButton.textContent = i18n.t("reviewButton.review");
                 }
                 this.mainButton.disabled = false;
                 this.updateButtonClass("reviewed");
             } else {
                 // Карточка готова к повторению
-                this.mainButton.textContent = "Повторить карточку";
+                this.mainButton.textContent = i18n.t(
+                    "reviewButton.review_card",
+                );
                 this.mainButton.disabled = false;
                 this.updateButtonClass("due");
             }
         } catch (error) {
             console.error("Ошибка при обновлении состояния кнопки:", error);
-            this.mainButton.textContent = "Ошибка загрузки";
+            this.mainButton.textContent = i18n.t("reviewButton.error_loading");
             this.mainButton.disabled = true;
             this.updateButtonClass("error");
         }
