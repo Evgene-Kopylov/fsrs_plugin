@@ -96,7 +96,7 @@ impl Value {
 pub enum Expression {
     /// Простое сравнение: поле оператор значение
     Comparison {
-        /// Имя поля для сравнения (overdue, reps, stability и т.д.)
+        /// Имя поля для сравнения (reps, stability и т.д.)
         field: String,
         /// Оператор сравнения
         operator: ComparisonOp,

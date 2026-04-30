@@ -145,7 +145,7 @@ pub fn is_card_due(
             retrievability: 1.0,
         });
 
-    // Проверяем, просрочена ли карточка
+    // Проверяем, наступило ли время повторения
     let due_date: DateTime<Utc> = parse_datetime_flexible(&state.due).unwrap_or_else(Utc::now);
     let now: DateTime<Utc> = parse_datetime_flexible(&now_str).unwrap_or_else(Utc::now);
 

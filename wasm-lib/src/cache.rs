@@ -242,7 +242,7 @@ pub fn get_cache_size() -> usize {
 ///   "cards": [
 ///     {
 ///       "card_json": "...",
-///       "computed_fields": { "file": "...", "overdue": 0.0, ... }
+///       "computed_fields": { "file": "...", "retrievability": 0.9, ... }
 ///     }
 ///   ],
 ///   "total_count": 10,
