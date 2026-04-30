@@ -113,7 +113,7 @@
     "help": {
         "title": "Syntax help for fsrs-table",
         "examples": {
-            "actual": "### Actual overdue cards (most urgent)"
+            "actual": "### Default table (most urgent first)"
         },
         "available_fields": {
             "heading": "Available fields (columns)",

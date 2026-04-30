@@ -347,7 +347,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
     }
 
     /**
-     * Определяет, является ли карточка просроченной.
+     * Определяет, готова ли карточка к повторению.
      */
     private computeIsDue(state: ComputedCardState, now: Date): boolean {
         if (state.state === "Learning") return true;

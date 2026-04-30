@@ -89,7 +89,7 @@ LIMIT 30
 
 **Examples:**
 
-1. Overdue cards with priority:
+1. Urgent cards (by due date):
 
 ````markdown
 ```fsrs-table

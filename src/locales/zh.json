@@ -113,7 +113,7 @@
     "help": {
         "title": "fsrs-table 语法帮助",
         "examples": {
-            "actual": "### 实际逾期卡片（最紧急）"
+            "actual": "### 默认表格（最紧急的在前）"
         },
         "available_fields": {
             "heading": "可用字段（列）",

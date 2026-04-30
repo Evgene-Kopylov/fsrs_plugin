@@ -19,4 +19,4 @@
 - [x] Убрать `overdue` из README (таблица полей)
 - [x] Убрать `overdue` из createDefaultTableBlock
 - [x] Обновить тесты (убраны formatOverdue, getRussianNoun, formatOverdueTime; добавлены тесты getMinutesSinceLastReview)
-- [ ] Убрать `overdue` из WASM (Rust): get_overdue_hours, is_card_overdue, get_hours_until_due
+- [x] Убрать `overdue` из WASM (Rust): get_overdue_hours, is_card_overdue, get_hours_until_due, поле из CardWithComputedFields, сортировка, фильтрация, CalculationError

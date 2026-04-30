@@ -7,8 +7,7 @@ describe('fsrs-table-params', () => {
       const expectedFields = [
         'file',
         'reps',
-        'overdue',
-        'stability',
+                'stability',
         'difficulty',
         'retrievability',
         'due',
@@ -29,8 +28,7 @@ describe('fsrs-table-params', () => {
       const allowedFields = new Set([
         'file',
         'reps',
-        'overdue',
-        'stability',
+                'stability',
         'difficulty',
         'retrievability',
         'due',
@@ -44,8 +42,8 @@ describe('fsrs-table-params', () => {
       }
     });
 
-    it('should have exactly 10 fields', () => {
-      expect(AVAILABLE_FIELDS.size).toBe(10);
+    it('should have exactly 9 fields', () => {
+      expect(AVAILABLE_FIELDS.size).toBe(9);
     });
   });
 });
