@@ -73,7 +73,6 @@ LIMIT 30
 |-------|-------------|-------|
 | `file` | card file name | clickable link |
 | `reps` | number of repetitions completed | |
-| `overdue` | hours overdue | |
 | `stability` | card stability (S) | FSRS parameter |
 | `difficulty` | card difficulty (D) | value from 0 to 10 |
 | `retrievability` | retrievability (R) | probability of correct recall |

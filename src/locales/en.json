@@ -64,7 +64,6 @@
         "column_defaults": {
             "file": "File",
             "reps": "Reps",
-            "overdue": "Overdue",
             "stability": "Stability",
             "difficulty": "Difficulty",
             "retrievability": "Retrievability",
@@ -121,7 +120,6 @@
             "descriptions": {
                 "file": "File name (clickable link)",
                 "reps": "Number of completed reviews",
-                "overdue": "Hours overdue",
                 "stability": "Stability (S) — FSRS parameter determining growth interval",
                 "difficulty": "Difficulty (D) — value from 0 to 10",
                 "retrievability": "Retrievability (R) — probability of correct answer at this moment",

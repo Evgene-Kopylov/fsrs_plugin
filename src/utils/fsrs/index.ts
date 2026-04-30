@@ -17,17 +17,7 @@ export {
 } from "./fsrs-wasm";
 
 // Экспорт функций работы со временем
-export {
-    getOverdueHours,
-    formatOverdueTime,
-    getRussianNoun,
-    formatLocalDate,
-    isCardOverdue,
-    getHoursUntilDue,
-    formatTimeUntilDue,
-    describeCardState,
-    getMinutesSinceLastReview,
-} from "./fsrs-time";
+export { formatLocalDate, getMinutesSinceLastReview } from "./fsrs-time";
 
 // Экспорт функций фильтрации файлов
 export {

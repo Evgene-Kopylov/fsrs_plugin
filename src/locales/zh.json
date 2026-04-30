@@ -64,7 +64,6 @@
         "column_defaults": {
             "file": "文件",
             "reps": "复习次数",
-            "overdue": "逾期",
             "stability": "稳定性",
             "difficulty": "难度",
             "retrievability": "可提取性",
@@ -121,7 +120,6 @@
             "descriptions": {
                 "file": "文件名（可点击链接）",
                 "reps": "已完成的复习次数",
-                "overdue": "逾期小时数",
                 "stability": "稳定性 (S) — FSRS 参数，决定间隔增长",
                 "difficulty": "难度 (D) — 值从 0 到 10",
                 "retrievability": "可提取性 (R) — 当前正确回答的概率",

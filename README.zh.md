@@ -73,7 +73,6 @@ LIMIT 30
 | ------ | ---------- | ------------ |
 | `file` | 卡片文件名 | 可点击链接 |
 | `reps` | 已完成复习次数 | |
-| `overdue` | 逾期小时数 | |
 | `stability` | 稳定性 (S) | FSRS 参数 |
 | `difficulty` | 难度 (D) | 值从 0 到 10 |
 | `retrievability` | 可提取性 (R) | 正确回答的概率 |
