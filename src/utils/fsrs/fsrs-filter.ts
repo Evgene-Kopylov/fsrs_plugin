@@ -35,17 +35,21 @@ export function shouldIgnoreFile(
         const trimmedPattern = pattern.trim();
         if (trimmedPattern === "") continue;
 
-        // Паттерн для папки (заканчивается на /)
-        if (trimmedPattern.endsWith("/")) {
-            // Проверяем, содержит ли путь эту папку (включая вложенные пути)
-            if (filePath.includes(trimmedPattern)) {
+        // Паттерн для расширения файла (начинается с *.) — самый быстрый (endsWith)
+        if (trimmedPattern.startsWith("*.")) {
+            const extension = trimmedPattern.substring(1); // удаляем *
+            if (filePath.endsWith(extension)) {
                 return true;
             }
         }
-        // Паттерн для расширения файла (начинается с *.)
-        else if (trimmedPattern.startsWith("*.")) {
-            const extension = trimmedPattern.substring(1); // удаляем *
-            if (filePath.endsWith(extension)) {
+        // Паттерн для папки (заканчивается на /)
+        else if (trimmedPattern.endsWith("/")) {
+            // Сначала startsWith — быстрее для корневых папок (templates/file.md),
+            // затем includes — для вложенных (subdir/templates/file.md)
+            if (
+                filePath.startsWith(trimmedPattern) ||
+                filePath.includes(trimmedPattern)
+            ) {
                 return true;
             }
         }
@@ -97,20 +101,4 @@ export function parseIgnorePatterns(patternsString: string): string[] {
         .split("\n")
         .map((p) => p.trim())
         .filter((p) => p !== "");
-}
-
-/**
- * Получает все активные паттерны игнорирования (дефолтные + пользовательские)
- * @param settings Настройки плагина
- * @returns Массив всех активных паттернов
- */
-export function getAllIgnorePatterns(
-    settings: FsrsPluginSettings,
-    configDir: string,
-): string[] {
-    return [
-        `${configDir}/`,
-        ...DEFAULT_IGNORE_PATTERNS,
-        ...settings.ignore_patterns,
-    ];
 }

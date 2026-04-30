@@ -45,3 +45,11 @@
 ### Лимиты выборки
 
 - [x] [query-limits.md](./query-limits.md) — проверить и задокументировать, как работают LIMIT в fsrs-table
+
+### Оптимизация
+
+- [x] [optimize-file-filtering.md](./optimize-file-filtering.md) — оптимизация отсева файлов
+
+### UI
+
+- [>] [command-emoji.md](./command-emoji.md) — эмодзи в начале названий команд

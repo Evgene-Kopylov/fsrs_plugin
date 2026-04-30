@@ -49,9 +49,6 @@
         "card_reviewed_with_next": "Карточка повторена: {rating}\nСледующее повторение: {date}",
         "fsrs_fields_added": "Поля FSRS добавлены в файл",
         "fsrs_fields_exists": "В файле уже есть поля FSRS. Используйте команду повторения для обновления.",
-        "no_cards_for_review": "Нет карточек для повторения",
-        "cards_found": "Найдено {count} карточек для повторения",
-        "fsrs_table_inserted": "Добавлен блок fsrs-table с {count} карточками для повторения",
         "review_deleted": "Последнее повторение удалено",
         "no_reviews_to_delete": "Нет повторений для удаления",
         "error_parsing_card": "Ошибка при парсинге карточки FSRS: {error}",
@@ -67,7 +64,6 @@
     },
     "commands": {
         "add_fsrs_fields": "Добавить поля FSRS в шапку файла",
-        "find_fsrs_cards": "Найти карточки для повторения",
         "review_current_card": "Повторить текущую карточку",
         "delete_last_review": "Удалить последнее повторение карточки",
         "show_fsrs_help": "Показать справку по синтаксису fsrs-table",

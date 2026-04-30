@@ -37,7 +37,6 @@ export {
     shouldIgnoreFileWithSettings,
     formatIgnorePatterns,
     parseIgnorePatterns,
-    getAllIgnorePatterns,
 } from "./fsrs-filter";
 // Экспорт функций работы с frontmatter
 export {
