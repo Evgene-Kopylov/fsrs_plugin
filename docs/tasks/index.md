@@ -48,4 +48,4 @@
 
 ### Оптимизация
 
-- [>] [optimize-file-filtering.md](./optimize-file-filtering.md) — оптимизация отсева файлов
+- [x] [optimize-file-filtering.md](./optimize-file-filtering.md) — оптимизация отсева файлов
