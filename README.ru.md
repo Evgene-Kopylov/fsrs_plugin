@@ -2,6 +2,7 @@
 
 - [🇷🇺](README.ru.md) <
 - [🇺🇸](README.md)
+- [🇨🇳](README.zh.md)
 
 
 **Free Spaced Repetition Scheduler** — современный алгоритм интервального

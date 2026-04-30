@@ -2,6 +2,7 @@
 
 - [🇷🇺](README.ru.md)
 - [🇺🇸](README.md) <
+- [🇨🇳](README.zh.md)
 
 **Free Spaced Repetition Scheduler** — a modern spaced repetition algorithm for Obsidian.
 The plugin turns your notes into FSRS-based flashcards for effective memorization.
