@@ -24,3 +24,37 @@
 3. Если не помогло — подождать 2-4 секунды и повторить (возможна блокировка ОС).
 
 **Статус:** Воспроизводится нестабильно. Лечится чтением файла.
+
+## 2026-05-01: edit_file с режимом edit падает с «VecOrJsonString»
+
+**Проблема:** После некоторого количества успешных правок `edit_file` в режиме `edit` (с параметром `edits` как массив) начинает стабильно падать:
+
+```
+Failed to receive tool input: data did not match any variant of untagged enum VecOrJsonString
+```
+
+Даже no-op правка (old_text == new_text) не проходит. При этом `read_file` работает, `edit_file` в режиме `write` тоже работает.
+
+**Причина:** Реализация `edit_file` в `crates/agent/src/tools/streaming_edit_file_tool.rs` использует `#[serde(untagged)] enum VecOrJsonString<T> { Vec(Vec<T>), String(String) }`. При передаче `edits` как raw JSON-массива сериализация внешнего вызова инструмента иногда ломается (вероятно, из-за спецсимволов в `old_text`/`new_text`).
+
+**Решение:** Передавать `edits` как JSON-строку:
+
+```json
+// Вместо:
+"edits": [{"old_text": "...", "new_text": "..."}]
+
+// Использовать:
+"edits": "[{\"old_text\": \"...\", \"new_text\": \"...\"}]"
+```
+
+Это активирует ветку `VecOrJsonString::String`, где массив парсится из строки внутри инструмента — работает стабильно.
+
+**Признак:** Ошибка `VecOrJsonString` при любом вызове `edit_file` с режимом `edit`. `write` продолжает работать.
+
+**Что делать:** Передавать `edits` как JSON-строку, не как массив:
+
+```json
+"edits": "[{\"old_text\": \"...\", \"new_text\": \"...\"}]"
+```
+
+Это активирует ветку `VecOrJsonString::String` — массив парсится из строки внутри инструмента.

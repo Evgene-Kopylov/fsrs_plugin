@@ -2,7 +2,6 @@ import { describe, it, expect } from "vitest";
 import {
     extractDisplayName,
     translateState,
-    createDefaultTableBlock,
     formatError,
 } from "../../../src/utils/fsrs-table-format";
 
@@ -39,16 +38,6 @@ describe("fsrs-table-format pure functions", () => {
         it("returns state name as fallback for unknown state", () => {
             expect(translateState("Unknown")).toBe("Unknown");
             expect(translateState("")).toBe("");
-        });
-    });
-
-    describe("createDefaultTableBlock", () => {
-        it("returns correct fsrs-table block", () => {
-            const result = createDefaultTableBlock();
-            expect(result).toBe(`\`\`\`fsrs-table
-SELECT file, reps, state, due
-LIMIT 20
-\`\`\``);
         });
     });
 

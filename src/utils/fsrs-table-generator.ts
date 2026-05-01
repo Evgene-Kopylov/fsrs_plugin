@@ -120,7 +120,14 @@ export function generateTableDOM(
         tbody.appendChild(row);
 
         for (const column of params.columns) {
-            const value = formatFieldValue(column.field, card, state, app, now);
+            const value = formatFieldValue(
+                column.field,
+                card,
+                state,
+                app,
+                now,
+                column.date_format,
+            );
             const td = createEl("td");
             td.className = `fsrs-col-${column.field}`;
 

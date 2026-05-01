@@ -259,10 +259,6 @@ pub fn is_valid_table_field(field: &str) -> bool {
     crate::table_processing::types::is_valid_table_field(field)
 }
 
-// ===================================================================
-// Кэш карточек
-// ===================================================================
-
 #[wasm_bindgen]
 pub fn init_cache() {
     cache::init_cache();

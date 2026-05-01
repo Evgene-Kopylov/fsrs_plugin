@@ -56,16 +56,17 @@
 CRITICAL: When using `edit_file` tool:
 
 - NEVER rewrite entire file. Do targeted SEARCH and REPLACE only.
-- `old_string` must include 3-5 lines of surrounding code to ensure uniqueness.
-- `new_string` identical to `old_string` except the exact change.
-- No markdown code blocks, no extra text like "Here is the updated code" inside `new_string`.
+- `old_text` must include 3-5 lines of surrounding code to ensure uniqueness.
+- `new_text` identical to `old_text` except the exact change.
+- No markdown code blocks, no extra text inside `new_text`.
 - Multiple unrelated changes → separate `edit_file` calls.
+- **`edits` передавать как JSON-строку, не как массив.** Иначе VecOrJsonString. Формат: `"edits": "[{\"old_text\": \"...\", \"new_text\": \"...\"}]"`
 
 Example:
 
 Task: change `const port = 3000;` to `const port = 8080;`
 
-✅ Correct `old_string`:
+✅ Correct `old_text`:
 ```
 const express = require('express');
 const app = express();
@@ -76,7 +77,7 @@ app.listen(port, () => {
 });
 ```
 
-✅ Correct `new_string`:
+✅ Correct `new_text`:
 ```
 const express = require('express');
 const app = express();

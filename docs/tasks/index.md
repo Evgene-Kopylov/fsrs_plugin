@@ -24,3 +24,6 @@
 - [x] условие
 - [x] дата следующего просмотра вместо overdue в примере. 
 - [x] возможно, убрать overdue вообще
+
+### Функция date_format для форматирования дат в SELECT
+- [x] date_format для любого поля с датой (due, scheduled) — [date-format-function.md](date-format-function.md)

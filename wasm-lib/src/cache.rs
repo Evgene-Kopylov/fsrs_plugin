@@ -654,6 +654,7 @@ mod tests {
                 field: "file".to_string(),
                 title: "File".to_string(),
                 width: None,
+                date_format: None,
             }],
             limit: 10,
             sort: None,
@@ -856,5 +857,48 @@ mod tests {
         assert_eq!(parsed["total_count"].as_u64().unwrap(), 0);
         assert!(!parsed["errors"].as_array().unwrap().is_empty());
         assert!(parsed["cards"].as_array().unwrap().is_empty());
+    }
+
+    #[test]
+    fn test_query_cards_with_date_format() {
+        let _lock = acquire_test_lock();
+        init_cache();
+
+        // 1. Парсим запрос с date_format
+        let parsed = crate::table_processing::parsing::parse_fsrs_table_block(
+            "SELECT date_format(due, '%d.%m.%Y') AS \"Дата\", file, reps",
+        )
+        .unwrap();
+        let params = parsed.value;
+
+        // Первая колонка — date_format
+        assert_eq!(params.columns.len(), 3);
+        assert_eq!(params.columns[0].field, "due");
+        assert_eq!(params.columns[0].date_format, Some("%d.%m.%Y".to_string()));
+        assert_eq!(params.columns[0].title, "Дата");
+        // Остальные без формата
+        assert_eq!(params.columns[1].field, "file");
+        assert_eq!(params.columns[1].date_format, None);
+        assert_eq!(params.columns[2].field, "reps");
+        assert_eq!(params.columns[2].date_format, None);
+
+        // 2. Добавляем карточку в кэш
+        let item = make_test_item("t_datefmt.md", 2, "2025-03-07T14:30:00Z");
+        let input = serde_json::to_string(&vec![item]).unwrap();
+        add_or_update_cards(&input);
+
+        // 3. Запрашиваем через query_cards
+        let params_json = serde_json::to_string(&params).unwrap();
+        let result = query_cards(&params_json, "2025-03-08T12:00:00Z");
+        let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
+
+        // 4. Проверяем результат
+        assert_eq!(parsed["total_count"].as_u64().unwrap(), 1);
+        let cards = parsed["cards"].as_array().unwrap();
+        assert_eq!(cards.len(), 1);
+
+        // computed_fields.due в Obsidian-формате — готов для TS wasmFieldsToState
+        let due = cards[0]["computed_fields"]["due"].as_str().unwrap();
+        assert!(due.starts_with("2025-03-07_"));
     }
 }

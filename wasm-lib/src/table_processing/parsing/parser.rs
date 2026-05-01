@@ -33,6 +33,8 @@ struct ColumnDefinition {
     field: String,
     /// Алиас (заголовок) колонки (опционально)
     alias: Option<String>,
+    /// Формат даты для date_format (опционально)
+    date_format: Option<String>,
 }
 
 /// Определение сортировки
@@ -218,6 +220,7 @@ impl<'a> ParserState<'a> {
             self.result.columns.push(ColumnDefinition {
                 field: field.to_string(),
                 alias: None,
+                date_format: None,
             });
         }
 
@@ -225,18 +228,25 @@ impl<'a> ParserState<'a> {
     }
 
     /// Парсит определение колонки: identifier [AS string]
+    /// или function(identifier, string) [AS string]
     fn parse_column_definition(&mut self) -> Result<(), ParseError> {
-        // Проверяем, является ли токен идентификатором или звездочкой
         match self.current_token.token_type {
             TokenType::Identifier => {
-                let field = self.current_token.value.clone().to_lowercase();
+                let name = self.current_token.value.clone().to_lowercase();
                 self.advance()?;
+
+                // Проверяем, является ли это вызовом функции: name(...)
+                let (field, date_format) = if self.current_token.is_operator('(') {
+                    self.parse_function_call(&name)?
+                } else {
+                    (name, None)
+                };
 
                 let mut alias = None;
 
                 // Проверяем наличие алиаса
                 if self.current_token.is_keyword("AS") {
-                    self.advance()?; // Пропускаем AS
+                    self.advance()?;
 
                     if self.current_token.token_type != TokenType::String {
                         return Err(ParseError::Syntax(format!(
@@ -249,20 +259,78 @@ impl<'a> ParserState<'a> {
                     self.advance()?;
                 }
 
-                self.result.columns.push(ColumnDefinition { field, alias });
+                self.result.columns.push(ColumnDefinition {
+                    field,
+                    alias,
+                    date_format,
+                });
                 Ok(())
             }
-            TokenType::Operator if self.current_token.value == "*" => {
-                // Звездочка должна обрабатываться в parse_select_clause
-                Err(ParseError::Syntax(
-                    "Звездочка (*) должна быть единственным элементом в SELECT".to_string(),
-                ))
-            }
+            TokenType::Operator if self.current_token.value == "*" => Err(ParseError::Syntax(
+                "Звездочка (*) должна быть единственным элементом в SELECT".to_string(),
+            )),
             _ => Err(ParseError::Syntax(format!(
                 "Ожидается идентификатор поля, получено '{}'",
                 self.current_token.value
             ))),
         }
+    }
+
+    /// Парсит вызов функции: (identifier, string)
+    /// Возвращает (field, date_format)
+    fn parse_function_call(
+        &mut self,
+        func_name: &str,
+    ) -> Result<(String, Option<String>), ParseError> {
+        if func_name != "date_format" {
+            return Err(ParseError::Syntax(format!(
+                "Неизвестная функция: '{}'. Доступна только date_format",
+                func_name
+            )));
+        }
+
+        // Пропускаем (
+        self.advance()?;
+
+        // Первый аргумент: поле с датой
+        if self.current_token.token_type != TokenType::Identifier {
+            return Err(ParseError::Syntax(format!(
+                "Ожидается имя поля (первый аргумент date_format), получено '{}'",
+                self.current_token.value
+            )));
+        }
+        let field = self.current_token.value.clone().to_lowercase();
+        self.advance()?;
+
+        // Запятая
+        if !self.current_token.is_operator(',') {
+            return Err(ParseError::Syntax(format!(
+                "Ожидается запятая после поля, получено '{}'",
+                self.current_token.value
+            )));
+        }
+        self.advance()?;
+
+        // Второй аргумент: строка формата
+        if self.current_token.token_type != TokenType::String {
+            return Err(ParseError::Syntax(format!(
+                "Ожидается строка формата (второй аргумент date_format), получено '{}'",
+                self.current_token.value
+            )));
+        }
+        let format = self.current_token.value.clone();
+        self.advance()?;
+
+        // Закрывающая скобка
+        if !self.current_token.is_operator(')') {
+            return Err(ParseError::Syntax(format!(
+                "Ожидается закрывающая скобка ')', получено '{}'",
+                self.current_token.value
+            )));
+        }
+        self.advance()?;
+
+        Ok((field, Some(format)))
     }
 
     /// Парсит WHERE clause
@@ -461,6 +529,7 @@ impl<'a> ParserState<'a> {
                 field: col_def.field,
                 title,
                 width: None,
+                date_format: col_def.date_format,
             });
         }
 
@@ -879,10 +948,6 @@ fn test_parse_where_after_limit() {
     }
 }
 
-// ============================================================
-// Тесты WHERE со строковыми значениями
-// ============================================================
-
 #[test]
 fn test_parse_where_string_state_equal() {
     // Простое сравнение: state = "review"
@@ -1165,4 +1230,82 @@ fn test_parse_where_string_with_full_query() {
     let sort = params.sort.unwrap();
     assert_eq!(sort.field, "due");
     assert_eq!(sort.direction, SortDirection::Asc);
+}
+
+// Тесты date_format
+
+#[test]
+fn test_parse_date_format_simple() {
+    // SELECT date_format(due, '%Y-%m-%d')
+    let result = parse_sql_block("SELECT date_format(due, '%Y-%m-%d')").unwrap();
+    let params = result.value;
+
+    assert_eq!(params.columns.len(), 1);
+    let col = &params.columns[0];
+    assert_eq!(col.field, "due");
+    assert_eq!(col.date_format, Some("%Y-%m-%d".to_string()));
+}
+
+#[test]
+fn test_parse_date_format_with_alias() {
+    // SELECT date_format(due, '%d.%m.%Y') AS "Дата"
+    let result = parse_sql_block("SELECT date_format(due, '%d.%m.%Y') AS \"Дата\"").unwrap();
+    let params = result.value;
+
+    assert_eq!(params.columns.len(), 1);
+    let col = &params.columns[0];
+    assert_eq!(col.field, "due");
+    assert_eq!(col.date_format, Some("%d.%m.%Y".to_string()));
+    assert_eq!(col.title, "Дата");
+}
+
+#[test]
+fn test_parse_date_format_time_only() {
+    // SELECT date_format(due, '%H:%M')
+    let result = parse_sql_block("SELECT date_format(due, '%H:%M')").unwrap();
+    let params = result.value;
+
+    let col = &params.columns[0];
+    assert_eq!(col.field, "due");
+    assert_eq!(col.date_format, Some("%H:%M".to_string()));
+}
+
+#[test]
+fn test_parse_date_format_mixed_columns() {
+    // SELECT file, date_format(due, '%Y-%m-%d') AS "След.", reps
+    let result =
+        parse_sql_block("SELECT file, date_format(due, '%Y-%m-%d') AS \"След.\", reps").unwrap();
+    let params = result.value;
+
+    assert_eq!(params.columns.len(), 3);
+    // file
+    assert_eq!(params.columns[0].field, "file");
+    assert_eq!(params.columns[0].date_format, None);
+    // date_format
+    assert_eq!(params.columns[1].field, "due");
+    assert_eq!(params.columns[1].date_format, Some("%Y-%m-%d".to_string()));
+    assert_eq!(params.columns[1].title, "След.");
+    // reps
+    assert_eq!(params.columns[2].field, "reps");
+    assert_eq!(params.columns[2].date_format, None);
+}
+
+#[test]
+fn test_parse_date_format_unknown_function() {
+    let result = parse_sql_block("SELECT unknown_func(due, '%Y')");
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_parse_date_format_missing_args() {
+    // Скобка открыта, но аргументы неполные
+    let result = parse_sql_block("SELECT date_format(due");
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_parse_date_format_field_not_identifier() {
+    // Первый аргумент должен быть идентификатором, не строкой
+    let result = parse_sql_block("SELECT date_format('due', '%Y')");
+    assert!(result.is_err());
 }

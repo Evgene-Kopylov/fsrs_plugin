@@ -7,7 +7,7 @@ import { verboseLog } from "../utils/logger";
  * Дефолтный блок fsrs-table
  */
 export const DEFAULT_TABLE_BLOCK =
-    '```fsrs-table\nSELECT file as " ", difficulty as "D",\n       stability as "S", retrievability as "R",\n       due as "Следующее"\nLIMIT 20\n```\n';
+    '```fsrs-table\nSELECT file as " ", difficulty as "D",\n       stability as "S", retrievability as "R",\n       date_format(due, \'%d.%m.%Y\') as "Следующее"\nLIMIT 20\n```\n';
 
 /**
  * Ищет пустую строку ниже курсора (строка из пробелов/табов тоже пустая).

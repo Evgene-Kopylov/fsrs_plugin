@@ -20,7 +20,6 @@ export {
     extractDisplayName,
     translateState,
     formatFieldValue,
-    createDefaultTableBlock,
 } from "./fsrs-table-format";
 
 // Генерация DOM таблицы
