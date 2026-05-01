@@ -15,6 +15,9 @@ pub struct TableColumn {
     /// Ширина колонки (опционально)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub width: Option<String>,
+    /// Формат даты для date_format (опционально, например "%Y-%m-%d")
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub date_format: Option<String>,
 }
 
 /// Направление сортировки
@@ -83,6 +86,7 @@ pub fn default_columns() -> Vec<TableColumn> {
         field: "file".to_string(),
         title: "file".to_string(),
         width: None,
+        date_format: None,
     }]
 }
 
@@ -123,11 +127,13 @@ mod tests {
                     field: "file".to_string(),
                     title: "file".to_string(),
                     width: None,
+                    date_format: None,
                 },
                 TableColumn {
                     field: "reps".to_string(),
                     title: "reps".to_string(),
                     width: None,
+                    date_format: None,
                 },
             ],
             limit: 10,

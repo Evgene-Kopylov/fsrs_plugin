@@ -131,7 +131,9 @@ impl SqlLexer {
         } else if Self::is_digit(current_char) {
             self.read_number(start)?
         } else if current_char == '"' {
-            self.read_string(start)?
+            self.read_string(start, '"')?
+        } else if current_char == '\'' {
+            self.read_string(start, '\'')?
         } else if Self::is_operator_char(current_char) {
             self.read_operator(start)?
         } else {
@@ -225,15 +227,15 @@ impl SqlLexer {
         Ok(Token::new(TokenType::Number, value, start, end))
     }
 
-    /// Читает строку в двойных кавычках
-    fn read_string(&mut self, start: usize) -> Result<Token, String> {
+    /// Читает строку в кавычках (одинарных или двойных)
+    fn read_string(&mut self, start: usize, quote: char) -> Result<Token, String> {
         // Пропускаем открывающую кавычку
         self.position += 1;
         let mut value = String::new();
 
         while self.position < self.length {
             let current_char = self.chars[self.position];
-            if current_char == '"' {
+            if current_char == quote {
                 // Закрывающая кавычка - заканчиваем чтение строки
                 self.position += 1;
                 let end = self.position;
@@ -251,7 +253,7 @@ impl SqlLexer {
         }
 
         // Если достигли конца строки без закрывающей кавычки
-        Err("Незакрытая строка в двойных кавычках".to_string())
+        Err(format!("Незакрытая строка в кавычках '{}'", quote))
     }
 
     /// Читает оператор
@@ -291,7 +293,7 @@ impl SqlLexer {
 
     /// Проверяет, является ли символ оператором
     fn is_operator_char(ch: char) -> bool {
-        matches!(ch, '>' | '<' | '=' | '!' | ',' | '*')
+        matches!(ch, '>' | '<' | '=' | '!' | ',' | '*' | '(' | ')')
     }
 }
 

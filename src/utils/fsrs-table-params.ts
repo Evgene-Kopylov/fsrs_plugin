@@ -23,6 +23,7 @@ export interface TableColumn {
     field: string; // идентификатор поля
     title: string; // заголовок колонки
     width?: string; // ширина колонки (опционально)
+    date_format?: string; // формат даты из date_format() (опционально)
 }
 
 /**
@@ -127,8 +128,10 @@ function convertToTableParams(value: unknown): TableParams | null {
         const field = String(col.field);
         const title = typeof col.title === "string" ? col.title : field;
         const width = typeof col.width === "string" ? col.width : undefined;
+        const date_format =
+            typeof col.date_format === "string" ? col.date_format : undefined;
 
-        columns.push({ field, title, width });
+        columns.push({ field, title, width, date_format });
     }
 
     // Преобразуем сортировку, если есть
