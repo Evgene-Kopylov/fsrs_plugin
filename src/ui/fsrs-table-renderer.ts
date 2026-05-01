@@ -32,6 +32,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
     private params: TableParams | null = null;
     private isRendering = false;
     private sourceText: string;
+    private isFirstRender = true;
 
     constructor(
         private plugin: FsrsPlugin,
@@ -98,17 +99,15 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             // при многократных вызовах closest() после мутаций DOM
             const codeBlockParent = this.getCodeBlockParent();
 
+            // Захватываем позиции старых строк ДО очистки контейнера (для FLIP-анимации)
+            const oldRowRects = this.isFirstRender
+                ? null
+                : this.captureRowPositions();
+
             // Убираем класс ошибки
             this.container.removeClass("fsrs-table-error");
             if (codeBlockParent)
                 codeBlockParent.removeClass("fsrs-table-error");
-
-            // Убираем класс «загружено» — блок снова выглядит как обычный code block
-            this.removeLoadedClass(codeBlockParent);
-
-            // Показываем loading — очищает контейнер и добавляет индикатор
-            this.showLoadingIndicator(codeBlockParent);
-            this.container.classList.add("fsrs-table-loading");
 
             // Парсим SQL блок, если ещё не спарсено
             if (!this.params) {
@@ -155,6 +154,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             verboseLog(`📊 Выборка: ${parts.join(" | ")}`);
 
             if (result.cards.length === 0) {
+                this.isFirstRender = false;
                 this.renderEmptyState(codeBlockParent);
                 return;
             }
@@ -173,13 +173,17 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 now,
             );
 
+            // Применяем FLIP-анимацию для строк (перемещение, появление)
+            if (oldRowRects) {
+                this.applyFlipAnimation(oldRowRects);
+            }
+
             // Добавляем обработчики событий для сортировки
             this.addEventListeners();
 
-            // Восстанавливаем полную прозрачность после обновления
-            this.container.classList.remove("fsrs-table-loading");
+            // Первый рендер завершён
+            this.isFirstRender = false;
 
-            // Отключаем фон code block — таблица уже отрендерена
             this.addLoadedClass(codeBlockParent);
         } catch (error) {
             this.renderErrorState(error);
@@ -331,9 +335,90 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         await this.renderContent();
     }
 
-    // -----------------------------------------------------------------------
-    // Утилиты
-    // -----------------------------------------------------------------------
+    /**
+     * Захватывает позиции и filePath всех строк таблицы до обновления.
+     * Возвращает Map: filePath → DOMRect.
+     */
+    private captureRowPositions(): Map<string, DOMRect> {
+        const rects = new Map<string, DOMRect>();
+        const rows = this.container.querySelectorAll(
+            "tr.fsrs-table-row[data-file-path]",
+        );
+        rows.forEach((row) => {
+            const filePath = (row as HTMLElement).dataset.filePath;
+            if (filePath) {
+                rects.set(filePath, row.getBoundingClientRect());
+            }
+        });
+        return rects;
+    }
+
+    /**
+     * Применяет FLIP-анимацию: строки плавно перемещаются на новые позиции,
+     * а новые строки проявляются (fade in).
+     *
+     * Классический FLIP:
+     * 1. Invert: setCssProps мгновенно сдвигает строки в старые позиции
+     * 2. Reflow: принудительный layout (offsetHeight)
+     * 3. Play: сброс setCssProps → CSS transition оживляет строки
+     *
+     * @param oldRects Позиции строк до обновления (filePath → DOMRect).
+     */
+    private applyFlipAnimation(oldRects: Map<string, DOMRect>): void {
+        const rows = this.container.querySelectorAll(
+            "tr.fsrs-table-row[data-file-path]",
+        );
+        if (rows.length === 0) return;
+
+        const MIN_DELTA = 0.5; // порог заметного смещения
+        const ENTER_OFFSET = 12; // px, начальный сдвиг новой строки
+
+        // Шаг 1 — Invert: мгновенно перемещаем строки в старые позиции
+        const movedRows: HTMLElement[] = [];
+        const newRows: HTMLElement[] = [];
+
+        rows.forEach((row) => {
+            const htmlRow = row as HTMLElement;
+            const filePath = htmlRow.dataset.filePath;
+            if (!filePath) return;
+
+            const newRect = row.getBoundingClientRect();
+            const oldRect = oldRects.get(filePath);
+
+            if (oldRect) {
+                const deltaY = oldRect.top - newRect.top;
+                if (Math.abs(deltaY) > MIN_DELTA) {
+                    // Инверсия: визуально возвращаем строку в старую позицию
+                    htmlRow.setCssProps({
+                        transform: `translateY(${deltaY}px)`,
+                        transition: "none",
+                    });
+                    movedRows.push(htmlRow);
+                }
+            } else {
+                // Новая строка: невидима и чуть ниже
+                htmlRow.setCssProps({
+                    opacity: "0",
+                    transform: `translateY(${ENTER_OFFSET}px)`,
+                    transition: "none",
+                });
+                newRows.push(htmlRow);
+            }
+        });
+
+        // Шаг 2 — принудительный reflow, фиксирует инвертированные позиции
+        if (movedRows.length > 0 || newRows.length > 0) {
+            void this.container.offsetHeight;
+        }
+
+        // Шаг 3 — Play: сброс инлайн-стилей, CSS transition запускает анимацию
+        for (const row of movedRows) {
+            row.setCssProps({ transform: "", transition: "" });
+        }
+        for (const row of newRows) {
+            row.setCssProps({ opacity: "", transform: "", transition: "" });
+        }
+    }
 
     /**
      * Вычисляет isDue для каждой карточки и возвращает массив CardForDisplay.
