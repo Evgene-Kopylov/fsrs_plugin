@@ -112,17 +112,6 @@ export function formatFieldValue(
 }
 
 /**
- * Создает блок fsrs-table по умолчанию для вставки в файл
- * @returns Текст для вставки в блок
- */
-export function createDefaultTableBlock(): string {
-    return `\`\`\`fsrs-table
-SELECT file, reps, state, due
-LIMIT 20
-\`\`\``;
-}
-
-/**
  * Форматирует сообщение об ошибке в стиле Dataview
  * @param errorMessage Сообщение об ошибке
  * @returns Отформатированное сообщение об ошибке

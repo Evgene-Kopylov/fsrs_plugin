@@ -26,4 +26,4 @@
 - [x] возможно, убрать overdue вообще
 
 ### Функция date_format для форматирования дат в SELECT
-- [>] date_format для любого поля с датой (due, scheduled) — [date-format-function.md](date-format-function.md)
+- [x] date_format для любого поля с датой (due, scheduled) — [date-format-function.md](date-format-function.md)
