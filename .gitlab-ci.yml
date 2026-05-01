@@ -185,7 +185,6 @@ release_to_github:
         - apk add --no-cache git curl jq file bash
     script: |
         git fetch --tags
-        git tag --sort=-v:refname | head -n1
         LATEST_TAG=$(git tag --sort=-v:refname | head -n1)
         echo "Последний тег: $LATEST_TAG"
         export VERSION="$LATEST_TAG"
