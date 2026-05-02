@@ -27,3 +27,6 @@
 
 ### Функция date_format для форматирования дат в SELECT
 - [x] date_format для любого поля с датой (due, scheduled) — [date-format-function.md](date-format-function.md)
+
+### Устаревший sourcePath после переименования заметки
+- [>] Хранить TFile вместо строки — [stale-path-after-rename.md](stale-path-after-rename.md)

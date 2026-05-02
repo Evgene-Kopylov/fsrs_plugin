@@ -85,11 +85,15 @@ export default class FsrsPlugin extends Plugin {
                 buttonContainer.className = "fsrs-review-button-container";
                 el.appendChild(buttonContainer);
 
+                // Получаем стабильную ссылку на файл
+                const sourceFile = this.app.vault.getFileByPath(ctx.sourcePath);
+                if (!sourceFile) return;
+
                 // Создаем рендерер кнопки
                 const renderer = new ReviewButtonRenderer(
                     this,
                     buttonContainer,
-                    ctx.sourcePath,
+                    sourceFile,
                 );
                 ctx.addChild(renderer);
             },
