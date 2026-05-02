@@ -134,6 +134,13 @@
     background-color: var(--background-modifier-hover);
 }
 
+/* Анимация строк через FLIP: инверсия через setCssProps, возврат через transition */
+.fsrs-table-row {
+    transition:
+        transform 0.3s ease,
+        opacity 0.3s ease;
+}
+
 .fsrs-buttons-container {
     display: flex;
     align-items: center;
@@ -164,8 +171,6 @@
     font-weight: 600;
     color: var(--text-muted);
 }
-
-
 
 /* Стили для модального окна справки */
 .fsrs-help-title {
