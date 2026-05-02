@@ -1,4 +1,4 @@
-import { MarkdownRenderChild, TAbstractFile } from "obsidian";
+import { MarkdownRenderChild, TAbstractFile, TFile } from "obsidian";
 import {
     parseModernFsrsFromFrontmatter,
     extractFrontmatterWithMatch,
@@ -32,12 +32,12 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
      * Создает новый рендерер кнопки
      * @param plugin - Экземпляр плагина FSRS
      * @param container - Контейнер для кнопки (div элемент)
-     * @param sourcePath - Путь к файлу, в котором находится блок
+     * @param sourceFile - Файл, в котором находится блок (стабильная ссылка TFile)
      */
     constructor(
         private plugin: FsrsPlugin,
         container: HTMLElement,
-        private sourcePath: string,
+        private sourceFile: TFile,
     ) {
         super(container);
 
@@ -98,7 +98,9 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
                 return;
             }
 
-            const file = this.plugin.app.vault.getFileByPath(this.sourcePath);
+            const file = this.plugin.app.vault.getFileByPath(
+                this.sourceFile.path,
+            );
             if (!file) {
                 this.mainButton.textContent = i18n.t(
                     "reviewButton.file_not_found",
@@ -123,7 +125,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             const frontmatter = frontmatterMatch.content;
             const parseResult = parseModernFsrsFromFrontmatter(
                 frontmatter,
-                this.sourcePath,
+                this.sourceFile.path,
             );
 
             if (!parseResult.success || !parseResult.card) {
@@ -269,9 +271,13 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             this.mainButton.disabled = true;
 
             // Проверяем статус карточки перед открытием модального окна
-            const file = this.plugin.app.vault.getFileByPath(this.sourcePath);
+            const file = this.plugin.app.vault.getFileByPath(
+                this.sourceFile.path,
+            );
             if (!file) {
-                showNotice("notices.file_not_found", { path: this.sourcePath });
+                showNotice("notices.file_not_found", {
+                    path: this.sourceFile.path,
+                });
                 await this.updateButtonState();
                 return;
             }
@@ -288,7 +294,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             const frontmatter = frontmatterMatch.content;
             const parseResult = parseModernFsrsFromFrontmatter(
                 frontmatter,
-                this.sourcePath,
+                this.sourceFile.path,
             );
 
             if (!parseResult.success || !parseResult.card) {
@@ -343,7 +349,9 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             }
 
             // Карточка готова к повторению - вызываем стандартный ревью
-            const rating = await this.plugin.reviewCardByPath(this.sourcePath);
+            const rating = await this.plugin.reviewCardByPath(
+                this.sourceFile.path,
+            );
 
             if (rating) {
                 // После успешного ревью сразу обновляем состояние кнопки
@@ -365,7 +373,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
      */
     private setupFileWatcher(): void {
         this.fileChangeHandler = (file: TAbstractFile) => {
-            if (file.path === this.sourcePath) {
+            if (file.path === this.sourceFile.path) {
                 void this.refresh();
             }
         };
@@ -382,7 +390,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             const modal = new ReviewHistoryModal(
                 this.plugin.app,
                 this.plugin,
-                this.sourcePath,
+                this.sourceFile.path,
             );
             await modal.show();
         } catch (error) {
