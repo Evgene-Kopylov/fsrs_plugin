@@ -30,3 +30,6 @@
 
 ### Устаревший sourcePath после переименования заметки
 - [>] Хранить TFile вместо строки — [stale-path-after-rename.md](stale-path-after-rename.md)
+
+### Оптимизация кэша: убрать предсериализованные JSON-строки
+- [>] Убрать `card_json`/`state_json` из CachedCard, сериализовать только результат — [cache-json-strings-optimization.md](cache-json-strings-optimization.md)

@@ -49,36 +49,25 @@ pub fn filter_and_sort_cards_with_states(
         cards.len()
     );
 
-    let mut computed_cards = Vec::new();
+    let mut computed_fields_list: Vec<(CardWithComputedFields, &CardData)> = Vec::new();
 
-    // Обрабатываем каждую пару
+    // Обрабатываем каждую пару — только вычисляем поля, без сериализации
     for (card, state) in cards {
-        // Вычисляем поля из готового состояния
         let computed_fields = calculator::compute_fields_from_state(card, state, now_iso);
-
-        // Сохраняем исходный JSON карточки как строку (для TS)
-        let card_json_str = serde_json::to_string(card).map_err(|e| {
-            FilterError::JsonParseError(format!("Ошибка сериализации карточки: {}", e))
-        })?;
-
-        computed_cards.push(ComputedCard {
-            card_json: card_json_str,
-            computed_fields,
-        });
+        computed_fields_list.push((computed_fields, card));
     }
 
     debug!(
         "Вычислены поля для {} карточек с готовыми состояниями",
-        computed_cards.len()
+        computed_fields_list.len()
     );
 
     // Применяем фильтрацию WHERE если указана
     if let Some(condition) = &params.where_condition {
         info!("Применение фильтрации WHERE для карточек с готовыми состояниями");
-        computed_cards.retain(|card| {
+        computed_fields_list.retain(|(fields, _)| {
             match crate::table_processing::filtering::evaluator::evaluate_condition(
-                condition,
-                &card.computed_fields,
+                condition, fields,
             ) {
                 Ok(result) => result,
                 Err(e) => {
@@ -92,7 +81,7 @@ pub fn filter_and_sort_cards_with_states(
         });
         info!(
             "После фильтрации WHERE осталось {} карточек",
-            computed_cards.len()
+            computed_fields_list.len()
         );
     }
 
@@ -108,23 +97,33 @@ pub fn filter_and_sort_cards_with_states(
         "Применение сортировки по полю '{}' для карточек с готовыми состояниями",
         sort.field
     );
-    computed_cards.sort_by(|a, b| {
-        compare_computed_fields(
-            &a.computed_fields,
-            &b.computed_fields,
-            &sort.field,
-            sort.direction,
-        )
-    });
+    computed_fields_list
+        .sort_by(|(a, _), (b, _)| compare_computed_fields(a, b, &sort.field, sort.direction));
 
-    let total_count = computed_cards.len();
+    let total_count = computed_fields_list.len();
 
     // Применяем лимит если указан
-    let limited_cards = if params.limit > 0 && params.limit < computed_cards.len() {
-        computed_cards[0..params.limit].to_vec()
+    let limited = if params.limit > 0 && params.limit < computed_fields_list.len() {
+        &computed_fields_list[0..params.limit]
     } else {
-        computed_cards
+        &computed_fields_list[..]
     };
+
+    // Сериализуем в JSON только те карточки, которые попали в результат
+    let cards: Result<Vec<ComputedCard>, _> = limited
+        .iter()
+        .map(|(fields, card)| {
+            let card_json_str = serde_json::to_string(card).map_err(|e| {
+                FilterError::JsonParseError(format!("Ошибка сериализации карточки: {}", e))
+            })?;
+            Ok(ComputedCard {
+                card_json: card_json_str,
+                computed_fields: fields.clone(),
+            })
+        })
+        .collect();
+
+    let limited_cards = cards?;
 
     debug!(
         "Фильтрация и сортировка карточек с готовыми состояниями завершена: {} карточек (лимит {}), всего {}",
