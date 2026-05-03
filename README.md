@@ -24,7 +24,7 @@ The plugin turns your notes into FSRS-based flashcards for effective memorizatio
 - **🎯 Retention Control** — 70–97% target level
 - **⚡ High Performance** — Rust/WASM for fast computations
 - **🔄 Dynamic Interface** — auto-updating lists
-- **📱 Mobile Support** — iOS, Android
+- **📱 Mobile Support** — iOS(?), Android(✓)
 - **🎨 Flexible Configuration** — filtering, sorting, customization
 - **📈 Statistics** — track your progress
 
