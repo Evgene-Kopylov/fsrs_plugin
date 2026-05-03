@@ -30,3 +30,6 @@
 
 ### Использовать metadataCache для инкрементальных обновлений
 - [x] В scanSingleCard читать frontmatter из metadataCache, а не через vault.read() — [use-metadata-cache-for-incremental-updates.md](use-metadata-cache-for-incremental-updates.md)
+
+### Передавать структуры в WASM напрямую, без JSON-строк
+- [>] Убрать двойную JSON-сериализацию в addOrUpdateCards — [wasm-direct-structs.md](wasm-direct-structs.md)

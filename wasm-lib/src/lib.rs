@@ -275,6 +275,11 @@ pub fn add_or_update_cards(cards_json_array: &str) -> String {
 }
 
 #[wasm_bindgen]
+pub fn add_or_update_cards_js(cards: JsValue) -> String {
+    cache::add_or_update_cards_js(cards)
+}
+
+#[wasm_bindgen]
 pub fn remove_card(file_path: &str) -> String {
     cache::remove_card(file_path)
 }
