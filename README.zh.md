@@ -42,6 +42,16 @@
 - Obsidian v1.12.7 或更高版本
 - 支持 WebAssembly（默认启用）
 
+### 平台支持
+
+| 平台 | 状态 |
+| :--- | :--- |
+| Linux (x86_64) | ✅ |
+| macOS | ❓ (未测试) |
+| Windows (x86_64) | ✅ |
+| Android | ✅ |
+| iOS | ❓ (未测试) |
+
 ## 🐌 快速开始
 
 1. **创建卡片** — 打开笔记 → 执行命令 `添加 FSRS 字段到 frontmatter`（Ctrl/Cmd+P）。

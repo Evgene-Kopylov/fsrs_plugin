@@ -42,6 +42,16 @@ The plugin turns your notes into FSRS-based flashcards for effective memorizatio
 - Obsidian v1.12.7 or higher
 - WebAssembly support (enabled by default)
 
+### Platform Support
+
+| Platform | Status |
+| :--- | :--- |
+| Linux (x86_64) | ✅ |
+| macOS | ❓ (not tested) |
+| Windows (x86_64) | ✅ |
+| Android | ✅ |
+| iOS | ❓ (not tested) |
+
 ## 🐌 Quick Start
 
 1. **Create a card** – open a note → run the command `Add FSRS fields to file header` (Ctrl/Cmd+P).
