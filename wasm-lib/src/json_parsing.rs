@@ -1,13 +1,13 @@
 // Модуль для парсинга JSON и обработки ошибок
 
-use crate::types::{FsrsParameters, ModernFsrsCard};
+use crate::types::{CardData, FsrsParameters};
 use chrono::{DateTime, Utc};
 
 /// Парсит карточку из JSON строки
-pub fn parse_card_from_json(card_json: &str) -> ModernFsrsCard {
+pub fn parse_card_from_json(card_json: &str) -> CardData {
     serde_json::from_str(card_json).unwrap_or_else(|_| {
         // Дефолтная карточка при ошибке парсинга
-        ModernFsrsCard {
+        CardData {
             reviews: Vec::new(),
             file_path: None,
         }
@@ -72,7 +72,7 @@ pub fn parse_datetime_flexible(date_str: &str) -> Option<DateTime<Utc>> {
 }
 
 /// Преобразует карточку в JSON строку
-pub fn card_to_json(card: &ModernFsrsCard) -> String {
+pub fn card_to_json(card: &CardData) -> String {
     serde_json::to_string(card).unwrap_or_else(|_| r#"{"reviews": []}"#.to_string())
 }
 
@@ -85,8 +85,8 @@ pub fn parameters_to_json(parameters: &FsrsParameters) -> String {
 }
 
 /// Создает карточку с дефолтными значениями
-pub fn create_default_card() -> ModernFsrsCard {
-    ModernFsrsCard {
+pub fn create_default_card() -> CardData {
+    CardData {
         reviews: Vec::new(),
         file_path: None,
     }
@@ -108,7 +108,7 @@ pub fn get_current_time() -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{FsrsParameters, ModernFsrsCard, ReviewSession};
+    use crate::types::{CardData, FsrsParameters, ReviewSession};
     use chrono::{DateTime, Datelike, Timelike, Utc};
 
     #[test]
@@ -222,7 +222,7 @@ mod tests {
 
     #[test]
     fn test_card_to_json_and_back() {
-        let original_card = ModernFsrsCard {
+        let original_card = CardData {
             reviews: vec![ReviewSession {
                 date: "2026-01-01T10:00:00Z".to_string(),
                 rating: 2u8,

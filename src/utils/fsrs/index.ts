@@ -41,7 +41,7 @@ export { FsrsCache } from "./fsrs-cache";
 
 // Реэкспорт типов для удобства
 export type {
-    ModernFSRSCard,
+    CardData,
     ReviewSession,
     FSRSRating,
     FSRSState,

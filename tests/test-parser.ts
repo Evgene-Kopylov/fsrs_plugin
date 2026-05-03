@@ -9,14 +9,14 @@ interface ReviewSession {
     difficulty: number;
 }
 
-interface ModernFSRSCard {
+interface CardData {
     reviews: ReviewSession[];
     filePath: string;
 }
 
 interface ParseResult {
     success: boolean;
-    card: ModernFSRSCard | null;
+    card: CardData | null;
     error: string | undefined;
 }
 
@@ -209,7 +209,7 @@ function parseModernFsrsFromFrontmatter(
             });
         }
 
-        const card: ModernFSRSCard = {
+        const card: CardData = {
             reviews,
             filePath,
         };

@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 use crate::json_parsing::parse_datetime_flexible;
-use crate::types::{ComputedState, ModernFsrsCard};
+use crate::types::{CardData, ComputedState};
 
 /// Вычисленные поля карточки для сортировки
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -34,7 +34,7 @@ pub struct CardWithComputedFields {
 }
 
 pub fn compute_fields_from_state(
-    card: &ModernFsrsCard,
+    card: &CardData,
     state: &ComputedState,
     _now_iso: &str,
 ) -> CardWithComputedFields {

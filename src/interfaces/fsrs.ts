@@ -38,7 +38,7 @@ export interface ReviewSession {
 }
 
 // Современная карточка FSRS (новый формат)
-export interface ModernFSRSCard {
+export interface CardData {
     reviews: ReviewSession[]; // история сессий повторения
     filePath: string; // путь к файлу в хранилище Obsidian
 }
@@ -72,7 +72,7 @@ export interface ComputedCardState {
 
 // Карточка с кэшированным состоянием
 export interface CachedCard {
-    card: ModernFSRSCard;
+    card: CardData;
     state: ComputedCardState;
 }
 
@@ -103,6 +103,6 @@ export interface FSRSSettings {
 // Результат парсинга frontmatter
 export interface ParseResult {
     success: boolean;
-    card: ModernFSRSCard | null;
+    card: CardData | null;
     error?: string;
 }

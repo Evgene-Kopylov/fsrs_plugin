@@ -1,7 +1,7 @@
 // Парсеры для работы с YAML и FSRS данными
 
 import type {
-    ModernFSRSCard,
+    CardData,
     ReviewSession,
     ParseResult,
 } from "../../interfaces/fsrs";
@@ -84,7 +84,7 @@ export function parseModernFsrsFromFrontmatter(
 
         // Если после фильтрации нет сессий, но файл содержит reviews поле,
         // считаем это успехом с пустым массивом сессий (карточка без повторений)
-        const card: ModernFSRSCard = {
+        const card: CardData = {
             reviews,
             filePath,
         };

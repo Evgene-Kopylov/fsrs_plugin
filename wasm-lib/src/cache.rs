@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
 use crate::table_processing::types::TableParams;
-use crate::types::{ComputedState, ModernFsrsCard};
+use crate::types::{CardData, ComputedState};
 use serde::{Deserialize, Serialize};
 
 // ---------------------------------------------------------------------------
@@ -23,7 +23,7 @@ use serde::{Deserialize, Serialize};
 /// чтобы при запросах не тратить время на повторную сериализацию структур.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CachedCard {
-    pub card: ModernFsrsCard,
+    pub card: CardData,
     pub state: ComputedState,
     /// Предварительно сериализованная JSON-строка карточки (избегает повторной сериализации)
     #[serde(skip)]
@@ -119,7 +119,7 @@ pub fn add_or_update_cards(cards_json_array: &str) -> String {
 
         for item in &items {
             // Парсим карточку и проставляем file_path (он передаётся отдельно)
-            let mut card: ModernFsrsCard = match serde_json::from_str(&item.card_json) {
+            let mut card: CardData = match serde_json::from_str(&item.card_json) {
                 Ok(c) => c,
                 Err(e) => {
                     errors.push(format!(
@@ -371,7 +371,7 @@ mod tests {
 
     /// Вспомогательная функция для создания тестовой карточки с состоянием
     fn make_test_item(file_path: &str, rating: u8, due: &str) -> CardInputItem {
-        let card = ModernFsrsCard {
+        let card = CardData {
             reviews: vec![crate::types::ReviewSession {
                 date: "2026-01-01T10:00:00Z".to_string(),
                 rating,
@@ -449,7 +449,7 @@ mod tests {
         assert_eq!(get_cache_size(), 1);
 
         // Обновляем ту же карточку с новыми данными
-        let card = ModernFsrsCard {
+        let card = CardData {
             reviews: vec![
                 crate::types::ReviewSession {
                     date: "2026-01-01T10:00:00Z".to_string(),
@@ -701,7 +701,7 @@ mod tests {
         let _lock = acquire_test_lock();
         init_cache();
 
-        let card_a = ModernFsrsCard {
+        let card_a = CardData {
             reviews: vec![crate::types::ReviewSession {
                 date: "2026-01-01T10:00:00Z".to_string(),
                 rating: 2,
@@ -719,7 +719,7 @@ mod tests {
             lapses: 1,
             retrievability: 0.9,
         };
-        let card_b = ModernFsrsCard {
+        let card_b = CardData {
             reviews: vec![crate::types::ReviewSession {
                 date: "2026-01-01T10:00:00Z".to_string(),
                 rating: 3,
@@ -737,7 +737,7 @@ mod tests {
             lapses: 0,
             retrievability: 0.95,
         };
-        let card_c = ModernFsrsCard {
+        let card_c = CardData {
             reviews: vec![crate::types::ReviewSession {
                 date: "2026-01-01T10:00:00Z".to_string(),
                 rating: 2,

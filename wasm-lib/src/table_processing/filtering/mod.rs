@@ -11,7 +11,7 @@ pub use calculator::CardWithComputedFields;
 pub use sorter::FilterError;
 
 use crate::table_processing::types::{SortDirection, SortParam, TableParams};
-use crate::types::{ComputedState, ModernFsrsCard};
+use crate::types::{CardData, ComputedState};
 use serde::{Deserialize, Serialize};
 
 use log::{debug, info, warn};
@@ -67,7 +67,7 @@ pub fn filter_and_sort_cards_with_states(
         })?;
 
         // Десериализуем карточку (поддерживаем как строку JSON, так и объект)
-        let card: ModernFsrsCard = if card_json_value.is_string() {
+        let card: CardData = if card_json_value.is_string() {
             serde_json::from_str(card_json_value.as_str().unwrap()).map_err(|e| {
                 FilterError::JsonParseError(format!(
                     "Ошибка парсинга карточки из строки {}: {}",

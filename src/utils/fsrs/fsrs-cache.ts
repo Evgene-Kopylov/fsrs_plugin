@@ -12,7 +12,7 @@
  */
 
 import type {
-    ModernFSRSCard,
+    CardData,
     ComputedCardState,
     CachedCard,
     FSRSState,
@@ -28,7 +28,7 @@ import * as wasm from "../../../wasm-lib/pkg/wasm_lib";
 /** Элемент входного массива для addOrUpdateCards */
 export interface CacheCardInput {
     filePath: string;
-    card: ModernFSRSCard;
+    card: CardData;
     state: ComputedCardState;
 }
 
@@ -182,7 +182,7 @@ export class FsrsCache {
      * с карточками в формате CachedCard[].
      *
      * WASM возвращает { card_json: string, computed_fields: {...} },
-     * а TS ожидает { card: ModernFSRSCard, state: ComputedCardState }.
+     * а TS ожидает { card: CardData, state: ComputedCardState }.
      */
     private normalizeQueryResult(resultJson: string, now: Date): QueryResult {
         const raw = JSON.parse(resultJson) as {
@@ -195,7 +195,7 @@ export class FsrsCache {
         };
 
         const cards: CachedCard[] = raw.cards.map((item) => ({
-            card: JSON.parse(item.card_json) as ModernFSRSCard,
+            card: JSON.parse(item.card_json) as CardData,
             state: this.wasmFieldsToState(item.computed_fields, now),
         }));
 

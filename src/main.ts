@@ -25,11 +25,7 @@ import {
     parseModernFsrsFromFrontmatter,
     computeCardState,
 } from "./utils/fsrs";
-import type {
-    FSRSRating,
-    ReviewSession,
-    ModernFSRSCard,
-} from "./interfaces/fsrs";
+import type { FSRSRating, ReviewSession, CardData } from "./interfaces/fsrs";
 import { i18n } from "./utils/i18n";
 import { showNotice } from "./utils/notice";
 import { verboseLog, setVerboseLoggingEnabled } from "./utils/logger";
@@ -280,7 +276,7 @@ export default class FsrsPlugin extends Plugin {
                     reviews.push({ date, rating });
                 }
 
-                const card: ModernFSRSCard = { reviews, filePath: file.path };
+                const card: CardData = { reviews, filePath: file.path };
                 const state = computeCardState(card, this.settings);
                 batch.push({
                     filePath: file.path,

@@ -3,7 +3,7 @@
 use chrono::Utc;
 
 use crate::json_parsing::{parse_card_from_json, parse_datetime_flexible};
-use crate::types::{ModernFsrsCard, ReviewSession};
+use crate::types::{CardData, ReviewSession};
 
 /// Обновляет карточку FSRS на основе оценки
 pub fn review_card(
@@ -50,11 +50,10 @@ pub fn get_fsrs_yaml_after_review(
     );
 
     // Парсим обновленную карточку
-    let card: ModernFsrsCard =
-        serde_json::from_str(&updated_card_json).unwrap_or_else(|_| ModernFsrsCard {
-            reviews: Vec::new(),
-            file_path: None,
-        });
+    let card: CardData = serde_json::from_str(&updated_card_json).unwrap_or_else(|_| CardData {
+        reviews: Vec::new(),
+        file_path: None,
+    });
 
     // Сериализуем в YAML
     serde_yaml::to_string(&card).unwrap_or_else(|_| "reviews: []".to_string())
@@ -105,7 +104,7 @@ mod tests {
         );
 
         // Проверяем, что результат - валидный JSON
-        let parsed_result: Result<ModernFsrsCard, _> = serde_json::from_str(&result);
+        let parsed_result: Result<CardData, _> = serde_json::from_str(&result);
         assert!(parsed_result.is_ok());
 
         let card = parsed_result.unwrap();
@@ -136,7 +135,7 @@ mod tests {
             default_difficulty,
         );
 
-        let parsed_result: Result<ModernFsrsCard, _> = serde_json::from_str(&result);
+        let parsed_result: Result<CardData, _> = serde_json::from_str(&result);
         assert!(parsed_result.is_ok());
 
         let card = parsed_result.unwrap();
@@ -173,7 +172,7 @@ mod tests {
                 default_difficulty,
             );
 
-            let parsed_result: Result<ModernFsrsCard, _> = serde_json::from_str(&result);
+            let parsed_result: Result<CardData, _> = serde_json::from_str(&result);
             assert!(
                 parsed_result.is_ok(),
                 "Failed to parse result for rating: {}",
@@ -205,7 +204,7 @@ mod tests {
             default_difficulty,
         );
 
-        let parsed_result: Result<ModernFsrsCard, _> = serde_json::from_str(&result);
+        let parsed_result: Result<CardData, _> = serde_json::from_str(&result);
         assert!(parsed_result.is_ok());
 
         let card = parsed_result.unwrap();
@@ -231,7 +230,7 @@ mod tests {
             default_difficulty,
         );
 
-        let parsed_result: Result<ModernFsrsCard, _> = serde_json::from_str(&result);
+        let parsed_result: Result<CardData, _> = serde_json::from_str(&result);
         assert!(parsed_result.is_ok());
 
         let card = parsed_result.unwrap();
@@ -267,7 +266,7 @@ mod tests {
         assert!(yaml_result.contains("rating: 2"));
 
         // Пробуем парсить YAML обратно
-        let parsed_yaml: Result<ModernFsrsCard, _> = serde_yaml::from_str(&yaml_result);
+        let parsed_yaml: Result<CardData, _> = serde_yaml::from_str(&yaml_result);
         assert!(
             parsed_yaml.is_ok(),
             "Invalid YAML generated: {}",
@@ -311,7 +310,7 @@ mod tests {
         assert_eq!(review_lines.len(), 2, "Expected 2 review entries in YAML");
 
         // Проверяем парсинг
-        let parsed_yaml: Result<ModernFsrsCard, _> = serde_yaml::from_str(&yaml_result);
+        let parsed_yaml: Result<CardData, _> = serde_yaml::from_str(&yaml_result);
         assert!(parsed_yaml.is_ok());
 
         let card = parsed_yaml.unwrap();
@@ -348,7 +347,7 @@ mod tests {
         );
 
         // Функция должна обработать elapsed_days корректно (не падать)
-        let parsed_result: Result<ModernFsrsCard, _> = serde_json::from_str(&result);
+        let parsed_result: Result<CardData, _> = serde_json::from_str(&result);
         assert!(parsed_result.is_ok());
 
         let card = parsed_result.unwrap();
@@ -392,7 +391,7 @@ mod tests {
                 default_difficulty,
             );
 
-            let parsed_result: Result<ModernFsrsCard, _> = serde_json::from_str(&result);
+            let parsed_result: Result<CardData, _> = serde_json::from_str(&result);
             assert!(parsed_result.is_ok(), "Failed for case: {}", description);
 
             let card = parsed_result.unwrap();
