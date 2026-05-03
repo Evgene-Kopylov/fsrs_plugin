@@ -24,7 +24,7 @@ The plugin turns your notes into FSRS-based flashcards for effective memorizatio
 - **🎯 Retention Control** — 70–97% target level
 - **⚡ High Performance** — Rust/WASM for fast computations
 - **🔄 Dynamic Interface** — auto-updating lists
-- **📱 Mobile Support** — iOS, Android
+- **📱 Mobile Support** — iOS(?), Android(✓)
 - **🎨 Flexible Configuration** — filtering, sorting, customization
 - **📈 Statistics** — track your progress
 
@@ -41,6 +41,16 @@ The plugin turns your notes into FSRS-based flashcards for effective memorizatio
 
 - Obsidian v1.12.7 or higher
 - WebAssembly support (enabled by default)
+
+### Platform Support
+
+| Platform | Status |
+| :--- | :--- |
+| Linux (x86_64) | ✅ |
+| macOS | ❔ (not tested) |
+| Windows (x86_64) | ✅ |
+| Android | ✅ |
+| iOS | ❔ (not tested) |
 
 ## 🐌 Quick Start
 
