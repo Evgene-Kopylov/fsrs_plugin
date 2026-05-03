@@ -35,4 +35,4 @@
 - [x] Убрать `card_json`/`state_json` из CachedCard, сериализовать только результат — [cache-json-strings-optimization.md](cache-json-strings-optimization.md)
 
 ### Использовать metadataCache для инкрементальных обновлений
-- [>] В scanSingleCard читать frontmatter из metadataCache, а не через vault.read() — [use-metadata-cache-for-incremental-updates.md](use-metadata-cache-for-incremental-updates.md)
+- [x] В scanSingleCard читать frontmatter из metadataCache, а не через vault.read() — [use-metadata-cache-for-incremental-updates.md](use-metadata-cache-for-incremental-updates.md)

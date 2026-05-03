@@ -391,19 +391,13 @@ export default class FsrsPlugin extends Plugin {
                 unknown
             >;
             const rawReviews = cachedFrontmatter.reviews;
-            if (!Array.isArray(rawReviews) || rawReviews.length === 0) {
+            if (!Array.isArray(rawReviews)) {
                 this.cache.removeCard(filePath);
                 this.notifyFsrsTableRenderers();
                 return;
             }
 
             const reviews = this.parseReviewsFromCache(rawReviews);
-            if (reviews.length === 0) {
-                this.cache.removeCard(filePath);
-                this.notifyFsrsTableRenderers();
-                return;
-            }
-
             const card: CardData = { reviews, filePath };
             const state = computeCardState(card, this.settings);
             this.cache.addOrUpdateCards([{ filePath, card, state }]);
