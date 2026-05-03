@@ -1,10 +1,10 @@
 use crate::json_parsing::parse_datetime_flexible;
-use crate::types::ModernFsrsCard;
+use crate::types::CardData;
 
 /// Рассчитывает возраст карточки в днях (от первого повторения или создания)
 pub fn get_card_age_days(card_json: String, now_iso: String) -> String {
     let result = match (
-        serde_json::from_str::<ModernFsrsCard>(&card_json),
+        serde_json::from_str::<CardData>(&card_json),
         parse_datetime_flexible(&now_iso),
     ) {
         (Ok(card), Some(now)) => {

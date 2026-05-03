@@ -1,7 +1,7 @@
 // Функции состояния карточек для WASM модуля FSRS
 
 import type {
-    ModernFSRSCard,
+    CardData,
     FSRSRating,
     ComputedCardState,
     HistoricalState,
@@ -12,7 +12,7 @@ import * as wasm from "../../../wasm-lib/pkg/wasm_lib";
 
 /** Вычисляет текущее состояние карточки через WASM */
 export function computeCardState(
-    card: ModernFSRSCard,
+    card: CardData,
     settings: FSRSSettings,
     now: Date = new Date(),
 ): ComputedCardState {
@@ -50,7 +50,7 @@ export function computeCardState(
 
 /** Проверяет, готова ли карточка к повторению через WASM */
 export function isCardDue(
-    card: ModernFSRSCard,
+    card: CardData,
     settings: FSRSSettings,
     now: Date = new Date(),
 ): boolean {
@@ -77,7 +77,7 @@ export function isCardDue(
 
 /** Возвращает историю состояний карточки по всем повторениям через WASM */
 export function computeCardHistory(
-    card: ModernFSRSCard,
+    card: CardData,
     settings: FSRSSettings,
     now: Date = new Date(),
 ): HistoricalState[] {
@@ -104,7 +104,7 @@ export function computeCardHistory(
 
 /** Получает даты следующего повторения для каждого рейтинга через WASM */
 export function getNextReviewDates(
-    card: ModernFSRSCard,
+    card: CardData,
     settings: FSRSSettings,
     now: Date = new Date(),
 ): Record<FSRSRating, string | null> {

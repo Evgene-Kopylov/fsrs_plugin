@@ -27,7 +27,7 @@ export { generateTableDOM } from "./fsrs-table-generator";
 
 // Экспорт типов для удобства
 export type {
-    ModernFSRSCard,
+    CardData,
     ComputedCardState,
     FSRSSettings,
     FSRSState,

@@ -4,7 +4,7 @@
 
 Ниже перечислены места, где парсинг ещё применяется.
 
-## `parseModernFsrsFromFrontmatter` (WASM)
+## `parseCardDataFromFrontmatter` (WASM)
 
 Извлекает FSRS-карточку из YAML-строки через WASM.
 
@@ -35,7 +35,7 @@
 
 ## Итого
 
-- `parseModernFsrsFromFrontmatter` — 6 мест (только для чтения/записи одной карточки)
+- `parseCardDataFromFrontmatter` — 6 мест (только для чтения/записи одной карточки)
 - `extractFrontmatter` / `extractFrontmatterWithMatch` — 9 мест (в основном для вставки/редактирования frontmatter через `process`)
 - Сам модуль: `src/utils/fsrs/fsrs-parser.ts` + `src/utils/fsrs/fsrs-frontmatter.ts`
 

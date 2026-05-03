@@ -1,6 +1,6 @@
 import { MarkdownRenderChild, TAbstractFile, TFile } from "obsidian";
 import {
-    parseModernFsrsFromFrontmatter,
+    parseCardDataFromFrontmatter,
     extractFrontmatterWithMatch,
     isCardDue,
     computeCardState,
@@ -123,7 +123,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             }
 
             const frontmatter = frontmatterMatch.content;
-            const parseResult = parseModernFsrsFromFrontmatter(
+            const parseResult = parseCardDataFromFrontmatter(
                 frontmatter,
                 this.sourceFile.path,
             );
@@ -292,7 +292,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             }
 
             const frontmatter = frontmatterMatch.content;
-            const parseResult = parseModernFsrsFromFrontmatter(
+            const parseResult = parseCardDataFromFrontmatter(
                 frontmatter,
                 this.sourceFile.path,
             );

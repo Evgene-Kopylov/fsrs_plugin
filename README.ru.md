@@ -7,7 +7,7 @@
 
 **Free Spaced Repetition Scheduler** — современный алгоритм интервального
 повторения в Obsidian.
-Плагин превращает заметки в карточки для запоминания по FSRS.
+Плагин добавляет интервальное повторение по алгоритму FSRS к заметкам Obsidian.
 
 [![Obsidian](https://img.shields.io/badge/Obsidian-%23483699.svg?&logo=obsidian&logoColor=white)](https://obsidian.md)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?&logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/)

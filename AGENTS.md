@@ -2,32 +2,30 @@
 
 ## Язык и локализация
 
-Разработка ведется на русском языке. Интерфейсы для пользователя локализуются.
-Всегда на русском языке
-- коммиты (только заголовок, без тела и описания кода)
-- документация
-- комментарии в коде
-- логи
+Разработка — на русском:
+- коммиты (только заголовок)
+- документация, комментарии, логи
+
+UI локализуется.
 
 ## Процесс работы с задачами
 
-В папке `docs/tasks/` лежат задачи. Каждая задача — отдельный файл.
-Перед началом любых изменений **обязательно** прочитай `docs/tasks/index.md`.
+Задачи — `docs/tasks/`, по файлу на задачу. Перед изменениями читать `docs/tasks/index.md`.
 
-Порядок работы над задачами:
-1. Взять свободную задачу из `index.md` — отметить `[ ]` → `[>]` (в работе)
-2. Выполнить задачу (код, тесты)
-3. Сделать коммит и сообщить пользователю
-4. Дождаться принятия коммита пользователем
-5. Отметить задачу `[x]` (выполнена)
-6. Взять следующую свободную задачу
-7. Если задач в `index.md` нет — обновить его из папки `docs/tasks/`
+Порядок:
+1. Взять свободную из `index.md`: `[ ]` → `[>]`
+2. Выполнить (код, тесты)
+3. Коммит → уведомить пользователя
+4. Дождаться принятия коммита
+5. Отметить `[x]`
+6. Взять следующую
+7. Если свободных нет — обновить `index.md` из `docs/tasks/`
 
 ## Документация
 
-- **Все `.ru.md` файлы — приоритетные (source of truth).** Правки вносятся только в них.
-- Файлы без `.ru` (например, `README.md`, `intended_use.md`) — автоматически генерируемые переводы. Они не редактируются вручную, а обновляются периодически на основе соответствующих `.ru.md` версий.
-- Пример: `README.ru.md` → `README.md`, `intended_use.ru.md` → `intended_use.md`.
+- **`.ru.md` — source of truth.** Правки только в них.
+- Файлы без `.ru` — автопереводы. Не редактировать вручную. Обновляются из `.ru.md`.
+- Пример: `README.ru.md` → `README.md`.
 
 ## 🚫 Запрещённые файлы (никогда не читать)
 
@@ -92,28 +90,17 @@ app.listen(port, () => {
 
 Если edit_file или любая файловая операция завершается с ошибкой доступа, блокировки или похожей:
 
-Пошаговое восстановление, строго по порядку:
-
-1. Сохранить файл и повторить медленно
-Попробуй ту же самую операцию ещё один раз. 
-Часто блокировка снимается к моменту второй попытки.
-
-2. Подождать и повторить с задержками
-Если вторая попытка тоже провалилась — жди и пробуй снова (до 3 попыток):
-
-- Подождать 2 секунды, повторить.
-
-- Подождать 4 секунды, повторить.
-
-- Подождать 8 секунд, повторить.
-После каждого неудачного раза кратко сообщай: «Файл выглядит заблокированным, повторяю через N секунд…»
-
-Если все повторные попытки исчерпаны, выведи:
+1. Сохранить файл и повторить
+2. Не вышло — жди и пробуй (2с → 4с → 8с). После каждой попытки: «Файл выглядит заблокированным, повторяю через N секунд…»
+3. Не вышло — выведи:
 ```text
-ОШИБКА: Не удаётся получить доступ к <файл> после нескольких попыток. 
-Вероятно он заблокирован другим процессом. 
+ОШИБКА: Не удаётся получить доступ к <файл> после нескольких попыток.
+Вероятно он заблокирован другим процессом.
 Я прекращаю работу и жду разрешения ситуации.
 ```
+
+### Несохранённые изменения в файлах
+Unsaved changes → `save_file` → продолжай. Без спроса.
 
 ## 🔥 Строгое отношение к неиспользуемому коду
 
@@ -211,9 +198,7 @@ npm run build
 
 - Используйте Vitest (конфиг `vitest.config.ts`).
 - **Запрещены моки** внешних зависимостей (Obsidian API, файловая система, WASM). Вместо моков — тестируйте изолированные чистые функции (утилиты, парсеры, преобразования).
-    Причины: 
-    - агент не различает внешние зависимости и собственный WASM проекта.
-    - Снжено доверие таким тестам.
+    Причины: агент не различает внешние зависимости и собственный WASM проекта — снижено доверие к тестам.
 - Пример: тесты для `fsrs-table-format.ts`, `date-format.ts`, `i18n.ts` и других pure-модулей.
 
 ## Commands & settings
@@ -234,14 +219,14 @@ npm run build
 
 Follow Obsidian's **Developer Policies** + **Plugin Guidelines**:
 
-- Default to local/offline. Network only if essential.
-- No hidden telemetry. Optional analytics/third-party → explicit opt-in, document in `README.md` + settings.
-- Never remote code, fetch/eval scripts, or auto-update outside normal releases.
-- Minimize scope: read/write only what's necessary inside vault. No outside vault access.
+- Default local/offline. Network only if essential.
+- No hidden telemetry. Analytics/third-party → explicit opt-in, documented.
+- No remote code, fetch/eval, or auto-update outside releases.
+- Read/write only inside vault. No outside access.
 - Disclose external services, data sent, risks.
-- Respect privacy. No vault contents, filenames, personal info unless essential + explicit consent.
-- No deceptive patterns, ads, spammy notifications.
-- Register & clean up DOM, app, interval listeners with `register*` helpers → safe unload.
+- No vault contents, filenames, personal info without necessity + consent.
+- No deceptive patterns, ads, spam.
+- Use `register*` helpers for cleanup → safe unload.
 
 ## UX & copy guidelines
 
@@ -253,17 +238,16 @@ Follow Obsidian's **Developer Policies** + **Plugin Guidelines**:
 
 ## Performance
 
-- Light startup. Defer heavy work.
-- Avoid long-running tasks in `onload`. Lazy init.
+- Light startup. Lazy init.
 - Batch disk access, avoid excessive vault scans.
 - Debounce/throttle expensive ops on file system events.
 
 ## Coding conventions
 
 - TypeScript with `"strict": true` preferred.
-- **Keep `main.ts` minimal**: lifecycle only (onload, onunload, addCommand). Delegate feature logic to separate modules.
-- **Split large files**: >200-300 lines → break into smaller focused modules.
-- **Clear module boundaries**: single responsibility per file.
+- **Keep `main.ts` minimal**: lifecycle only. Delegate to separate modules.
+- **Split large files**: >200-300 lines → smaller focused modules.
+- **Single responsibility** per file.
 - Bundle everything into `main.js` (no unbundled runtime deps).
 - Avoid Node/Electron APIs for mobile compat; set `isDesktopOnly` accordingly.
 - Prefer `async/await` over promise chains; handle errors gracefully.
@@ -274,38 +258,32 @@ Follow Obsidian's **Developer Policies** + **Plugin Guidelines**:
 
 ### Rust (WASM)
 
-- **Хранит кэш карточек** — глобальный `Map<filePath, CachedCard>` внутри WASM (стабильность, сложность, состояние, история).
-- **Инкрементально обновляет кэш** — получает от TS команды: добавить/обновить карточку, удалить карточку.
-- **Выполняет все вычисления**:
-  - FSRS-расчёты (состояние, следующий интервал, история).
-  - Парсинг YAML/JSON.
-  - Парсинг SQL-подобного синтаксиса для `fsrs-table`.
-  - Фильтрацию (`WHERE`), сортировку (`ORDER BY`), ограничение (`LIMIT`).
-- **Предоставляет быстрые запросы**:
-  - `get_cards_count_for_query(params_json)` — количество карточек после WHERE (без сортировки/лимита).
-  - `get_filtered_cards(params_json, limit, offset)` — JSON отфильтрованных, отсортированных, усечённых карточек с состояниями.
-- **Stateless между вызовами?** Нет — кэш сохраняется между вызовами внутри одного экземпляра WASM (глобальная переменная). При выгрузке плагина кэш теряется — это нормально, так как TS запустит повторное сканирование.
+- **Хранит кэш карточек** — глобальный `Map<filePath, CachedCard>` внутри WASM.
+- **Инкрементально обновляет кэш** — получает от TS команды: добавить/обновить/удалить карточку.
+- **Выполняет все вычисления**: FSRS, парсинг YAML/JSON, парсинг SQL-синтаксиса для таблиц, фильтрацию (`WHERE`), сортировку (`ORDER BY`), лимит (`LIMIT`).
+- **Предоставляет быстрые запросы**: `get_cards_count_for_query`, `get_filtered_cards`.
+- **Stateless между вызовами?** Нет — кэш живёт в WASM между вызовами. При выгрузке плагина теряется — TS запустит повторное сканирование.
 
 ### TypeScript
 
-- **Файловая система** — читает markdown-файлы, извлекает frontmatter, передаёт в WASM.
-- **Жизненный цикл и UI** — инициализация плагина, команды, настройки, рендеринг кнопок и таблиц.
-- **Рендеринг таблиц** — вызывает `get_filtered_cards` и отображает результат (без дополнительной сортировки/фильтрации).
-- **События файловой системы** — при `modify`, `delete`, `rename` отправляет соответствующие команды в WASM для обновления кэша (с debounce).
-- **Никакого кэширования состояний в TS** — TS не хранит карточки, не вычисляет состояния, не сортирует, не фильтрует.
+- **Файловая система** — читает markdown, извлекает frontmatter, передаёт в WASM.
+- **Жизненный цикл и UI** — инициализация, команды, настройки, рендеринг.
+- **Рендеринг таблиц** — вызывает `get_filtered_cards` и отображает результат.
+- **События FS** — при `modify`/`delete`/`rename` отправляет команды в WASM (с debounce).
+- **Никакого кэширования** карточек в TS.
 
 ### Что запрещено в TS
 
-- Хранить кэш карточек (массивы, `Map` с `CachedCard`).
-- Выполнять сортировку, фильтрацию, группировку карточек.
-- Парсить YAML/JSON с карточками (всё делает Rust).
+- Хранить кэш карточек.
+- Выполнять сортировку, фильтрацию, группировку.
+- Парсить YAML/JSON с карточками.
 - Дублировать логику FSRS.
 
 ### Что запрещено в Rust
 
-- Использовать API Obsidian (файловая система, UI, события) – это остаётся в TS.
-- Предполагать, что кэш сохранится при перезагрузке плагина (он не должен).
-- Блокировать поток выполнения (асинхронные операции в Rust не нужны, TS управляет асинхронностью).
+- Использовать API Obsidian (ФС, UI, события).
+- Предполагать, что кэш сохранится при перезагрузке плагина.
+- Блокировать поток (асинхронность — в TS).
 
 ## Mobile
 

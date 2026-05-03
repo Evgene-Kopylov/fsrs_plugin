@@ -1,6 +1,6 @@
 // Вспомогательные функции для WASM модуля FSRS
 
-import type { ModernFSRSCard } from "../../interfaces/fsrs";
+import type { CardData } from "../../interfaces/fsrs";
 import * as wasm from "../../../wasm-lib/pkg/wasm_lib";
 
 /** Конвертирует base64 строку в Uint8Array для загрузки WASM модуля */
@@ -12,7 +12,7 @@ export function base64ToBytes(base64: string): Uint8Array {
 }
 
 /** Преобразует карточку FSRS в YAML строку через WASM */
-export function cardToFsrsYaml(card: ModernFSRSCard): string {
+export function cardToFsrsYaml(card: CardData): string {
     try {
         const cardJson = JSON.stringify({ reviews: card.reviews });
         return wasm.card_to_fsrs_yaml(cardJson);

@@ -22,19 +22,14 @@ import {
     base64ToBytes,
     shouldIgnoreFileWithSettings,
     extractFrontmatter,
-    parseModernFsrsFromFrontmatter,
+    parseCardDataFromFrontmatter,
     computeCardState,
 } from "./utils/fsrs";
-import type {
-    FSRSRating,
-    ReviewSession,
-    ModernFSRSCard,
-} from "./interfaces/fsrs";
+import type { FSRSRating, ReviewSession, CardData } from "./interfaces/fsrs";
 import { i18n } from "./utils/i18n";
 import { showNotice } from "./utils/notice";
 import { verboseLog, setVerboseLoggingEnabled } from "./utils/logger";
 
-// Импорт WASM функций
 import init from "../wasm-lib/pkg/wasm_lib";
 import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
 
@@ -52,6 +47,33 @@ export default class FsrsPlugin extends Plugin {
     public cache!: FsrsCache;
     // Промис сканирования хранилища (запускается по первому запросу)
     private scanPromise: Promise<void> | null = null;
+
+    /**
+     * Извлекает и нормализует массив ReviewSession из frontmatter объекта metadataCache.
+     * Obsidian может хранить даты как строки или как объекты Date.
+     */
+    private parseReviewsFromCache(rawReviews: unknown[]): ReviewSession[] {
+        const reviews: ReviewSession[] = [];
+        for (const session of rawReviews) {
+            if (!session || typeof session !== "object") continue;
+            const s = session as Record<string, unknown>;
+            let date: string;
+            if (typeof s.date === "string") {
+                date = s.date;
+            } else if (s.date instanceof Date) {
+                date = s.date.toISOString();
+            } else {
+                continue;
+            }
+            const rating =
+                typeof s.rating === "number" && s.rating >= 0 && s.rating <= 3
+                    ? s.rating
+                    : undefined;
+            if (rating === undefined) continue;
+            reviews.push({ date, rating });
+        }
+        return reviews;
+    }
     // Флаг: завершено ли начальное сканирование хранилища
     private initialScanCompleted = false;
     // Ожидающие сканирования карточки
@@ -258,29 +280,14 @@ export default class FsrsPlugin extends Plugin {
                 }
 
                 // Нормализуем даты и рейтинги из кэша Obsidian
-                const reviews: ReviewSession[] = [];
-                for (const session of rawReviews) {
-                    if (!session || typeof session !== "object") continue;
-                    const s = session as Record<string, unknown>;
-                    let date: string;
-                    if (typeof s.date === "string") {
-                        date = s.date;
-                    } else if (s.date instanceof Date) {
-                        date = s.date.toISOString();
-                    } else {
-                        continue;
-                    }
-                    const rating =
-                        typeof s.rating === "number" &&
-                        s.rating >= 0 &&
-                        s.rating <= 3
-                            ? s.rating
-                            : undefined;
-                    if (rating === undefined) continue;
-                    reviews.push({ date, rating });
+                const reviews = this.parseReviewsFromCache(rawReviews);
+
+                if (reviews.length === 0) {
+                    skippedCount++;
+                    continue;
                 }
 
-                const card: ModernFSRSCard = { reviews, filePath: file.path };
+                const card: CardData = { reviews, filePath: file.path };
                 const state = computeCardState(card, this.settings);
                 batch.push({
                     filePath: file.path,
@@ -376,7 +383,7 @@ export default class FsrsPlugin extends Plugin {
                 return;
             }
 
-            const parseResult = parseModernFsrsFromFrontmatter(
+            const parseResult = parseCardDataFromFrontmatter(
                 frontmatter,
                 filePath,
             );

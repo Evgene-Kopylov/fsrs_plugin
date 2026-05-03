@@ -1,6 +1,6 @@
 // Вспомогательные функции для работы со временем
 
-import type { ModernFSRSCard } from "../../interfaces/fsrs";
+import type { CardData } from "../../interfaces/fsrs";
 import type { App } from "obsidian";
 import { formatDate } from "../date-format";
 
@@ -21,7 +21,7 @@ export function formatLocalDate(date: Date, app?: App): string {
  * Возвращает Infinity, если повторений еще не было
  */
 export function getMinutesSinceLastReview(
-    card: ModernFSRSCard,
+    card: CardData,
     now: Date = new Date(),
 ): number {
     if (card.reviews.length === 0) {

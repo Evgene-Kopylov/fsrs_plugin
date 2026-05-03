@@ -142,7 +142,7 @@ function extractFrontmatter(content) {
 }
 
 // Parse FSRS card from frontmatter
-function parseModernFsrsFromFrontmatter(frontmatter, filePath) {
+function parseCardDataFromFrontmatter(frontmatter, filePath) {
     try {
         const parsed = parseYaml(frontmatter);
         if (!parsed) {
@@ -234,7 +234,7 @@ async function testCards() {
                     continue;
                 }
 
-                const result = parseModernFsrsFromFrontmatter(
+                const result = parseCardDataFromFrontmatter(
                     frontmatter,
                     filePath,
                 );

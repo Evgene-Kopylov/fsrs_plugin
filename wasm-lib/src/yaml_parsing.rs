@@ -1,7 +1,7 @@
 // Модуль для парсинга YAML в Rust с использованием serde_yaml
 
 use crate::json_parsing::parse_datetime_flexible;
-use crate::types::{FsrsParameters, ModernFsrsCard, ReviewSession};
+use crate::types::{CardData, FsrsParameters, ReviewSession};
 
 /// Макрос для логирования предупреждений, работает в нативных тестах.
 /// В WASM не выводит ничего — ошибки обрабатываются на стороне TypeScript.
@@ -13,8 +13,8 @@ macro_rules! log_warn {
 }
 
 /// Парсит YAML строку в карточку FSRS
-pub fn parse_yaml_to_card(yaml_str: &str) -> ModernFsrsCard {
-    match serde_yaml::from_str::<ModernFsrsCard>(yaml_str) {
+pub fn parse_yaml_to_card(yaml_str: &str) -> CardData {
+    match serde_yaml::from_str::<CardData>(yaml_str) {
         Ok(card) => card,
         Err(_e) => {
             log_warn!("Ошибка парсинга YAML: {}", _e);
@@ -24,7 +24,7 @@ pub fn parse_yaml_to_card(yaml_str: &str) -> ModernFsrsCard {
 }
 
 /// Преобразует карточку в YAML строку
-pub fn card_to_yaml(card: &ModernFsrsCard) -> String {
+pub fn card_to_yaml(card: &CardData) -> String {
     match serde_yaml::to_string(card) {
         Ok(yaml) => yaml,
         Err(_e) => {
@@ -47,7 +47,7 @@ pub fn parse_yaml_to_parameters(yaml_str: &str) -> FsrsParameters {
 }
 
 /// Извлекает FSRS карточку из frontmatter Obsidian
-pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<ModernFsrsCard> {
+pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<CardData> {
     // Извлекаем YAML между первым и вторым "---"
     let trimmed = frontmatter.trim();
     let parts: Vec<&str> = trimmed.splitn(3, "---").collect();
@@ -82,7 +82,7 @@ pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<ModernFsrsCard
             Some(serde_yaml::Value::Sequence(seq)) => {
                 // Если массив пустой — это валидная карточка без сессий
                 if seq.is_empty() {
-                    return Some(ModernFsrsCard {
+                    return Some(CardData {
                         reviews: Vec::new(),
                         file_path: None,
                     });
@@ -113,21 +113,21 @@ pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<ModernFsrsCard
     };
 
     // Создаем карточку с reviews и без file_path (он будет добавлен позже)
-    Some(ModernFsrsCard {
+    Some(CardData {
         reviews,
         file_path: None,
     })
 }
 
 /// Создает frontmatter с FSRS карточкой
-pub fn create_frontmatter_with_fsrs(card: &ModernFsrsCard) -> String {
+pub fn create_frontmatter_with_fsrs(card: &CardData) -> String {
     let yaml_content = card_to_yaml(card);
     format!("---\n{}\n---", yaml_content.trim())
 }
 
 /// Создает дефолтную карточку
-pub fn create_default_card() -> ModernFsrsCard {
-    ModernFsrsCard {
+pub fn create_default_card() -> CardData {
+    CardData {
         reviews: Vec::new(),
         file_path: None,
     }
@@ -161,7 +161,7 @@ fn validate_review_session(session: &serde_yaml::Value) -> Option<ReviewSession>
     })
 }
 
-pub fn validate_review_sessions(card: &ModernFsrsCard) -> Vec<String> {
+pub fn validate_review_sessions(card: &CardData) -> Vec<String> {
     let mut errors = Vec::new();
 
     for (i, session) in card.reviews.iter().enumerate() {
@@ -239,7 +239,7 @@ reviews:
 
     #[test]
     fn test_card_to_yaml_and_back() {
-        let original_card = ModernFsrsCard {
+        let original_card = CardData {
             reviews: vec![ReviewSession {
                 date: "2026-01-01T10:00:00Z".to_string(),
                 rating: 2u8,
@@ -296,7 +296,7 @@ tags: [note]
 Content"#;
 
         let card = extract_fsrs_from_frontmatter(frontmatter);
-        // YAML с полями title и tags не может быть десериализован в ModernFsrsCard
+        // YAML с полями title и tags не может быть десериализован в CardData
         // поэтому extract_fsrs_from_frontmatter вернет None
         assert!(card.is_none());
     }
@@ -310,7 +310,7 @@ Content"#;
 
     #[test]
     fn test_create_frontmatter_with_fsrs() {
-        let card = ModernFsrsCard {
+        let card = CardData {
             reviews: vec![ReviewSession {
                 date: "2026-01-01T10:00:00Z".to_string(),
                 rating: 2u8,
@@ -329,7 +329,7 @@ Content"#;
 
     #[test]
     fn test_validate_review_sessions_valid() {
-        let card = ModernFsrsCard {
+        let card = CardData {
             reviews: vec![ReviewSession {
                 date: "2026-01-01T10:00:00Z".to_string(),
                 rating: 2u8,
@@ -343,7 +343,7 @@ Content"#;
 
     #[test]
     fn test_validate_review_sessions_invalid_date() {
-        let card = ModernFsrsCard {
+        let card = CardData {
             reviews: vec![ReviewSession {
                 date: "invalid-date".to_string(),
                 rating: 2u8,
@@ -358,7 +358,7 @@ Content"#;
 
     #[test]
     fn test_validate_review_sessions_invalid_rating() {
-        let card = ModernFsrsCard {
+        let card = CardData {
             reviews: vec![ReviewSession {
                 date: "2026-01-01T10:00:00Z".to_string(),
                 rating: 255u8,

@@ -1,5 +1,5 @@
 import { Modal, App } from "obsidian";
-import type { ModernFSRSCard, FSRSRating } from "../../interfaces/fsrs";
+import type { CardData, FSRSRating } from "../../interfaces/fsrs";
 import { i18n } from "../../utils/i18n";
 
 /**
@@ -7,13 +7,13 @@ import { i18n } from "../../utils/i18n";
  * Использует стандартный API Obsidian Modal
  */
 export class ReviewModal extends Modal {
-    private card: ModernFSRSCard;
+    private card: CardData;
     private resolve: (rating: FSRSRating | null) => void;
     private ratingSelected: boolean = false;
 
     constructor(
         app: App,
-        card: ModernFSRSCard,
+        card: CardData,
         private customLabels?: {
             again: string;
             hard: string;

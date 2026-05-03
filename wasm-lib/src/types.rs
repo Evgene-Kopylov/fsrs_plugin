@@ -11,7 +11,7 @@ pub struct ReviewSession {
 
 /// Современная карточка FSRS с reviews
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct ModernFsrsCard {
+pub struct CardData {
     #[serde(default)]
     pub reviews: Vec<ReviewSession>,
     #[serde(default, rename = "filePath", skip_serializing_if = "Option::is_none")]

@@ -1,7 +1,7 @@
 // Файл-индекс для реэкспорта всех модулей FSRS
 
 // Экспорт парсеров
-export { parseModernFsrsFromFrontmatter } from "./fsrs-parser";
+export { parseCardDataFromFrontmatter } from "./fsrs-parser";
 
 // Экспорт функций работы с WASM
 export {
@@ -41,7 +41,7 @@ export { FsrsCache } from "./fsrs-cache";
 
 // Реэкспорт типов для удобства
 export type {
-    ModernFSRSCard,
+    CardData,
     ReviewSession,
     FSRSRating,
     FSRSState,

@@ -6,7 +6,7 @@
 import type { App } from "obsidian";
 import type {
     FSRSSettings,
-    ModernFSRSCard,
+    CardData,
     ComputedCardState,
 } from "../interfaces/fsrs";
 import type { TableParams } from "./fsrs-table-params";
@@ -20,7 +20,7 @@ import { DEFAULT_TABLE_DISPLAY_LIMIT } from "../constants";
 // ---------------------------------------------------------------------------
 
 interface CardWithState {
-    card: ModernFSRSCard;
+    card: CardData;
     state: ComputedCardState;
     isDue: boolean;
 }

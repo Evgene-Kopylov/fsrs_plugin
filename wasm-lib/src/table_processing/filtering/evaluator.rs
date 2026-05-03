@@ -203,6 +203,7 @@ fn get_string_field_value(
         "state" => card
             .state
             .clone()
+            .map(|s| s.to_lowercase())
             .ok_or_else(|| EvaluationError::MissingField("state".to_string())),
         "file" => card
             .file
@@ -225,7 +226,7 @@ mod tests {
             difficulty: Some(0.3),
             retrievability: Some(0.4),
             due: Some("2024-01-01".to_string()),
-            state: Some("review".to_string()),
+            state: Some("Review".to_string()),
             elapsed: Some(10.5),
             scheduled: Some(30.2),
             additional_fields: std::collections::HashMap::new(),

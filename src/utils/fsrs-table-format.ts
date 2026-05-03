@@ -1,4 +1,4 @@
-import type { ModernFSRSCard, ComputedCardState } from "../interfaces/fsrs";
+import type { CardData, ComputedCardState } from "../interfaces/fsrs";
 import type { App } from "obsidian";
 import { formatDateTime } from "./date-format";
 import { i18n } from "./i18n";
@@ -71,7 +71,7 @@ export function formatDateWithSpecifiers(
  */
 export function formatFieldValue(
     field: string,
-    card: ModernFSRSCard,
+    card: CardData,
     state: ComputedCardState,
     app: App,
     _now: Date = new Date(),

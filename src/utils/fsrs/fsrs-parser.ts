@@ -1,7 +1,7 @@
 // Парсеры для работы с YAML и FSRS данными
 
 import type {
-    ModernFSRSCard,
+    CardData,
     ReviewSession,
     ParseResult,
 } from "../../interfaces/fsrs";
@@ -10,7 +10,7 @@ import { extract_fsrs_from_frontmatter_wrapped } from "../../../wasm-lib/pkg/was
 /**
  * Парсит frontmatter файла и извлекает карточку в новом формате
  */
-export function parseModernFsrsFromFrontmatter(
+export function parseCardDataFromFrontmatter(
     frontmatter: string,
     filePath: string,
 ): ParseResult {
@@ -84,7 +84,7 @@ export function parseModernFsrsFromFrontmatter(
 
         // Если после фильтрации нет сессий, но файл содержит reviews поле,
         // считаем это успехом с пустым массивом сессий (карточка без повторений)
-        const card: ModernFSRSCard = {
+        const card: CardData = {
             reviews,
             filePath,
         };

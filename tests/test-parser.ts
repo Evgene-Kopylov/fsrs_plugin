@@ -9,14 +9,14 @@ interface ReviewSession {
     difficulty: number;
 }
 
-interface ModernFSRSCard {
+interface CardData {
     reviews: ReviewSession[];
     filePath: string;
 }
 
 interface ParseResult {
     success: boolean;
-    card: ModernFSRSCard | null;
+    card: CardData | null;
     error: string | undefined;
 }
 
@@ -163,8 +163,8 @@ function parseYaml(yaml: string): any {
     }
 }
 
-// Copy of parseModernFsrsFromFrontmatter from fsrs-helper.ts
-function parseModernFsrsFromFrontmatter(
+// Copy of parseCardDataFromFrontmatter from fsrs-helper.ts
+function parseCardDataFromFrontmatter(
     frontmatter: string,
     filePath: string,
 ): ParseResult {
@@ -209,7 +209,7 @@ function parseModernFsrsFromFrontmatter(
             });
         }
 
-        const card: ModernFSRSCard = {
+        const card: CardData = {
             reviews,
             filePath,
         };
@@ -368,7 +368,7 @@ async function runTestCards() {
                     continue;
                 }
 
-                const result = parseModernFsrsFromFrontmatter(
+                const result = parseCardDataFromFrontmatter(
                     frontmatter,
                     filePath,
                 );
@@ -427,4 +427,4 @@ if (isMainModule) {
     main().catch(console.error);
 }
 
-export { parseYaml, parseModernFsrsFromFrontmatter };
+export { parseYaml, parseCardDataFromFrontmatter };

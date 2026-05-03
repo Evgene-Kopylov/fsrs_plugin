@@ -2,15 +2,11 @@ import { Modal, App } from "obsidian";
 import { showNotice } from "../utils/notice";
 import { i18n } from "../utils/i18n";
 import {
-    parseModernFsrsFromFrontmatter,
+    parseCardDataFromFrontmatter,
     extractFrontmatter,
     formatLocalDate,
 } from "../utils/fsrs-helper";
-import type {
-    ModernFSRSCard,
-    FSRSRating,
-    HistoricalState,
-} from "../interfaces/fsrs";
+import type { CardData, FSRSRating, HistoricalState } from "../interfaces/fsrs";
 import { numberToRating } from "../interfaces/fsrs";
 import type MyPlugin from "../main";
 import { deleteLastReview } from "../commands/review/delete-last-review";
@@ -21,7 +17,7 @@ import { computeCardHistory } from "../utils/fsrs/wasm-state";
  * Отображает таблицу с историей повторений и статистику
  */
 export class ReviewHistoryModal extends Modal {
-    private card: ModernFSRSCard | null = null;
+    private card: CardData | null = null;
     private historyStates: HistoricalState[] = [];
     private filePath: string;
     private deleteCooldownUntil = 0;
@@ -74,7 +70,7 @@ export class ReviewHistoryModal extends Modal {
                 return;
             }
 
-            const parseResult = parseModernFsrsFromFrontmatter(
+            const parseResult = parseCardDataFromFrontmatter(
                 frontmatter,
                 this.filePath,
             );

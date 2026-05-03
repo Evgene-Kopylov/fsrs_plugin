@@ -12,7 +12,7 @@ import type { TableParams } from "../utils/fsrs-table-params";
 import type {
     CachedCard,
     ComputedCardState,
-    ModernFSRSCard,
+    CardData,
 } from "../interfaces/fsrs";
 import { generateTableDOM } from "../utils/fsrs-table-helpers";
 import { i18n } from "../utils/i18n";
@@ -23,7 +23,7 @@ import { verboseLog } from "../utils/logger";
  * Дублирует CardWithState, но не требует импорта из fsrs-table-filter.
  */
 interface CardForDisplay {
-    card: ModernFSRSCard;
+    card: CardData;
     state: ComputedCardState;
     isDue: boolean;
 }
