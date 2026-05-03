@@ -110,14 +110,8 @@ export class FsrsCache {
      * @returns количество обновлённых и ошибки
      */
     addOrUpdateCards(cards: CacheCardInput[]): CacheUpdateResult {
-        // Сериализуем каждую карточку в формат, ожидаемый WASM
-        const input = cards.map((c) => ({
-            filePath: c.filePath,
-            card_json: JSON.stringify({ reviews: c.card.reviews }),
-            state_json: JSON.stringify(c.state),
-        }));
-
-        const resultJson = wasm.add_or_update_cards(JSON.stringify(input));
+        // Передаём объекты напрямую — WASM делает JSON.stringify + парсинг
+        const resultJson = wasm.add_or_update_cards_js(cards);
         return JSON.parse(resultJson) as CacheUpdateResult;
     }
 

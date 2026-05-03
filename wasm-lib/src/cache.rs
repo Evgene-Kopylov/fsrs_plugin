@@ -12,6 +12,7 @@ use std::sync::{Mutex, OnceLock};
 use crate::table_processing::types::TableParams;
 use crate::types::{CardData, ComputedState};
 use serde::{Deserialize, Serialize};
+use wasm_bindgen::JsValue;
 
 // ---------------------------------------------------------------------------
 // Структуры данных
@@ -91,6 +92,16 @@ pub fn clear_cache() {
 ///
 /// Возвращает JSON: `{"updated": <число>, "errors": [...]}`
 pub fn add_or_update_cards(cards_json_array: &str) -> String {
+    add_or_update_cards_inner(cards_json_array)
+}
+
+/// Принимает JS-массив объектов напрямую.
+/// Для каждой карточки: JSON.stringify → serde_json::from_str.
+pub fn add_or_update_cards_js(cards: JsValue) -> String {
+    add_or_update_cards_inner_js(cards)
+}
+
+fn add_or_update_cards_inner(cards_json_array: &str) -> String {
     let cache = global_cache();
 
     // Парсим входной массив
@@ -146,6 +157,63 @@ pub fn add_or_update_cards(cards_json_array: &str) -> String {
     let result = UpdateResult { updated, errors };
     serde_json::to_string(&result)
         .unwrap_or_else(|_| r#"{"updated":0,"errors":["serialization error"]}"#.to_string())
+}
+
+fn add_or_update_cards_inner_js(cards: JsValue) -> String {
+    let arr = js_sys::Array::from(&cards);
+    let cache = global_cache();
+    let mut updated = 0usize;
+    let mut errors: Vec<String> = Vec::new();
+
+    {
+        let mut map = cache.lock().unwrap();
+        for item in arr.iter() {
+            let file_path = js_sys::Reflect::get(&item, &JsValue::from_str("filePath"))
+                .unwrap_or_default()
+                .as_string()
+                .unwrap_or_default();
+
+            if file_path.is_empty() {
+                continue;
+            }
+
+            let card_js =
+                js_sys::Reflect::get(&item, &JsValue::from_str("card")).unwrap_or_default();
+            let state_js =
+                js_sys::Reflect::get(&item, &JsValue::from_str("state")).unwrap_or_default();
+
+            // JSON.stringify → serde_json::from_str
+            let card_json = js_sys::JSON::stringify(&card_js)
+                .map(|s| s.as_string().unwrap_or_default())
+                .unwrap_or_default();
+            let state_json = js_sys::JSON::stringify(&state_js)
+                .map(|s| s.as_string().unwrap_or_default())
+                .unwrap_or_default();
+
+            let mut card: CardData = match serde_json::from_str(&card_json) {
+                Ok(c) => c,
+                Err(e) => {
+                    errors.push(format!("Карточка '{}': {}", file_path, e));
+                    continue;
+                }
+            };
+            card.file_path = Some(file_path.clone());
+
+            let state: ComputedState = match serde_json::from_str(&state_json) {
+                Ok(s) => s,
+                Err(e) => {
+                    errors.push(format!("Состояние '{}': {}", file_path, e));
+                    continue;
+                }
+            };
+
+            map.insert(file_path, CachedCard { card, state });
+            updated += 1;
+        }
+    }
+
+    let result = UpdateResult { updated, errors };
+    serde_json::to_string(&result).unwrap_or_default()
 }
 
 /// Удаляет карточку из кэша по пути файла.
