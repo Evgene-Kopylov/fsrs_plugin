@@ -163,8 +163,8 @@ function parseYaml(yaml: string): any {
     }
 }
 
-// Copy of parseModernFsrsFromFrontmatter from fsrs-helper.ts
-function parseModernFsrsFromFrontmatter(
+// Copy of parseCardDataFromFrontmatter from fsrs-helper.ts
+function parseCardDataFromFrontmatter(
     frontmatter: string,
     filePath: string,
 ): ParseResult {
@@ -368,7 +368,7 @@ async function runTestCards() {
                     continue;
                 }
 
-                const result = parseModernFsrsFromFrontmatter(
+                const result = parseCardDataFromFrontmatter(
                     frontmatter,
                     filePath,
                 );
@@ -427,4 +427,4 @@ if (isMainModule) {
     main().catch(console.error);
 }
 
-export { parseYaml, parseModernFsrsFromFrontmatter };
+export { parseYaml, parseCardDataFromFrontmatter };

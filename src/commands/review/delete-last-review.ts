@@ -1,7 +1,7 @@
 import { App } from "obsidian";
 import { showNotice } from "../../utils/notice";
 import {
-    parseModernFsrsFromFrontmatter,
+    parseCardDataFromFrontmatter,
     extractFrontmatterWithMatch,
     cardToFsrsYaml,
 } from "../../utils/fsrs-helper";
@@ -36,10 +36,7 @@ export async function deleteLastReview(
         }
 
         const frontmatter = frontmatterMatch.content;
-        const parseResult = parseModernFsrsFromFrontmatter(
-            frontmatter,
-            filePath,
-        );
+        const parseResult = parseCardDataFromFrontmatter(frontmatter, filePath);
 
         if (!parseResult.success || !parseResult.card) {
             showNotice("notices.not_fsrs_card");

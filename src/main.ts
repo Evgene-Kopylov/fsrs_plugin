@@ -22,7 +22,7 @@ import {
     base64ToBytes,
     shouldIgnoreFileWithSettings,
     extractFrontmatter,
-    parseModernFsrsFromFrontmatter,
+    parseCardDataFromFrontmatter,
     computeCardState,
 } from "./utils/fsrs";
 import type { FSRSRating, ReviewSession, CardData } from "./interfaces/fsrs";
@@ -372,7 +372,7 @@ export default class FsrsPlugin extends Plugin {
                 return;
             }
 
-            const parseResult = parseModernFsrsFromFrontmatter(
+            const parseResult = parseCardDataFromFrontmatter(
                 frontmatter,
                 filePath,
             );

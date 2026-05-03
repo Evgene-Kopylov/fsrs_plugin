@@ -2,7 +2,7 @@ import { Modal, App } from "obsidian";
 import { showNotice } from "../utils/notice";
 import { i18n } from "../utils/i18n";
 import {
-    parseModernFsrsFromFrontmatter,
+    parseCardDataFromFrontmatter,
     extractFrontmatter,
     formatLocalDate,
 } from "../utils/fsrs-helper";
@@ -70,7 +70,7 @@ export class ReviewHistoryModal extends Modal {
                 return;
             }
 
-            const parseResult = parseModernFsrsFromFrontmatter(
+            const parseResult = parseCardDataFromFrontmatter(
                 frontmatter,
                 this.filePath,
             );

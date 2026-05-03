@@ -2,7 +2,7 @@ import { App, TFile } from "obsidian";
 import { showNotice } from "../../utils/notice";
 import { getLocalizedNoun, i18n } from "../../utils/i18n";
 import {
-    parseModernFsrsFromFrontmatter,
+    parseCardDataFromFrontmatter,
     addReviewSession,
     getNextReviewDates,
     isCardDue,
@@ -127,7 +127,7 @@ async function reviewCardByFile(
 
     const frontmatter = frontmatterMatch.content;
 
-    const parseResult = parseModernFsrsFromFrontmatter(frontmatter, file.path);
+    const parseResult = parseCardDataFromFrontmatter(frontmatter, file.path);
 
     if (!parseResult.success || !parseResult.card) {
         showNotice("notices.not_fsrs_card");

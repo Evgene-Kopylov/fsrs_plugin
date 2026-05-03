@@ -10,7 +10,7 @@ import { extract_fsrs_from_frontmatter_wrapped } from "../../../wasm-lib/pkg/was
 /**
  * Парсит frontmatter файла и извлекает карточку в новом формате
  */
-export function parseModernFsrsFromFrontmatter(
+export function parseCardDataFromFrontmatter(
     frontmatter: string,
     filePath: string,
 ): ParseResult {
