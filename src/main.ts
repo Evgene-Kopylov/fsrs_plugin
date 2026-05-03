@@ -1,4 +1,4 @@
-import { Plugin, TFile, Notice } from "obsidian";
+import { Plugin, TFile, Notice, EventRef } from "obsidian";
 import { registerCommands } from "./commands/index";
 import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from "./commands/add-fsrs-fields";
 import {
@@ -28,7 +28,11 @@ import { i18n } from "./utils/i18n";
 import { showNotice } from "./utils/notice";
 import { verboseLog, setVerboseLoggingEnabled } from "./utils/logger";
 
-// Импорт WASM функций
+// Расширение типов Obsidian: metadataCache.on("changed") существует в runtime
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- declaration merging extends MetadataCache from Obsidian, used implicitly
+interface MetadataCache {
+    on(name: "changed", callback: (path: string) => void): EventRef;
+}
 import init from "../wasm-lib/pkg/wasm_lib";
 import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
 
@@ -162,8 +166,7 @@ export default class FsrsPlugin extends Plugin {
             // metadataCache.on("changed") срабатывает после того, как Obsidian
             // перепарсил frontmatter изменённого файла. Данные уже в кэше —
             // читать файл через vault.read() не нужно.
-            // Типы Obsidian не включают "changed", но событие существует в runtime.
-            (this.app.metadataCache as any).on("changed", (path: string) => {
+            this.app.metadataCache.on("changed", (path: string) => {
                 if (!this.isWasmReady()) return;
                 if (!this.initialScanCompleted) return;
                 if (
@@ -361,7 +364,7 @@ export default class FsrsPlugin extends Plugin {
      * Использует metadataCache Obsidian — без vault.read().
      * Если карточка не содержит FSRS-данных — удаляет из кэша.
      */
-    private async scanSingleCard(filePath: string): Promise<void> {
+    private scanSingleCard(filePath: string): void {
         if (
             shouldIgnoreFileWithSettings(
                 filePath,
