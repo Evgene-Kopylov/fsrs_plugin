@@ -67,6 +67,7 @@ TypeScript                  Rust/WASM
 ```
 
 <!-- ИЛЛЮСТРАЦИЯ 4: Диаграмма архитектуры. Две колонки: TS (Obsidian) слева, Rust/WASM справа. Между ними стрелки. TS → WASM: «файлы → обнови/удали карточку», «SQL-запрос». WASM → TS: «отфильтрованные карточки с состояниями». Поток: Obsidian → TS-обвязка → WASM-ядро (кэш + FSRS + парсер) → обратно. -->
+![fsrs-plugin-schema](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/raw/main/docs/images/fsrs-plugin-schema.ru.png)
 
 TypeScript — тонкая обвязка над Obsidian API. Вся логика — в WASM. Механизм прост: TS читает файлы, передаёт данные в WASM, получает результат, отображает.
 
