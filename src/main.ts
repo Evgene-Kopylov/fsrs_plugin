@@ -1,6 +1,4 @@
 import { Plugin, TFile, Notice } from "obsidian";
-// @ts-expect-error -- used inside declare module below
-import type { EventRef } from "obsidian";
 import { registerCommands } from "./commands/index";
 import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from "./commands/add-fsrs-fields";
 import {
@@ -23,6 +21,8 @@ import type { CacheCardInput } from "./utils/fsrs/fsrs-cache";
 import {
     base64ToBytes,
     shouldIgnoreFileWithSettings,
+    extractFrontmatter,
+    parseCardDataFromFrontmatter,
     computeCardState,
 } from "./utils/fsrs";
 import type { FSRSRating, ReviewSession, CardData } from "./interfaces/fsrs";
@@ -30,11 +30,6 @@ import { i18n } from "./utils/i18n";
 import { showNotice } from "./utils/notice";
 import { verboseLog, setVerboseLoggingEnabled } from "./utils/logger";
 
-declare module "obsidian" {
-    interface MetadataCache {
-        on(name: "changed", callback: (path: string) => void): EventRef;
-    }
-}
 import init from "../wasm-lib/pkg/wasm_lib";
 import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
 
@@ -165,21 +160,18 @@ export default class FsrsPlugin extends Plugin {
             }),
         );
         this.registerEvent(
-            // metadataCache.on("changed") срабатывает после того, как Obsidian
-            // перепарсил frontmatter изменённого файла. Данные уже в кэше —
-            // читать файл через vault.read() не нужно.
-            this.app.metadataCache.on("changed", (path: string) => {
+            this.app.vault.on("modify", (file) => {
                 if (!this.isWasmReady()) return;
                 if (!this.initialScanCompleted) return;
                 if (
-                    path &&
+                    file.path &&
                     !shouldIgnoreFileWithSettings(
-                        path,
+                        file.path,
                         this.settings,
                         this.app.vault.configDir,
                     )
                 ) {
-                    this.scheduleCardScan(path);
+                    this.scheduleCardScan(file.path);
                 }
             }),
         );
@@ -363,10 +355,10 @@ export default class FsrsPlugin extends Plugin {
 
     /**
      * Сканирует одну карточку по пути файла.
-     * Использует metadataCache Obsidian — без vault.read().
+     * Читает файл, парсит frontmatter, вычисляет состояние и обновляет кэш.
      * Если карточка не содержит FSRS-данных — удаляет из кэша.
      */
-    private scanSingleCard(filePath: string): void {
+    private async scanSingleCard(filePath: string): Promise<void> {
         if (
             shouldIgnoreFileWithSettings(
                 filePath,
@@ -383,30 +375,28 @@ export default class FsrsPlugin extends Plugin {
             const file = this.app.vault.getAbstractFileByPath(filePath);
             if (!file || !(file instanceof TFile)) return;
 
-            // Читаем frontmatter из кэша Obsidian — без vault.read()
-            const fileCache = this.app.metadataCache.getFileCache(file);
-            if (!fileCache?.frontmatter) {
+            const content = await this.app.vault.read(file);
+            const frontmatter = extractFrontmatter(content);
+            if (!frontmatter) {
                 this.cache.removeCard(filePath);
                 this.notifyFsrsTableRenderers();
                 return;
             }
 
-            const cachedFrontmatter = fileCache.frontmatter as Record<
-                string,
-                unknown
-            >;
-            const rawReviews = cachedFrontmatter.reviews;
-            if (!Array.isArray(rawReviews)) {
+            const parseResult = parseCardDataFromFrontmatter(
+                frontmatter,
+                filePath,
+            );
+            if (parseResult.success && parseResult.card) {
+                const state = computeCardState(parseResult.card, this.settings);
+                this.cache.addOrUpdateCards([
+                    { filePath, card: parseResult.card, state },
+                ]);
+                this.notifyFsrsTableRenderers();
+            } else {
                 this.cache.removeCard(filePath);
                 this.notifyFsrsTableRenderers();
-                return;
             }
-
-            const reviews = this.parseReviewsFromCache(rawReviews);
-            const card: CardData = { reviews, filePath };
-            const state = computeCardState(card, this.settings);
-            this.cache.addOrUpdateCards([{ filePath, card, state }]);
-            this.notifyFsrsTableRenderers();
         } catch (error) {
             console.warn(
                 `Ошибка при сканировании карточки ${filePath}:`,
