@@ -1,4 +1,6 @@
-import { Plugin, TFile, Notice, EventRef } from "obsidian";
+import { Plugin, TFile, Notice } from "obsidian";
+// @ts-expect-error -- used inside declare module below
+import type { EventRef } from "obsidian";
 import { registerCommands } from "./commands/index";
 import { addFsrsFieldsToCurrentFile as addFsrsFieldsToCurrentFileFunction } from "./commands/add-fsrs-fields";
 import {
@@ -28,10 +30,10 @@ import { i18n } from "./utils/i18n";
 import { showNotice } from "./utils/notice";
 import { verboseLog, setVerboseLoggingEnabled } from "./utils/logger";
 
-// Расширение типов Obsidian: metadataCache.on("changed") существует в runtime
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- declaration merging extends MetadataCache from Obsidian, used implicitly
-interface MetadataCache {
-    on(name: "changed", callback: (path: string) => void): EventRef;
+declare module "obsidian" {
+    interface MetadataCache {
+        on(name: "changed", callback: (path: string) => void): EventRef;
+    }
 }
 import init from "../wasm-lib/pkg/wasm_lib";
 import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
