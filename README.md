@@ -47,10 +47,10 @@ The plugin turns your notes into FSRS-based flashcards for effective memorizatio
 | Platform | Status |
 | :--- | :--- |
 | Linux (x86_64) | ✅ |
-| macOS | ❓ (not tested) |
+| macOS | ❔ (not tested) |
 | Windows (x86_64) | ✅ |
 | Android | ✅ |
-| iOS | ❓ (not tested) |
+| iOS | ❔ (not tested) |
 
 ## 🐌 Quick Start
 
