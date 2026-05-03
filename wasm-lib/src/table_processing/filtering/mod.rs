@@ -37,77 +37,29 @@ pub struct FilterSortResult {
 }
 
 /// Функция фильтрации и сортировки карточек с готовыми состояниями
-/// Принимает JSON массив объектов `{card_json, state_json}` вместо простых карточек
+/// Принимает срез пар (CardData, ComputedState) — без JSON-сериализации на входе
 pub fn filter_and_sort_cards_with_states(
-    cards_with_states_json: &str,
+    cards: &[(CardData, ComputedState)],
     params: &TableParams,
     _settings_json: &str,
     now_iso: &str,
 ) -> Result<FilterSortResult, FilterError> {
     debug!(
-        "Начало фильтрации и сортировки карточек с готовыми состояниями: {} байт JSON",
-        cards_with_states_json.len()
+        "Начало фильтрации и сортировки {} карточек с готовыми состояниями",
+        cards.len()
     );
 
-    // Парсим массив пар (карточка, состояние)
-    let pairs_array: Vec<serde_json::Value> = serde_json::from_str(cards_with_states_json)
-        .map_err(|e| FilterError::JsonParseError(e.to_string()))?;
-
     let mut computed_cards = Vec::new();
-    let errors = Vec::new();
 
     // Обрабатываем каждую пару
-    for (index, pair_value) in pairs_array.iter().enumerate() {
-        // Извлекаем карточку и состояние из JSON объекта
-        let card_json_value = pair_value.get("card_json").ok_or_else(|| {
-            FilterError::JsonParseError(format!("Отсутствует card_json в паре {}", index))
-        })?;
-        let state_json_value = pair_value.get("state_json").ok_or_else(|| {
-            FilterError::JsonParseError(format!("Отсутствует state_json в паре {}", index))
-        })?;
-
-        // Десериализуем карточку (поддерживаем как строку JSON, так и объект)
-        let card: CardData = if card_json_value.is_string() {
-            serde_json::from_str(card_json_value.as_str().unwrap()).map_err(|e| {
-                FilterError::JsonParseError(format!(
-                    "Ошибка парсинга карточки из строки {}: {}",
-                    index, e
-                ))
-            })?
-        } else {
-            serde_json::from_value(card_json_value.clone()).map_err(|e| {
-                FilterError::JsonParseError(format!("Ошибка парсинга карточки {}: {}", index, e))
-            })?
-        };
-
-        // Десериализуем состояние (поддерживаем как строку JSON, так и объект)
-        let state: ComputedState = if state_json_value.is_string() {
-            serde_json::from_str(state_json_value.as_str().unwrap()).map_err(|e| {
-                FilterError::JsonParseError(format!(
-                    "Ошибка парсинга состояния из строки {}: {}",
-                    index, e
-                ))
-            })?
-        } else {
-            serde_json::from_value(state_json_value.clone()).map_err(|e| {
-                FilterError::JsonParseError(format!("Ошибка парсинга состояния {}: {}", index, e))
-            })?
-        };
-
+    for (card, state) in cards {
         // Вычисляем поля из готового состояния
-        let computed_fields = calculator::compute_fields_from_state(&card, &state, now_iso);
+        let computed_fields = calculator::compute_fields_from_state(card, state, now_iso);
 
-        // Сохраняем исходный JSON карточки как строку
-        let card_json_str = if card_json_value.is_string() {
-            card_json_value.as_str().unwrap().to_string()
-        } else {
-            serde_json::to_string(card_json_value).map_err(|e| {
-                FilterError::JsonParseError(format!(
-                    "Ошибка сериализации карточки {}: {}",
-                    index, e
-                ))
-            })?
-        };
+        // Сохраняем исходный JSON карточки как строку (для TS)
+        let card_json_str = serde_json::to_string(card).map_err(|e| {
+            FilterError::JsonParseError(format!("Ошибка сериализации карточки: {}", e))
+        })?;
 
         computed_cards.push(ComputedCard {
             card_json: card_json_str,
@@ -184,7 +136,7 @@ pub fn filter_and_sort_cards_with_states(
     Ok(FilterSortResult {
         cards: limited_cards,
         total_count,
-        errors,
+        errors: vec![],
     })
 }
 
