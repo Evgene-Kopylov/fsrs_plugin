@@ -32,4 +32,7 @@
 - [>] Хранить TFile вместо строки — [stale-path-after-rename.md](stale-path-after-rename.md)
 
 ### Оптимизация кэша: убрать предсериализованные JSON-строки
-- [>] Убрать `card_json`/`state_json` из CachedCard, сериализовать только результат — [cache-json-strings-optimization.md](cache-json-strings-optimization.md)
+- [x] Убрать `card_json`/`state_json` из CachedCard, сериализовать только результат — [cache-json-strings-optimization.md](cache-json-strings-optimization.md)
+
+### Использовать metadataCache для инкрементальных обновлений
+- [>] В scanSingleCard читать frontmatter из metadataCache, а не через vault.read() — [use-metadata-cache-for-incremental-updates.md](use-metadata-cache-for-incremental-updates.md)
