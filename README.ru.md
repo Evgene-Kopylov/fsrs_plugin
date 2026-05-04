@@ -253,22 +253,21 @@ reviews:
 
 ### Сборка из исходников
 
+#### Требования
+
+- **Node.js** 18+
+- **npm**
+- **Rust** (с целью `wasm32-unknown-unknown`)
+- **wasm-pack**
+
 ```bash
-# Клонирование репозитория
 git clone https://gitlab.com/Evgene-Kopylov/FSRS-plugin.git
 cd FSRS-plugin
-
-# Установка зависимостей
 npm install
-
-# Сборка WASM модуля
-npm run build-wasm
-
-# Разработка (watch mode)
-npm run dev
-
-# Продакшн сборка
 npm run build
+
+# Разработка (опционально)
+npm run dev
 ```
 
 ### WASM интеграция
