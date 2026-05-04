@@ -29,4 +29,4 @@ export const DEFAULT_SETTINGS: FSRSSettings = {
 };
 
 /** Максимальное количество строк, отображаемых в таблице, если не указан LIMIT в SQL */
-export const DEFAULT_TABLE_DISPLAY_LIMIT = 200;
+export const DEFAULT_TABLE_DISPLAY_LIMIT = 20;
