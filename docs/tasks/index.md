@@ -33,3 +33,6 @@
 
 ### Передавать структуры в WASM напрямую, без JSON-строк
 - [>] Убрать двойную JSON-сериализацию в addOrUpdateCards — [wasm-direct-structs.md](wasm-direct-structs.md)
+
+### Тепловая карта (Heatmap)
+- [ ] HeatMap — сколько повторений сделано по дням — [heatmap.md](heatmap.md)

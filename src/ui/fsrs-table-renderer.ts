@@ -17,6 +17,7 @@ import type {
 import { generateTableDOM } from "../utils/fsrs-table-helpers";
 import { i18n } from "../utils/i18n";
 import { verboseLog } from "../utils/logger";
+import { DEFAULT_TABLE_DISPLAY_LIMIT } from "../constants";
 
 /**
  * Внутреннее представление карточки для генерации DOM.
@@ -136,7 +137,9 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 
             // Диагностика: формируем строку для самоконтроля
             const effectiveLimit =
-                this.params.limit > 0 ? this.params.limit : 20;
+                this.params.limit > 0
+                    ? this.params.limit
+                    : DEFAULT_TABLE_DISPLAY_LIMIT;
             const shownCount = Math.min(result.cards.length, effectiveLimit);
             const hiddenCount = result.total_count - shownCount;
             const parts: string[] = [
