@@ -11,6 +11,10 @@ import type { HeatmapData } from "../utils/fsrs/fsrs-cache";
 import { i18n } from "../utils/i18n";
 import { verboseLog } from "../utils/logger";
 
+// Глобальные переменные Obsidian для popout window совместимости
+declare const activeWindow: Window & { setTimeout: Window["setTimeout"] };
+declare const activeDocument: Document;
+
 // ---------------------------------------------------------------------------
 // Константы отрисовки (только вёрстка)
 // ---------------------------------------------------------------------------
@@ -163,16 +167,28 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
 
                 const el = weekCol.createDiv({ cls: cls.join(" ") });
 
-                el.addEventListener("mouseenter", () =>
-                    this.showPopup(el, cell.date, cell.tooltip, cell.reviews),
-                );
-                el.addEventListener("mouseleave", () => {
-                    if (!this.locked) this.closePopup();
-                });
-                el.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    this.lockPopup(el, cell.date, cell.tooltip, cell.reviews);
-                });
+                if (cell.count > 0) {
+                    el.addEventListener("mouseenter", () =>
+                        this.showPopup(
+                            el,
+                            cell.date,
+                            cell.tooltip,
+                            cell.reviews,
+                        ),
+                    );
+                    el.addEventListener("mouseleave", () => {
+                        if (!this.locked) this.closePopup();
+                    });
+                    el.addEventListener("click", (e) => {
+                        e.stopPropagation();
+                        this.lockPopup(
+                            el,
+                            cell.date,
+                            cell.tooltip,
+                            cell.reviews,
+                        );
+                    });
+                }
             }
         }
     }
@@ -221,14 +237,11 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
         const close = (e: MouseEvent) => {
             if (!popup.contains(e.target as Node) && e.target !== anchor) {
                 this.closePopup();
-                // eslint-disable-next-line obsidianmd/prefer-active-doc -- activeDocument не экспортирован в Obsidian 1.12.3
-                document.removeEventListener("click", close);
+                activeDocument.removeEventListener("click", close);
             }
         };
-        // eslint-disable-next-line obsidianmd/prefer-active-window-timers -- activeWindow не экспортирован
-        setTimeout(
-            // eslint-disable-next-line obsidianmd/prefer-active-doc -- activeDocument не экспортирован
-            () => document.addEventListener("click", close),
+        activeWindow.setTimeout(
+            () => activeDocument.addEventListener("click", close),
             0,
         );
     }
@@ -285,14 +298,20 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
             });
         }
 
-        // eslint-disable-next-line obsidianmd/prefer-active-doc -- activeDocument не экспортирован
-        document.body.appendChild(popup);
+        activeDocument.body.appendChild(popup);
 
         const ar = anchor.getBoundingClientRect();
         const pr = popup.getBoundingClientRect();
+        // Если не помещается сверху — показываем снизу
+        const topAbove = ar.top - pr.height - 6;
+        const top = topAbove >= 4 ? topAbove : ar.bottom + 6;
+        const left = Math.min(
+            Math.max(4, ar.left + ar.width / 2 - pr.width / 2),
+            window.innerWidth - pr.width - 4,
+        );
         popup.setCssProps({
-            top: `${Math.max(4, ar.top - pr.height - 6)}px`,
-            left: `${Math.max(4, ar.left + ar.width / 2 - pr.width / 2)}px`,
+            top: `${top}px`,
+            left: `${left}px`,
         });
 
         return popup;
