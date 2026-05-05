@@ -38,4 +38,4 @@
 - [>] Написать пользовательскую статью о плагине — [normis-article.md](normis-article.md)
 
 ### Тепловая карта (Heatmap)
-- [ ] HeatMap — сколько повторений сделано по дням — [heatmap.md](heatmap.md)
+- [x] HeatMap — сколько повторений сделано по дням — [heatmap.md](heatmap.md)

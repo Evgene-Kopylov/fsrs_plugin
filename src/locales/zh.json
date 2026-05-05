@@ -54,7 +54,8 @@
         "show_fsrs_help": "显示 fsrs-table 语法帮助",
         "show_review_history": "显示复习历史",
         "insert_review_button": "插入复习按钮块",
-        "insert_default_table": "插入默认 fsrs-table"
+        "insert_default_table": "插入默认 fsrs-table",
+        "insert_heatmap": "插入热力图 fsrs-heatmap"
     },
     "table": {
         "loading": "正在扫描仓库...",
