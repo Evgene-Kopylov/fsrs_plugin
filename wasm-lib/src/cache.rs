@@ -278,6 +278,198 @@ pub fn get_cache_size() -> usize {
     map.len()
 }
 
+/// Возвращает полные данные для рендеринга тепловой карты.
+///
+/// Все вычисления и строки формируются в Rust:
+/// - подсчёт повторений по датам из кэша
+/// - уровни цвета (0-4)
+/// - позиции месяцев
+/// - локализованные названия месяцев, дней недели, тултипы, заголовок
+///
+/// TS только создаёт DOM-элементы и вставляет готовые строки.
+pub fn get_heatmap_data(now_iso: &str, weeks: usize, locale: &str) -> String {
+    use chrono::{Datelike, Duration, NaiveDate};
+
+    let now = match NaiveDate::parse_from_str(&now_iso[..10], "%Y-%m-%d") {
+        Ok(d) => d,
+        Err(_) => {
+            return serde_json::to_string(&serde_json::json!({"error": "invalid date"}))
+                .unwrap_or_else(|_| "{}".to_string());
+        }
+    };
+
+    let is_ru = locale == "ru";
+
+    // Локализованные строки
+    let (month_names, day_labels, title, reviews_forms): ([&str; 12], [&str; 7], &str, [&str; 3]) =
+        if is_ru {
+            (
+                [
+                    "Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя",
+                    "Дек",
+                ],
+                ["", "Пн", "", "Ср", "", "Пт", ""],
+                "Повторения",
+                ["повторение", "повторения", "повторений"],
+            )
+        } else {
+            (
+                [
+                    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov",
+                    "Dec",
+                ],
+                ["", "Mon", "", "Wed", "", "Fri", ""],
+                "Reviews",
+                ["review", "reviews", "reviews"],
+            )
+        };
+
+    // Строим ячейки
+    // Диапазон дат: конец = суббота текущей недели
+    let weekday = now.weekday().num_days_from_monday();
+    let end_date = now + Duration::days(6 - weekday as i64);
+    let total_days = (weeks * 7) as i64;
+    let start_date = end_date - Duration::days(total_days - 1);
+
+    // Собираем повторения из кэша: дата → список (путь, оценка)
+    let cache = global_cache();
+    let map = cache.lock().unwrap();
+    let mut reviews_by_date: HashMap<String, Vec<(String, u8)>> = HashMap::new();
+    for (file_path, cached) in map.iter() {
+        for session in &cached.card.reviews {
+            let date_str: String = session.date.chars().take(10).collect();
+            reviews_by_date
+                .entry(date_str)
+                .or_default()
+                .push((file_path.clone(), session.rating));
+        }
+    }
+
+    // Строим ячейки
+    let mut cells: Vec<serde_json::Value> = Vec::new();
+    let mut d = start_date;
+    while d <= end_date {
+        let date_str = d.format("%Y-%m-%d").to_string();
+        let reviews = reviews_by_date.get(&date_str);
+        let count = reviews.map_or(0, |r| r.len() as u32);
+        let level = color_level(count);
+        let future = d > now;
+
+        // Флаги границ для визуального разделения месяцев
+        let mon_idx = d.weekday().num_days_from_monday();
+        let day_num = d.day();
+        let last_day = last_day_of_month(d);
+        let border_top = mon_idx == 0 || day_num == 1;
+        let border_bottom = mon_idx == 6 || d == last_day;
+        let border_left = day_num == 1 || day_num <= 7;
+        let border_right = d == last_day || day_num >= last_day.day().saturating_sub(6);
+
+        // Формируем тултип: только количество, дату отформатирует TS через moment
+        let review_word = plural_ru(count, &reviews_forms);
+        let tooltip = format!("{} {}", count, review_word);
+
+        // JSON для reviews (файл + оценка + полный путь)
+        let reviews_json: Vec<serde_json::Value> = reviews
+            .map(|list| {
+                list.iter()
+                    .map(|(path, rating)| {
+                        let name = path.rsplit('/').next().unwrap_or(path);
+                        serde_json::json!({"file": name, "path": path, "rating": rating})
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        cells.push(serde_json::json!({
+            "date": date_str,
+            "count": count,
+            "level": level,
+            "future": future,
+            "tooltip": tooltip,
+            "reviews": reviews_json,
+            "border_top": border_top,
+            "border_bottom": border_bottom,
+            "border_left": border_left,
+            "border_right": border_right,
+        }));
+
+        d += Duration::days(1);
+    }
+
+    // Позиции месяцев
+    let month_positions = compute_month_positions(start_date, weeks);
+
+    let result = serde_json::json!({
+        "title": title,
+        "month_names": month_names,
+        "day_labels": day_labels,
+        "cells": cells,
+        "month_positions": month_positions,
+        "weeks": weeks,
+    });
+
+    serde_json::to_string(&result).unwrap_or_else(|_| "{}".to_string())
+}
+
+fn color_level(count: u32) -> u32 {
+    const T: [u32; 5] = [0, 1, 2, 4, 7];
+    for i in (0..T.len()).rev() {
+        if count >= T[i] {
+            return i as u32;
+        }
+    }
+    0
+}
+
+fn last_day_of_month(d: chrono::NaiveDate) -> chrono::NaiveDate {
+    use chrono::Datelike;
+    let next = if d.month() == 12 {
+        chrono::NaiveDate::from_ymd_opt(d.year() + 1, 1, 1)
+    } else {
+        chrono::NaiveDate::from_ymd_opt(d.year(), d.month() + 1, 1)
+    };
+    next.unwrap_or(d) - chrono::Duration::days(1)
+}
+
+fn plural_ru<'a>(n: u32, forms: &'a [&'a str; 3]) -> &'a str {
+    let m = n % 100;
+    let m1 = m % 10;
+    if m > 10 && m < 20 {
+        return forms[2];
+    }
+    if m1 == 1 {
+        forms[0]
+    } else if (2..=4).contains(&m1) {
+        forms[1]
+    } else {
+        forms[2]
+    }
+}
+
+fn compute_month_positions(start: chrono::NaiveDate, weeks: usize) -> Vec<serde_json::Value> {
+    use chrono::{Datelike, Duration};
+    let mut pos: Vec<serde_json::Value> = Vec::new();
+    let mut last: i32 = -1;
+    let mut first_week: usize = 0;
+    for w in 0..weeks {
+        let d = start + Duration::days((w * 7) as i64);
+        let m = d.month0() as i32;
+        if m != last {
+            if last != -1 {
+                let lw = (first_week + 1).min(weeks - 1);
+                pos.push(serde_json::json!({"month": last, "week": lw}));
+            }
+            last = m;
+            first_week = w;
+        }
+    }
+    if last != -1 {
+        let lw = (first_week + 1).min(weeks - 1);
+        pos.push(serde_json::json!({"month": last, "week": lw}));
+    }
+    pos
+}
+
 /// Запрашивает карточки из кэша с фильтрацией, сортировкой и лимитом.
 ///
 /// Принимает JSON с параметрами таблицы (TableParams) и текущее время ISO.

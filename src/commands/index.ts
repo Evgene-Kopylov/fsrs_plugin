@@ -9,6 +9,7 @@ import { FsrsHelpModal } from "../ui/fsrs-help-modal";
 import { showReviewHistoryForCurrentFile } from "../ui/review-history-modal";
 import { insertReviewButton } from "./add-review-button";
 import { insertDefaultTable } from "./add-default-table";
+import { insertHeatmap } from "./add-heatmap";
 
 /** Карта эмодзи для каждой команды (не зависят от локали) */
 const COMMAND_EMOJIS: Record<string, string> = {
@@ -19,6 +20,7 @@ const COMMAND_EMOJIS: Record<string, string> = {
     show_review_history: "H",
     insert_review_button: "□",
     insert_default_table: "⬒",
+    insert_heatmap: "☰",
 };
 
 /**
@@ -44,6 +46,7 @@ export function updateCommandNames(app: App): void {
         { id: "show-review-history", key: "commands.show_review_history" },
         { id: "insert-review-button", key: "commands.insert_review_button" },
         { id: "insert-default-table", key: "commands.insert_default_table" },
+        { id: "insert-heatmap", key: "commands.insert_heatmap" },
     ];
 
     const commandMap = (app as unknown as CommandsAccess).commands;
@@ -125,6 +128,15 @@ export function registerCommands(plugin: FsrsPlugin): void {
         name: commandEmojiText("commands.insert_default_table"),
         editorCallback: async (editor) => {
             await insertDefaultTable(plugin.app, plugin, editor);
+        },
+    });
+
+    // Команда для вставки fsrs-heatmap
+    plugin.addCommand({
+        id: "insert-heatmap",
+        name: commandEmojiText("commands.insert_heatmap"),
+        editorCallback: async (editor) => {
+            await insertHeatmap(plugin.app, plugin, editor);
         },
     });
 }

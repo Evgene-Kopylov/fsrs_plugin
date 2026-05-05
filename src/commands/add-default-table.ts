@@ -21,91 +21,85 @@ export function findInsertLine(lines: string[], cursorLine: number): number {
 }
 
 /**
+ * Вставляет произвольный блок в позицию курсора.
+ * Общая логика для insertDefaultTable и insertHeatmap.
+ */
+export async function insertBlock(
+    app: App,
+    plugin: FsrsPlugin,
+    block: string,
+    editor?: Editor,
+): Promise<boolean> {
+    const activeFile = app.workspace.getActiveFile();
+    if (!activeFile) {
+        showNotice("notices.no_active_file");
+        return false;
+    }
+    if (!activeFile.path.endsWith(".md")) return false;
+
+    if (editor) {
+        const cursor = editor.getCursor();
+        const content = await app.vault.read(activeFile);
+        const lines = content.split("\n");
+        const insertLine = findInsertLine(lines, cursor.line);
+
+        let newContent: string;
+        if (insertLine >= lines.length) {
+            newContent = content.trimEnd() + "\n\n" + block + "\n";
+        } else {
+            const before = lines.slice(0, insertLine).join("\n");
+            const after = lines.slice(insertLine + 1).join("\n");
+            newContent =
+                (before ? before + "\n" : "") +
+                "\n" +
+                block +
+                "\n" +
+                (after ? after : "");
+        }
+
+        await app.vault.modify(activeFile, newContent);
+        const newLines = newContent.split("\n");
+        const blockLineCount = block.split("\n").length + 2;
+        const newCursorLine = Math.min(
+            insertLine + blockLineCount,
+            newLines.length - 1,
+        );
+        editor.setCursor(newCursorLine, 0);
+    } else {
+        await app.vault.process(activeFile, (data) => {
+            const fm = /^(---\n[\s\S]*?\n---)/.exec(data);
+            if (fm) {
+                const afterFm = fm.index + fm[0].length;
+                return (
+                    data.slice(0, afterFm) +
+                    "\n\n" +
+                    block +
+                    "\n" +
+                    data.slice(afterFm)
+                );
+            }
+            return "\n" + block + "\n" + data;
+        });
+    }
+
+    plugin.notifyFsrsTableRenderers();
+    return true;
+}
+
+/**
  * Вставляет дефолтный блок `fsrs-table` в позицию курсора.
- * Находит ближайшую пустую строку, вставляет туда с отступами.
  */
 export async function insertDefaultTable(
     app: App,
     plugin: FsrsPlugin,
     editor?: Editor,
 ): Promise<void> {
+    const file = app.workspace.getActiveFile();
+    verboseLog("Команда: Вставить дефолтный fsrs-table для файла", file?.name);
     try {
-        const activeFile = app.workspace.getActiveFile();
-        if (!activeFile) {
-            showNotice("notices.no_active_file");
-            return;
-        }
-
-        if (!activeFile.path.endsWith(".md")) {
-            console.debug("Файл не является markdown:", activeFile.path);
-            return;
-        }
-
-        verboseLog(
-            "Команда: Вставить дефолтный fsrs-table для файла",
-            activeFile.name,
-        );
-
-        // Если есть редактор — вставляем по курсору
-        if (editor) {
-            const cursor = editor.getCursor();
-            const content = await app.vault.read(activeFile);
-            const lines = content.split("\n");
-            const insertLine = findInsertLine(lines, cursor.line);
-
-            // Формируем новый контент
-            let newContent: string;
-            if (insertLine >= lines.length) {
-                // Нет пустой строки ниже — добавляем в конец файла
-                newContent =
-                    content.trimEnd() + "\n\n" + DEFAULT_TABLE_BLOCK + "\n";
-            } else {
-                // Вставляем блок на найденную пустую строку
-                const before = lines.slice(0, insertLine).join("\n");
-                const after = lines.slice(insertLine + 1).join("\n");
-                newContent =
-                    (before ? before + "\n" : "") +
-                    "\n" +
-                    DEFAULT_TABLE_BLOCK +
-                    "\n" +
-                    (after ? after : "");
-            }
-
-            await app.vault.modify(activeFile, newContent);
-
-            // Ставим курсор после вставленного блока
-            const newLines = newContent.split("\n");
-            const blockLineCount = DEFAULT_TABLE_BLOCK.split("\n").length + 2; // +2 за пустые строки
-            const newCursorLine = Math.min(
-                insertLine + blockLineCount,
-                newLines.length - 1,
-            );
-            editor.setCursor(newCursorLine, 0);
-        } else {
-            // Нет редактора — старый fallback: в начало файла
-            await app.vault.process(activeFile, (data) => {
-                const frontmatterMatch = /^(---\n[\s\S]*?\n---)/.exec(data);
-                if (frontmatterMatch) {
-                    const afterFm =
-                        frontmatterMatch.index + frontmatterMatch[0].length;
-                    return (
-                        data.slice(0, afterFm) +
-                        "\n\n" +
-                        DEFAULT_TABLE_BLOCK +
-                        "\n" +
-                        data.slice(afterFm)
-                    );
-                }
-                return "\n" + DEFAULT_TABLE_BLOCK + "\n" + data;
-            });
-        }
-
-        plugin.notifyFsrsTableRenderers();
-
-        verboseLog(
-            "Дефолтный fsrs-table успешно добавлен в файл",
-            activeFile.name,
-        );
+        await insertBlock(app, plugin, DEFAULT_TABLE_BLOCK, editor);
+        if (file)
+            verboseLog("Дефолтный fsrs-table успешно добавлен в", file.name);
     } catch (error) {
         console.error("Ошибка при вставке дефолтного fsrs-table:", error);
         showNotice("notices.card_processing_error");

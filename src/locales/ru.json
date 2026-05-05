@@ -79,7 +79,8 @@
         "show_fsrs_help": "Показать справку по синтаксису fsrs-table",
         "show_review_history": "Показать историю повторений",
         "insert_review_button": "Вставить блок кнопки повторения",
-        "insert_default_table": "Вставить таблицу fsrs-table по умолчанию"
+        "insert_default_table": "Вставить таблицу fsrs-table по умолчанию",
+        "insert_heatmap": "Вставить тепловую карту fsrs-heatmap"
     },
     "table": {
         "loading": "Сканирование хранилища...",

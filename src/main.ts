@@ -12,6 +12,7 @@ import {
 
 import { ReviewButtonRenderer } from "./ui/review-button-renderer";
 import { FsrsTableRenderer } from "./ui/fsrs-table-renderer";
+import { FsrsHeatmapRenderer } from "./ui/fsrs-heatmap-renderer";
 
 import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings/types";
 import { FsrsSettingTab } from "./settings/settings-core";
@@ -33,6 +34,11 @@ import { verboseLog, setVerboseLoggingEnabled } from "./utils/logger";
 import init from "../wasm-lib/pkg/wasm_lib";
 import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
 
+/** Интерфейс для рендереров, поддерживающих обновление */
+interface RefreshableRenderer {
+    refresh(): Promise<void>;
+}
+
 /**
  * Основной класс плагина FSRS для Obsidian
  * Интегрирует алгоритм интервального повторения FSRS в Obsidian
@@ -42,7 +48,7 @@ export default class FsrsPlugin extends Plugin {
     private isWasmInitialized = false;
     private lastReloadNoticeTime = 0;
 
-    private fsrsTableRenderers = new Set<FsrsTableRenderer>();
+    private fsrsTableRenderers = new Set<RefreshableRenderer>();
     // Кэш карточек в WASM
     public cache!: FsrsCache;
     // Промис сканирования хранилища (запускается по первому запросу)
@@ -132,6 +138,23 @@ export default class FsrsPlugin extends Plugin {
 
                 // Создаем и добавляем рендерер
                 const renderer = new FsrsTableRenderer(
+                    this,
+                    renderContainer,
+                    source,
+                );
+                ctx.addChild(renderer);
+            },
+        );
+
+        // Регистрация MarkdownCodeBlockProcessor для блоков fsrs-heatmap
+        this.registerMarkdownCodeBlockProcessor(
+            "fsrs-heatmap",
+            (source, el, ctx) => {
+                const renderContainer = createDiv();
+                renderContainer.className = "fsrs-heatmap-render-container";
+                el.appendChild(renderContainer);
+
+                const renderer = new FsrsHeatmapRenderer(
                     this,
                     renderContainer,
                     source,
@@ -555,14 +578,14 @@ export default class FsrsPlugin extends Plugin {
      * Регистрирует активный рендерер fsrs-table для уведомлений об обновлениях.
      * Первый рендер запускается самим рендерером в onload() через refresh().
      */
-    registerFsrsTableRenderer(renderer: FsrsTableRenderer): void {
+    registerFsrsTableRenderer(renderer: RefreshableRenderer): void {
         this.fsrsTableRenderers.add(renderer);
     }
 
     /**
-     * Удаляет рендерер fsrs-table из списка активных
+     * Удаляет рендерер из списка активных
      */
-    unregisterFsrsTableRenderer(renderer: FsrsTableRenderer): void {
+    unregisterFsrsTableRenderer(renderer: RefreshableRenderer): void {
         this.fsrsTableRenderers.delete(renderer);
     }
 

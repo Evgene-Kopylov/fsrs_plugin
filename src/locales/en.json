@@ -54,7 +54,8 @@
         "show_fsrs_help": "Show fsrs-table syntax help",
         "show_review_history": "Show review history",
         "insert_review_button": "Insert review button block",
-        "insert_default_table": "Insert default fsrs-table"
+        "insert_default_table": "Insert default fsrs-table",
+        "insert_heatmap": "Insert heatmap fsrs-heatmap"
     },
     "table": {
         "loading": "Scanning vault...",

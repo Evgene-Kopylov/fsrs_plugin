@@ -57,6 +57,37 @@ export interface CountResult {
     errors: string[];
 }
 
+/** Ячейка тепловой карты — все поля вычислены в Rust */
+export interface HeatmapCell {
+    date: string;
+    count: number;
+    level: number;
+    future: boolean;
+    tooltip: string;
+    reviews: Array<{ file: string; path: string; rating: number }>;
+    border_top: boolean;
+    border_bottom: boolean;
+    border_left: boolean;
+    border_right: boolean;
+}
+
+/** Позиция месяца в сетке */
+export interface HeatmapMonthPosition {
+    month: number;
+    week: number;
+}
+
+/** Полные данные тепловой карты — вычислены в Rust, TS только рендерит */
+export interface HeatmapData {
+    title: string;
+    month_names: string[];
+    day_labels: string[];
+    cells: HeatmapCell[];
+    month_positions: HeatmapMonthPosition[];
+    weeks: number;
+    error?: string;
+}
+
 // ---------------------------------------------------------------------------
 // Внутренние типы для преобразования WASM → TS
 // ---------------------------------------------------------------------------
@@ -165,6 +196,19 @@ export class FsrsCache {
     getAll(): CachedCard[] {
         const resultJson = wasm.get_all_cards();
         return JSON.parse(resultJson) as CachedCard[];
+    }
+
+    /**
+     * Возвращает готовые данные для рендеринга тепловой карты.
+     * Все вычисления и строки — в Rust.
+     */
+    getHeatmapData(now: Date, weeks: number, locale: string): HeatmapData {
+        const resultJson = wasm.get_heatmap_data(
+            now.toISOString(),
+            weeks,
+            locale,
+        );
+        return JSON.parse(resultJson) as HeatmapData;
     }
 
     // -----------------------------------------------------------------------

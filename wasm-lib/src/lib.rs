@@ -303,3 +303,8 @@ pub fn query_cards(params_json: &str, now_iso: &str) -> String {
 pub fn query_cards_count(params_json: &str, now_iso: &str) -> String {
     cache::query_cards_count(params_json, now_iso)
 }
+
+#[wasm_bindgen]
+pub fn get_heatmap_data(now_iso: &str, weeks: usize, locale: &str) -> String {
+    cache::get_heatmap_data(now_iso, weeks, locale)
+}
