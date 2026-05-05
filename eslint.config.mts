@@ -75,11 +75,14 @@ export default tseslint.config(
                 "@typescript-eslint/no-explicit-any",
                 "obsidianmd/no-static-styles-assignment",
                 "obsidianmd/hardcoded-config-path",
+                "obsidianmd/prefer-active-doc",
+                "obsidianmd/prefer-active-window-timers",
                 "no-console",
             ],
 
-            // no-unsupported-api — off, метаданные ненадёжны, бот не проверяет
-            "obsidianmd/no-unsupported-api": "off",
+            // Правила совместимости с popout windows (бот требует)
+            "obsidianmd/prefer-active-doc": "error",
+            "obsidianmd/prefer-active-window-timers": "error",
         },
     },
     globalIgnores([
