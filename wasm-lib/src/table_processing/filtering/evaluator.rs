@@ -95,7 +95,7 @@ fn evaluate_string_comparison(
     let field_value = get_string_field_value(field, card)?;
 
     let target_value = match value {
-        Value::String(s) => s.as_str(),
+        Value::String(s) => s.clone(),
         Value::Number(n) => {
             log::warn!(
                 "Строковое поле {} сравнивается с числом {}, возвращаем false",
@@ -113,13 +113,47 @@ fn evaluate_string_comparison(
         target_value
     );
 
-    let result = match operator {
-        ComparisonOp::Greater => field_value.as_str() > target_value,
-        ComparisonOp::Less => field_value.as_str() < target_value,
-        ComparisonOp::GreaterOrEqual => field_value.as_str() >= target_value,
-        ComparisonOp::LessOrEqual => field_value.as_str() <= target_value,
-        ComparisonOp::Equal => field_value == target_value,
-        ComparisonOp::NotEqual => field_value != target_value,
+    // Regex-операторы (~ и !~)
+    if operator == ComparisonOp::Regex || operator == ComparisonOp::NotRegex {
+        let re = regex::Regex::new(&target_value).map_err(|e| {
+            log::warn!("Некорректный regex '{}': {}", target_value, e);
+            EvaluationError::MissingField(format!("regex: {}", e))
+        })?;
+        let matches = re.is_match(&field_value);
+        return Ok(if operator == ComparisonOp::Regex {
+            matches
+        } else {
+            !matches
+        });
+    }
+
+    // Для state — регистронезависимое сравнение (New/new, Review/review и т.д.)
+    let result = if field == "state" {
+        match operator {
+            ComparisonOp::Equal => field_value.eq_ignore_ascii_case(&target_value),
+            ComparisonOp::NotEqual => !field_value.eq_ignore_ascii_case(&target_value),
+            _ => {
+                let a = field_value.to_lowercase();
+                let b = target_value.to_lowercase();
+                match operator {
+                    ComparisonOp::Greater => a > b,
+                    ComparisonOp::Less => a < b,
+                    ComparisonOp::GreaterOrEqual => a >= b,
+                    ComparisonOp::LessOrEqual => a <= b,
+                    _ => unreachable!(),
+                }
+            }
+        }
+    } else {
+        match operator {
+            ComparisonOp::Greater => field_value > target_value,
+            ComparisonOp::Less => field_value < target_value,
+            ComparisonOp::GreaterOrEqual => field_value >= target_value,
+            ComparisonOp::LessOrEqual => field_value <= target_value,
+            ComparisonOp::Equal => field_value == target_value,
+            ComparisonOp::NotEqual => field_value != target_value,
+            ComparisonOp::Regex | ComparisonOp::NotRegex => unreachable!(),
+        }
     };
 
     Ok(result)
@@ -159,6 +193,10 @@ fn evaluate_numeric_comparison(
         ComparisonOp::LessOrEqual => field_value <= target_value,
         ComparisonOp::Equal => (field_value - target_value).abs() < f64::EPSILON,
         ComparisonOp::NotEqual => (field_value - target_value).abs() >= f64::EPSILON,
+        ComparisonOp::Regex | ComparisonOp::NotRegex => {
+            log::warn!("Regex-оператор не применим к числовому полю {}", field);
+            return Ok(false);
+        }
     };
 
     Ok(result)
@@ -203,7 +241,6 @@ fn get_string_field_value(
         "state" => card
             .state
             .clone()
-            .map(|s| s.to_lowercase())
             .ok_or_else(|| EvaluationError::MissingField("state".to_string())),
         "file" => card
             .file
@@ -452,5 +489,60 @@ mod tests {
             Value::string("hello".to_string()),
         );
         assert!(!evaluate_condition(&expr, &card).unwrap());
+    }
+
+    #[test]
+    fn test_regex_file_tilde_matches() {
+        let mut card = create_test_card();
+        card.file = Some("алгебра.md".to_string());
+        let expr = Expression::comparison(
+            "file",
+            ComparisonOp::Regex,
+            Value::string("алге".to_string()),
+        );
+        assert!(evaluate_condition(&expr, &card).unwrap());
+    }
+
+    #[test]
+    fn test_regex_file_tilde_no_match() {
+        let mut card = create_test_card();
+        card.file = Some("геометрия.md".to_string());
+        let expr = Expression::comparison(
+            "file",
+            ComparisonOp::Regex,
+            Value::string("алге".to_string()),
+        );
+        assert!(!evaluate_condition(&expr, &card).unwrap());
+    }
+
+    #[test]
+    fn test_regex_file_not_tilde() {
+        let mut card = create_test_card();
+        card.file = Some("геометрия.md".to_string());
+        let expr = Expression::comparison(
+            "file",
+            ComparisonOp::NotRegex,
+            Value::string("алге".to_string()),
+        );
+        assert!(evaluate_condition(&expr, &card).unwrap());
+    }
+
+    #[test]
+    fn test_regex_due_anchor() {
+        let card = create_test_card();
+        let expr = Expression::comparison(
+            "due",
+            ComparisonOp::Regex,
+            Value::string("^2024".to_string()),
+        );
+        assert!(evaluate_condition(&expr, &card).unwrap());
+    }
+
+    #[test]
+    fn test_regex_invalid_pattern_returns_error() {
+        let card = create_test_card();
+        let expr =
+            Expression::comparison("file", ComparisonOp::Regex, Value::string("[".to_string()));
+        assert!(evaluate_condition(&expr, &card).is_err());
     }
 }

@@ -39,3 +39,12 @@
 
 ### Тепловая карта (Heatmap)
 - [x] HeatMap — сколько повторений сделано по дням — [heatmap.md](heatmap.md)
+
+### WHERE file — совпадение по имени, а не полному пути
+- [x] `file` возвращает file_stem вместо полного пути — [where-file-match.md](where-file-match.md)
+
+### Оператор ~ для WHERE (regex)
+- [x] Добавить операторы `~` и `!~` для regex-фильтрации — [like-operator.md](like-operator.md)
+
+### WASM-модуль в тестах TypeScript
+- [x] Настроить загрузку WASM в Vitest, чтобы тесты могли вызывать WASM-функции — [wasm-in-tests.md](wasm-in-tests.md)

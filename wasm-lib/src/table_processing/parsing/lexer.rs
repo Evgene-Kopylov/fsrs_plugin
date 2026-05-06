@@ -266,7 +266,11 @@ impl SqlLexer {
         if self.position < self.length {
             let next_char = self.chars[self.position];
             let two_char_op = format!("{}{}", current_char, next_char);
-            if two_char_op == ">=" || two_char_op == "<=" || two_char_op == "!=" {
+            if two_char_op == ">="
+                || two_char_op == "<="
+                || two_char_op == "!="
+                || two_char_op == "!~"
+            {
                 value = two_char_op;
                 self.position += 1;
             }
@@ -293,7 +297,7 @@ impl SqlLexer {
 
     /// Проверяет, является ли символ оператором
     fn is_operator_char(ch: char) -> bool {
-        matches!(ch, '>' | '<' | '=' | '!' | ',' | '*' | '(' | ')')
+        matches!(ch, '>' | '<' | '=' | '!' | '~' | ',' | '*' | '(' | ')')
     }
 }
 

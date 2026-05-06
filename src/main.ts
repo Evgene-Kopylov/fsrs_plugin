@@ -305,11 +305,6 @@ export default class FsrsPlugin extends Plugin {
                 // Нормализуем даты и рейтинги из кэша Obsidian
                 const reviews = this.parseReviewsFromCache(rawReviews);
 
-                if (reviews.length === 0) {
-                    skippedCount++;
-                    continue;
-                }
-
                 const card: CardData = { reviews, filePath: file.path };
                 const state = computeCardState(card, this.settings);
                 batch.push({
