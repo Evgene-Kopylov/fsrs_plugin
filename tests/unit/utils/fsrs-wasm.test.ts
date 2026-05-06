@@ -101,10 +101,10 @@ describe("FSRS-таблица: от SQL-запроса до результата
         }
     });
 
-    it("WHERE state = 'new' — только физика", () => {
+    it("WHERE state = 'New' — только физика", () => {
         const queryWithWhere = DEFAULT_QUERY.replace(
             "LIMIT 20",
-            "WHERE state = 'new'\nLIMIT 20",
+            "WHERE state = 'New'\nLIMIT 20",
         );
         const params = parseSqlBlock(queryWithWhere);
         const result = cache.query(params, now);

@@ -95,7 +95,7 @@ fn evaluate_string_comparison(
     let field_value = get_string_field_value(field, card)?;
 
     let target_value = match value {
-        Value::String(s) => s.as_str(),
+        Value::String(s) => s.clone(),
         Value::Number(n) => {
             log::warn!(
                 "Строковое поле {} сравнивается с числом {}, возвращаем false",
@@ -113,13 +113,32 @@ fn evaluate_string_comparison(
         target_value
     );
 
-    let result = match operator {
-        ComparisonOp::Greater => field_value.as_str() > target_value,
-        ComparisonOp::Less => field_value.as_str() < target_value,
-        ComparisonOp::GreaterOrEqual => field_value.as_str() >= target_value,
-        ComparisonOp::LessOrEqual => field_value.as_str() <= target_value,
-        ComparisonOp::Equal => field_value == target_value,
-        ComparisonOp::NotEqual => field_value != target_value,
+    // Для state — регистронезависимое сравнение (New/new, Review/review и т.д.)
+    let result = if field == "state" {
+        match operator {
+            ComparisonOp::Equal => field_value.eq_ignore_ascii_case(&target_value),
+            ComparisonOp::NotEqual => !field_value.eq_ignore_ascii_case(&target_value),
+            _ => {
+                let a = field_value.to_lowercase();
+                let b = target_value.to_lowercase();
+                match operator {
+                    ComparisonOp::Greater => a > b,
+                    ComparisonOp::Less => a < b,
+                    ComparisonOp::GreaterOrEqual => a >= b,
+                    ComparisonOp::LessOrEqual => a <= b,
+                    _ => unreachable!(),
+                }
+            }
+        }
+    } else {
+        match operator {
+            ComparisonOp::Greater => field_value > target_value,
+            ComparisonOp::Less => field_value < target_value,
+            ComparisonOp::GreaterOrEqual => field_value >= target_value,
+            ComparisonOp::LessOrEqual => field_value <= target_value,
+            ComparisonOp::Equal => field_value == target_value,
+            ComparisonOp::NotEqual => field_value != target_value,
+        }
     };
 
     Ok(result)
@@ -203,7 +222,6 @@ fn get_string_field_value(
         "state" => card
             .state
             .clone()
-            .map(|s| s.to_lowercase())
             .ok_or_else(|| EvaluationError::MissingField("state".to_string())),
         "file" => card
             .file
