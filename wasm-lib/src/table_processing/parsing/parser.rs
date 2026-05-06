@@ -250,7 +250,7 @@ impl<'a> ParserState<'a> {
 
                     if self.current_token.token_type != TokenType::String {
                         return Err(ParseError::Syntax(format!(
-                            "Ожидается строка с алиасом в двойных кавычках, получено '{}'",
+                            "Ожидается строка с алиасом в кавычках, получено '{}'",
                             self.current_token.value
                         )));
                     }
