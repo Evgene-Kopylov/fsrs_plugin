@@ -105,8 +105,9 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                 ? null
                 : this.captureRowPositions();
 
-            // Убираем класс ошибки
+            // Убираем класс ошибки и загрузки
             this.container.removeClass("fsrs-table-error");
+            this.container.removeClass("fsrs-table-loading");
             if (codeBlockParent)
                 codeBlockParent.removeClass("fsrs-table-error");
 
