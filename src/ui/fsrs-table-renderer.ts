@@ -8,6 +8,12 @@
 
 import { MarkdownRenderChild } from "obsidian";
 import type FsrsPlugin from "../main";
+
+declare const activeWindow: Window & {
+    setTimeout: Window["setTimeout"];
+    setInterval: Window["setInterval"];
+    clearInterval: Window["clearInterval"];
+};
 import type { TableParams } from "../utils/fsrs-table-params";
 import type {
     CachedCard,
@@ -38,7 +44,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
     private isRendering = false;
     private sourceText: string;
     private isFirstRender = true;
-    private autoRefreshTimer: ReturnType<typeof setInterval> | null = null;
+    private autoRefreshTimer: number | null = null;
 
     constructor(
         private plugin: FsrsPlugin,
@@ -435,15 +441,15 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
      */
     private startAutoRefresh(): void {
         this.stopAutoRefresh();
-        this.autoRefreshTimer = setInterval(() => {
+        this.autoRefreshTimer = activeWindow.setInterval(() => {
             if (this.container.offsetParent === null) return;
-            this.refreshValues().catch(console.error);
+            this.refreshValues();
         }, TABLE_AUTO_REFRESH_INTERVAL_SECONDS * 1000);
     }
 
     private stopAutoRefresh(): void {
         if (this.autoRefreshTimer !== null) {
-            clearInterval(this.autoRefreshTimer);
+            activeWindow.clearInterval(this.autoRefreshTimer);
             this.autoRefreshTimer = null;
         }
     }
@@ -452,7 +458,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
      * Лёгкое обновление: перезапрашивает WASM и обновляет
      * только текст в существующих ячейках, без перестройки DOM.
      */
-    private async refreshValues(): Promise<void> {
+    private refreshValues(): void {
         if (!this.params || !this.plugin.isWasmReady()) return;
 
         const now = new Date();

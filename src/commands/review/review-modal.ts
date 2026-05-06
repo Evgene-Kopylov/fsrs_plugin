@@ -75,7 +75,7 @@ export class ReviewModal extends Modal {
             const ratingLabels = ["Again", "Hard", "Good", "Easy"];
             const ratingLabel = ratingLabels[last.rating] ?? "?";
             small.appendText(" ");
-            small.createEl("span", {
+            small.createSpan({
                 text: ratingLabel,
                 cls: `fsrs-heatmap-tip-rating fsrs-heatmap-tip-r${last.rating}`,
             });
