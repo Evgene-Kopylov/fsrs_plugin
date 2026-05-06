@@ -41,7 +41,7 @@
 - [x] HeatMap — сколько повторений сделано по дням — [heatmap.md](heatmap.md)
 
 ### WHERE file — совпадение по имени, а не полному пути
-- [>] Добавить поле `filename` — [where-file-match.md](where-file-match.md)
+- [x] `file` возвращает file_stem вместо полного пути — [where-file-match.md](where-file-match.md)
 
 ### Оператор ~ для WHERE (regex)
 - [ ] Добавить операторы `~` и `!~` для regex-фильтрации — [like-operator.md](like-operator.md)
