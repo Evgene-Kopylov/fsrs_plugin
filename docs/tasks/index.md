@@ -39,3 +39,9 @@
 
 ### Тепловая карта (Heatmap)
 - [x] HeatMap — сколько повторений сделано по дням — [heatmap.md](heatmap.md)
+
+### WHERE file — совпадение по имени, а не полному пути
+- [>] Добавить поле `filename` — [where-file-match.md](where-file-match.md)
+
+### Частичное совпадение по строке (LIKE)
+- [ ] Добавить оператор `LIKE` для WHERE — [like-operator.md](like-operator.md)
