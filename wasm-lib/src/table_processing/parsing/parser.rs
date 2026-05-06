@@ -483,6 +483,8 @@ impl<'a> ParserState<'a> {
             "<=" => ComparisonOp::LessOrEqual,
             "=" => ComparisonOp::Equal,
             "!=" => ComparisonOp::NotEqual,
+            "~" => ComparisonOp::Regex,
+            "!~" => ComparisonOp::NotRegex,
             _ => {
                 return Err(ParseError::Syntax(format!(
                     "Неподдерживаемый оператор сравнения: '{}'",
@@ -1308,4 +1310,62 @@ fn test_parse_date_format_field_not_identifier() {
     // Первый аргумент должен быть идентификатором, не строкой
     let result = parse_sql_block("SELECT date_format('due', '%Y')");
     assert!(result.is_err());
+}
+
+
+#[test]
+fn test_parse_where_regex_tilde() {
+    use crate::table_processing::parsing::*;
+    let result = parse_sql_block("SELECT file WHERE file ~ \"test.*\"").unwrap();
+    let params = result.value;
+    assert!(params.where_condition.is_some());
+    let condition = params.where_condition.unwrap();
+    match condition {
+        Expression::Comparison { field, operator, value } => {
+            assert_eq!(field, "file");
+            assert_eq!(operator, ComparisonOp::Regex);
+            match value {
+                Value::String(s) => assert_eq!(s, "test.*"),
+                _ => panic!("Expected String"),
+            }
+        }
+        _ => panic!("Expected comparison"),
+    }
+}
+
+#[test]
+fn test_parse_where_regex_not_tilde() {
+    use crate::table_processing::parsing::*;
+    let result = parse_sql_block("SELECT file WHERE file !~ \"/archive/\"").unwrap();
+    let params = result.value;
+    let condition = params.where_condition.unwrap();
+    match condition {
+        Expression::Comparison { operator, .. } => {
+            assert_eq!(operator, ComparisonOp::NotRegex);
+        }
+        _ => panic!("Expected comparison"),
+    }
+}
+
+#[test]
+fn test_parse_where_regex_with_and() {
+    use crate::table_processing::parsing::*;
+    let result = parse_sql_block(
+        "SELECT file WHERE file ~ \"test.*\" AND reps > 3",
+    )
+    .unwrap();
+    let params = result.value;
+    assert!(params.where_condition.is_some());
+    match params.where_condition.unwrap() {
+        Expression::Logical { left, operator, right: _ } => {
+            assert_eq!(operator, LogicalOp::And);
+            match *left {
+                Expression::Comparison { operator, .. } => {
+                    assert_eq!(operator, ComparisonOp::Regex);
+                }
+                _ => panic!("Expected comparison"),
+            }
+        }
+        _ => panic!("Expected logical"),
+    }
 }

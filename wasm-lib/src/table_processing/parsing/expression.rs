@@ -25,6 +25,12 @@ pub enum ComparisonOp {
     /// Не равно (!=)
     #[serde(rename = "!=")]
     NotEqual,
+    /// Соответствует regex (~)
+    #[serde(rename = "~")]
+    Regex,
+    /// Не соответствует regex (!~)
+    #[serde(rename = "!~")]
+    NotRegex,
 }
 
 impl fmt::Display for ComparisonOp {
@@ -36,6 +42,8 @@ impl fmt::Display for ComparisonOp {
             ComparisonOp::LessOrEqual => write!(f, "<="),
             ComparisonOp::Equal => write!(f, "="),
             ComparisonOp::NotEqual => write!(f, "!="),
+            ComparisonOp::Regex => write!(f, "~"),
+            ComparisonOp::NotRegex => write!(f, "!~"),
         }
     }
 }

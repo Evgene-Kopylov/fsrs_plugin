@@ -35,7 +35,7 @@ const testCards: CachedCard[] = [
 
 const BASE_QUERY = "SELECT file, state\nLIMIT 20";
 
-describe("~ (regex) — частичное совпадение строк", () => {
+describe("~ (regex) — фильтрация строк", () => {
     const cache = new FsrsCache();
     const now = new Date("2026-01-25T12:00:00Z");
 
@@ -48,10 +48,10 @@ describe("~ (regex) — частичное совпадение строк", () 
         })),
     );
 
-    it.skip("WHERE filename ~ 'алгеб.*' — начинается с 'алгеб'", () => {
+    it("WHERE file ~ 'алгеб.*' — стем начинается с 'алгеб'", () => {
         const sql = BASE_QUERY.replace(
             "LIMIT 20",
-            "WHERE filename ~ 'алгеб.*'\nLIMIT 20",
+            "WHERE file ~ 'алгеб.*'\nLIMIT 20",
         );
         const params = parseSqlBlock(sql);
         const result = cache.query(params, now);
@@ -60,10 +60,10 @@ describe("~ (regex) — частичное совпадение строк", () 
         expect(result.cards[0].card.filePath).toBe("notes/алгебра.md");
     });
 
-    it.skip("WHERE filename ~ 'рия' — содержит подстроку", () => {
+    it("WHERE file ~ 'рия' — стем содержит подстроку", () => {
         const sql = BASE_QUERY.replace(
             "LIMIT 20",
-            "WHERE filename ~ 'рия'\nLIMIT 20",
+            "WHERE file ~ 'рия'\nLIMIT 20",
         );
         const params = parseSqlBlock(sql);
         const result = cache.query(params, now);
@@ -72,61 +72,66 @@ describe("~ (regex) — частичное совпадение строк", () 
         expect(result.cards[0].card.filePath).toBe("notes/история.md");
     });
 
-    it.skip("WHERE filename ~ '\.md$' — заканчивается на .md", () => {
+    it("WHERE file ~ '^физика' — якорь начала строки", () => {
         const sql = BASE_QUERY.replace(
             "LIMIT 20",
-            "WHERE filename ~ '\\.md$'\nLIMIT 20",
-        );
-        const params = parseSqlBlock(sql);
-        const result = cache.query(params, now);
-
-        expect(result.cards).toHaveLength(4);
-    });
-
-    it.skip("WHERE file ~ '/архив/' — путь содержит /архив/", () => {
-        const sql = BASE_QUERY.replace(
-            "LIMIT 20",
-            "WHERE file ~ '/архив/'\nLIMIT 20",
-        );
-        const params = parseSqlBlock(sql);
-        const result = cache.query(params, now);
-
-        expect(result.cards).toHaveLength(1);
-        expect(result.cards[0].card.filePath).toBe("архив/старые/конспект.md");
-    });
-
-    it.skip("WHERE file !~ '/notes/' — исключает notes", () => {
-        const sql = BASE_QUERY.replace(
-            "LIMIT 20",
-            "WHERE file !~ '/notes/'\nLIMIT 20",
-        );
-        const params = parseSqlBlock(sql);
-        const result = cache.query(params, now);
-
-        const paths = result.cards.map((c) => c.card.filePath);
-        expect(paths).toEqual(["архив/старые/конспект.md"]);
-    });
-
-    it.skip("WHERE filename ~ '.*' — совпадает всё", () => {
-        const sql = BASE_QUERY.replace(
-            "LIMIT 20",
-            "WHERE filename ~ '.*'\nLIMIT 20",
-        );
-        const params = parseSqlBlock(sql);
-        const result = cache.query(params, now);
-
-        expect(result.cards).toHaveLength(4);
-    });
-
-    it.skip("WHERE filename ~ '^физика' AND state ~ 'New' — два условия", () => {
-        const sql = BASE_QUERY.replace(
-            "LIMIT 20",
-            "WHERE filename ~ '^физика' AND state ~ 'New'\nLIMIT 20",
+            "WHERE file ~ '^физика'\nLIMIT 20",
         );
         const params = parseSqlBlock(sql);
         const result = cache.query(params, now);
 
         expect(result.cards).toHaveLength(1);
         expect(result.cards[0].card.filePath).toBe("notes/физика.md");
+    });
+
+    it("WHERE file !~ '^алге' — исключает стемы на 'алге'", () => {
+        const sql = BASE_QUERY.replace(
+            "LIMIT 20",
+            "WHERE file !~ '^алге'\nLIMIT 20",
+        );
+        const params = parseSqlBlock(sql);
+        const result = cache.query(params, now);
+
+        const paths = result.cards.map((c) => c.card.filePath).sort();
+        expect(paths).toEqual([
+            "архив/старые/конспект.md",
+            "notes/история.md",
+            "notes/физика.md",
+        ].sort());
+    });
+
+    it("WHERE file ~ '.*' — совпадает всё", () => {
+        const sql = BASE_QUERY.replace(
+            "LIMIT 20",
+            "WHERE file ~ '.*'\nLIMIT 20",
+        );
+        const params = parseSqlBlock(sql);
+        const result = cache.query(params, now);
+
+        expect(result.cards).toHaveLength(4);
+    });
+
+    it("WHERE file ~ '^физика' AND state ~ 'New' — два regex-условия", () => {
+        const sql = BASE_QUERY.replace(
+            "LIMIT 20",
+            "WHERE file ~ '^физика' AND state ~ 'New'\nLIMIT 20",
+        );
+        const params = parseSqlBlock(sql);
+        const result = cache.query(params, now);
+
+        expect(result.cards).toHaveLength(1);
+        expect(result.cards[0].card.filePath).toBe("notes/физика.md");
+    });
+
+    it("WHERE file ~ 'конспект' — стем из вложенной папки", () => {
+        const sql = BASE_QUERY.replace(
+            "LIMIT 20",
+            "WHERE file ~ 'конспект'\nLIMIT 20",
+        );
+        const params = parseSqlBlock(sql);
+        const result = cache.query(params, now);
+
+        expect(result.cards).toHaveLength(1);
+        expect(result.cards[0].card.filePath).toBe("архив/старые/конспект.md");
     });
 });
