@@ -52,7 +52,9 @@ export class ReviewModal extends Modal {
         contentEl.createEl("h3", { text: i18n.t("review.title") });
 
         // Информация о карточке
-        const info = contentEl.createDiv();
+        const info = contentEl.createDiv({
+            cls: "fsrs-review-info",
+        });
         const small = info.createEl("small");
 
         // Файл
@@ -65,15 +67,21 @@ export class ReviewModal extends Modal {
         small.appendText(" " + this.card.reviews.length);
         small.createEl("br");
 
-        // Последняя
+        // Последняя + оценка (одна строка)
         small.createEl("strong", { text: i18n.t("review.last_review_label") });
-        const lastReviewStr =
-            this.card.reviews.length > 0
-                ? new Date(
-                      this.card.reviews[this.card.reviews.length - 1]!.date,
-                  ).toLocaleString()
-                : i18n.t("review.no_reviews");
-        small.appendText(" " + lastReviewStr);
+        if (this.card.reviews.length > 0) {
+            const last = this.card.reviews[this.card.reviews.length - 1]!;
+            small.appendText(" " + new Date(last.date).toLocaleString());
+            const ratingLabels = ["Again", "Hard", "Good", "Easy"];
+            const ratingLabel = ratingLabels[last.rating] ?? "?";
+            small.appendText(" ");
+            small.createEl("span", {
+                text: ratingLabel,
+                cls: `fsrs-heatmap-tip-rating fsrs-heatmap-tip-r${last.rating}`,
+            });
+        } else {
+            small.appendText(" " + i18n.t("review.no_reviews"));
+        }
         small.createEl("hr");
 
         // Вспомогательная функция: custom label или перевод

@@ -1,226 +1,226 @@
 {
-    "review": {
-        "title": "复习卡片",
-        "file_label": "文件：",
-        "sessions_label": "复习记录：",
-        "last_review_label": "上次复习：",
-        "no_reviews": "无",
-        "buttons": {
-            "again": "重来 (1)",
-            "hard": "困难 (2)",
-            "good": "良好 (3)",
-            "easy": "简单 (4)",
-            "cancel": "取消"
-        }
-    },
-    "reviewButton": {
-        "loading": "加载中...",
-        "file_not_found": "文件未找到",
-        "no_frontmatter": "没有 frontmatter",
-        "review": "复习",
-        "review_with_rating": "复习：{rating}",
-        "review_card": "复习卡片",
-        "error_loading": "加载错误",
-        "history_tooltip": "复习历史"
-    },
-    "notices": {
-        "no_active_file": "没有打开的文件",
-        "no_frontmatter": "文件没有 frontmatter",
-        "frontmatter_empty": "Frontmatter 为空",
-        "not_fsrs_card": "不是 FSRS 卡片",
-        "review_cancelled": "复习已取消",
-        "card_reviewed": "卡片已复习：{rating}",
-        "next_review": "下次复习：{date}",
-        "card_reviewed_with_next": "卡片已复习：{rating}\n下次复习：{date}",
-        "fsrs_fields_added": "FSRS 字段已添加到文件",
-        "fsrs_fields_exists": "文件已有 FSRS 字段，请使用复习命令更新。",
-        "review_deleted": "最后一次复习已删除",
-        "no_reviews_to_delete": "没有可删除的复习记录",
-        "error_parsing_card": "解析 FSRS 卡片失败：{error}",
-        "card_processing_error": "处理卡片时出错",
-        "review_history_error": "打开复习历史时出错",
-        "card_load_error": "加载卡片数据失败",
-        "wasm_not_ready": "FSRS 组件未就绪，请重启 Obsidian。",
-        "settings_changed_reload": "FSRS 设置已更改，请重新加载插件以应用。",
-        "file_not_found": "文件未找到：{path}",
-        "card_not_due": "卡片已复习。下次计划复习：{date}",
-        "early_review_blocked": "每天只计一次复习。{minutes} {noun} 后可进行下次复习。计划：{date}",
-        "review_button_exists": "该文件中已存在复习按钮块"
-    },
-    "commands": {
-        "add_fsrs_fields": "添加 FSRS 字段到 frontmatter",
-        "review_current_card": "复习当前卡片",
-        "delete_last_review": "删除最后一次复习",
-        "show_fsrs_help": "显示 fsrs-table 语法帮助",
-        "show_review_history": "显示复习历史",
-        "insert_review_button": "插入复习按钮块",
-        "insert_default_table": "插入默认 fsrs-table",
-        "insert_heatmap": "插入热力图 fsrs-heatmap"
-    },
-    "table": {
-        "loading": "正在扫描仓库...",
-        "no_cards": "未找到 FSRS 卡片",
-        "showing_limit": "显示：{shown} / {total} 张卡片（隐藏 {hidden} 张）",
-        "error_prefix": "FSRS：错误：\n-- 解析失败 --------------------------------------------------\n\n",
-        "column_defaults": {
-            "file": "文件",
-            "reps": "复习次数",
-            "stability": "稳定性",
-            "difficulty": "难度",
-            "retrievability": "可提取性",
-            "due": "下次复习",
-            "state": "状态",
-            "elapsed": "已过天数",
-            "scheduled": "计划天数"
-        },
-        "states": {
-            "New": "新卡片",
-            "Learning": "学习中",
-            "Review": "复习中",
-            "Relearning": "重新学习中",
-            "due": "待复习"
-        },
-        "units": {
-            "days": "天",
-            "hours": "小时",
-            "minutes": "分钟"
-        }
-    },
-    "history": {
-        "title": "复习历史：{file}",
-        "file_label": "文件：",
-        "empty": "没有复习历史",
-        "error_load": "加载卡片数据失败",
-        "table": {
-            "number": "#",
-            "datetime": "日期和时间",
-            "rating": "评分",
-            "retrievability": "可提取性 (R)",
-            "stability": "稳定性 (S)",
-            "difficulty": "难度 (D)",
-            "days_since_last": "距上次天数",
-            "actions": ""
-        },
-        "delete_aria": "删除最后一次复习",
-        "statistics": {
-            "heading": "统计",
-            "total_reviews": "总复习次数：{count}",
-            "first_review": "首次复习：{date}",
-            "last_review": "末次复习：{date}",
-            "last_rating": "末次评分：{rating}",
-            "ratings_distribution": "评分分布：{again}×🟥 {hard}×🟨 {good}×🟩 {easy}×🟦"
-        }
-    },
-    "help": {
-        "title": "fsrs-table 语法帮助",
-        "examples": {
-            "actual": "### 默认表格（最紧急的在前）"
-        },
-        "available_fields": {
-            "heading": "可用字段（列）",
-            "descriptions": {
-                "file": "文件名（可点击链接）",
-                "reps": "已完成的复习次数",
-                "stability": "稳定性 (S) — FSRS 参数，决定间隔增长",
-                "difficulty": "难度 (D) — 值从 0 到 10",
-                "retrievability": "可提取性 (R) — 当前正确回答的概率",
-                "due": "下次复习的日期和时间",
-                "state": "卡片状态：新卡片、学习中、复习中、重新学习中",
-                "elapsed": "距上次复习的天数",
-                "scheduled": "距下次复习的天数"
-            }
-        },
-        "parameters": {
-            "heading": "参数（SQL 语法）",
-            "select": "**`SELECT 字段1, 字段2 as \"标题\", ...`** — 选择要显示的字段",
-            "select_star": "**`SELECT *`** — 选择所有可用字段",
-            "order_by": "**`ORDER BY 字段 ASC|DESC`** — 按指定字段排序（ASC - 升序，DESC - 降序）",
-            "limit": "**`LIMIT 数字`** — 限制行数（0 = 使用插件默认值，通常为 30）",
-            "notes": "**注意：** 如果未指定 ORDER BY，默认使用 ORDER BY retrievability ASC 排序。自定义排序会覆盖默认排序。"
-        },
-        "general": {
-            "heading": "基本信息",
-            "description": "`fsrs-table` 块显示可自定义列和排序的 FSRS 卡片表格。",
-            "update_note": "数据自动更新。",
-            "notes": {
-                "heading": "备注",
-                "cache": "表格数据已缓存，打开文件时刷新。",
-                "click_file": "点击文件名打开对应笔记。",
-                "click_row": "点击表格行也会打开文件。",
-                "default_sort": "未指定 ORDER BY 参数时，默认使用 ORDER BY retrievability ASC 排序。",
-                "custom_sort": "指定 ORDER BY 参数时，使用用户指定的排序。",
-                "rounding": "所有数值均四舍五入以提高可读性。"
-            }
-        }
-    },
-    "settings": {
-        "language": {
-            "heading": "语言",
-            "desc": "选择界面语言",
-            "system": "系统（Obsidian 语言）",
-            "en": "英语",
-            "ru": "俄语",
-            "zh": "中文"
-        },
-        "fsrs_algorithm": {
-            "heading": "FSRS 算法",
-            "request_retention": {
-                "name": "目标保留率",
-                "desc": "目标记忆保留率（0.0-1.0）。越高 = 复习越多，保留率越低。"
-            },
-            "maximum_interval": {
-                "name": "最大间隔",
-                "desc": "两次复习之间的最大天数。36500 = 约 100 年。"
-            },
-            "enable_fuzz": {
-                "name": "启用间隔模糊",
-                "desc": "为间隔添加随机变化（±5%），防止卡片扎堆。"
-            }
-        },
-        "card_defaults": {
-            "heading": "新卡片默认值",
-            "initial_stability": {
-                "name": "初始稳定性",
-                "desc": "新卡片的默认稳定性值。",
-                "placeholder": "0.0"
-            },
-            "initial_difficulty": {
-                "name": "初始难度",
-                "desc": "新卡片的默认难度值。",
-                "placeholder": "0.0"
-            }
-        },
-        "display": {
-            "heading": "显示",
-            "auto_add_button": {
-                "name": "在 frontmatter 下方自动添加复习按钮块",
-                "desc": "添加 FSRS 字段时，在 frontmatter 后自动插入复习按钮块。示例：```fsrs-review-button```"
-            },
-            "verbose_logging": {
-                "name": "详细日志",
-                "desc": "在 Obsidian 控制台中显示带表情符号（⏱️、✅）的详细性能日志。用于调试。"
-            },
-            "custom_button_labels": {
-                "name": "自定义按钮标签",
-                "desc": "覆盖复习按钮文本。留空使用默认翻译。",
-                "again": "「重来」按钮",
-                "hard": "「困难」按钮",
-                "good": "「良好」按钮",
-                "easy": "「简单」按钮",
-                "placeholder_again": "重来 (1)",
-                "placeholder_hard": "困难 (2)",
-                "placeholder_good": "良好 (3)",
-                "placeholder_easy": "简单 (4)",
-                "reset_tooltip": "重置名称和颜色"
-            }
-        },
-        "filtering": {
-            "heading": "文件过滤",
-            "ignore_patterns": {
-                "name": "忽略模式",
-                "desc": "要忽略的文件和文件夹模式（每行一个）。以 / 结尾的模式为文件夹。*.扩展名 为文件类型。示例：config/、templates/、*.excalidraw.md",
-                "placeholder": ".obsidian/\ntemplates/\n*.excalidraw.md"
-            }
-        }
+  "review": {
+    "title": "复习卡片",
+    "file_label": "文件：",
+    "sessions_label": "复习记录：",
+    "last_review_label": "上次复习：",
+    "no_reviews": "无",
+    "buttons": {
+      "again": "重来 (1)",
+      "hard": "困难 (2)",
+      "good": "良好 (3)",
+      "easy": "简单 (4)",
+      "cancel": "取消"
     }
+  },
+  "reviewButton": {
+    "loading": "加载中...",
+    "file_not_found": "文件未找到",
+    "no_frontmatter": "没有 frontmatter",
+    "review": "复习",
+    "review_with_rating": "复习：{rating}",
+    "review_card": "复习卡片",
+    "error_loading": "加载错误",
+    "history_tooltip": "复习历史"
+  },
+  "notices": {
+    "no_active_file": "没有打开的文件",
+    "no_frontmatter": "文件没有 frontmatter",
+    "frontmatter_empty": "Frontmatter 为空",
+    "not_fsrs_card": "不是 FSRS 卡片",
+    "review_cancelled": "复习已取消",
+    "card_reviewed": "卡片已复习：{rating}",
+    "next_review": "下次复习：{date}",
+    "card_reviewed_with_next": "卡片已复习：{rating}\n下次复习：{date}",
+    "fsrs_fields_added": "FSRS 字段已添加到文件",
+    "fsrs_fields_exists": "文件已有 FSRS 字段，请使用复习命令更新。",
+    "review_deleted": "最后一次复习已删除",
+    "no_reviews_to_delete": "没有可删除的复习记录",
+    "error_parsing_card": "解析 FSRS 卡片失败：{error}",
+    "card_processing_error": "处理卡片时出错",
+    "review_history_error": "打开复习历史时出错",
+    "card_load_error": "加载卡片数据失败",
+    "wasm_not_ready": "FSRS 组件未就绪，请重启 Obsidian。",
+    "settings_changed_reload": "FSRS 设置已更改，请重新加载插件以应用。",
+    "file_not_found": "文件未找到：{path}",
+    "card_not_due": "卡片已复习。下次计划复习：{date}",
+    "early_review_blocked": "每天只计一次复习。{minutes} {noun} 后可进行下次复习。计划：{date}",
+    "review_button_exists": "该文件中已存在复习按钮块"
+  },
+  "commands": {
+    "add_fsrs_fields": "添加 FSRS 字段到 frontmatter",
+    "review_current_card": "复习当前卡片",
+    "delete_last_review": "删除最后一次复习",
+    "show_fsrs_help": "显示 fsrs-table 语法帮助",
+    "show_review_history": "显示复习历史",
+    "insert_review_button": "插入复习按钮块",
+    "insert_default_table": "插入默认 fsrs-table",
+    "insert_heatmap": "插入热力图 fsrs-heatmap"
+  },
+  "table": {
+    "loading": "正在扫描仓库...",
+    "no_cards": "未找到 FSRS 卡片",
+    "showing_limit": "显示：{shown} / {total} 张卡片（隐藏 {hidden} 张）",
+    "error_prefix": "FSRS：错误：\n-- 解析失败 --------------------------------------------------\n\n",
+    "column_defaults": {
+      "file": "文件",
+      "reps": "复习次数",
+      "stability": "稳定性",
+      "difficulty": "难度",
+      "retrievability": "可提取性",
+      "due": "下次复习",
+      "state": "状态",
+      "elapsed": "已过天数",
+      "scheduled": "计划天数"
+    },
+    "states": {
+      "New": "新卡片",
+      "Learning": "学习中",
+      "Review": "复习中",
+      "Relearning": "重新学习中",
+      "due": "待复习"
+    },
+    "units": {
+      "days": "天",
+      "hours": "小时",
+      "minutes": "分钟"
+    }
+  },
+  "history": {
+    "title": "复习历史：{file}",
+    "file_label": "文件：",
+    "empty": "没有复习历史",
+    "error_load": "加载卡片数据失败",
+    "table": {
+      "number": "#",
+      "datetime": "日期和时间",
+      "rating": "评分",
+      "retrievability": "可提取性 (R)",
+      "stability": "稳定性 (S)",
+      "difficulty": "难度 (D)",
+      "days_since_last": "距上次天数",
+      "actions": ""
+    },
+    "delete_aria": "删除最后一次复习",
+    "statistics": {
+      "heading": "统计",
+      "total_reviews": "总复习次数：{count}",
+      "first_review": "首次复习：{date}",
+      "last_review": "末次复习：{date}",
+      "last_rating": "末次评分：{rating}",
+      "ratings_distribution": "评分分布：{again}×🟥 {hard}×🟨 {good}×🟩 {easy}×🟦"
+    }
+  },
+  "help": {
+    "title": "fsrs-table 语法帮助",
+    "examples": {
+      "actual": "### 默认表格（最紧急的在前）"
+    },
+    "available_fields": {
+      "heading": "可用字段（列）",
+      "descriptions": {
+        "file": "文件名（可点击链接）",
+        "reps": "已完成的复习次数",
+        "stability": "稳定性 (S) — FSRS 参数，决定间隔增长",
+        "difficulty": "难度 (D) — 值从 0 到 10",
+        "retrievability": "可提取性 (R) — 当前正确回答的概率",
+        "due": "下次复习的日期和时间",
+        "state": "卡片状态：新卡片、学习中、复习中、重新学习中",
+        "elapsed": "距上次复习的天数",
+        "scheduled": "距下次复习的天数"
+      }
+    },
+    "parameters": {
+      "heading": "参数（SQL 语法）",
+      "select": "**`SELECT 字段1, 字段2 as \"标题\", ...`** — 选择要显示的字段",
+      "select_star": "**`SELECT *`** — 选择所有可用字段",
+      "order_by": "**`ORDER BY 字段 ASC|DESC`** — 按指定字段排序（ASC - 升序，DESC - 降序）",
+      "limit": "**`LIMIT 数字`** — 限制行数（0 = 使用插件默认值，通常为 30）",
+      "notes": "**注意：** 如果未指定 ORDER BY，默认使用 ORDER BY retrievability ASC 排序。自定义排序会覆盖默认排序。"
+    },
+    "general": {
+      "heading": "基本信息",
+      "description": "`fsrs-table` 块显示可自定义列和排序的 FSRS 卡片表格。",
+      "update_note": "数据自动更新。",
+      "notes": {
+        "heading": "备注",
+        "cache": "表格数据已缓存，打开文件时刷新。",
+        "click_file": "点击文件名打开对应笔记。",
+        "click_row": "点击表格行也会打开文件。",
+        "default_sort": "未指定 ORDER BY 参数时，默认使用 ORDER BY retrievability ASC 排序。",
+        "custom_sort": "指定 ORDER BY 参数时，使用用户指定的排序。",
+        "rounding": "所有数值均四舍五入以提高可读性。"
+      }
+    }
+  },
+  "settings": {
+    "language": {
+      "heading": "语言",
+      "desc": "选择界面语言",
+      "system": "系统（Obsidian 语言）",
+      "en": "英语",
+      "ru": "俄语",
+      "zh": "中文"
+    },
+    "fsrs_algorithm": {
+      "heading": "FSRS 算法",
+      "request_retention": {
+        "name": "目标保留率",
+        "desc": "目标记忆保留率（0.0-1.0）。越高 = 复习越多，保留率越低。"
+      },
+      "maximum_interval": {
+        "name": "最大间隔",
+        "desc": "两次复习之间的最大天数。36500 = 约 100 年。"
+      },
+      "enable_fuzz": {
+        "name": "启用间隔模糊",
+        "desc": "为间隔添加随机变化（±5%），防止卡片扎堆。"
+      }
+    },
+    "card_defaults": {
+      "heading": "新卡片默认值",
+      "initial_stability": {
+        "name": "初始稳定性",
+        "desc": "新卡片的默认稳定性值。",
+        "placeholder": "0.0"
+      },
+      "initial_difficulty": {
+        "name": "初始难度",
+        "desc": "新卡片的默认难度值。",
+        "placeholder": "0.0"
+      }
+    },
+    "display": {
+      "heading": "显示",
+      "auto_add_button": {
+        "name": "在 frontmatter 下方自动添加复习按钮块",
+        "desc": "添加 FSRS 字段时，在 frontmatter 后自动插入复习按钮块。示例：```fsrs-review-button```"
+      },
+      "verbose_logging": {
+        "name": "详细日志",
+        "desc": "在 Obsidian 控制台中显示带表情符号（⏱️、✅）的详细性能日志。用于调试。"
+      },
+      "custom_button_labels": {
+        "name": "自定义按钮标签",
+        "desc": "覆盖复习按钮文本。留空使用默认翻译。",
+        "again": "「重来」按钮",
+        "hard": "「困难」按钮",
+        "good": "「良好」按钮",
+        "easy": "「简单」按钮",
+        "placeholder_again": "重来 (1)",
+        "placeholder_hard": "困难 (2)",
+        "placeholder_good": "良好 (3)",
+        "placeholder_easy": "简单 (4)",
+        "reset_tooltip": "重置名称和颜色"
+      }
+    },
+    "filtering": {
+      "heading": "文件过滤",
+      "ignore_patterns": {
+        "name": "忽略模式",
+        "desc": "要忽略的文件和文件夹模式（每行一个）。以 / 结尾的模式为文件夹。*.扩展名 为文件类型。示例：config/、templates/、*.excalidraw.md",
+        "placeholder": ".obsidian/\ntemplates/\n*.excalidraw.md"
+      }
+    }
+  }
 }
