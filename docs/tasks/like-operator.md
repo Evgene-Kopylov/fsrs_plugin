@@ -8,7 +8,7 @@
 
 ```sql
 SELECT file, reps
-WHERE filename ~ "алгеб.*"
+WHERE file ~ "алгеб.*"
 ORDER BY retrievability ASC
 ```
 
@@ -20,7 +20,7 @@ LIMIT 10
 
 ```sql
 -- Точное совпадение (без wildcard-символов — якоря ^ и $)
-WHERE filename ~ "^алгебра\.md$"
+WHERE file ~ "^алгебра\.md$"
 ```
 
 - `~` — строка соответствует regex
@@ -30,7 +30,7 @@ WHERE filename ~ "^алгебра\.md$"
 
 ## Поля, к которым применим ~
 
-Все строковые поля: `file`, `filename`, `state`, `due`.
+Все строковые поля: `file`, `state`, `due`.
 
 ## Что сделать
 
