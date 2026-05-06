@@ -7,10 +7,8 @@ export const DEFAULT_PARAMETERS: FSRSParameters = {
     enable_fuzz: true, // включить случайное изменение интервалов
 };
 
-// Минимальный интервал для досрочного повторения
-// 1440 минут = 24 часа, алгоритм не учитывает повторения
-// если прошло менее одного полного дня.
-export const MINIMUM_REVIEW_INTERVAL_MINUTES = 1440;
+// Минимальный интервал для досрочного повторения (40 минут)
+export const MINIMUM_REVIEW_INTERVAL_MINUTES = 40;
 
 // Настройки плагина по умолчанию
 export const DEFAULT_SETTINGS: FSRSSettings = {
@@ -30,3 +28,6 @@ export const DEFAULT_SETTINGS: FSRSSettings = {
 
 /** Максимальное количество строк, отображаемых в таблице, если не указан LIMIT в SQL */
 export const DEFAULT_TABLE_DISPLAY_LIMIT = 20;
+
+/** Интервал автообновления таблицы (секунды), пока она видна */
+export const TABLE_AUTO_REFRESH_INTERVAL_SECONDS = 300;

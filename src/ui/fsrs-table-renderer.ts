@@ -8,6 +8,12 @@
 
 import { MarkdownRenderChild } from "obsidian";
 import type FsrsPlugin from "../main";
+
+declare const activeWindow: Window & {
+    setTimeout: Window["setTimeout"];
+    setInterval: Window["setInterval"];
+    clearInterval: Window["clearInterval"];
+};
 import type { TableParams } from "../utils/fsrs-table-params";
 import type {
     CachedCard,
@@ -15,9 +21,13 @@ import type {
     CardData,
 } from "../interfaces/fsrs";
 import { generateTableDOM } from "../utils/fsrs-table-helpers";
+import { formatFieldValue } from "../utils/fsrs-table-format";
 import { i18n } from "../utils/i18n";
 import { verboseLog } from "../utils/logger";
-import { DEFAULT_TABLE_DISPLAY_LIMIT } from "../constants";
+import {
+    DEFAULT_TABLE_DISPLAY_LIMIT,
+    TABLE_AUTO_REFRESH_INTERVAL_SECONDS,
+} from "../constants";
 
 /**
  * Внутреннее представление карточки для генерации DOM.
@@ -34,6 +44,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
     private isRendering = false;
     private sourceText: string;
     private isFirstRender = true;
+    private autoRefreshTimer: number | null = null;
 
     constructor(
         private plugin: FsrsPlugin,
@@ -58,6 +69,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
     }
 
     onunload() {
+        this.stopAutoRefresh();
         this.plugin.unregisterFsrsTableRenderer(this);
         super.onunload();
     }
@@ -88,6 +100,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 
         this.isRendering = true;
         const start = performance.now();
+        const now = new Date();
 
         // ДИАГНОСТИКА: кто вызывает renderContent
         verboseLog(
@@ -117,8 +130,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
                     await import("../utils/fsrs-table-params");
                 this.params = parseSqlBlock(this.sourceText);
             }
-
-            const now = new Date();
 
             verboseLog("📊 FsrsTableRenderer.renderContent:", {
                 params: this.params
@@ -195,6 +206,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
             const elapsedMs = performance.now() - start;
             const elapsedSec = elapsedMs / 1000;
             verboseLog(`⏱️ Загрузка таблицы FSRS: ${elapsedSec.toFixed(2)} с`);
+            this.startAutoRefresh();
             this.isRendering = false;
         }
     }
@@ -427,6 +439,67 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
     /**
      * Вычисляет isDue для каждой карточки и возвращает массив CardForDisplay.
      */
+    private startAutoRefresh(): void {
+        this.stopAutoRefresh();
+        this.autoRefreshTimer = activeWindow.setInterval(() => {
+            if (this.container.offsetParent === null) return;
+            this.refreshValues();
+        }, TABLE_AUTO_REFRESH_INTERVAL_SECONDS * 1000);
+    }
+
+    private stopAutoRefresh(): void {
+        if (this.autoRefreshTimer !== null) {
+            activeWindow.clearInterval(this.autoRefreshTimer);
+            this.autoRefreshTimer = null;
+        }
+    }
+
+    /**
+     * Лёгкое обновление: перезапрашивает WASM и обновляет
+     * только текст в существующих ячейках, без перестройки DOM.
+     */
+    private refreshValues(): void {
+        if (!this.params || !this.plugin.isWasmReady()) return;
+
+        const now = new Date();
+        const result = this.plugin.cache.query(this.params, now);
+        if (result.cards.length === 0) return;
+
+        // Индекс: filePath → { card, state }
+        const newCards = new Map(result.cards.map((c) => [c.card.filePath, c]));
+
+        const rows = this.container.querySelectorAll<HTMLElement>(
+            ".fsrs-table tbody tr",
+        );
+        const columns = this.params.columns;
+        for (const row of Array.from(rows)) {
+            const filePath = row.dataset.filePath;
+            if (!filePath) continue;
+            const entry = newCards.get(filePath);
+            if (!entry) continue;
+
+            const tds = Array.from(row.querySelectorAll("td"));
+            for (let i = 0; i < tds.length && i < columns.length; i++) {
+                const td = tds[i]!;
+                const col = columns[i]!;
+                // file — ссылка, не трогаем
+                if (col.field === "file") continue;
+
+                const value = formatFieldValue(
+                    col.field,
+                    entry.card,
+                    entry.state,
+                    this.plugin.app,
+                    now,
+                    col.date_format,
+                );
+                if (td.textContent !== value) {
+                    td.textContent = value;
+                }
+            }
+        }
+    }
+
     private addIsDue(cards: CachedCard[], now: Date): CardForDisplay[] {
         return cards.map(({ card, state }) => ({
             card,

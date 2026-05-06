@@ -48,3 +48,7 @@
 
 ### WASM-модуль в тестах TypeScript
 - [x] Настроить загрузку WASM в Vitest, чтобы тесты могли вызывать WASM-функции — [wasm-in-tests.md](wasm-in-tests.md)
+
+### Периодическое обновление цифр в таблице
+- [x] Автообновление значений (retrievability, due) в открытой таблице — [table-auto-refresh.md](table-auto-refresh.md)
+

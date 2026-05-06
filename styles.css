@@ -756,3 +756,7 @@
     font-size: 0.8em;
     white-space: pre-wrap;
 }
+
+.fsrs-review-info {
+    user-select: text;
+}
