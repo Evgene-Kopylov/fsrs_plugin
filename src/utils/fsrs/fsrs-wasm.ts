@@ -11,4 +11,5 @@ export {
     getCardYamlAfterReview,
 } from "./wasm-review";
 
-export { base64ToBytes, cardToFsrsYaml } from "./wasm-utils";
+export { base64ToBytes } from "../base64";
+export { cardToFsrsYaml } from "./wasm-utils";

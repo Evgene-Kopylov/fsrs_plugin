@@ -47,4 +47,4 @@
 - [ ] Добавить оператор `LIKE` для WHERE — [like-operator.md](like-operator.md)
 
 ### WASM-модуль в тестах TypeScript
-- [ ] Настроить загрузку WASM в Vitest, чтобы тесты могли вызывать WASM-функции — [wasm-in-tests.md](wasm-in-tests.md)
+- [>] Настроить загрузку WASM в Vitest, чтобы тесты могли вызывать WASM-функции — [wasm-in-tests.md](wasm-in-tests.md)
