@@ -194,10 +194,7 @@ fn evaluate_numeric_comparison(
         ComparisonOp::Equal => (field_value - target_value).abs() < f64::EPSILON,
         ComparisonOp::NotEqual => (field_value - target_value).abs() >= f64::EPSILON,
         ComparisonOp::Regex | ComparisonOp::NotRegex => {
-            log::warn!(
-                "Regex-оператор не применим к числовому полю {}",
-                field
-            );
+            log::warn!("Regex-оператор не применим к числовому полю {}", field);
             return Ok(false);
         }
     };
@@ -544,11 +541,8 @@ mod tests {
     #[test]
     fn test_regex_invalid_pattern_returns_error() {
         let card = create_test_card();
-        let expr = Expression::comparison(
-            "file",
-            ComparisonOp::Regex,
-            Value::string("[".to_string()),
-        );
+        let expr =
+            Expression::comparison("file", ComparisonOp::Regex, Value::string("[".to_string()));
         assert!(evaluate_condition(&expr, &card).is_err());
     }
 }

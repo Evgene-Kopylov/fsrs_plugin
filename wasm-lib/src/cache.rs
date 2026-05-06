@@ -929,13 +929,11 @@ mod tests {
         let _lock = acquire_test_lock();
         init_cache();
 
-        let items = vec![
-            make_test_item(
-                "папка/Танзанит ( Tanzanite ).md",
-                2,
-                "2026-06-01T10:00:00Z",
-            ),
-        ];
+        let items = vec![make_test_item(
+            "папка/Танзанит ( Tanzanite ).md",
+            2,
+            "2026-06-01T10:00:00Z",
+        )];
         let input = serde_json::to_string(&items).unwrap();
         add_or_update_cards(&input);
 

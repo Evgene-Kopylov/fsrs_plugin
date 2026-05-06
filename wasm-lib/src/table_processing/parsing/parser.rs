@@ -1312,7 +1312,6 @@ fn test_parse_date_format_field_not_identifier() {
     assert!(result.is_err());
 }
 
-
 #[test]
 fn test_parse_where_regex_tilde() {
     use crate::table_processing::parsing::*;
@@ -1321,7 +1320,11 @@ fn test_parse_where_regex_tilde() {
     assert!(params.where_condition.is_some());
     let condition = params.where_condition.unwrap();
     match condition {
-        Expression::Comparison { field, operator, value } => {
+        Expression::Comparison {
+            field,
+            operator,
+            value,
+        } => {
             assert_eq!(field, "file");
             assert_eq!(operator, ComparisonOp::Regex);
             match value {
@@ -1350,14 +1353,15 @@ fn test_parse_where_regex_not_tilde() {
 #[test]
 fn test_parse_where_regex_with_and() {
     use crate::table_processing::parsing::*;
-    let result = parse_sql_block(
-        "SELECT file WHERE file ~ \"test.*\" AND reps > 3",
-    )
-    .unwrap();
+    let result = parse_sql_block("SELECT file WHERE file ~ \"test.*\" AND reps > 3").unwrap();
     let params = result.value;
     assert!(params.where_condition.is_some());
     match params.where_condition.unwrap() {
-        Expression::Logical { left, operator, right: _ } => {
+        Expression::Logical {
+            left,
+            operator,
+            right: _,
+        } => {
             assert_eq!(operator, LogicalOp::And);
             match *left {
                 Expression::Comparison { operator, .. } => {
