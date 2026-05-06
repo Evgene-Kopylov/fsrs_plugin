@@ -6,44 +6,28 @@
 set -e  # Прерывать выполнение при ошибках
 
 # Настройки по умолчанию
-DEFAULT_VAULT_PATH="/home/death/Documents/FSRS-test-Obsidian-Vault"
-DEFAULT_WELCOME_FILE="$DEFAULT_VAULT_PATH/Welcome.md"
-DEFAULT_LOG_FILE=""  # автоматически: последний файл в logs/
-DEFAULT_DELAY=5
-
-# Переменные, которые можно переопределить через аргументы
-VAULT_PATH="$DEFAULT_VAULT_PATH"
-WELCOME_FILE="$DEFAULT_WELCOME_FILE"
-LOG_FILE="$DEFAULT_LOG_FILE"
-DELAY="$DEFAULT_DELAY"
+VAULT_PATH=""
+LOG_FILE=""
+DELAY=5
 VERBOSE=false
-DRY_RUN=false
 
 # Функция для вывода справки
 print_help() {
     cat << EOF
-Использование: $0 [ОПЦИИ] [ПУТЬ_К_ЛОГ_ФАЙЛУ]
+Использование: $0 -v ПУТЬ_К_ХРАНИЛИЩУ -l ПУТЬ_К_ЛОГ_ФАЙЛУ [ОПЦИИ]
 
-Скрипт для пересборки плагина FSRS и сбора логов из тестового хранилища.
+Обязательные параметры:
+  -v, --vault-path ПУТЬ   Путь к хранилищу Obsidian
+  -l, --log-file ПУТЬ     Путь к лог-файлу
 
 Опции:
-  -v, --vault-path ПУТЬ   Путь к хранилищу Obsidian (по умолчанию: $DEFAULT_VAULT_PATH)
-  -w, --welcome-file ПУТЬ Путь к файлу Welcome.md (по умолчанию: \$VAULT_PATH/Welcome.md)
-  -l, --log-file ПУТЬ     Путь к лог-файлу (по умолчанию: последний в logs/)
-  -d, --delay СЕКУНДЫ     Задержка после сборки в секундах (по умолчанию: $DEFAULT_DELAY)
+  -d, --delay СЕКУНДЫ     Задержка после сборки в секундах (по умолчанию: 5)
   -V, --verbose           Подробный вывод
-  -n, --dry-run           Тестовый режим без фактической пересборки
   -h, --help              Показать эту справку
 
-Позиционный аргумент:
-  ПУТЬ_К_ЛОГ_ФАЙЛУ        Путь к лог-файлу (переопределяет --log-file)
-
 Примеры:
-  $0 --vault-path /home/user/my-vault --delay 5
-  $0 -v /home/user/my-vault -d 2 -V
-  $0 --dry-run
-  $0 /home/user/logs/console-log.system.2026-04-28.md
-  $0 -v /home/user/my-vault /home/user/logs/my-log.md
+  $0 -v /home/user/my-vault -l /home/user/my-vault/logs/console-log.system.2026-05-06.md
+  $0 -v /home/user/my-vault -l /home/user/my-vault/logs/console-log.system.2026-05-06.md -d 2 -V
 
 EOF
 }
@@ -61,17 +45,10 @@ verbose_log() {
 }
 
 # Парсинг аргументов командной строки
-POSITIONAL_ARGS=()
-
 while [[ $# -gt 0 ]]; do
     case $1 in
         -v|--vault-path)
             VAULT_PATH="$2"
-            WELCOME_FILE="$VAULT_PATH/Welcome.md"
-            shift 2
-            ;;
-        -w|--welcome-file)
-            WELCOME_FILE="$2"
             shift 2
             ;;
         -l|--log-file)
@@ -86,10 +63,6 @@ while [[ $# -gt 0 ]]; do
             VERBOSE=true
             shift
             ;;
-        -n|--dry-run)
-            DRY_RUN=true
-            shift
-            ;;
         -h|--help)
             print_help
             exit 0
@@ -100,58 +73,39 @@ while [[ $# -gt 0 ]]; do
             exit 1
             ;;
         *)
-            # Позиционный аргумент (путь к лог-файлу)
-            POSITIONAL_ARGS+=("$1")
-            shift
+            echo "❌ Неизвестный аргумент: $1"
+            echo "Используйте $0 --help для справки"
+            exit 1
             ;;
     esac
 done
 
-# Используем первый позиционный аргумент как путь к лог-файлу
-if [[ ${#POSITIONAL_ARGS[@]} -gt 0 ]]; then
-    LOG_FILE="${POSITIONAL_ARGS[0]}"
+# Проверка обязательных параметров
+if [ -z "$VAULT_PATH" ]; then
+    echo "❌ Не указан путь к хранилищу (-v / --vault-path)"
+    echo "Используйте $0 --help для справки"
+    exit 1
 fi
-
-
-# Обновление путей на основе vault-path
-WELCOME_FILE="${WELCOME_FILE/\$VAULT_PATH/$VAULT_PATH}"
-LOG_FILE="${LOG_FILE/\$VAULT_PATH/$VAULT_PATH}"
-
-# Автоматическое определение последнего лог-файла, если не указан или не существует
-AUTO_DETECTED=false
-if [ -z "$LOG_FILE" ] || [ ! -f "$LOG_FILE" ]; then
-    # Сначала ищем в logs/ (тестовое хранилище)
-    LATEST_LOG=$(find "$VAULT_PATH/logs" -name "console-log.*.md" -type f 2>/dev/null | sort | tail -n 1)
-    if [ -n "$LATEST_LOG" ]; then
-        LOG_FILE="$LATEST_LOG"
-        AUTO_DETECTED=true
-        verbose_log "Автоопределён лог-файл: $LOG_FILE"
-    fi
-
-    # Если не нашли — ищем в logs/ (основное хранилище)
-    if [ -z "$LOG_FILE" ] || [ ! -f "$LOG_FILE" ]; then
-        LATEST_LOG=$(find "$VAULT_PATH/logs" -name "console-log.*.md" -type f 2>/dev/null | sort | tail -n 1)
-        if [ -n "$LATEST_LOG" ]; then
-            LOG_FILE="$LATEST_LOG"
-            AUTO_DETECTED=true
-            verbose_log "Автоопределён лог-файл: $LOG_FILE"
-        fi
-    fi
+if [ -z "$LOG_FILE" ]; then
+    echo "❌ Не указан путь к лог-файлу (-l / --log-file)"
+    echo "Используйте $0 --help для справки"
+    exit 1
 fi
 
 log_message "🔧 Запуск пересборки плагина FSRS..."
 verbose_log "Параметры:"
 verbose_log "  Vault path: $VAULT_PATH"
-verbose_log "  Welcome file: $WELCOME_FILE"
 verbose_log "  Log file: $LOG_FILE"
 verbose_log "  Delay: $DELAY секунд"
-verbose_log "  Verbose: $VERBOSE"
-verbose_log "  Dry run: $DRY_RUN"
 
 # Проверка существования путей
 echo "Проверка путей к файлам..."
 if [ ! -d "$VAULT_PATH" ]; then
     echo "❌ Хранилище не найдено: $VAULT_PATH"
+    exit 1
+fi
+if [ ! -f "$LOG_FILE" ]; then
+    echo "❌ Лог-файл не найден: $LOG_FILE"
     exit 1
 fi
 
@@ -162,6 +116,7 @@ if [ ! -d "$PROJECT_ROOT" ]; then
 fi
 
 echo "✅ Хранилище: $VAULT_PATH"
+echo "✅ Лог-файл: $LOG_FILE"
 echo "✅ Проект: $PROJECT_ROOT"
 
 # Шаг 1: Пересборка плагина
@@ -176,75 +131,26 @@ if [ ! -f "package.json" ]; then
 fi
 
 # Выполнение сборки
-if [ "$DRY_RUN" = true ]; then
-    echo "✅ [DRY RUN] Пропуск фактической пересборки"
+if npm run build; then
+    echo "✅ Плагин успешно пересобран"
 else
-    if npm run build; then
-        echo "✅ Плагин успешно пересобран"
-    else
-        echo "❌ Ошибка при пересборке плагина"
-        exit 1
-    fi
+    echo "❌ Ошибка при пересборке плагина"
+    exit 1
 fi
 
 # Шаг 2: Пауза для обновления Obsidian
 echo ""
 log_message "⏳ Шаг 2: Ожидание обновления Obsidian ($DELAY секунд)..."
-if [ "$DRY_RUN" = true ]; then
-    echo "✅ [DRY RUN] Пропуск ожидания"
-else
-    sleep "$DELAY"
-    echo "✅ Пауза завершена"
-fi
+sleep "$DELAY"
+echo "✅ Пауза завершена"
 
 # Шаг 3: Получение файлов
 echo ""
-log_message "📄 Шаг 3: Получение файлов и логов..."
+log_message "📄 Шаг 3: Получение логов..."
 
-# Проверка и вывод содержимого Welcome.md
-if [ -f "$WELCOME_FILE" ]; then
-    echo "📁 Welcome.md найден: $WELCOME_FILE"
-    echo "--- Начало Welcome.md (первые 30 строк) ---"
-    head -n 30 "$WELCOME_FILE"
-    echo "--- Конец Welcome.md ---"
-    echo ""
-    echo "📊 Информация о файле:"
-    wc -l "$WELCOME_FILE" | awk '{print "Количество строк:", $1}'
-    ls -lh "$WELCOME_FILE" | awk '{print "Размер:", $5, "Дата изменения:", $6, $7, $8}'
-else
-    echo "⚠️  Файл Welcome.md не найден: $WELCOME_FILE"
-fi
-
-echo ""
-
-# Проверка и вывод содержимого лог-файла
-if [ -f "$LOG_FILE" ]; then
-    if [ "$AUTO_DETECTED" = true ]; then
-        echo "📁 Лог-файл (автоопределён): $LOG_FILE"
-    else
-        echo "📁 Лог-файл найден: $LOG_FILE"
-    fi
-    echo "--- Начало лога (последние 100 строк) ---"
-    tail -n 100 "$LOG_FILE"
-    echo "--- Конец лога ---"
-    echo ""
-    echo "📊 Информация о логе:"
-    wc -l "$LOG_FILE" | awk '{print "Общее количество строк:", $1}'
-    ls -lh "$LOG_FILE" | awk '{print "Размер:", $5, "Дата изменения:", $6, $7, $8}'
-
-    # Поиск упоминаний FSRS в логе
-    echo ""
-    echo "🔍 Поиск упоминаний FSRS в логе:"
-    if grep -i "fsrs" "$LOG_FILE" | head -n 10; then
-        echo "✅ Найдены упоминания FSRS"
-    else
-        echo "⚠️  Упоминания FSRS не найдены"
-    fi
-else
-    echo "⚠️  Лог-файл не найден: $LOG_FILE"
-    echo "Поиск альтернативных лог-файлов..."
-    find "$VAULT_PATH/logs" -name "console-log.*.md" -type f 2>/dev/null | head -n 10
-fi
+echo "--- Начало лога (последние 100 строк) ---"
+tail -n 100 "$LOG_FILE"
+echo "--- Конец лога ---"
 
 # Шаг 4: Проверка сборки плагина
 echo ""
@@ -271,20 +177,17 @@ fi
 echo ""
 log_message "📋 Сводка выполнения:"
 echo "================================"
-echo "✅ Пересборка: $(if [ "$DRY_RUN" = true ]; then echo "DRY RUN"; else echo "завершена"; fi)"
+echo "✅ Пересборка: завершена"
 echo "✅ Пауза $DELAY секунд: выполнена"
-echo "📁 Welcome.md: $(if [ -f "$WELCOME_FILE" ]; then echo "найден"; else echo "не найден"; fi)"
-echo "📁 Лог-файл: $(if [ -f "$LOG_FILE" ]; then echo "найден"; else echo "не найден"; fi)"
+echo "📁 Лог-файл: $(wc -l < "$LOG_FILE") строк"
 echo "📦 Файлы плагина: проверены"
 echo "================================"
 echo ""
-log_message "🚀 Готово! $(if [ "$DRY_RUN" = true ]; then echo "[DRY RUN]"; else echo "Плагин пересобран и логи собраны."; fi)"
+log_message "🚀 Готово! Плагин пересобран и логи собраны."
 
 # Создание timestamp файла для отслеживания
-if [ "$DRY_RUN" = false ]; then
-    TIMESTAMP_FILE="$PROJECT_ROOT/.last_rebuild_timestamp"
-    date '+%Y-%m-%d %H:%M:%S' > "$TIMESTAMP_FILE"
-    echo "🕐 Время пересборки сохранено в: $TIMESTAMP_FILE"
-fi
+TIMESTAMP_FILE="$PROJECT_ROOT/.last_rebuild_timestamp"
+date '+%Y-%m-%d %H:%M:%S' > "$TIMESTAMP_FILE"
+echo "🕐 Время пересборки сохранено в: $TIMESTAMP_FILE"
 
 exit 0
