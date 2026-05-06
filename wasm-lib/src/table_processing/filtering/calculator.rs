@@ -39,7 +39,13 @@ pub fn compute_fields_from_state(
     _now_iso: &str,
 ) -> CardWithComputedFields {
     let mut result = CardWithComputedFields {
-        file: card.file_path.clone(),
+        file: card.file_path.as_ref().map(|p| {
+            std::path::Path::new(p)
+                .file_stem()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string()
+        }),
         reps: Some(state.reps as u32),
         stability: Some(state.stability),
         difficulty: Some(state.difficulty),

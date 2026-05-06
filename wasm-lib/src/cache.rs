@@ -896,6 +896,66 @@ mod tests {
     }
 
     #[test]
+    fn test_query_cards_with_where_file_stem() {
+        let _lock = acquire_test_lock();
+        init_cache();
+
+        let items = vec![
+            make_test_item("папка/Запись.md", 2, "2026-06-01T10:00:00Z"),
+            make_test_item("папка/Другая.md", 3, "2026-06-05T10:00:00Z"),
+        ];
+        let input = serde_json::to_string(&items).unwrap();
+        add_or_update_cards(&input);
+
+        // Парсим полную SQL-строку как в Obsidian
+        let parsed_sql = crate::table_processing::parsing::parse_fsrs_table_block(
+            "SELECT file WHERE file = \"Запись\" LIMIT 10",
+        )
+        .unwrap();
+        let params_json = serde_json::to_string(&parsed_sql.value).unwrap();
+        let result = query_cards(&params_json, "2026-06-10T12:00:00Z");
+
+        let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
+        assert_eq!(
+            parsed["total_count"].as_u64().unwrap(),
+            1,
+            "WHERE file = \"Запись\" должно найти 1 карточку"
+        );
+        assert_eq!(parsed["cards"].as_array().unwrap().len(), 1);
+    }
+
+    #[test]
+    fn test_query_cards_with_where_file_spaces_parens() {
+        let _lock = acquire_test_lock();
+        init_cache();
+
+        let items = vec![
+            make_test_item(
+                "папка/Танзанит ( Tanzanite ).md",
+                2,
+                "2026-06-01T10:00:00Z",
+            ),
+        ];
+        let input = serde_json::to_string(&items).unwrap();
+        add_or_update_cards(&input);
+
+        // Парсим полную SQL-строку как в Obsidian
+        let parsed_sql = crate::table_processing::parsing::parse_fsrs_table_block(
+            "SELECT file WHERE file = \"Танзанит ( Tanzanite )\" LIMIT 10",
+        )
+        .unwrap();
+        let params_json = serde_json::to_string(&parsed_sql.value).unwrap();
+        let result = query_cards(&params_json, "2026-06-10T12:00:00Z");
+
+        let parsed: serde_json::Value = serde_json::from_str(&result).unwrap();
+        assert_eq!(
+            parsed["total_count"].as_u64().unwrap(),
+            1,
+            "WHERE file = \"Танзанит ( Tanzanite )\" должно найти 1 карточку"
+        );
+    }
+
+    #[test]
     fn test_query_cards_with_limit() {
         let _lock = acquire_test_lock();
         init_cache();
