@@ -20,7 +20,7 @@ Open the command palette (`Ctrl/Cmd+P`) and run:
 The plugin adds an empty `reviews: []` array to the note's frontmatter.
 From now on, the note is considered an FSRS card — ready for review.
 
-![«Add FSRS fields» command in the palette](gifs/add-fsrs-fields.gif)
+![«Add FSRS fields» command in the palette](images/add-fsrs-fields.gif)
 
 After adding the fields, the frontmatter looks like this:
 
@@ -51,7 +51,7 @@ The button is inserted as a code block in the note:
 In reading mode (`Ctrl/Cmd+E`) the block renders as a button
 with four rating options.
 
-![review button in reading mode](gifs/insert-review-button.gif)
+![review button in reading mode](images/insert-review-button.gif)
 
 ---
 
@@ -75,7 +75,7 @@ LIMIT 20
 In reading mode the block renders as a table with all your cards,
 sorted by default (by due date ascending — most urgent first).
 
-![rendered fsrs-table with cards](gifs/fsrs-table.gif)
+![rendered fsrs-table with cards](images/fsrs-table.gif)
 
 ### Column reference
 
@@ -90,7 +90,7 @@ Hover over a file name in the table.
 A popover appears showing the note's content,
 with the review button inside — clickable directly from the preview.
 
-![popover with card content and review button](gifs/hover-review.gif)
+![popover with card content and review button](images/hover-review.gif)
 
 This lets you:
 

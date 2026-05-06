@@ -20,7 +20,7 @@
 插件将在笔记的 frontmatter 中添加一个空的 `reviews: []` 数组。
 从此，该笔记被视为 FSRS 卡片 — 可以开始复习了。
 
-![命令面板中的「添加 FSRS 字段」命令](gifs/add-fsrs-fields.gif)
+![命令面板中的「添加 FSRS 字段」命令](images/add-fsrs-fields.gif)
 
 添加字段后，笔记的 frontmatter 如下所示：
 
@@ -50,7 +50,7 @@ reviews: []
 
 在阅读模式（`Ctrl/Cmd+E`）下，该块将渲染为带有四个评分选项的按钮。
 
-![阅读模式下的复习按钮](gifs/insert-review-button.gif)
+![阅读模式下的复习按钮](images/insert-review-button.gif)
 
 ---
 
@@ -74,7 +74,7 @@ LIMIT 20
 在阅读模式下，该块将渲染为包含所有卡片的表格，
 默认排序（按逾期 — 最逾期的在最上面）。您没有逾期的卡片，因此该字段为空。
 
-![渲染后的 fsrs-table 含卡片](gifs/fsrs-table.gif)
+![渲染后的 fsrs-table 含卡片](images/fsrs-table.gif)
 
 ### 各列含义
 
@@ -89,7 +89,7 @@ LIMIT 20
 将弹出一个包含笔记内容的弹出窗口，
 里面正是那个复习按钮 — 可以直接从预览中点击。
 
-![包含内容和复习按钮的弹出窗口](gifs/hover-review.gif)
+![包含内容和复习按钮的弹出窗口](images/hover-review.gif)
 
 这样您可以：
 
