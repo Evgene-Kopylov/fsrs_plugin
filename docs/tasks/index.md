@@ -43,8 +43,8 @@
 ### WHERE file — совпадение по имени, а не полному пути
 - [>] Добавить поле `filename` — [where-file-match.md](where-file-match.md)
 
-### Частичное совпадение по строке (LIKE)
-- [ ] Добавить оператор `LIKE` для WHERE — [like-operator.md](like-operator.md)
+### Оператор ~ для WHERE (regex)
+- [ ] Добавить операторы `~` и `!~` для regex-фильтрации — [like-operator.md](like-operator.md)
 
 ### WASM-модуль в тестах TypeScript
 - [x] Настроить загрузку WASM в Vitest, чтобы тесты могли вызывать WASM-функции — [wasm-in-tests.md](wasm-in-tests.md)
