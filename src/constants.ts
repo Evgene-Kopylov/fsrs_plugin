@@ -20,7 +20,7 @@ export const DEFAULT_SETTINGS: FSRSSettings = {
     default_initial_difficulty: 0.0,
 
     // Настройка для автоматического добавления кнопки повторения
-    auto_add_review_button: false,
+    auto_add_review_button: true,
 
     // Паттерны игнорирования файлов и папок
     ignore_patterns: [],

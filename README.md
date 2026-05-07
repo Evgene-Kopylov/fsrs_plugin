@@ -59,7 +59,7 @@ The plugin turns your notes into FSRS-based flashcards for effective memorizatio
 3. **Insert a table** – use the command `Insert default fsrs-table` (Ctrl/Cmd+P), or create a ` ```fsrs-table ...``` ` block manually.
 4. **Start reviewing** – open the table, hover over a file name, and click a rating.
 
-A detailed step-by-step guide with screenshots: [**Usage Guide**](docs/intended_use.md)
+A detailed step-by-step guide with screenshots: [**Usage Guide**](docs/intended_use.en.md)
 
 ## 📖 Usage
 
@@ -312,7 +312,7 @@ Full text: [LICENSE](LICENSE)
 - [Official FSRS Documentation](https://github.com/open-spaced-repetition/fsrs)
 - [Obsidian Forum Discussion](https://forum.obsidian.md/)
 - [Issues & Feature Requests](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/work_items)
-- [FSRS Table Usage Guide](docs/intended_use.md)
+- [FSRS Table Usage Guide](docs/intended_use.en.md)
 
 ***
 
