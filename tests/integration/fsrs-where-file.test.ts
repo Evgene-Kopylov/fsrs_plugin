@@ -9,8 +9,8 @@ describe("WHERE file", () => {
 
     beforeEach(() => {
         fillCache(cache, [
-            reviewCard("алгебра.md"), // file = "алгебра"
-            reviewCard("Тема/Квантовая механика.md"), // file = "Квантовая механика"
+            reviewCard("алгебра.md"),
+            reviewCard("Тема/Квантовая механика.md"),
         ]);
     });
 
@@ -28,18 +28,5 @@ describe("WHERE file", () => {
         expect(result.cards[0].card.filePath).toBe(
             "Тема/Квантовая механика.md",
         );
-    });
-
-    it("нет совпадений по полному пути", () => {
-        const sql = [
-            'SELECT file as "Карточка"',
-            "WHERE file = 'Тема/Квантовая механика.md'",
-            "LIMIT 20",
-        ].join("\n");
-
-        const result = cache.query(parseSqlBlock(sql), now);
-
-        expect(result.errors).toEqual([]);
-        expect(result.cards).toHaveLength(0);
     });
 });

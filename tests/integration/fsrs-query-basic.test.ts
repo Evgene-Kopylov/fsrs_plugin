@@ -14,18 +14,12 @@ describe("Базовая выборка", () => {
         fillCache(cache, [reviewCard("алгебра.md"), newCard("физика.md")]);
     });
 
-    it("возвращает все карточки из кэша", () => {
-        const params = parseSqlBlock(sql);
-        const result = cache.query(params, now);
+    it("возвращает все карточки из кэша с ожидаемой структурой", () => {
+        const result = cache.query(parseSqlBlock(sql), now);
 
         expect(result.errors).toEqual([]);
         expect(result.cards).toHaveLength(2);
         expect(result.total_count).toBe(2);
-    });
-
-    it("каждая карточка содержит card и state с ожидаемыми полями", () => {
-        const params = parseSqlBlock(sql);
-        const result = cache.query(params, now);
 
         for (const cached of result.cards) {
             expect(cached.card).toHaveProperty("filePath");
