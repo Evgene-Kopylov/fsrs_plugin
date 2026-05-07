@@ -3,11 +3,6 @@ import { parseSqlBlock } from "../../src/utils/fsrs-table-params";
 import { FsrsCache } from "../../src/utils/fsrs/fsrs-cache";
 import { reviewCard, fillCache } from "./helpers";
 
-const QUERY = [
-    'SELECT file as "Карточка", reps as "Повторы"',
-    "LIMIT 20",
-].join("\n");
-
 describe("ORDER BY reps DESC", () => {
     const cache = new FsrsCache();
     const now = new Date("2026-01-25T12:00:00Z");
@@ -21,12 +16,13 @@ describe("ORDER BY reps DESC", () => {
     });
 
     it("сортирует по убыванию числа повторений", () => {
-        const sql = QUERY.replace(
+        const sql = [
+            'SELECT file as "Карточка", reps as "Повторы"',
+            "ORDER BY reps DESC",
             "LIMIT 20",
-            "ORDER BY reps DESC\nLIMIT 20",
-        );
-        const params = parseSqlBlock(sql);
-        const result = cache.query(params, now);
+        ].join("\n");
+
+        const result = cache.query(parseSqlBlock(sql), now);
 
         expect(result.errors).toEqual([]);
         expect(result.cards).toHaveLength(3);

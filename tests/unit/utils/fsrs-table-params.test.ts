@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { AVAILABLE_FIELDS } from "../../../src/utils/fsrs-table-params";
-import { parseSqlBlock } from "../../../src/utils/fsrs-table-params";
+import {
+    AVAILABLE_FIELDS,
+    parseSqlBlock,
+} from "../../../src/utils/fsrs-table-params";
+import { DEFAULT_TABLE_BLOCK } from "../../../src/commands/add-default-table";
 
 describe("fsrs-table-params", () => {
     describe("AVAILABLE_FIELDS", () => {
@@ -49,13 +52,10 @@ describe("fsrs-table-params", () => {
     });
 
     describe("parseSqlBlock", () => {
-        it("парсит дефолтный запрос с алиасами и date_format", () => {
-            const sql = [
-                'SELECT file as " ", difficulty as "D",',
-                '       stability as "S", retrievability as "R",',
-                "       date_format(due, '%d.%m.%Y') as \"Следующее\"",
-                "LIMIT 20",
-            ].join("\n");
+        it("парсит реальный DEFAULT_TABLE_BLOCK", () => {
+            // выдираем SQL из ```fsrs-table ... ```
+            const lines = DEFAULT_TABLE_BLOCK.split("\n");
+            const sql = lines.slice(1, -2).join("\n");
 
             const params = parseSqlBlock(sql);
 

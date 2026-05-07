@@ -2,26 +2,20 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { parseSqlBlock } from "../../src/utils/fsrs-table-params";
 import { FsrsCache } from "../../src/utils/fsrs/fsrs-cache";
 import { reviewCard, newCard, fillCache } from "./helpers";
+import { DEFAULT_TABLE_BLOCK } from "../../src/commands/add-default-table";
 
-const QUERY = [
-    'SELECT file as "Карточка", retrievability as "R",',
-    '       stability as "S", difficulty as "D"',
-    "LIMIT 20",
-].join("\n");
+const sql = DEFAULT_TABLE_BLOCK.split("\n").slice(1, -2).join("\n");
 
 describe("Базовая выборка", () => {
     const cache = new FsrsCache();
     const now = new Date("2026-01-25T12:00:00Z");
 
     beforeEach(() => {
-        fillCache(cache, [
-            reviewCard("алгебра.md"),
-            newCard("физика.md"),
-        ]);
+        fillCache(cache, [reviewCard("алгебра.md"), newCard("физика.md")]);
     });
 
     it("возвращает все карточки из кэша", () => {
-        const params = parseSqlBlock(QUERY);
+        const params = parseSqlBlock(sql);
         const result = cache.query(params, now);
 
         expect(result.errors).toEqual([]);
@@ -30,7 +24,7 @@ describe("Базовая выборка", () => {
     });
 
     it("каждая карточка содержит card и state с ожидаемыми полями", () => {
-        const params = parseSqlBlock(QUERY);
+        const params = parseSqlBlock(sql);
         const result = cache.query(params, now);
 
         for (const cached of result.cards) {
