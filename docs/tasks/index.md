@@ -18,37 +18,7 @@
 
 ## Задачи
 
-### Доработка использования поля даты следующего повторения
-- [x] доступно ли это поле в таблице? если нет, добавить
-- [x] сортировка
-- [x] условие
-- [x] дата следующего просмотра вместо overdue в примере. 
-- [x] возможно, убрать overdue вообще
-
-### Оптимизация кэша: убрать предсериализованные JSON-строки
-- [x] Убрать `card_json`/`state_json` из CachedCard, сериализовать только результат — [cache-json-strings-optimization.md](cache-json-strings-optimization.md)
-
-### Использовать metadataCache для инкрементальных обновлений
-- [x] В scanSingleCard читать frontmatter из metadataCache, а не через vault.read() — [use-metadata-cache-for-incremental-updates.md](use-metadata-cache-for-incremental-updates.md)
-
-### Передавать структуры в WASM напрямую, без JSON-строк
-- [>] Убрать двойную JSON-сериализацию в addOrUpdateCards — [wasm-direct-structs.md](wasm-direct-structs.md)
-
-### Пользовательская статья (normis-article)
-- [>] Написать пользовательскую статью о плагине — [normis-article.md](normis-article.md)
-
-### Тепловая карта (Heatmap)
-- [x] HeatMap — сколько повторений сделано по дням — [heatmap.md](heatmap.md)
-
-### WHERE file — совпадение по имени, а не полному пути
-- [x] `file` возвращает file_stem вместо полного пути — [where-file-match.md](where-file-match.md)
-
-### Оператор ~ для WHERE (regex)
-- [x] Добавить операторы `~` и `!~` для regex-фильтрации — [like-operator.md](like-operator.md)
-
-### WASM-модуль в тестах TypeScript
-- [x] Настроить загрузку WASM в Vitest, чтобы тесты могли вызывать WASM-функции — [wasm-in-tests.md](wasm-in-tests.md)
-
-### Периодическое обновление цифр в таблице
-- [x] Автообновление значений (retrievability, due) в открытой таблице — [table-auto-refresh.md](table-auto-refresh.md)
-
+### Интеграционные тесты
+- [ ] тест дефолтной таблици. Импортировать фактически используемую.
+- [ ] намисать README.md в паку интеграционных тестов.
+- [ ] Описать в AGENTS.md как писать интеграционные тесты.
