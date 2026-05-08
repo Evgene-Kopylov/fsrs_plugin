@@ -10,6 +10,15 @@ export const DEFAULT_PARAMETERS: FSRSParameters = {
 // Минимальный интервал для досрочного повторения (40 минут)
 export const MINIMUM_REVIEW_INTERVAL_MINUTES = 40;
 
+/** CSS-переменная акцентного цвета Obsidian */
+export const OBSIDIAN_ACCENT_VAR = "var(--interactive-accent)";
+
+/** Цвет по умолчанию, если акцентный не удалось определить */
+export const FALLBACK_ACCENT_COLOR = "#8b5cf6";
+
+/** Цвет кнопки по умолчанию, если CSS-переменная не определена */
+export const FALLBACK_BUTTON_COLOR = "#cccccc";
+
 // Настройки плагина по умолчанию
 export const DEFAULT_SETTINGS: FSRSSettings = {
     // Параметры алгоритма FSRS
@@ -21,6 +30,12 @@ export const DEFAULT_SETTINGS: FSRSSettings = {
 
     // Настройка для автоматического добавления кнопки повторения
     auto_add_review_button: true,
+
+    // Целевое число повторений для насыщения цвета тепловой карты
+    heatmap_target_count: 30,
+
+    // Кастомный цвет тепловой карты (пусто = accent)
+    heatmap_color: "",
 
     // Паттерны игнорирования файлов и папок
     ignore_patterns: [],

@@ -96,6 +96,12 @@ export interface FSRSSettings {
     // Настройка для автоматического добавления кнопки повторения
     auto_add_review_button: boolean;
 
+    // Целевое число повторений для насыщения цвета тепловой карты
+    heatmap_target_count: number;
+
+    // Кастомный цвет тепловой карты (пусто = accent)
+    heatmap_color: string;
+
     // Паттерны игнорирования файлов и папок
     ignore_patterns: string[];
 }

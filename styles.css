@@ -511,23 +511,6 @@
    Тепловая карта (fsrs-heatmap)
    ======================================================================== */
 
-/* Уровни цвета ячеек */
-:root {
-    --fsrs-heatmap-0: transparent;
-    --fsrs-heatmap-1: #9be9a8;
-    --fsrs-heatmap-2: #40c463;
-    --fsrs-heatmap-3: #30a14e;
-    --fsrs-heatmap-4: #216e39;
-}
-
-.theme-dark {
-    --fsrs-heatmap-0: transparent;
-    --fsrs-heatmap-1: #0e4429;
-    --fsrs-heatmap-2: #006d32;
-    --fsrs-heatmap-3: #26a641;
-    --fsrs-heatmap-4: #39d353;
-}
-
 /* Контейнер как у code block до загрузки */
 .markdown-rendered .block-language-fsrs-heatmap,
 .cm-preview-code-block.block-language-fsrs-heatmap,
@@ -630,22 +613,6 @@
     transition: outline 0.1s;
     outline: 1px solid transparent;
     outline-offset: -1px;
-}
-
-.fsrs-heatmap-level-0 {
-    background-color: var(--fsrs-heatmap-0);
-}
-.fsrs-heatmap-level-1 {
-    background-color: var(--fsrs-heatmap-1);
-}
-.fsrs-heatmap-level-2 {
-    background-color: var(--fsrs-heatmap-2);
-}
-.fsrs-heatmap-level-3 {
-    background-color: var(--fsrs-heatmap-3);
-}
-.fsrs-heatmap-level-4 {
-    background-color: var(--fsrs-heatmap-4);
 }
 
 .fsrs-heatmap-cell:hover {

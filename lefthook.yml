@@ -1,0 +1,27 @@
+pre-commit:
+    parallel: true
+    jobs:
+        - name: eslint
+          glob: "*.{ts,mts}"
+          run: npx eslint {staged_files}
+
+        - name: cargo fmt
+          glob: "*.rs"
+          run: cargo fmt --check
+          root: "wasm-lib/"
+
+pre-push:
+    parallel: true
+    jobs:
+        - name: tsc
+          glob: "*.{ts,mts}"
+          run: npx tsc -noEmit -skipLibCheck
+
+        - name: cargo clippy
+          glob: "*.rs"
+          run: cargo clippy -- -D warnings
+          root: "wasm-lib/"
+
+        - name: vitest
+          glob: "*.{ts,mts}"
+          run: npx vitest --run
