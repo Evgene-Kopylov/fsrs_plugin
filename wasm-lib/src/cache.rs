@@ -412,7 +412,9 @@ pub fn get_heatmap_data(now_iso: &str, weeks: usize, locale: &str) -> String {
 }
 
 fn color_level(count: u32) -> u32 {
-    const T: [u32; 5] = [0, 1, 2, 4, 7];
+    const T: [u32; 19] = [
+        0, 1, 3, 5, 8, 11, 14, 17, 21, 25, 29, 33, 37, 41, 44, 47, 49, 50, 50,
+    ];
     for i in (0..T.len()).rev() {
         if count >= T[i] {
             return i as u32;

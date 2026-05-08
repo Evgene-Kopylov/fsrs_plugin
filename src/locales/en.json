@@ -200,6 +200,14 @@
                 "name": "Verbose logging",
                 "desc": "Show detailed performance logs with emojis (⏱️, ✅) in Obsidian console. Useful for debugging."
             },
+            "heatmap_target": {
+                "name": "Daily review target for heatmap",
+                "desc": "Number of reviews per day at which the cell color is most saturated. Above this, color brightens."
+            },
+            "heatmap_color": {
+                "name": "Heatmap color",
+                "desc": "Leave empty to use Obsidian accent color."
+            },
             "custom_button_labels": {
                 "name": "Custom button labels",
                 "desc": "Override review button text. Leave empty to use default translation.",

@@ -1,5 +1,10 @@
 import { Setting, TextComponent, ColorComponent } from "obsidian";
 import type MyPlugin from "../../main";
+import {
+    FALLBACK_ACCENT_COLOR,
+    FALLBACK_BUTTON_COLOR,
+    OBSIDIAN_ACCENT_VAR,
+} from "../../constants";
 import { i18n } from "../../utils/i18n";
 import { setVerboseLoggingEnabled } from "../../utils/logger";
 import { DEFAULT_SETTINGS } from "../types";
@@ -73,6 +78,80 @@ export function renderDisplaySettings(
             });
     });
 
+    // heatmap_target_count + heatmap_color
+    const heatmapSetting = new Setting(containerEl)
+        .setName(i18n.t("settings.display.heatmap_target.name"))
+        .setDesc(i18n.t("settings.display.heatmap_target.desc"));
+
+    let heatmapTargetSlider: import("obsidian").SliderComponent;
+    heatmapSetting.addSlider((slider) => {
+        heatmapTargetSlider = slider;
+        slider
+            .setLimits(1, 100, 1)
+            .setValue(plugin.settings.heatmap_target_count)
+            .setDynamicTooltip()
+            .onChange(async (value) => {
+                plugin.settings.heatmap_target_count = value;
+                await plugin.saveSettings();
+                plugin.notifyFsrsTableRenderers();
+            });
+    });
+
+    // Акцентный цвет Obsidian: создаём элемент, чтобы дать браузеру
+    // вычислить var(--interactive-accent), и конвертируем в hex.
+    const rgbToHex = (rgb: string): string => {
+        const m = rgb.match(/\d+/g);
+        if (!m || m.length < 3) return FALLBACK_ACCENT_COLOR;
+        return (
+            "#" +
+            m
+                .slice(0, 3)
+                .map((n) => parseInt(n, 10).toString(16).padStart(2, "0"))
+                .join("")
+        );
+    };
+
+    // Пробный элемент, чтобы браузер вычислил var(--interactive-accent) в
+    // конкретный цвет. createDiv — метод Obsidian, недоступен в настройках.
+    // eslint-disable-next-line obsidianmd/prefer-create-el -- нативный createElement вместо createDiv
+    const accentProbe = activeDocument.createElement("div");
+    accentProbe.setAttribute("style", `color: ${OBSIDIAN_ACCENT_VAR}`);
+    activeDocument.body.appendChild(accentProbe);
+    const accentColor = rgbToHex(
+        getComputedStyle(accentProbe).color || FALLBACK_ACCENT_COLOR,
+    );
+    accentProbe.remove();
+
+    let heatmapColorPicker: import("obsidian").ColorComponent;
+    heatmapSetting.addColorPicker((color) => {
+        heatmapColorPicker = color;
+        color
+            .setValue(plugin.settings.heatmap_color || accentColor)
+            .onChange(async (value) => {
+                // Если цвет совпадает с акцентным — стираем (пустая строка → accent)
+                plugin.settings.heatmap_color =
+                    value === accentColor ? "" : value;
+                await plugin.saveSettings();
+                plugin.notifyFsrsTableRenderers();
+            });
+    });
+
+    heatmapSetting.addExtraButton((btn) => {
+        btn.setIcon("reset")
+            .setTooltip("Сбросить")
+            .onClick(async () => {
+                plugin.settings.heatmap_target_count =
+                    DEFAULT_SETTINGS.heatmap_target_count;
+                heatmapTargetSlider.setValue(
+                    DEFAULT_SETTINGS.heatmap_target_count,
+                );
+                plugin.settings.heatmap_color = "";
+                heatmapColorPicker.setValue(accentColor);
+                await plugin.saveSettings();
+                plugin.notifyFsrsTableRenderers();
+            });
+    });
+
     // custom_button_labels
     new Setting(containerEl)
         .setName(i18n.t("settings.display.custom_button_labels.name"))
@@ -122,7 +201,7 @@ export function renderDisplaySettings(
         const defaultColor =
             getComputedStyle(activeDocument.body)
                 .getPropertyValue(`--fsrs-color-${key}`)
-                .trim() || "#cccccc";
+                .trim() || FALLBACK_BUTTON_COLOR;
 
         let colorComponent: ColorComponent;
         setting.addColorPicker((color) => {

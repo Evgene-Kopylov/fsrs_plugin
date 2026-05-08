@@ -7,6 +7,7 @@
 
 import { MarkdownRenderChild } from "obsidian";
 import type FsrsPlugin from "../main";
+import { OBSIDIAN_ACCENT_VAR } from "../constants";
 import type { HeatmapData } from "../utils/fsrs/fsrs-cache";
 import { i18n } from "../utils/i18n";
 import { verboseLog } from "../utils/logger";
@@ -101,7 +102,12 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
             const block = this.container.closest<HTMLElement>(
                 ".block-language-fsrs-heatmap",
             );
-            if (block) block.scrollLeft = block.scrollWidth;
+            if (block) {
+                block.scrollLeft = block.scrollWidth;
+                new ResizeObserver(() => {
+                    block.scrollLeft = block.scrollWidth;
+                }).observe(block);
+            }
         } catch (e) {
             this.renderError(String(e));
         } finally {
@@ -155,10 +161,7 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
                 const cell = d.cells[idx];
                 if (!cell) continue;
 
-                const cls = [
-                    "fsrs-heatmap-cell",
-                    `fsrs-heatmap-level-${cell.level}`,
-                ];
+                const cls = ["fsrs-heatmap-cell"];
                 if (cell.border_top) cls.push("fsrs-heatmap-bt");
                 if (cell.border_bottom) cls.push("fsrs-heatmap-bb");
                 if (cell.border_left) cls.push("fsrs-heatmap-bl");
@@ -166,6 +169,22 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
                 if (cell.future) cls.push("fsrs-heatmap-future");
 
                 const el = weekCol.createDiv({ cls: cls.join(" ") });
+                if (cell.level > 0) {
+                    const target = this.plugin.settings.heatmap_target_count;
+                    const ratio = cell.count / target;
+                    const cellStyle: Record<string, string> = {
+                        backgroundColor:
+                            this.plugin.settings.heatmap_color ||
+                            OBSIDIAN_ACCENT_VAR,
+                    };
+                    if (ratio <= 1) {
+                        cellStyle.opacity = String(ratio);
+                    } else {
+                        cellStyle.opacity = "1";
+                        cellStyle.filter = `brightness(${1 + (ratio - 1)})`;
+                    }
+                    Object.assign(el.style, cellStyle);
+                }
 
                 if (cell.count > 0) {
                     el.addEventListener("mouseenter", () =>
