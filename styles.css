@@ -527,6 +527,11 @@
     font-size: 0.8em;
 }
 
+/* Слайдеры в настройках */
+.setting-item-control input[type="range"] {
+    width: 200px;
+}
+
 .fsrs-heatmap-header {
     font-weight: 600;
     margin-bottom: 4px;
