@@ -160,7 +160,8 @@
             "system": "System (Obsidian language)",
             "en": "English",
             "ru": "Russian",
-            "zh": "Chinese"
+            "zh": "Chinese",
+            "resetTooltip": "Reset to system language"
         },
         "fsrs_algorithm": {
             "heading": "FSRS Algorithm",

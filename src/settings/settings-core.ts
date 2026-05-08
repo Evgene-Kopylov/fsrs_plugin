@@ -28,7 +28,7 @@ export class FsrsSettingTab extends PluginSettingTab {
             .setName(i18n.t("settings.language.heading"))
             .setHeading();
 
-        new Setting(containerEl)
+        const languageSetting = new Setting(containerEl)
             .setDesc(i18n.t("settings.language.desc"))
             .addDropdown((dropdown) => {
                 dropdown
@@ -50,6 +50,19 @@ export class FsrsSettingTab extends PluginSettingTab {
                         this.display();
                     });
             });
+
+        languageSetting.addExtraButton((button) => {
+            button
+                .setIcon("reset")
+                .setTooltip(i18n.t("settings.language.resetTooltip"))
+                .onClick(async () => {
+                    this.plugin.settings.language = "system";
+                    await this.plugin.saveSettings();
+                    i18n.setLocale(i18n.resolveLocale("system"));
+                    updateCommandNames(this.plugin.app);
+                    this.display();
+                });
+        });
 
         // Разделитель
         containerEl.createEl("hr");
