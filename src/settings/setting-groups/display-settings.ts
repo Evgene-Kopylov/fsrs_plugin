@@ -92,9 +92,22 @@ export function renderDisplaySettings(
             .setDynamicTooltip()
             .onChange(async (value) => {
                 plugin.settings.heatmap_target_count = value;
+                plugin.notifyFsrsTableRenderers();
                 await plugin.saveSettings();
+            });
+
+        // Нативный input для реалтайм-обновления при движении ползунка
+        const range = heatmapSetting.settingEl.querySelector(
+            'input[type="range"]',
+        );
+        if (range) {
+            range.addEventListener("input", () => {
+                plugin.settings.heatmap_target_count = Number(
+                    (range as HTMLInputElement).value,
+                );
                 plugin.notifyFsrsTableRenderers();
             });
+        }
     });
 
     // Акцентный цвет Obsidian: создаём элемент, чтобы дать браузеру
