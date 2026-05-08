@@ -29,7 +29,6 @@ export class FsrsSettingTab extends PluginSettingTab {
             .setHeading();
 
         new Setting(containerEl)
-            .setName(i18n.t("settings.language.heading"))
             .setDesc(i18n.t("settings.language.desc"))
             .addDropdown((dropdown) => {
                 dropdown
