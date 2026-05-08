@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
 import type MyPlugin from "../main";
 import { renderFsrsParameters } from "./setting-groups/fsrs-parameters";
 import { renderCardDefaults } from "./setting-groups/card-defaults";
@@ -19,6 +19,20 @@ export class FsrsSettingTab extends PluginSettingTab {
         this.plugin = plugin;
     }
 
+    private async applyLanguage(
+        value: "system" | "en" | "ru" | "zh",
+    ): Promise<void> {
+        this.plugin.settings.language = value;
+        if (value === "system") {
+            i18n.setLocale(i18n.resolveLocale("system"));
+        } else {
+            i18n.setLocale(value);
+        }
+        updateCommandNames(this.plugin.app);
+        await this.plugin.saveSettings();
+        new Notice(i18n.t("notices.settings_changed_reload"));
+    }
+
     display(): void {
         const { containerEl } = this;
         containerEl.empty();
@@ -28,9 +42,12 @@ export class FsrsSettingTab extends PluginSettingTab {
             .setName(i18n.t("settings.language.heading"))
             .setHeading();
 
+        let languageDropdown: import("obsidian").DropdownComponent;
+
         const languageSetting = new Setting(containerEl)
             .setDesc(i18n.t("settings.language.desc"))
             .addDropdown((dropdown) => {
+                languageDropdown = dropdown;
                 dropdown
                     .addOption("system", i18n.t("settings.language.system"))
                     .addOption("en", i18n.t("settings.language.en"))
@@ -38,16 +55,7 @@ export class FsrsSettingTab extends PluginSettingTab {
                     .addOption("zh", i18n.t("settings.language.zh"))
                     .setValue(this.plugin.settings.language || "system")
                     .onChange(async (value: "system" | "en" | "ru" | "zh") => {
-                        this.plugin.settings.language = value;
-                        await this.plugin.saveSettings();
-                        if (value === "system") {
-                            i18n.setLocale(i18n.resolveLocale("system"));
-                        } else {
-                            i18n.setLocale(value);
-                        }
-                        updateCommandNames(this.plugin.app);
-                        // Перерисовать вкладку настроек для применения нового языка
-                        this.display();
+                        await this.applyLanguage(value);
                     });
             });
 
@@ -56,11 +64,8 @@ export class FsrsSettingTab extends PluginSettingTab {
                 .setIcon("reset")
                 .setTooltip(i18n.t("settings.language.resetTooltip"))
                 .onClick(async () => {
-                    this.plugin.settings.language = "system";
-                    await this.plugin.saveSettings();
-                    i18n.setLocale(i18n.resolveLocale("system"));
-                    updateCommandNames(this.plugin.app);
-                    this.display();
+                    await this.applyLanguage("system");
+                    languageDropdown.setValue("system");
                 });
         });
 
