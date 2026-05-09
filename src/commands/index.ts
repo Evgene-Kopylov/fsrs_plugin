@@ -50,6 +50,13 @@ export function updateCommandNames(app: App): void {
     ];
 
     const commandMap = (app as unknown as CommandsAccess).commands;
+    // commands может быть не Map в некоторых версиях Obsidian
+    if (
+        !commandMap ||
+        typeof (commandMap as Map<unknown, unknown>).get !== "function"
+    ) {
+        return;
+    }
     for (const cmd of commands) {
         const key = `fsrs:${cmd.id}`;
         const command = commandMap?.get(key);

@@ -160,7 +160,8 @@
             "system": "系统（Obsidian 语言）",
             "en": "英语",
             "ru": "俄语",
-            "zh": "中文"
+            "zh": "中文",
+            "resetTooltip": "重置为系统语言"
         },
         "fsrs_algorithm": {
             "heading": "FSRS 算法",

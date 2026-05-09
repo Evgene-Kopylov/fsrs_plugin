@@ -32,7 +32,7 @@ export const DEFAULT_SETTINGS: FSRSSettings = {
     auto_add_review_button: true,
 
     // Целевое число повторений для насыщения цвета тепловой карты
-    heatmap_target_count: 30,
+    heatmap_target_count: 15,
 
     // Кастомный цвет тепловой карты (пусто = accent)
     heatmap_color: "",
