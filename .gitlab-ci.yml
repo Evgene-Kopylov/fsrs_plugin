@@ -172,7 +172,6 @@ release_to_github:
     stage: release
     image: alpine:latest
     rules:
-        # Запускаем только при прямом пуше в ветку main (например, после мержа MR)
         - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
     variables:
         GITHUB_OWNER: "Evgene-Kopylov"
