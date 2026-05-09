@@ -125,11 +125,9 @@ export function renderDisplaySettings(
     };
 
     // Пробный элемент, чтобы браузер вычислил var(--interactive-accent) в
-    // конкретный цвет. createDiv — метод Obsidian, недоступен в настройках.
-    // eslint-disable-next-line obsidianmd/prefer-create-el -- нативный createElement вместо createDiv
-    const accentProbe = activeDocument.createElement("div");
+    // конкретный цвет.
+    const accentProbe = containerEl.createDiv();
     accentProbe.setAttribute("style", `color: ${OBSIDIAN_ACCENT_VAR}`);
-    activeDocument.body.appendChild(accentProbe);
     const accentColor = rgbToHex(
         getComputedStyle(accentProbe).color || FALLBACK_ACCENT_COLOR,
     );
