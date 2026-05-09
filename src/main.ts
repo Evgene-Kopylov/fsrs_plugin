@@ -16,6 +16,7 @@ import { FsrsHeatmapRenderer } from "./ui/fsrs-heatmap-renderer";
 
 import { FsrsPluginSettings, DEFAULT_SETTINGS } from "./settings/types";
 import { FsrsSettingTab } from "./settings/settings-core";
+import { setBodyHideFrontmatter } from "./settings/setting-groups/display-settings";
 
 import { FsrsCache } from "./utils/fsrs/fsrs-cache";
 import type { CacheCardInput } from "./utils/fsrs/fsrs-cache";
@@ -511,6 +512,7 @@ export default class FsrsPlugin extends Plugin {
                 : this.settings.language || "en";
         i18n.setLocale(lang);
         setVerboseLoggingEnabled(this.settings.verbose_logging);
+        setBodyHideFrontmatter(this.settings.hide_frontmatter_in_preview);
     }
 
     /**
