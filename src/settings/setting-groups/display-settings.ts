@@ -9,6 +9,13 @@ import { i18n } from "../../utils/i18n";
 import { setVerboseLoggingEnabled } from "../../utils/logger";
 import { DEFAULT_SETTINGS } from "../types";
 
+const BODY_CLASS = "fsrs-hide-frontmatter";
+
+/** Включает/выключает CSS-скрытие фронтматтера в попапах */
+export function setBodyHideFrontmatter(on: boolean): void {
+    activeDocument.body.classList.toggle(BODY_CLASS, on);
+}
+
 /**
  * Рендерит группу настроек отображения.
  * Включает настройки: auto_add_review_button, verbose_logging.
@@ -74,6 +81,39 @@ export function renderDisplaySettings(
                     DEFAULT_SETTINGS.verbose_logging;
                 verboseToggle.setValue(DEFAULT_SETTINGS.verbose_logging);
                 setVerboseLoggingEnabled(DEFAULT_SETTINGS.verbose_logging);
+                await plugin.saveSettings();
+            });
+    });
+
+    // hide_frontmatter_in_preview
+    const hideFmSetting = new Setting(containerEl)
+        .setName(i18n.t("settings.display.hide_frontmatter.name"))
+        .setDesc(i18n.t("settings.display.hide_frontmatter.desc"));
+
+    let hideFmToggle: import("obsidian").ToggleComponent;
+    hideFmSetting.addToggle((toggle) => {
+        hideFmToggle = toggle;
+        toggle
+            .setValue(plugin.settings.hide_frontmatter_in_preview)
+            .onChange(async (value) => {
+                plugin.settings.hide_frontmatter_in_preview = value;
+                setBodyHideFrontmatter(value);
+                await plugin.saveSettings();
+            });
+    });
+
+    hideFmSetting.addExtraButton((btn) => {
+        btn.setIcon("reset")
+            .setTooltip("Сбросить")
+            .onClick(async () => {
+                plugin.settings.hide_frontmatter_in_preview =
+                    DEFAULT_SETTINGS.hide_frontmatter_in_preview;
+                hideFmToggle.setValue(
+                    DEFAULT_SETTINGS.hide_frontmatter_in_preview,
+                );
+                setBodyHideFrontmatter(
+                    DEFAULT_SETTINGS.hide_frontmatter_in_preview,
+                );
                 await plugin.saveSettings();
             });
     });
