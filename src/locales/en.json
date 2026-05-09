@@ -209,6 +209,10 @@
                 "name": "Heatmap color",
                 "desc": "Leave empty to use Obsidian accent color."
             },
+            "hide_frontmatter": {
+                "name": "Hide frontmatter in preview",
+                "desc": "Hide yaml header and properties in FSRS card preview popups."
+            },
             "custom_button_labels": {
                 "name": "Custom button labels",
                 "desc": "Override review button text. Leave empty to use default translation.",

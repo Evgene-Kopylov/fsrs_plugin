@@ -732,3 +732,20 @@
 .fsrs-review-info {
     user-select: text;
 }
+
+/* Скрыть фронтматтер в попапе предпросмотра FSRS-карточек */
+body.fsrs-hide-frontmatter
+    .hover-popover:has(.fsrs-review-button)
+    .mod-header.mod-ui {
+    display: none;
+}
+body.fsrs-hide-frontmatter
+    .hover-popover:has(.fsrs-review-button)
+    .el-pre.mod-frontmatter {
+    display: none;
+}
+body.fsrs-hide-frontmatter
+    .hover-popover:has(.fsrs-review-button)
+    .metadata-container {
+    display: none;
+}
