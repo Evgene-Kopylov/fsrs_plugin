@@ -77,6 +77,7 @@ export default tseslint.config(
                 "obsidianmd/hardcoded-config-path",
                 "obsidianmd/prefer-active-doc",
                 "obsidianmd/prefer-active-window-timers",
+                "obsidianmd/prefer-create-el",
                 "no-console",
             ],
 
