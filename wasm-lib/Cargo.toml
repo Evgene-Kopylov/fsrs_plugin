@@ -20,7 +20,7 @@ serde_yaml = "0.9"
 log = "0.4"
 web-sys = { version = "0.3", features = ["console"] }
 js-sys = "0.3"
-regex = "1"
+regex-lite = "0.1"
 
 [profile.release]
 opt-level = "s"

@@ -115,7 +115,7 @@ fn evaluate_string_comparison(
 
     // Regex-операторы (~ и !~)
     if operator == ComparisonOp::Regex || operator == ComparisonOp::NotRegex {
-        let re = regex::Regex::new(&target_value).map_err(|e| {
+        let re = regex_lite::Regex::new(&target_value).map_err(|e| {
             log::warn!("Некорректный regex '{}': {}", target_value, e);
             EvaluationError::MissingField(format!("regex: {}", e))
         })?;
