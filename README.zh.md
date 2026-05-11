@@ -241,22 +241,25 @@ GitHub 仓库为镜像。
 
 ### 从源码构建
 
+#### 要求
+
+- **Node.js** 18+
+- **npm**
+- **Rust**（需要 `wasm32-unknown-unknown` 目标）
+- **wasm-pack**
+- **binaryen**（wasm-opt，通过 `npm install` 安装）
+
 ```bash
-# 克隆仓库
 git clone https://gitlab.com/Evgene-Kopylov/FSRS-plugin.git
 cd FSRS-plugin
-
-# 安装依赖
 npm install
-
-# 构建 WASM 模块
-npm run build-wasm
-
-# 开发（监听模式）
-npm run dev
-
-# 生产构建
 npm run build
+
+# 安装插件到仓库
+ln -s "$PWD" /path/to/vault/.obsidian/plugins/fsrs
+
+# 开发（可选）
+npm run dev
 ```
 
 ### WASM 集成

@@ -240,22 +240,25 @@ The project uses GitLab CI/CD for automated build, test, and release:
 
 ### Building from Source
 
+#### Requirements
+
+- **Node.js** 18+
+- **npm**
+- **Rust** (with `wasm32-unknown-unknown` target)
+- **wasm-pack**
+- **binaryen** (wasm-opt, installed via `npm install`)
+
 ```bash
-# Clone the repository
 git clone https://gitlab.com/Evgene-Kopylov/FSRS-plugin.git
 cd FSRS-plugin
-
-# Install dependencies
 npm install
-
-# Build the WASM module
-npm run build-wasm
-
-# Development (watch mode)
-npm run dev
-
-# Production build
 npm run build
+
+# Install plugin in vault
+ln -s "$PWD" /path/to/vault/.obsidian/plugins/fsrs
+
+# Development (optional)
+npm run dev
 ```
 
 ### WASM Integration

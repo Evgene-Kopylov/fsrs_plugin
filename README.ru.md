@@ -259,6 +259,7 @@ reviews:
 - **npm**
 - **Rust** (с целью `wasm32-unknown-unknown`)
 - **wasm-pack**
+- **binaryen** (wasm-opt, ставится через `npm install`)
 
 ```bash
 git clone https://gitlab.com/Evgene-Kopylov/FSRS-plugin.git
