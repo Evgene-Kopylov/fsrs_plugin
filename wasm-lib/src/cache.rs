@@ -368,25 +368,12 @@ pub fn get_heatmap_data(now_iso: &str, weeks: usize, locale: &str) -> String {
         let review_word = plural_ru(count, &reviews_forms);
         let tooltip = format!("{} {}", count, review_word);
 
-        // JSON для reviews (файл + оценка + полный путь)
-        let reviews_json: Vec<serde_json::Value> = reviews
-            .map(|list| {
-                list.iter()
-                    .map(|(path, rating)| {
-                        let name = path.rsplit('/').next().unwrap_or(path);
-                        serde_json::json!({"file": name, "path": path, "rating": rating})
-                    })
-                    .collect()
-            })
-            .unwrap_or_default();
-
         cells.push(serde_json::json!({
             "date": date_str,
             "count": count,
             "level": level,
             "future": future,
             "tooltip": tooltip,
-            "reviews": reviews_json,
             "border_top": border_top,
             "border_bottom": border_bottom,
             "border_left": border_left,
@@ -409,6 +396,54 @@ pub fn get_heatmap_data(now_iso: &str, weeks: usize, locale: &str) -> String {
     });
 
     serde_json::to_string(&result).unwrap_or_else(|_| "{}".to_string())
+}
+
+/// Возвращает все reviews для диапазона хитмапа: дата → [{file, path, rating}]
+pub fn get_heatmap_reviews(now_iso: &str, weeks: usize) -> String {
+    use chrono::{Datelike, Duration, NaiveDate};
+
+    let now = match NaiveDate::parse_from_str(&now_iso[..10], "%Y-%m-%d") {
+        Ok(d) => d,
+        Err(_) => {
+            return serde_json::to_string(&serde_json::json!({"error": "invalid date"}))
+                .unwrap_or_else(|_| "{}".to_string());
+        }
+    };
+
+    let weekday = now.weekday().num_days_from_monday();
+    let end_date = now + Duration::days(6 - weekday as i64);
+    let total_days = (weeks * 7) as i64;
+    let start_date = end_date - Duration::days(total_days - 1);
+
+    let cache = global_cache();
+    let map = cache.lock().unwrap();
+
+    let mut result: serde_json::Map<String, serde_json::Value> = serde_json::Map::new();
+    for (file_path, cached) in map.iter() {
+        for session in &cached.card.reviews {
+            let date_str: String = session.date.chars().take(10).collect();
+            let d = match NaiveDate::parse_from_str(&date_str, "%Y-%m-%d") {
+                Ok(d) => d,
+                Err(_) => continue,
+            };
+            if d < start_date || d > end_date {
+                continue;
+            }
+            let name = file_path.rsplit('/').next().unwrap_or(file_path);
+            let entry = result
+                .entry(date_str)
+                .or_insert_with(|| serde_json::json!([]));
+            if let Some(arr) = entry.as_array_mut() {
+                arr.push(serde_json::json!({
+                    "file": name,
+                    "path": file_path,
+                    "rating": session.rating,
+                }));
+            }
+        }
+    }
+
+    serde_json::to_string(&serde_json::Value::Object(result)).unwrap_or_else(|_| "{}".to_string())
 }
 
 fn color_level(count: u32) -> u32 {

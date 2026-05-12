@@ -64,12 +64,17 @@ export interface HeatmapCell {
     level: number;
     future: boolean;
     tooltip: string;
-    reviews: Array<{ file: string; path: string; rating: number }>;
     border_top: boolean;
     border_bottom: boolean;
     border_left: boolean;
     border_right: boolean;
 }
+
+/** Reviews для хитмапа: дата → список повторений */
+export type HeatmapReviews = Record<
+    string,
+    Array<{ file: string; path: string; rating: number }>
+>;
 
 /** Позиция месяца в сетке */
 export interface HeatmapMonthPosition {
@@ -209,6 +214,15 @@ export class FsrsCache {
             locale,
         );
         return JSON.parse(resultJson) as HeatmapData;
+    }
+
+    /**
+     * Возвращает все reviews для диапазона хитмапа: дата → [{file, path, rating}].
+     * Вызывается лениво при первом hover.
+     */
+    getHeatmapReviews(now: Date, weeks: number): HeatmapReviews {
+        const resultJson = wasm.get_heatmap_reviews(now.toISOString(), weeks);
+        return JSON.parse(resultJson) as HeatmapReviews;
     }
 
     // -----------------------------------------------------------------------
