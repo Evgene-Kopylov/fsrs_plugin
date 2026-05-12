@@ -26,3 +26,4 @@
 ### UX
 - [x] [твикнуть окно предпросмотра из таблицы](preview-popup-tweak.md) — выше и с прокруткой мимо фронтматтера
 - [x] [ленивый попап в хитмапе](lazy-heatmap-popup.md) — гипотеза не подтвердилась, откатили
+- [ ] [ленивая загрузка reviews](lazy-heatmap-reviews.md) — разделить `get_heatmap_data` на лёгкий (без reviews) и `get_heatmap_reviews` (все сразу, первый hover)
