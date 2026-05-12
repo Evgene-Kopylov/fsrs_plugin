@@ -331,27 +331,23 @@ pub fn get_heatmap_data(now_iso: &str, weeks: usize, locale: &str) -> String {
     let total_days = (weeks * 7) as i64;
     let start_date = end_date - Duration::days(total_days - 1);
 
-    // Собираем повторения из кэша: дата → список (путь, оценка)
+    // Собираем повторения из кэша: дата → количество
     let cache = global_cache();
     let map = cache.lock().unwrap();
-    let mut reviews_by_date: HashMap<String, Vec<(String, u8)>> = HashMap::new();
-    for (file_path, cached) in map.iter() {
+    let mut count_by_date: HashMap<String, u32> = HashMap::new();
+    for (_file_path, cached) in map.iter() {
         for session in &cached.card.reviews {
             let date_str: String = session.date.chars().take(10).collect();
-            reviews_by_date
-                .entry(date_str)
-                .or_default()
-                .push((file_path.clone(), session.rating));
+            *count_by_date.entry(date_str).or_default() += 1;
         }
     }
 
     // Строим ячейки
-    let mut cells: Vec<serde_json::Value> = Vec::new();
+    let mut cells: Vec<serde_json::Value> = Vec::with_capacity(weeks * 7);
     let mut d = start_date;
     while d <= end_date {
         let date_str = d.format("%Y-%m-%d").to_string();
-        let reviews = reviews_by_date.get(&date_str);
-        let count = reviews.map_or(0, |r| r.len() as u32);
+        let count = count_by_date.get(&date_str).copied().unwrap_or(0);
         let level = color_level(count);
         let future = d > now;
 

@@ -6,7 +6,7 @@
 
 ## Что осталось
 
-- [ ] **Заменить `reviews_by_date` на `count_by_date`** в `get_heatmap_data`
+- [x] **Заменить `reviews_by_date` на `count_by_date`** в `get_heatmap_data` (0.17→0.12 с)
 
 Сейчас для каждой даты собирается `Vec<(path, rating)>` — клонирование путей, аллокации, хранение rating. Всё это только ради `.len()`. После выноса `reviews` в отдельный метод этот `Vec` не нужен.
 
@@ -24,7 +24,7 @@ let mut count_by_date: HashMap<String, u32> = HashMap::new();
 let count = *count_by_date.get(&date_str).unwrap_or(&0);
 ```
 
-- [ ] **Предвыделить `cells`** — `Vec::with_capacity(weeks * 7)`
+- [x] **Предвыделить `cells`** — `Vec::with_capacity(weeks * 7)`
 
 - [ ] **DOM чанками** — рендерить ячейки через `requestAnimationFrame` порциями по ~50
 
