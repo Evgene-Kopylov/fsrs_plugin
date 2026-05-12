@@ -21,6 +21,18 @@
 - Мгновенная отзывчивость попапа сохраняется.
 - Сетка становится видимой быстрее, чем сейчас.
 
+### План
+
+1. **Сохранять `HeatmapData`** в поле `this.heatmapData` — чтобы обработчики могли найти данные ячейки по индексу.
+2. **Убрать индивидуальные обработчики** с ячеек (`mouseenter`, `mouseleave`, `click`). Вместо них — `el.dataset.idx = String(idx)`.
+3. **Добавить `attachPopupDelegation(cellsContainer)`** — вешает 3 обработчика на контейнер:
+   - `mouseover` → `closest(".fsrs-heatmap-cell")` → `buildPopup` (мгновенно, как сейчас)
+   - `mouseout` → если `relatedTarget` не ячейка и не закреплён → `closePopup`
+   - `click` → `lockPopup` (закрепление + ссылки)
+4. `buildPopup`, `showPopup`, `lockPopup`, `closePopup` — без изменений.
+
+Суть: вместо 371×3=1113 обработчиков — 3 на контейнере. Сетка рендерится без касания попапов, делегат навешивается один раз в конце `renderGrid`.
+
 ### Файлы
 
 - `src/ui/fsrs-heatmap-renderer.ts`
