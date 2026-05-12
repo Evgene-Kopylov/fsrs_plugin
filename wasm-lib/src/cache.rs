@@ -56,10 +56,21 @@ struct RemoveResult {
 // Глобальный кэш
 // ---------------------------------------------------------------------------
 
+/// Данные кэша: карточки + инкрементальный счётчик повторений по датам
+struct CacheData {
+    cards: HashMap<String, CachedCard>,
+    count_by_date: HashMap<String, u32>,
+}
+
 /// Возвращает ссылку на глобальный кэш (инициализируется при первом вызове)
-fn global_cache() -> &'static Mutex<HashMap<String, CachedCard>> {
-    static CACHE: OnceLock<Mutex<HashMap<String, CachedCard>>> = OnceLock::new();
-    CACHE.get_or_init(|| Mutex::new(HashMap::new()))
+fn global_cache() -> &'static Mutex<CacheData> {
+    static CACHE: OnceLock<Mutex<CacheData>> = OnceLock::new();
+    CACHE.get_or_init(|| {
+        Mutex::new(CacheData {
+            cards: HashMap::new(),
+            count_by_date: HashMap::new(),
+        })
+    })
 }
 
 // ---------------------------------------------------------------------------
@@ -69,12 +80,16 @@ fn global_cache() -> &'static Mutex<HashMap<String, CachedCard>> {
 /// Инициализирует кэш (очищает, если уже существует).
 /// Безопасно вызывать многократно.
 pub fn init_cache() {
-    global_cache().lock().unwrap().clear();
+    let mut cache = global_cache().lock().unwrap();
+    cache.cards.clear();
+    cache.count_by_date.clear();
 }
 
 /// Полностью очищает кэш.
 pub fn clear_cache() {
-    global_cache().lock().unwrap().clear();
+    let mut cache = global_cache().lock().unwrap();
+    cache.cards.clear();
+    cache.count_by_date.clear();
 }
 
 /// Пакетное добавление или обновление карточек в кэше.
@@ -120,7 +135,7 @@ fn add_or_update_cards_inner(cards_json_array: &str) -> String {
     let mut errors: Vec<String> = Vec::new();
 
     {
-        let mut map = cache.lock().unwrap();
+        let mut cache = cache.lock().unwrap();
 
         for item in &items {
             // Парсим карточку и проставляем file_path (он передаётся отдельно)
@@ -148,8 +163,33 @@ fn add_or_update_cards_inner(cards_json_array: &str) -> String {
                 }
             };
 
+            // Инкрементальный счётчик: вычитаем старые повторения
+            {
+                let old_dates: Vec<String> = match cache.cards.get(&item.file_path) {
+                    Some(old) => old
+                        .card
+                        .reviews
+                        .iter()
+                        .map(|s| s.date.chars().take(10).collect())
+                        .collect(),
+                    None => Vec::new(),
+                };
+                for date_str in old_dates {
+                    let entry = cache.count_by_date.entry(date_str).or_default();
+                    *entry = entry.saturating_sub(1);
+                }
+            }
+
+            // Добавляем новые повторения
+            for session in &card.reviews {
+                let date_str: String = session.date.chars().take(10).collect();
+                *cache.count_by_date.entry(date_str).or_default() += 1;
+            }
+
             // Вставляем или обновляем в кэше
-            map.insert(item.file_path.clone(), CachedCard { card, state });
+            cache
+                .cards
+                .insert(item.file_path.clone(), CachedCard { card, state });
             updated += 1;
         }
     }
@@ -166,7 +206,7 @@ fn add_or_update_cards_inner_js(cards: JsValue) -> String {
     let mut errors: Vec<String> = Vec::new();
 
     {
-        let mut map = cache.lock().unwrap();
+        let mut cache = cache.lock().unwrap();
         for item in arr.iter() {
             let file_path = js_sys::Reflect::get(&item, &JsValue::from_str("filePath"))
                 .unwrap_or_default()
@@ -207,7 +247,30 @@ fn add_or_update_cards_inner_js(cards: JsValue) -> String {
                 }
             };
 
-            map.insert(file_path, CachedCard { card, state });
+            // Инкрементальный счётчик: вычитаем старые повторения
+            {
+                let old_dates: Vec<String> = match cache.cards.get(&file_path) {
+                    Some(old) => old
+                        .card
+                        .reviews
+                        .iter()
+                        .map(|s| s.date.chars().take(10).collect())
+                        .collect(),
+                    None => Vec::new(),
+                };
+                for date_str in old_dates {
+                    let entry = cache.count_by_date.entry(date_str).or_default();
+                    *entry = entry.saturating_sub(1);
+                }
+            }
+
+            // Добавляем новые повторения
+            for session in &card.reviews {
+                let date_str: String = session.date.chars().take(10).collect();
+                *cache.count_by_date.entry(date_str).or_default() += 1;
+            }
+
+            cache.cards.insert(file_path, CachedCard { card, state });
             updated += 1;
         }
     }
@@ -221,9 +284,15 @@ fn add_or_update_cards_inner_js(cards: JsValue) -> String {
 /// Возвращает JSON: `{"removed": true}` или `{"removed": false, "reason": "not_found"}`
 pub fn remove_card(file_path: &str) -> String {
     let cache = global_cache();
-    let mut map = cache.lock().unwrap();
+    let mut cache = cache.lock().unwrap();
 
-    if map.remove(file_path).is_some() {
+    if let Some(old) = cache.cards.remove(file_path) {
+        // Вычитаем повторения удалённой карточки из счётчика
+        for session in &old.card.reviews {
+            let date_str: String = session.date.chars().take(10).collect();
+            let entry = cache.count_by_date.entry(date_str).or_default();
+            *entry = entry.saturating_sub(1);
+        }
         let result = RemoveResult {
             removed: true,
             reason: None,
@@ -254,10 +323,10 @@ pub fn remove_card(file_path: &str) -> String {
 /// ```
 pub fn get_all_cards() -> String {
     let cache = global_cache();
-    let map = cache.lock().unwrap();
+    let cache = cache.lock().unwrap();
 
-    // Собираем массив для сериализации
-    let entries: Vec<serde_json::Value> = map
+    let entries: Vec<serde_json::Value> = cache
+        .cards
         .iter()
         .map(|(file_path, cached)| {
             serde_json::json!({
@@ -274,8 +343,8 @@ pub fn get_all_cards() -> String {
 /// Возвращает количество карточек в кэше.
 pub fn get_cache_size() -> usize {
     let cache = global_cache();
-    let map = cache.lock().unwrap();
-    map.len()
+    let cache = cache.lock().unwrap();
+    cache.cards.len()
 }
 
 /// Возвращает полные данные для рендеринга тепловой карты.
@@ -333,21 +402,14 @@ pub fn get_heatmap_data(now_iso: &str, weeks: usize, locale: &str) -> String {
 
     // Собираем повторения из кэша: дата → количество
     let cache = global_cache();
-    let map = cache.lock().unwrap();
-    let mut count_by_date: HashMap<String, u32> = HashMap::new();
-    for (_file_path, cached) in map.iter() {
-        for session in &cached.card.reviews {
-            let date_str: String = session.date.chars().take(10).collect();
-            *count_by_date.entry(date_str).or_default() += 1;
-        }
-    }
+    let cache = cache.lock().unwrap();
 
     // Строим ячейки
     let mut cells: Vec<serde_json::Value> = Vec::with_capacity(weeks * 7);
     let mut d = start_date;
     while d <= end_date {
         let date_str = d.format("%Y-%m-%d").to_string();
-        let count = count_by_date.get(&date_str).copied().unwrap_or(0);
+        let count = cache.count_by_date.get(&date_str).copied().unwrap_or(0);
         let level = color_level(count);
         let future = d > now;
 
@@ -412,10 +474,10 @@ pub fn get_heatmap_reviews(now_iso: &str, weeks: usize) -> String {
     let start_date = end_date - Duration::days(total_days - 1);
 
     let cache = global_cache();
-    let map = cache.lock().unwrap();
+    let cache = cache.lock().unwrap();
 
     let mut result: serde_json::Map<String, serde_json::Value> = serde_json::Map::new();
-    for (file_path, cached) in map.iter() {
+    for (file_path, cached) in cache.cards.iter() {
         for session in &cached.card.reviews {
             let date_str: String = session.date.chars().take(10).collect();
             let d = match NaiveDate::parse_from_str(&date_str, "%Y-%m-%d") {
@@ -605,8 +667,10 @@ pub fn query_cards_count(params_json: &str, now_iso: &str) -> String {
 /// для использования внутри Rust без сериализации в JSON.
 pub fn get_all_cached_cards() -> Vec<(String, CachedCard)> {
     let cache = global_cache();
-    let map = cache.lock().unwrap();
-    map.iter()
+    let cache = cache.lock().unwrap();
+    cache
+        .cards
+        .iter()
         .map(|(path, card)| (path.clone(), card.clone()))
         .collect()
 }
