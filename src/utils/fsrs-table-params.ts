@@ -229,23 +229,6 @@ export function parseSqlBlock(source: string): TableParams {
                 console.warn(
                     `Предупреждение парсинга (${warning.type}): ${warning.message}`,
                 );
-
-                // Если есть неизвестное поле, бросаем ошибку
-                if (warning.type === "UnknownField") {
-                    throw new Error(
-                        formatError(
-                            `Неизвестное поле в запросе: ${warning.message}`,
-                        ),
-                    );
-                }
-                // Если есть неизвестное поле для сортировки, бросаем ошибку
-                if (warning.type === "UnknownSortField") {
-                    throw new Error(
-                        formatError(
-                            `Неизвестное поле для сортировки: ${warning.message}`,
-                        ),
-                    );
-                }
             }
         }
 
