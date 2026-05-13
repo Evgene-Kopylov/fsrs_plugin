@@ -13,8 +13,6 @@ use crate::table_processing::types::{TableParams, is_valid_table_field};
 pub enum ParseWarning {
     /// Некорректное значение LIMIT
     InvalidLimit(usize),
-    /// Прочее предупреждение
-    Other(String),
 }
 
 impl serde::Serialize for ParseWarning {
@@ -26,7 +24,6 @@ impl serde::Serialize for ParseWarning {
             ParseWarning::InvalidLimit(limit) => {
                 ("InvalidLimit", format!("Некорректный LIMIT: {}", limit))
             }
-            ParseWarning::Other(msg) => ("Other", msg.clone()),
         };
 
         let mut state = serializer.serialize_struct("ParseWarning", 2)?;
@@ -53,7 +50,6 @@ impl std::fmt::Display for ParseWarning {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ParseWarning::InvalidLimit(limit) => write!(f, "Некорректный LIMIT: {}", limit),
-            ParseWarning::Other(msg) => write!(f, "{}", msg),
         }
     }
 }
@@ -110,7 +106,7 @@ pub fn validate_table_params(params: &TableParams) -> Result<ValidationResult, P
 
     // Проверяем, что есть хотя бы одна колонка
     if params.columns.is_empty() {
-        warnings.push(ParseWarning::Other(
+        return Err(ParseError::Syntax(
             "В SELECT должно быть указано хотя бы одно поле".to_string(),
         ));
     }
@@ -258,30 +254,22 @@ mod tests {
             where_condition: None,
         };
 
-        let result = validate_table_params(&params).unwrap();
-        assert_eq!(result.warnings.len(), 1);
-        match &result.warnings[0] {
-            ParseWarning::Other(msg) => assert!(msg.contains("SELECT")),
-            _ => panic!("Ожидалось предупреждение Other"),
-        }
+        let result = validate_table_params(&params);
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("SELECT"));
     }
 
     #[test]
     fn test_parse_warning_display() {
         let warning = ParseWarning::InvalidLimit(5000);
         assert_eq!(warning.to_string(), "Некорректный LIMIT: 5000");
-
-        let warning = ParseWarning::Other("test message".to_string());
-        assert_eq!(warning.to_string(), "test message");
     }
 
     #[test]
     fn test_validation_result() {
-        let warnings = vec![
-            ParseWarning::InvalidLimit(5000),
-            ParseWarning::Other("test".to_string()),
-        ];
+        let warnings = vec![ParseWarning::InvalidLimit(5000)];
         let result = ValidationResult::new(warnings.clone());
-        assert_eq!(result.warnings.len(), 2);
+        assert_eq!(result.warnings.len(), 1);
     }
 }
