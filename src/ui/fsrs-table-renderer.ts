@@ -170,7 +170,11 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 
             if (result.cards.length === 0) {
                 this.isFirstRender = false;
-                this.renderEmptyState(codeBlockParent);
+                if (result.errors.length > 0) {
+                    this.renderErrorState(result.errors.join("; "));
+                } else {
+                    this.renderEmptyState(codeBlockParent);
+                }
                 return;
             }
 

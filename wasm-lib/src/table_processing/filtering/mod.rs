@@ -49,6 +49,7 @@ pub fn filter_and_sort_cards_with_states(
         cards.len()
     );
 
+    let mut result_errors: Vec<String> = Vec::new();
     let mut computed_fields_list: Vec<(CardWithComputedFields, &CardData)> = Vec::new();
 
     // Обрабатываем каждую пару — только вычисляем поля, без сериализации
@@ -65,16 +66,21 @@ pub fn filter_and_sort_cards_with_states(
     // Применяем фильтрацию WHERE если указана
     if let Some(condition) = &params.where_condition {
         info!("Применение фильтрации WHERE для карточек с готовыми состояниями");
+        let mut where_errors: Vec<String> = Vec::new();
         computed_fields_list.retain(|(fields, _)| {
             match crate::table_processing::filtering::evaluator::evaluate_condition(
                 condition, fields,
             ) {
                 Ok(result) => result,
                 Err(e) => {
+                    let err_msg = e.to_string();
                     warn!(
                         "Ошибка оценки условия WHERE для карточки с готовым состоянием: {}",
-                        e
+                        err_msg
                     );
+                    if !where_errors.contains(&err_msg) {
+                        where_errors.push(err_msg);
+                    }
                     false
                 }
             }
@@ -83,6 +89,9 @@ pub fn filter_and_sort_cards_with_states(
             "После фильтрации WHERE осталось {} карточек",
             computed_fields_list.len()
         );
+        if !where_errors.is_empty() {
+            result_errors.extend(where_errors);
+        }
     }
 
     // Применяем сортировку
@@ -135,7 +144,7 @@ pub fn filter_and_sort_cards_with_states(
     Ok(FilterSortResult {
         cards: limited_cards,
         total_count,
-        errors: vec![],
+        errors: result_errors,
     })
 }
 
