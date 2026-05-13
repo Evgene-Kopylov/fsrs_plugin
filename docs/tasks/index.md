@@ -25,3 +25,7 @@
 
 ### UX
 - [x] [твикнуть окно предпросмотра из таблицы](preview-popup-tweak.md) — выше и с прокруткой мимо фронтматтера
+- [x] [ленивый попап в хитмапе](lazy-heatmap-popup.md) — гипотеза не подтвердилась, откатили
+- [x] [ленивая загрузка reviews](lazy-heatmap-reviews.md) — разделить `get_heatmap_data` на лёгкий (без reviews) и `get_heatmap_reviews` (все сразу, первый hover). Ускорение 0.8→0.17 с
+- [x] [ускорение хитмапа — раунд 2](heatmap-perf-round2.md) — count_by_date + with_capacity. 0.17→0.12 с
+- [x] [инкрементальный счётчик в кэше](incremental-count-cache.md) — O(1) на рендер. 0.12→0.01 с

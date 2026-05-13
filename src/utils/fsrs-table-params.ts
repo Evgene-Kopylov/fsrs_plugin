@@ -37,20 +37,12 @@ export interface TableParams {
 }
 
 /**
- * Предупреждение парсинга из WASM
- */
-interface WasmParseWarning {
-    type: string;
-    message: string;
-}
-
-/**
  * Результат парсинга из WASM
  */
 interface WasmParseResult {
     error?: string;
     params?: unknown;
-    warnings: WasmParseWarning[];
+    warnings: string[];
 }
 
 /**
@@ -221,32 +213,6 @@ export function parseSqlBlock(source: string): TableParams {
                     )}`,
                 ),
             );
-        }
-
-        // Обрабатываем предупреждения, если есть
-        if (parsedResult.warnings && parsedResult.warnings.length > 0) {
-            for (const warning of parsedResult.warnings) {
-                console.warn(
-                    `Предупреждение парсинга (${warning.type}): ${warning.message}`,
-                );
-
-                // Если есть неизвестное поле, бросаем ошибку
-                if (warning.type === "UnknownField") {
-                    throw new Error(
-                        formatError(
-                            `Неизвестное поле в запросе: ${warning.message}`,
-                        ),
-                    );
-                }
-                // Если есть неизвестное поле для сортировки, бросаем ошибку
-                if (warning.type === "UnknownSortField") {
-                    throw new Error(
-                        formatError(
-                            `Неизвестное поле для сортировки: ${warning.message}`,
-                        ),
-                    );
-                }
-            }
         }
 
         return tableParams;

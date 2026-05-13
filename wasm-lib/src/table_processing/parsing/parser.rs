@@ -4,8 +4,7 @@
 use log::{debug, info, warn};
 
 use super::lexer::{SqlLexer, Token, TokenType};
-#[allow(unused_imports)]
-use super::{ComparisonOp, Expression, LogicalOp, ParseError, ParseResult, ParseWarning, Value};
+use super::{ComparisonOp, Expression, ParseError, ParseResult, Value};
 use crate::table_processing::types::{
     AVAILABLE_FIELDS, SortDirection, SortParam, TableColumn, TableParams,
 };
@@ -22,8 +21,6 @@ struct ParsedQuery {
     sort: Option<SortDefinition>,
     /// Ограничение количества строк (0 = не указано)
     limit: usize,
-    /// Предупреждения, обнаруженные во время парсинга
-    warnings: Vec<ParseWarning>,
 }
 
 /// Определение колонки с полем и алиасом
@@ -339,10 +336,9 @@ impl<'a> ParserState<'a> {
 
         // Проверяем, не было ли уже условия WHERE
         if self.result.where_condition.is_some() {
-            warn!("Обнаружено дублирующееся условие WHERE");
-            self.result
-                .warnings
-                .push(ParseWarning::DuplicateWhere("WHERE".to_string()));
+            return Err(ParseError::Syntax(
+                "Дублирующееся условие WHERE".to_string(),
+            ));
         }
 
         let condition = self.parse_expression()?;
@@ -397,20 +393,8 @@ impl<'a> ParserState<'a> {
         self.advance()?;
 
         match limit_str.parse::<usize>() {
-            Ok(limit) if limit > 0 => {
+            Ok(limit) => {
                 self.result.limit = limit;
-                Ok(())
-            }
-            Ok(0) => {
-                warn!("LIMIT 0 не имеет смысла, будет проигнорирован");
-                self.result.warnings.push(ParseWarning::InvalidLimit(0));
-                Ok(())
-            }
-            Ok(_) => {
-                warn!("Отрицательный LIMIT, будет проигнорирован");
-                self.result
-                    .warnings
-                    .push(ParseWarning::InvalidLimit(limit_str.parse().unwrap_or(0)));
                 Ok(())
             }
             Err(_) => Err(ParseError::Syntax(format!(
@@ -548,7 +532,7 @@ impl<'a> ParserState<'a> {
             where_condition: self.result.where_condition,
         };
 
-        ParseResult::new(params, self.result.warnings)
+        ParseResult::new(params, vec![])
     }
 }
 
@@ -907,469 +891,472 @@ mod tests {
         // Должна быть ошибка синтаксиса из-за отсутствия значения
         assert!(result.is_err());
     }
-}
 
-#[test]
-fn test_parse_where_after_limit() {
-    // WHERE после LIMIT (порядок не должен иметь значения)
-    let result =
-        parse_sql_block("SELECT file as \"Файл\", reps as \"oDue\", reps LIMIT 10 WHERE reps < 0")
-            .unwrap();
-    let params = result.value;
+    #[test]
+    fn test_parse_where_after_limit() {
+        // WHERE после LIMIT (порядок не должен иметь значения)
+        let result = parse_sql_block(
+            "SELECT file as \"Файл\", reps as \"oDue\", reps LIMIT 10 WHERE reps < 0",
+        )
+        .unwrap();
+        let params = result.value;
 
-    // Проверяем колонки
-    assert_eq!(params.columns.len(), 3);
-    assert_eq!(params.columns[0].field, "file");
-    assert_eq!(params.columns[0].title, "Файл");
-    assert_eq!(params.columns[1].field, "reps");
-    assert_eq!(params.columns[1].title, "oDue");
-    assert_eq!(params.columns[2].field, "reps");
+        // Проверяем колонки
+        assert_eq!(params.columns.len(), 3);
+        assert_eq!(params.columns[0].field, "file");
+        assert_eq!(params.columns[0].title, "Файл");
+        assert_eq!(params.columns[1].field, "reps");
+        assert_eq!(params.columns[1].title, "oDue");
+        assert_eq!(params.columns[2].field, "reps");
 
-    // Проверяем LIMIT
-    assert_eq!(params.limit, 10);
+        // Проверяем LIMIT
+        assert_eq!(params.limit, 10);
 
-    // Проверяем WHERE условие
-    assert!(params.where_condition.is_some());
-    let condition = params.where_condition.unwrap();
+        // Проверяем WHERE условие
+        assert!(params.where_condition.is_some());
+        let condition = params.where_condition.unwrap();
 
-    // Убедимся, что это сравнение
-    match condition {
-        Expression::Comparison {
-            field,
-            operator,
-            value,
-        } => {
-            assert_eq!(field, "reps");
-            assert_eq!(operator, ComparisonOp::Less);
-            match value {
-                Value::Number(n) => assert_eq!(n, 0.0),
-                Value::String(_) => panic!("Expected Number, got String"),
-            }
-        }
-        _ => panic!("Expected comparison expression"),
-    }
-}
-
-#[test]
-fn test_parse_where_string_state_equal() {
-    // Простое сравнение: state = "review"
-    let result = parse_sql_block("SELECT file WHERE state = \"review\"").unwrap();
-    let params = result.value;
-
-    assert!(params.where_condition.is_some());
-    let condition = params.where_condition.unwrap();
-
-    match condition {
-        Expression::Comparison {
-            field,
-            operator,
-            value,
-        } => {
-            assert_eq!(field, "state");
-            assert_eq!(operator, ComparisonOp::Equal);
-            assert_eq!(value, Value::string("review".to_string()));
-        }
-        _ => panic!("Expected Comparison"),
-    }
-}
-
-#[test]
-fn test_parse_where_string_file_equal() {
-    // file = "path/to/file.md"
-    let result = parse_sql_block("SELECT file WHERE file = \"path/to/file.md\"").unwrap();
-    let params = result.value;
-
-    assert!(params.where_condition.is_some());
-    let condition = params.where_condition.unwrap();
-
-    match condition {
-        Expression::Comparison {
-            field,
-            operator,
-            value,
-        } => {
-            assert_eq!(field, "file");
-            assert_eq!(operator, ComparisonOp::Equal);
-            assert_eq!(value, Value::string("path/to/file.md".to_string()));
-        }
-        _ => panic!("Expected Comparison"),
-    }
-}
-
-#[test]
-fn test_parse_where_string_state_not_equal() {
-    // state != "learning"
-    let result = parse_sql_block("SELECT file WHERE state != \"learning\"").unwrap();
-    let params = result.value;
-
-    assert!(params.where_condition.is_some());
-    let condition = params.where_condition.unwrap();
-
-    match condition {
-        Expression::Comparison {
-            field,
-            operator,
-            value,
-        } => {
-            assert_eq!(field, "state");
-            assert_eq!(operator, ComparisonOp::NotEqual);
-            assert_eq!(value, Value::string("learning".to_string()));
-        }
-        _ => panic!("Expected Comparison"),
-    }
-}
-
-#[test]
-fn test_parse_where_string_due_less() {
-    // due < "2024-06-01"
-    let result = parse_sql_block("SELECT file WHERE due < \"2024-06-01\"").unwrap();
-    let params = result.value;
-
-    assert!(params.where_condition.is_some());
-    let condition = params.where_condition.unwrap();
-
-    match condition {
-        Expression::Comparison {
-            field,
-            operator,
-            value,
-        } => {
-            assert_eq!(field, "due");
-            assert_eq!(operator, ComparisonOp::Less);
-            assert_eq!(value, Value::string("2024-06-01".to_string()));
-        }
-        _ => panic!("Expected Comparison"),
-    }
-}
-
-#[test]
-fn test_parse_where_string_due_greater_or_equal() {
-    // due >= "2023-01-01"
-    let result = parse_sql_block("SELECT file WHERE due >= \"2023-01-01\"").unwrap();
-    let params = result.value;
-
-    assert!(params.where_condition.is_some());
-    let condition = params.where_condition.unwrap();
-
-    match condition {
-        Expression::Comparison {
-            field,
-            operator,
-            value,
-        } => {
-            assert_eq!(field, "due");
-            assert_eq!(operator, ComparisonOp::GreaterOrEqual);
-            assert_eq!(value, Value::string("2023-01-01".to_string()));
-        }
-        _ => panic!("Expected Comparison"),
-    }
-}
-
-#[test]
-fn test_parse_where_string_and_numeric() {
-    // state = "review" AND reps > 5
-    let result = parse_sql_block("SELECT file WHERE state = \"review\" AND reps > 5").unwrap();
-    let params = result.value;
-
-    assert!(params.where_condition.is_some());
-    let condition = params.where_condition.unwrap();
-
-    match condition {
-        Expression::Logical {
-            left,
-            operator,
-            right,
-        } => {
-            assert_eq!(operator, LogicalOp::And);
-            // left: state = "review"
-            match *left {
-                Expression::Comparison {
-                    field,
-                    operator,
-                    value,
-                } => {
-                    assert_eq!(field, "state");
-                    assert_eq!(operator, ComparisonOp::Equal);
-                    assert_eq!(value, Value::string("review".to_string()));
+        // Убедимся, что это сравнение
+        match condition {
+            Expression::Comparison {
+                field,
+                operator,
+                value,
+            } => {
+                assert_eq!(field, "reps");
+                assert_eq!(operator, ComparisonOp::Less);
+                match value {
+                    Value::Number(n) => assert_eq!(n, 0.0),
+                    Value::String(_) => panic!("Expected Number, got String"),
                 }
-                _ => panic!("Left should be Comparison"),
             }
-            // right: reps > 5
-            match *right {
-                Expression::Comparison {
-                    field,
-                    operator,
-                    value,
-                } => {
-                    assert_eq!(field, "reps");
-                    assert_eq!(operator, ComparisonOp::Greater);
-                    assert_eq!(value, Value::Number(5.0));
+            _ => panic!("Expected comparison expression"),
+        }
+    }
+
+    #[test]
+    fn test_parse_where_string_state_equal() {
+        // Простое сравнение: state = "review"
+        let result = parse_sql_block("SELECT file WHERE state = \"review\"").unwrap();
+        let params = result.value;
+
+        assert!(params.where_condition.is_some());
+        let condition = params.where_condition.unwrap();
+
+        match condition {
+            Expression::Comparison {
+                field,
+                operator,
+                value,
+            } => {
+                assert_eq!(field, "state");
+                assert_eq!(operator, ComparisonOp::Equal);
+                assert_eq!(value, Value::string("review".to_string()));
+            }
+            _ => panic!("Expected Comparison"),
+        }
+    }
+
+    #[test]
+    fn test_parse_where_string_file_equal() {
+        // file = "path/to/file.md"
+        let result = parse_sql_block("SELECT file WHERE file = \"path/to/file.md\"").unwrap();
+        let params = result.value;
+
+        assert!(params.where_condition.is_some());
+        let condition = params.where_condition.unwrap();
+
+        match condition {
+            Expression::Comparison {
+                field,
+                operator,
+                value,
+            } => {
+                assert_eq!(field, "file");
+                assert_eq!(operator, ComparisonOp::Equal);
+                assert_eq!(value, Value::string("path/to/file.md".to_string()));
+            }
+            _ => panic!("Expected Comparison"),
+        }
+    }
+
+    #[test]
+    fn test_parse_where_string_state_not_equal() {
+        // state != "learning"
+        let result = parse_sql_block("SELECT file WHERE state != \"learning\"").unwrap();
+        let params = result.value;
+
+        assert!(params.where_condition.is_some());
+        let condition = params.where_condition.unwrap();
+
+        match condition {
+            Expression::Comparison {
+                field,
+                operator,
+                value,
+            } => {
+                assert_eq!(field, "state");
+                assert_eq!(operator, ComparisonOp::NotEqual);
+                assert_eq!(value, Value::string("learning".to_string()));
+            }
+            _ => panic!("Expected Comparison"),
+        }
+    }
+
+    #[test]
+    fn test_parse_where_string_due_less() {
+        // due < "2024-06-01"
+        let result = parse_sql_block("SELECT file WHERE due < \"2024-06-01\"").unwrap();
+        let params = result.value;
+
+        assert!(params.where_condition.is_some());
+        let condition = params.where_condition.unwrap();
+
+        match condition {
+            Expression::Comparison {
+                field,
+                operator,
+                value,
+            } => {
+                assert_eq!(field, "due");
+                assert_eq!(operator, ComparisonOp::Less);
+                assert_eq!(value, Value::string("2024-06-01".to_string()));
+            }
+            _ => panic!("Expected Comparison"),
+        }
+    }
+
+    #[test]
+    fn test_parse_where_string_due_greater_or_equal() {
+        // due >= "2023-01-01"
+        let result = parse_sql_block("SELECT file WHERE due >= \"2023-01-01\"").unwrap();
+        let params = result.value;
+
+        assert!(params.where_condition.is_some());
+        let condition = params.where_condition.unwrap();
+
+        match condition {
+            Expression::Comparison {
+                field,
+                operator,
+                value,
+            } => {
+                assert_eq!(field, "due");
+                assert_eq!(operator, ComparisonOp::GreaterOrEqual);
+                assert_eq!(value, Value::string("2023-01-01".to_string()));
+            }
+            _ => panic!("Expected Comparison"),
+        }
+    }
+
+    #[test]
+    fn test_parse_where_string_and_numeric() {
+        // state = "review" AND reps > 5
+        let result = parse_sql_block("SELECT file WHERE state = \"review\" AND reps > 5").unwrap();
+        let params = result.value;
+
+        assert!(params.where_condition.is_some());
+        let condition = params.where_condition.unwrap();
+
+        match condition {
+            Expression::Logical {
+                left,
+                operator,
+                right,
+            } => {
+                assert_eq!(operator, LogicalOp::And);
+                // left: state = "review"
+                match *left {
+                    Expression::Comparison {
+                        field,
+                        operator,
+                        value,
+                    } => {
+                        assert_eq!(field, "state");
+                        assert_eq!(operator, ComparisonOp::Equal);
+                        assert_eq!(value, Value::string("review".to_string()));
+                    }
+                    _ => panic!("Left should be Comparison"),
                 }
-                _ => panic!("Right should be Comparison"),
-            }
-        }
-        _ => panic!("Expected Logical AND"),
-    }
-}
-
-#[test]
-fn test_parse_where_string_or() {
-    // state = "review" OR state = "learning"
-    let result =
-        parse_sql_block("SELECT file WHERE state = \"review\" OR state = \"learning\"").unwrap();
-    let params = result.value;
-
-    assert!(params.where_condition.is_some());
-    let condition = params.where_condition.unwrap();
-
-    match condition {
-        Expression::Logical {
-            left,
-            operator,
-            right,
-        } => {
-            assert_eq!(operator, LogicalOp::Or);
-            match *left {
-                Expression::Comparison { field, value, .. } => {
-                    assert_eq!(field, "state");
-                    assert_eq!(value, Value::string("review".to_string()));
+                // right: reps > 5
+                match *right {
+                    Expression::Comparison {
+                        field,
+                        operator,
+                        value,
+                    } => {
+                        assert_eq!(field, "reps");
+                        assert_eq!(operator, ComparisonOp::Greater);
+                        assert_eq!(value, Value::Number(5.0));
+                    }
+                    _ => panic!("Right should be Comparison"),
                 }
-                _ => panic!("Left should be Comparison"),
             }
-            match *right {
-                Expression::Comparison { field, value, .. } => {
-                    assert_eq!(field, "state");
-                    assert_eq!(value, Value::string("learning".to_string()));
+            _ => panic!("Expected Logical AND"),
+        }
+    }
+
+    #[test]
+    fn test_parse_where_string_or() {
+        // state = "review" OR state = "learning"
+        let result =
+            parse_sql_block("SELECT file WHERE state = \"review\" OR state = \"learning\"")
+                .unwrap();
+        let params = result.value;
+
+        assert!(params.where_condition.is_some());
+        let condition = params.where_condition.unwrap();
+
+        match condition {
+            Expression::Logical {
+                left,
+                operator,
+                right,
+            } => {
+                assert_eq!(operator, LogicalOp::Or);
+                match *left {
+                    Expression::Comparison { field, value, .. } => {
+                        assert_eq!(field, "state");
+                        assert_eq!(value, Value::string("review".to_string()));
+                    }
+                    _ => panic!("Left should be Comparison"),
                 }
-                _ => panic!("Right should be Comparison"),
-            }
-        }
-        _ => panic!("Expected Logical OR"),
-    }
-}
-
-#[test]
-fn test_parse_where_string_unicode() {
-    // file = "карточка.md" (кириллица в строке)
-    let result = parse_sql_block("SELECT file WHERE file = \"карточка.md\"").unwrap();
-    let params = result.value;
-
-    assert!(params.where_condition.is_some());
-    let condition = params.where_condition.unwrap();
-
-    match condition {
-        Expression::Comparison { field, value, .. } => {
-            assert_eq!(field, "file");
-            assert_eq!(value, Value::string("карточка.md".to_string()));
-        }
-        _ => panic!("Expected Comparison"),
-    }
-}
-
-#[test]
-fn test_parse_where_string_with_spaces() {
-    // file = "my cards/topic one.md" (пробелы в строке)
-    let result = parse_sql_block("SELECT file WHERE file = \"my cards/topic one.md\"").unwrap();
-    let params = result.value;
-
-    assert!(params.where_condition.is_some());
-    let condition = params.where_condition.unwrap();
-
-    match condition {
-        Expression::Comparison { field, value, .. } => {
-            assert_eq!(field, "file");
-            assert_eq!(value, Value::string("my cards/topic one.md".to_string()));
-        }
-        _ => panic!("Expected Comparison"),
-    }
-}
-
-#[test]
-fn test_parse_where_string_empty() {
-    // state = "" (пустая строка)
-    let result = parse_sql_block("SELECT file WHERE state = \"\"").unwrap();
-    let params = result.value;
-
-    assert!(params.where_condition.is_some());
-    let condition = params.where_condition.unwrap();
-
-    match condition {
-        Expression::Comparison { field, value, .. } => {
-            assert_eq!(field, "state");
-            assert_eq!(value, Value::string("".to_string()));
-        }
-        _ => panic!("Expected Comparison"),
-    }
-}
-
-#[test]
-fn test_parse_where_string_with_full_query() {
-    // Полный запрос: SELECT, WHERE со строкой, ORDER BY, LIMIT
-    let result = parse_sql_block(
-        "SELECT file, reps, due WHERE state = \"review\" ORDER BY due ASC LIMIT 20",
-    )
-    .unwrap();
-    let params = result.value;
-
-    assert_eq!(params.columns.len(), 3);
-    assert_eq!(params.limit, 20);
-    assert!(params.sort.is_some());
-    assert!(params.where_condition.is_some());
-
-    match params.where_condition.unwrap() {
-        Expression::Comparison {
-            field,
-            operator,
-            value,
-        } => {
-            assert_eq!(field, "state");
-            assert_eq!(operator, ComparisonOp::Equal);
-            assert_eq!(value, Value::string("review".to_string()));
-        }
-        _ => panic!("Expected Comparison"),
-    }
-
-    let sort = params.sort.unwrap();
-    assert_eq!(sort.field, "due");
-    assert_eq!(sort.direction, SortDirection::Asc);
-}
-
-// Тесты date_format
-
-#[test]
-fn test_parse_date_format_simple() {
-    // SELECT date_format(due, '%Y-%m-%d')
-    let result = parse_sql_block("SELECT date_format(due, '%Y-%m-%d')").unwrap();
-    let params = result.value;
-
-    assert_eq!(params.columns.len(), 1);
-    let col = &params.columns[0];
-    assert_eq!(col.field, "due");
-    assert_eq!(col.date_format, Some("%Y-%m-%d".to_string()));
-}
-
-#[test]
-fn test_parse_date_format_with_alias() {
-    // SELECT date_format(due, '%d.%m.%Y') AS "Дата"
-    let result = parse_sql_block("SELECT date_format(due, '%d.%m.%Y') AS \"Дата\"").unwrap();
-    let params = result.value;
-
-    assert_eq!(params.columns.len(), 1);
-    let col = &params.columns[0];
-    assert_eq!(col.field, "due");
-    assert_eq!(col.date_format, Some("%d.%m.%Y".to_string()));
-    assert_eq!(col.title, "Дата");
-}
-
-#[test]
-fn test_parse_date_format_time_only() {
-    // SELECT date_format(due, '%H:%M')
-    let result = parse_sql_block("SELECT date_format(due, '%H:%M')").unwrap();
-    let params = result.value;
-
-    let col = &params.columns[0];
-    assert_eq!(col.field, "due");
-    assert_eq!(col.date_format, Some("%H:%M".to_string()));
-}
-
-#[test]
-fn test_parse_date_format_mixed_columns() {
-    // SELECT file, date_format(due, '%Y-%m-%d') AS "След.", reps
-    let result =
-        parse_sql_block("SELECT file, date_format(due, '%Y-%m-%d') AS \"След.\", reps").unwrap();
-    let params = result.value;
-
-    assert_eq!(params.columns.len(), 3);
-    // file
-    assert_eq!(params.columns[0].field, "file");
-    assert_eq!(params.columns[0].date_format, None);
-    // date_format
-    assert_eq!(params.columns[1].field, "due");
-    assert_eq!(params.columns[1].date_format, Some("%Y-%m-%d".to_string()));
-    assert_eq!(params.columns[1].title, "След.");
-    // reps
-    assert_eq!(params.columns[2].field, "reps");
-    assert_eq!(params.columns[2].date_format, None);
-}
-
-#[test]
-fn test_parse_date_format_unknown_function() {
-    let result = parse_sql_block("SELECT unknown_func(due, '%Y')");
-    assert!(result.is_err());
-}
-
-#[test]
-fn test_parse_date_format_missing_args() {
-    // Скобка открыта, но аргументы неполные
-    let result = parse_sql_block("SELECT date_format(due");
-    assert!(result.is_err());
-}
-
-#[test]
-fn test_parse_date_format_field_not_identifier() {
-    // Первый аргумент должен быть идентификатором, не строкой
-    let result = parse_sql_block("SELECT date_format('due', '%Y')");
-    assert!(result.is_err());
-}
-
-#[test]
-fn test_parse_where_regex_tilde() {
-    use crate::table_processing::parsing::*;
-    let result = parse_sql_block("SELECT file WHERE file ~ \"test.*\"").unwrap();
-    let params = result.value;
-    assert!(params.where_condition.is_some());
-    let condition = params.where_condition.unwrap();
-    match condition {
-        Expression::Comparison {
-            field,
-            operator,
-            value,
-        } => {
-            assert_eq!(field, "file");
-            assert_eq!(operator, ComparisonOp::Regex);
-            match value {
-                Value::String(s) => assert_eq!(s, "test.*"),
-                _ => panic!("Expected String"),
-            }
-        }
-        _ => panic!("Expected comparison"),
-    }
-}
-
-#[test]
-fn test_parse_where_regex_not_tilde() {
-    use crate::table_processing::parsing::*;
-    let result = parse_sql_block("SELECT file WHERE file !~ \"/archive/\"").unwrap();
-    let params = result.value;
-    let condition = params.where_condition.unwrap();
-    match condition {
-        Expression::Comparison { operator, .. } => {
-            assert_eq!(operator, ComparisonOp::NotRegex);
-        }
-        _ => panic!("Expected comparison"),
-    }
-}
-
-#[test]
-fn test_parse_where_regex_with_and() {
-    use crate::table_processing::parsing::*;
-    let result = parse_sql_block("SELECT file WHERE file ~ \"test.*\" AND reps > 3").unwrap();
-    let params = result.value;
-    assert!(params.where_condition.is_some());
-    match params.where_condition.unwrap() {
-        Expression::Logical {
-            left,
-            operator,
-            right: _,
-        } => {
-            assert_eq!(operator, LogicalOp::And);
-            match *left {
-                Expression::Comparison { operator, .. } => {
-                    assert_eq!(operator, ComparisonOp::Regex);
+                match *right {
+                    Expression::Comparison { field, value, .. } => {
+                        assert_eq!(field, "state");
+                        assert_eq!(value, Value::string("learning".to_string()));
+                    }
+                    _ => panic!("Right should be Comparison"),
                 }
-                _ => panic!("Expected comparison"),
             }
+            _ => panic!("Expected Logical OR"),
         }
-        _ => panic!("Expected logical"),
+    }
+
+    #[test]
+    fn test_parse_where_string_unicode() {
+        // file = "карточка.md" (кириллица в строке)
+        let result = parse_sql_block("SELECT file WHERE file = \"карточка.md\"").unwrap();
+        let params = result.value;
+
+        assert!(params.where_condition.is_some());
+        let condition = params.where_condition.unwrap();
+
+        match condition {
+            Expression::Comparison { field, value, .. } => {
+                assert_eq!(field, "file");
+                assert_eq!(value, Value::string("карточка.md".to_string()));
+            }
+            _ => panic!("Expected Comparison"),
+        }
+    }
+
+    #[test]
+    fn test_parse_where_string_with_spaces() {
+        // file = "my cards/topic one.md" (пробелы в строке)
+        let result = parse_sql_block("SELECT file WHERE file = \"my cards/topic one.md\"").unwrap();
+        let params = result.value;
+
+        assert!(params.where_condition.is_some());
+        let condition = params.where_condition.unwrap();
+
+        match condition {
+            Expression::Comparison { field, value, .. } => {
+                assert_eq!(field, "file");
+                assert_eq!(value, Value::string("my cards/topic one.md".to_string()));
+            }
+            _ => panic!("Expected Comparison"),
+        }
+    }
+
+    #[test]
+    fn test_parse_where_string_empty() {
+        // state = "" (пустая строка)
+        let result = parse_sql_block("SELECT file WHERE state = \"\"").unwrap();
+        let params = result.value;
+
+        assert!(params.where_condition.is_some());
+        let condition = params.where_condition.unwrap();
+
+        match condition {
+            Expression::Comparison { field, value, .. } => {
+                assert_eq!(field, "state");
+                assert_eq!(value, Value::string("".to_string()));
+            }
+            _ => panic!("Expected Comparison"),
+        }
+    }
+
+    #[test]
+    fn test_parse_where_string_with_full_query() {
+        // Полный запрос: SELECT, WHERE со строкой, ORDER BY, LIMIT
+        let result = parse_sql_block(
+            "SELECT file, reps, due WHERE state = \"review\" ORDER BY due ASC LIMIT 20",
+        )
+        .unwrap();
+        let params = result.value;
+
+        assert_eq!(params.columns.len(), 3);
+        assert_eq!(params.limit, 20);
+        assert!(params.sort.is_some());
+        assert!(params.where_condition.is_some());
+
+        match params.where_condition.unwrap() {
+            Expression::Comparison {
+                field,
+                operator,
+                value,
+            } => {
+                assert_eq!(field, "state");
+                assert_eq!(operator, ComparisonOp::Equal);
+                assert_eq!(value, Value::string("review".to_string()));
+            }
+            _ => panic!("Expected Comparison"),
+        }
+
+        let sort = params.sort.unwrap();
+        assert_eq!(sort.field, "due");
+        assert_eq!(sort.direction, SortDirection::Asc);
+    }
+
+    // Тесты date_format
+
+    #[test]
+    fn test_parse_date_format_simple() {
+        // SELECT date_format(due, '%Y-%m-%d')
+        let result = parse_sql_block("SELECT date_format(due, '%Y-%m-%d')").unwrap();
+        let params = result.value;
+
+        assert_eq!(params.columns.len(), 1);
+        let col = &params.columns[0];
+        assert_eq!(col.field, "due");
+        assert_eq!(col.date_format, Some("%Y-%m-%d".to_string()));
+    }
+
+    #[test]
+    fn test_parse_date_format_with_alias() {
+        // SELECT date_format(due, '%d.%m.%Y') AS "Дата"
+        let result = parse_sql_block("SELECT date_format(due, '%d.%m.%Y') AS \"Дата\"").unwrap();
+        let params = result.value;
+
+        assert_eq!(params.columns.len(), 1);
+        let col = &params.columns[0];
+        assert_eq!(col.field, "due");
+        assert_eq!(col.date_format, Some("%d.%m.%Y".to_string()));
+        assert_eq!(col.title, "Дата");
+    }
+
+    #[test]
+    fn test_parse_date_format_time_only() {
+        // SELECT date_format(due, '%H:%M')
+        let result = parse_sql_block("SELECT date_format(due, '%H:%M')").unwrap();
+        let params = result.value;
+
+        let col = &params.columns[0];
+        assert_eq!(col.field, "due");
+        assert_eq!(col.date_format, Some("%H:%M".to_string()));
+    }
+
+    #[test]
+    fn test_parse_date_format_mixed_columns() {
+        // SELECT file, date_format(due, '%Y-%m-%d') AS "След.", reps
+        let result =
+            parse_sql_block("SELECT file, date_format(due, '%Y-%m-%d') AS \"След.\", reps")
+                .unwrap();
+        let params = result.value;
+
+        assert_eq!(params.columns.len(), 3);
+        // file
+        assert_eq!(params.columns[0].field, "file");
+        assert_eq!(params.columns[0].date_format, None);
+        // date_format
+        assert_eq!(params.columns[1].field, "due");
+        assert_eq!(params.columns[1].date_format, Some("%Y-%m-%d".to_string()));
+        assert_eq!(params.columns[1].title, "След.");
+        // reps
+        assert_eq!(params.columns[2].field, "reps");
+        assert_eq!(params.columns[2].date_format, None);
+    }
+
+    #[test]
+    fn test_parse_date_format_unknown_function() {
+        let result = parse_sql_block("SELECT unknown_func(due, '%Y')");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_date_format_missing_args() {
+        // Скобка открыта, но аргументы неполные
+        let result = parse_sql_block("SELECT date_format(due");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_date_format_field_not_identifier() {
+        // Первый аргумент должен быть идентификатором, не строкой
+        let result = parse_sql_block("SELECT date_format('due', '%Y')");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_where_regex_tilde() {
+        use crate::table_processing::parsing::*;
+        let result = parse_sql_block("SELECT file WHERE file ~ \"test.*\"").unwrap();
+        let params = result.value;
+        assert!(params.where_condition.is_some());
+        let condition = params.where_condition.unwrap();
+        match condition {
+            Expression::Comparison {
+                field,
+                operator,
+                value,
+            } => {
+                assert_eq!(field, "file");
+                assert_eq!(operator, ComparisonOp::Regex);
+                match value {
+                    Value::String(s) => assert_eq!(s, "test.*"),
+                    _ => panic!("Expected String"),
+                }
+            }
+            _ => panic!("Expected comparison"),
+        }
+    }
+
+    #[test]
+    fn test_parse_where_regex_not_tilde() {
+        use crate::table_processing::parsing::*;
+        let result = parse_sql_block("SELECT file WHERE file !~ \"/archive/\"").unwrap();
+        let params = result.value;
+        let condition = params.where_condition.unwrap();
+        match condition {
+            Expression::Comparison { operator, .. } => {
+                assert_eq!(operator, ComparisonOp::NotRegex);
+            }
+            _ => panic!("Expected comparison"),
+        }
+    }
+
+    #[test]
+    fn test_parse_where_regex_with_and() {
+        use crate::table_processing::parsing::*;
+        let result = parse_sql_block("SELECT file WHERE file ~ \"test.*\" AND reps > 3").unwrap();
+        let params = result.value;
+        assert!(params.where_condition.is_some());
+        match params.where_condition.unwrap() {
+            Expression::Logical {
+                left,
+                operator,
+                right: _,
+            } => {
+                assert_eq!(operator, LogicalOp::And);
+                match *left {
+                    Expression::Comparison { operator, .. } => {
+                        assert_eq!(operator, ComparisonOp::Regex);
+                    }
+                    _ => panic!("Expected comparison"),
+                }
+            }
+            _ => panic!("Expected logical"),
+        }
     }
 }

@@ -97,6 +97,16 @@ LIMIT 30
 - `ORDER BY` — sort by a specified field (`ASC` ascending, `DESC` descending)
 - `LIMIT` — limit the number of rows (`0` uses the value from plugin settings)
 
+**Limitations:**
+
+- No subqueries, JOIN, aggregations (`COUNT`, `SUM`, `AVG`), `GROUP BY`, `UNION`
+- `WHERE` supports only simple conditions: `=`, `!=`, `<`, `>`, `<=`, `>=`, `~` (regex), `!~`, `AND`, `OR`
+- The only function available is `date_format(field, 'format')`
+- Unknown field in `SELECT`, `WHERE`, `ORDER BY` — error with field name indicated
+- Column order in `SELECT` is preserved in the displayed table
+
+**More:** [How the SQL parser works](docs/sql-parser.ru.md)
+
 **Examples:**
 
 1. Urgent cards (by due date):
@@ -119,6 +129,26 @@ ORDER BY due ASC
 LIMIT 100
 ```
 ````
+
+### FSRS Parameters and Configuration
+
+The plugin uses [rs-fsrs](https://crates.io/crates/rs-fsrs) — the official Rust FSRS implementation by the algorithm authors (L-M-Sherlock). Rationale:
+
+- **rs-fsrs** — maintained by the FSRS team, synced with the Python reference implementation, actively updated.
+- **fsrs-rs** — third-party implementation, long outdated, incompatible with current FSRS versions.
+
+**User-configurable** (Settings → FSRS → Algorithm Parameters):
+
+| Parameter | Default | Description |
+|---|---|---|
+| `request_retention` | 0.9 (90%) | Target retention rate |
+| `maximum_interval` | 36500 days | Maximum interval between reviews |
+| `enable_fuzz` | true | Randomize intervals to counter card grouping |
+
+**Not yet configurable:**
+
+- **`w` weights (17 parameters)** — the core of FSRS, determining the forgetting curve. The plugin uses defaults optimized by FSRS authors on the Anki corpus (millions of reviews).
+- **Parameter optimization on user statistics** — not supported. Users cannot retrain weights on their responses. Planned for future versions.
 
 ### Review Button in Notes `fsrs-review-button`
 

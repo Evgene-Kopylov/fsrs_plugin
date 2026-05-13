@@ -8,7 +8,7 @@
 import { MarkdownRenderChild } from "obsidian";
 import type FsrsPlugin from "../main";
 import { OBSIDIAN_ACCENT_VAR } from "../constants";
-import type { HeatmapData } from "../utils/fsrs/fsrs-cache";
+import type { HeatmapData, HeatmapReviews } from "../utils/fsrs/fsrs-cache";
 import { i18n } from "../utils/i18n";
 import { verboseLog } from "../utils/logger";
 
@@ -38,6 +38,7 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
     private popupEl: HTMLElement | null = null;
     private locked = false;
     private currentAnchor: HTMLElement | null = null;
+    private reviewsCache: HeatmapReviews | null = null;
 
     constructor(
         private plugin: FsrsPlugin,
@@ -76,6 +77,7 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
     private async renderContent() {
         if (this.isRendering) return;
         this.isRendering = true;
+        this.reviewsCache = null;
         const t0 = performance.now();
 
         try {
@@ -187,25 +189,17 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
                 }
 
                 if (cell.count > 0) {
-                    el.addEventListener("mouseenter", () =>
-                        this.showPopup(
-                            el,
-                            cell.date,
-                            cell.tooltip,
-                            cell.reviews,
-                        ),
-                    );
+                    el.addEventListener("mouseenter", () => {
+                        const reviews = this.ensureReviews()[cell.date] ?? [];
+                        this.showPopup(el, cell.date, cell.tooltip, reviews);
+                    });
                     el.addEventListener("mouseleave", () => {
                         if (!this.locked) this.closePopup();
                     });
                     el.addEventListener("click", (e) => {
                         e.stopPropagation();
-                        this.lockPopup(
-                            el,
-                            cell.date,
-                            cell.tooltip,
-                            cell.reviews,
-                        );
+                        const reviews = this.ensureReviews()[cell.date] ?? [];
+                        this.lockPopup(el, cell.date, cell.tooltip, reviews);
                     });
                 }
             }
@@ -215,6 +209,17 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
     // -------------------------------------------------------------------
     // Попап (ховер — быстро, клик — фиксация + ссылки)
     // -------------------------------------------------------------------
+
+    /** Ленивая загрузка reviews: первый вызов ходит в WASM, дальше из кэша */
+    private ensureReviews(): HeatmapReviews {
+        if (!this.reviewsCache) {
+            this.reviewsCache = this.plugin.cache.getHeatmapReviews(
+                new Date(),
+                DEFAULT_WEEKS,
+            );
+        }
+        return this.reviewsCache;
+    }
 
     private showPopup(
         anchor: HTMLElement,
