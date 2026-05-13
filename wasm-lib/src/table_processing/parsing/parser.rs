@@ -4,7 +4,7 @@
 use log::{debug, info, warn};
 
 use super::lexer::{SqlLexer, Token, TokenType};
-use super::{ComparisonOp, Expression, LogicalOp, ParseError, ParseResult, Value};
+use super::{ComparisonOp, Expression, ParseError, ParseResult, Value};
 use crate::table_processing::types::{
     AVAILABLE_FIELDS, SortDirection, SortParam, TableColumn, TableParams,
 };
