@@ -1,20 +1,13 @@
 # FSRS для Obsidian
 
 - [🇷🇺](README.ru.md) <
-- [🇺🇸](README.md)
-- [🇨🇳](README.zh.md)
+- [🇺🇸](https://github.com/Evgene-Kopylov/fsrs_plugin/blob/main/README.md)
+- [🇨🇳](https://github.com/Evgene-Kopylov/fsrs_plugin/blob/main/README.zh.md)
 
-
-**Free Spaced Repetition Scheduler** — современный алгоритм интервального
-повторения в Obsidian.
+**Free Spaced Repetition Scheduler** — современный алгоритм интервального повторения в Obsidian.
 Плагин добавляет интервальное повторение по алгоритму FSRS к заметкам Obsidian.
 
-[![Obsidian](https://img.shields.io/badge/Obsidian-%23483699.svg?&logo=obsidian&logoColor=white)](https://obsidian.md)
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?&logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/)
-[![Rust](https://img.shields.io/badge/Rust-000000.svg?&logo=Rust&logoColor=white)](https://www.rust-lang.org/)
-[![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?)](LICENSE)
-[![pipeline status](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/badges/main/pipeline.svg)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin)
-[![DeepSeek](https://img.shields.io/badge/AI-DeepSeek-536DFE.svg)](https://deepseek.com)
+[![Obsidian](https://img.shields.io/badge/Obsidian-%23483699.svg?&logo=obsidian&logoColor=white)](https://obsidian.md) [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?&logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/) [![Rust](https://img.shields.io/badge/Rust-000000.svg?&logo=Rust&logoColor=white)](https://www.rust-lang.org/) [![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?)](LICENSE) [![pipeline status](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/badges/main/pipeline.svg)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin) [![DeepSeek](https://img.shields.io/badge/AI-DeepSeek-536DFE.svg)](https://deepseek.com)
 
 ## 📋 Содержание
 
@@ -32,7 +25,6 @@
 
 ## 📦 Установка
 
-
 ### Через BRAT (для тестирования бета-версий)
 
 1. Установите плагин [BRAT](https://github.com/TfTHacker/obsidian42-brat) в Obsidian
@@ -40,7 +32,7 @@
 3. Добавьте репозиторий: `https://github.com/Evgene-Kopylov/fsrs_plugin`
 4. Включите плагин в **Настройки** → **Community plugins**
 
-### Требования
+### Требования к установке
 
 - Obsidian v1.12.7 или выше
 - Поддержка WebAssembly (по умолчанию включена)
@@ -108,7 +100,7 @@ LIMIT 30
 - Несуществующее поле в `SELECT`, `WHERE`, `ORDER BY` — ошибка с указанием поля
 - Порядок колонок в `SELECT` сохраняется при отображении
 
-**Подробнее:** [Как работает парсер SQL](docs/sql-parser.ru.md)
+**Подробнее:** [Как работает парсер SQL](https://github.com/Evgene-Kopylov/fsrs_plugin/blob/main/docs/sql-parser.ru.md)
 
 **Примеры:**
 
@@ -143,7 +135,7 @@ LIMIT 100
 **Что настраивается пользователем** (Settings → FSRS → Параметры алгоритма):
 
 | Параметр | По умолчанию | Описание |
-|---|---|---|
+| --- | --- | --- |
 | `request_retention` | 0.9 (90%) | Целевой уровень запоминания |
 | `maximum_interval` | 36500 дней | Максимальный интервал между повторениями |
 | `enable_fuzz` | true | Случайное изменение интервалов для борьбы с группировкой карточек |
@@ -283,7 +275,7 @@ reviews:
 
 ### Сборка из исходников
 
-#### Требования
+#### Требования к сборке
 
 - **Node.js** 18+
 - **npm**
@@ -360,8 +352,3 @@ npm run dev
 - [Обсуждение на форуме Obsidian](https://forum.obsidian.md/)
 - [Issues и feature requests](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/work_items)
 - [Руководство по использованию fsrs-table](docs/intended_use.ru.md)
-
-***
-
-**Примечание:** Плагин в активной разработке.
-Функциональность может не значительно меняться.

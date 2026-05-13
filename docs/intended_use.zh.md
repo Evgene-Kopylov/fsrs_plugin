@@ -29,7 +29,7 @@ BRAT 将自动跟踪更新。
 
 打开命令面板（`Ctrl/Cmd+P`）并执行：
 
-**FSRS：添加 FSRS 字段到 frontmatter**
+### FSRS：添加 FSRS 字段到 frontmatter
 
 ![命令面板中的「添加 FSRS 字段」命令](images/add-fsrs-fields-command.png)
 
@@ -85,7 +85,7 @@ reviews:
 
 打开您想要查看卡片集合的笔记，执行：
 
-**FSRS：插入默认 fsrs-table**
+### FSRS：插入默认 fsrs-table
 
 ![命令面板中的「插入 fsrs-table」命令](images/insert-table.png)
 
@@ -112,7 +112,7 @@ LIMIT 20
 FSRS 根据复习历史（日期和评分）为每张卡片计算三个参数：
 
 | 字段 | 含义 | 变化方式 |
-|---|---|---|
+| --- | --- | --- |
 | **Difficulty** (D) | 材料难度 | 几乎不变 — 难的主题始终难 |
 | **Stability** (S) | 记忆牢固程度（天） | 每次成功复习后增长 |
 | **Retrievability** (R) | 当前回忆概率 | 复习后每秒下降 |

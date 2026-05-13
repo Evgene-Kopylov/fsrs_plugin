@@ -1,18 +1,13 @@
 # FSRS for Obsidian
 
-- [🇷🇺](README.ru.md)
+- [🇷🇺](https://github.com/Evgene-Kopylov/fsrs_plugin/blob/main/README.ru.md)
 - [🇺🇸](README.md) <
-- [🇨🇳](README.zh.md)
+- [🇨🇳](https://github.com/Evgene-Kopylov/fsrs_plugin/blob/main/README.zh.md)
 
 **Free Spaced Repetition Scheduler** — a modern spaced repetition algorithm for Obsidian.
 The plugin turns your notes into FSRS-based flashcards for effective memorization.
 
-[![Obsidian](https://img.shields.io/badge/Obsidian-%23483699.svg?&logo=obsidian&logoColor=white)](https://obsidian.md)
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?&logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/)
-[![Rust](https://img.shields.io/badge/Rust-000000.svg?&logo=Rust&logoColor=white)](https://www.rust-lang.org/)
-[![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?)](LICENSE)
-[![pipeline status](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/badges/main/pipeline.svg)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin)
-[![DeepSeek](https://img.shields.io/badge/AI-DeepSeek-536DFE.svg)](https://deepseek.com)
+[![Obsidian](https://img.shields.io/badge/Obsidian-%23483699.svg?&logo=obsidian&logoColor=white)](https://obsidian.md) [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?&logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/) [![Rust](https://img.shields.io/badge/Rust-000000.svg?&logo=Rust&logoColor=white)](https://www.rust-lang.org/) [![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?)](LICENSE) [![pipeline status](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/badges/main/pipeline.svg)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin) [![DeepSeek](https://img.shields.io/badge/AI-DeepSeek-536DFE.svg)](https://deepseek.com)
 
 ## 📋 Table of Contents
 
@@ -37,7 +32,7 @@ The plugin turns your notes into FSRS-based flashcards for effective memorizatio
 3. Add the repository: `https://github.com/Evgene-Kopylov/fsrs_plugin`
 4. Enable the plugin in **Settings** → **Community plugins**
 
-### Requirements
+### Installation Requirements
 
 - Obsidian v1.12.7 or higher
 - WebAssembly support (enabled by default)
@@ -80,7 +75,7 @@ LIMIT 30
 **Available columns:**
 
 | Field | Description | Notes |
-|-------|-------------|-------|
+| ------- | ------------- | ------- |
 | `file` | card file name | clickable link |
 | `reps` | number of repetitions completed | |
 | `stability` | card stability (S) | FSRS parameter |
@@ -105,7 +100,7 @@ LIMIT 30
 - Unknown field in `SELECT`, `WHERE`, `ORDER BY` — error with field name indicated
 - Column order in `SELECT` is preserved in the displayed table
 
-**More:** [How the SQL parser works](docs/sql-parser.ru.md)
+**More:** [How the SQL parser works](https://github.com/Evgene-Kopylov/fsrs_plugin/blob/main/docs/sql-parser.ru.md)
 
 **Examples:**
 
@@ -120,7 +115,7 @@ LIMIT 20
 ```
 ````
 
-2. All cards sorted by date:
+1. All cards sorted by date:
 
 ````markdown
 ```fsrs-table
@@ -140,7 +135,7 @@ The plugin uses [rs-fsrs](https://crates.io/crates/rs-fsrs) — the official Rus
 **User-configurable** (Settings → FSRS → Algorithm Parameters):
 
 | Parameter | Default | Description |
-|---|---|---|
+| --- | --- | --- |
 | `request_retention` | 0.9 (90%) | Target retention rate |
 | `maximum_interval` | 36500 days | Maximum interval between reviews |
 | `enable_fuzz` | true | Randomize intervals to counter card grouping |
@@ -205,7 +200,7 @@ reviews:
 ### FSRS Algorithm Parameters
 
 | Setting | Description | Default |
-|---------|-------------|---------|
+| --------- | ------------- | --------- |
 | **Request Retention** | Target retention level | 0.9 (90%) |
 | **Maximum Interval** | Max interval (days) | 36500 (~100 years) |
 | **Enable Interval Fuzz** | Randomize intervals (±5%) | Enabled |
@@ -213,25 +208,26 @@ reviews:
 ### Default Settings for New Cards
 
 | Setting | Description | Default |
-|---------|-------------|---------|
+| --------- | ------------- | --------- |
 | **Initial Stability** | Initial stability | 0.0 |
 | **Initial Difficulty** | Initial difficulty for new cards | 0.0 |
 
 ### Display Settings
 
 | Setting | Description | Default |
-|---------|-------------|---------|
+| --------- | ------------- | --------- |
 | **Auto Add Review Button** | Automatically add review button | Disabled |
 
 ### Filter Settings
 
 | Setting | Description | Example |
-|---------|-------------|---------|
+| --------- | ------------- | --------- |
 | **Ignore Patterns** | Ignore patterns | `.obsidian/`, `templates/` |
 
 ## 🧠 The FSRS Algorithm
 
-**FSRS** is a modern spaced repetition algorithm by Jarrett Ye. Implements [FSRS-5](https://github.com/open-spaced-repetition/awesome-fsrs/wiki/The-Algorithm) ([rs-fsrs](https://github.com/open-spaced-repetition/fsrs-rs) v1.2.1). Compared to SM-2:
+**FSRS** is a modern spaced repetition algorithm by Jarrett Ye.
+Implements [FSRS-5](https://github.com/open-spaced-repetition/awesome-fsrs/wiki/The-Algorithm) ([rs-fsrs](https://github.com/open-spaced-repetition/fsrs-rs) v1.2.1). Compared to SM-2:
 
 - Learns memory patterns via machine learning
 - Adapts to your memory speed
@@ -270,7 +266,7 @@ The project uses GitLab CI/CD for automated build, test, and release:
 
 ### Building from Source
 
-#### Requirements
+#### Build Requirements
 
 - **Node.js** 18+
 - **npm**
@@ -346,8 +342,3 @@ Full text: [LICENSE](LICENSE)
 - [Obsidian Forum Discussion](https://forum.obsidian.md/)
 - [Issues & Feature Requests](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/work_items)
 - [FSRS Table Usage Guide](docs/intended_use.en.md)
-
-***
-
-**Note:** The plugin is under active development.
-Functionality may change slightly.

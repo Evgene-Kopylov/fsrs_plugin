@@ -30,7 +30,7 @@ After installing and enabling the plugin, open the note you plan to review.
 
 Open the command palette (`Ctrl/Cmd+P`) and run:
 
-**FSRS: Add FSRS fields to frontmatter**
+### FSRS: Add FSRS fields to frontmatter
 
 ![«Add FSRS fields» command in the palette](images/add-fsrs-fields-command.png)
 
@@ -88,7 +88,7 @@ add the button manually via **FSRS: Insert review button**.
 Open a note where you want to see a list of your cards
 and run:
 
-**FSRS: Insert default fsrs-table**
+### FSRS: Insert default fsrs-table
 
 ![«Insert fsrs-table» command in the palette](images/insert-table.png)
 
@@ -116,7 +116,7 @@ FSRS computes three parameters for each card
 based on review history (date and rating):
 
 | Field | Meaning | How it changes |
-|---|---|---|
+| --- | --- | --- |
 | **Difficulty** (D) | How hard the material is | Stays nearly constant — a hard topic stays hard |
 | **Stability** (S) | How firmly the memory is held, in days | Grows with each successful review |
 | **Retrievability** (R) | Probability of recall right now | Falls every second after review |

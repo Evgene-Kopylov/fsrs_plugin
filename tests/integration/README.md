@@ -19,7 +19,7 @@
 
 ## Структура
 
-```
+```text
 helpers.ts                        — фабрики: reviewCard, newCard, fillCache
 fsrs-query-basic.test.ts          — реальный DEFAULT_TABLE_BLOCK, дымовая выборка
 fsrs-query-count.test.ts          — queryCount

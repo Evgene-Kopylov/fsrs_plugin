@@ -1,8 +1,8 @@
 # How the plugin got its name (and why it matches the algorithm's name)
 
-It all started with a simple script for spaced repetition. 
+It all started with a simple script for spaced repetition.
 I called it, not too originally, **SRS**. It worked, but
-after a few weeks I started wondering: *can I do better? 
+after a few weeks I started wondering: *can I do better?
 Is there any research on this topic?*
 
 I dug deeper and found that Obsidian had no plugin that
