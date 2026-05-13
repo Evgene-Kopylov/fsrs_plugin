@@ -102,7 +102,7 @@ LIMIT 30
 - 不支持子查询、JOIN、聚合（`COUNT`、`SUM`、`AVG`）、`GROUP BY`、`UNION`
 - `WHERE` 仅支持简单条件：`=`、`!=`、`<`、`>`、`<=`、`>=`、`~`（正则）、`!~`、`AND`、`OR`
 - 唯一可用函数 — `date_format(字段, '格式')`
-- `WHERE` 中的未知字段 — 错误并指明字段名
+- `SELECT`、`WHERE`、`ORDER BY` 中的未知字段 — 错误并指明字段名
 - `SELECT` 中的列顺序保留在显示的表格中
 
 **更多：** [SQL 解析器工作原理](docs/sql-parser.ru.md)

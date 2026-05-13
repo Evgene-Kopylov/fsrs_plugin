@@ -94,8 +94,8 @@ pub fn parse_fsrs_table_block(
     // Парсинг SQL-подобного синтаксиса
     let parse_result = parse_sql_block(source)?;
 
-    // Валидация параметров таблицы
-    let validation_result = validate_table_params(&parse_result.value);
+    // Валидация параметров таблицы (может вернуть ошибку для WHERE)
+    let validation_result = validate_table_params(&parse_result.value)?;
 
     // Объединяем предупреждения из парсинга и валидации
     let mut all_warnings = parse_result.warnings;

@@ -5,22 +5,19 @@ use log::{debug, warn};
 use serde::{Deserialize, Serialize, ser::SerializeStruct};
 
 use super::Expression;
+use super::ParseError;
 use crate::table_processing::types::{TableParams, is_valid_table_field};
 
 /// Типы предупреждений, обнаруженных при валидации
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParseWarning {
-    /// Неизвестное поле в SELECT
-    UnknownField(String),
     /// Дублирующееся поле в SELECT
     DuplicateField(String),
     /// Некорректное значение LIMIT
     InvalidLimit(usize),
-    /// Неизвестное поле для сортировки
-    UnknownSortField(String),
-    /// Дублирующееся условие WHERE (в текущей версии поддерживается только одно)
+    /// Дублирующееся условие WHERE
     DuplicateWhere(String),
-    /// Прочие предупреждения
+    /// Прочее предупреждение
     Other(String),
 }
 
@@ -30,19 +27,12 @@ impl serde::Serialize for ParseWarning {
         S: serde::Serializer,
     {
         let (type_str, message) = match self {
-            ParseWarning::UnknownField(field) => {
-                ("UnknownField", format!("Неизвестное поле: '{}'", field))
-            }
             ParseWarning::DuplicateField(field) => {
                 ("DuplicateField", format!("Дублирующееся поле: '{}'", field))
             }
             ParseWarning::InvalidLimit(limit) => {
                 ("InvalidLimit", format!("Некорректный LIMIT: {}", limit))
             }
-            ParseWarning::UnknownSortField(field) => (
-                "UnknownSortField",
-                format!("Неизвестное поле для сортировки: '{}'", field),
-            ),
             ParseWarning::DuplicateWhere(field) => (
                 "DuplicateWhere",
                 format!("Дублирующееся условие WHERE: '{}'", field),
@@ -73,12 +63,8 @@ impl<'de> serde::Deserialize<'de> for ParseWarning {
 impl std::fmt::Display for ParseWarning {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ParseWarning::UnknownField(field) => write!(f, "Неизвестное поле: '{}'", field),
             ParseWarning::DuplicateField(field) => write!(f, "Дублирующееся поле: '{}'", field),
             ParseWarning::InvalidLimit(limit) => write!(f, "Некорректный LIMIT: {}", limit),
-            ParseWarning::UnknownSortField(field) => {
-                write!(f, "Неизвестное поле для сортировки: '{}'", field)
-            }
             ParseWarning::DuplicateWhere(field) => {
                 write!(f, "Дублирующееся условие WHERE: '{}'", field)
             }
@@ -117,8 +103,11 @@ fn collect_fields_from_expression(expr: &Expression) -> Vec<String> {
 }
 
 /// Валидирует параметры таблицы, полученные из парсинга
-/// Возвращает предупреждения, но не ошибки (потому что парсер уже проверил синтаксис)
-pub fn validate_table_params(params: &TableParams) -> ValidationResult {
+/// Возвращает `Ok(ValidationResult)` с предупреждениями для некритичных проблем
+/// (дубликаты полей, большой лимит).
+/// Возвращает `Err(ParseError)` для неизвестных полей в SELECT, WHERE, ORDER BY —
+/// запрос невыполним.
+pub fn validate_table_params(params: &TableParams) -> Result<ValidationResult, ParseError> {
     let mut warnings = Vec::new();
     debug!("Валидация параметры таблицы: {:?}", params);
 
@@ -129,7 +118,10 @@ pub fn validate_table_params(params: &TableParams) -> ValidationResult {
 
         // Проверяем, является ли поле допустимым
         if !is_valid_table_field(field) {
-            warnings.push(ParseWarning::UnknownField(field.clone()));
+            return Err(ParseError::Syntax(format!(
+                "Неизвестное поле в SELECT: '{}'",
+                field
+            )));
         }
 
         // Проверяем дублирование полей
@@ -149,7 +141,10 @@ pub fn validate_table_params(params: &TableParams) -> ValidationResult {
     if let Some(sort) = &params.sort
         && !is_valid_table_field(&sort.field)
     {
-        warnings.push(ParseWarning::UnknownSortField(sort.field.clone()));
+        return Err(ParseError::Syntax(format!(
+            "Неизвестное поле в ORDER BY: '{}'",
+            sort.field
+        )));
     }
 
     // Проверяем LIMIT (больше 1000 может быть проблемой производительности)
@@ -163,7 +158,10 @@ pub fn validate_table_params(params: &TableParams) -> ValidationResult {
         let where_fields = collect_fields_from_expression(condition);
         for field in where_fields {
             if !is_valid_table_field(&field) {
-                warnings.push(ParseWarning::UnknownField(field));
+                return Err(ParseError::Syntax(format!(
+                    "Неизвестное поле в WHERE: '{}'",
+                    field
+                )));
             }
         }
     }
@@ -172,7 +170,7 @@ pub fn validate_table_params(params: &TableParams) -> ValidationResult {
         warn!("Обнаружены предупреждения при валидации: {:?}", warnings);
     }
 
-    ValidationResult::new(warnings)
+    Ok(ValidationResult::new(warnings))
 }
 
 #[cfg(test)]
@@ -202,7 +200,7 @@ mod tests {
             where_condition: None,
         };
 
-        let result = validate_table_params(&params);
+        let result = validate_table_params(&params).unwrap();
         assert_eq!(result.warnings.len(), 1);
         match &result.warnings[0] {
             ParseWarning::DuplicateField(field) => assert_eq!(field, "file"),
@@ -211,7 +209,7 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_unknown_field() {
+    fn test_validate_unknown_field_in_select() {
         let params = TableParams {
             columns: vec![TableColumn {
                 field: "unknown".to_string(),
@@ -225,11 +223,10 @@ mod tests {
         };
 
         let result = validate_table_params(&params);
-        assert_eq!(result.warnings.len(), 1);
-        match &result.warnings[0] {
-            ParseWarning::UnknownField(field) => assert_eq!(field, "unknown"),
-            _ => panic!("Ожидалось предупреждение UnknownField"),
-        }
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("SELECT"));
+        assert!(err.contains("unknown"));
     }
 
     #[test]
@@ -250,11 +247,36 @@ mod tests {
         };
 
         let result = validate_table_params(&params);
-        assert_eq!(result.warnings.len(), 1);
-        match &result.warnings[0] {
-            ParseWarning::UnknownSortField(field) => assert_eq!(field, "unknown"),
-            _ => panic!("Ожидалось предупреждение UnknownSortField"),
-        }
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("ORDER BY"));
+        assert!(err.contains("unknown"));
+    }
+
+    #[test]
+    fn test_validate_unknown_field_in_where() {
+        use crate::table_processing::parsing::expression::Expression;
+
+        let params = TableParams {
+            columns: vec![TableColumn {
+                field: "file".to_string(),
+                title: "file".to_string(),
+                width: None,
+                date_format: None,
+            }],
+            limit: 0,
+            sort: None,
+            where_condition: Some(Expression::comparison(
+                "unknown",
+                crate::table_processing::parsing::expression::ComparisonOp::Equal,
+                crate::table_processing::parsing::expression::Value::Number(1.0),
+            )),
+        };
+
+        let result = validate_table_params(&params);
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("unknown"));
     }
 
     #[test]
@@ -271,7 +293,7 @@ mod tests {
             where_condition: None,
         };
 
-        let result = validate_table_params(&params);
+        let result = validate_table_params(&params).unwrap();
         assert_eq!(result.warnings.len(), 1);
         match &result.warnings[0] {
             ParseWarning::InvalidLimit(limit) => assert_eq!(*limit, 2000),
@@ -288,7 +310,7 @@ mod tests {
             where_condition: None,
         };
 
-        let result = validate_table_params(&params);
+        let result = validate_table_params(&params).unwrap();
         assert_eq!(result.warnings.len(), 1);
         match &result.warnings[0] {
             ParseWarning::Other(msg) => assert!(msg.contains("SELECT")),
@@ -298,20 +320,11 @@ mod tests {
 
     #[test]
     fn test_parse_warning_display() {
-        let warning = ParseWarning::UnknownField("test".to_string());
-        assert_eq!(warning.to_string(), "Неизвестное поле: 'test'");
-
         let warning = ParseWarning::DuplicateField("test".to_string());
         assert_eq!(warning.to_string(), "Дублирующееся поле: 'test'");
 
         let warning = ParseWarning::InvalidLimit(5000);
         assert_eq!(warning.to_string(), "Некорректный LIMIT: 5000");
-
-        let warning = ParseWarning::UnknownSortField("test".to_string());
-        assert_eq!(
-            warning.to_string(),
-            "Неизвестное поле для сортировки: 'test'"
-        );
 
         let warning = ParseWarning::DuplicateWhere("test".to_string());
         assert_eq!(warning.to_string(), "Дублирующееся условие WHERE: 'test'");
@@ -323,8 +336,8 @@ mod tests {
     #[test]
     fn test_validation_result() {
         let warnings = vec![
-            ParseWarning::UnknownField("test".to_string()),
-            ParseWarning::DuplicateField("test2".to_string()),
+            ParseWarning::DuplicateField("test".to_string()),
+            ParseWarning::InvalidLimit(5000),
         ];
         let result = ValidationResult::new(warnings.clone());
         assert_eq!(result.warnings.len(), 2);

@@ -102,7 +102,7 @@ LIMIT 30
 - No subqueries, JOIN, aggregations (`COUNT`, `SUM`, `AVG`), `GROUP BY`, `UNION`
 - `WHERE` supports only simple conditions: `=`, `!=`, `<`, `>`, `<=`, `>=`, `~` (regex), `!~`, `AND`, `OR`
 - The only function available is `date_format(field, 'format')`
-- Unknown field in `WHERE` — error with field name indicated
+- Unknown field in `SELECT`, `WHERE`, `ORDER BY` — error with field name indicated
 - Column order in `SELECT` is preserved in the displayed table
 
 **More:** [How the SQL parser works](docs/sql-parser.ru.md)
