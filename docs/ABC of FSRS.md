@@ -24,4 +24,4 @@ If you want to see how FSRS performs in comparison to other algorithms, read the
 
 If you want to learn more about spaced repetition algorithms, you can check out Spaced Repetition Algorithm: A Three‐Day Journey from Novice to Expert.
 
-source: https://github.com/open-spaced-repetition/awesome-fsrs/wiki/ABC-of-FSRS
+source: <https://github.com/open-spaced-repetition/awesome-fsrs/wiki/ABC-of-FSRS>

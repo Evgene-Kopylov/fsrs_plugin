@@ -46,6 +46,7 @@ git fetch origin main:main && git switch main \
 ```
 
 Обновить мейн перед переходом на него.
+
 ```bash
 git fetch origin main:main && git switch main
 ```
@@ -58,6 +59,7 @@ PS1='\w\$ '
 ```
 
 с подкраской
+
 ```bash
 export PROMPT_DIRTRIM=1
 PS1='\[\033[01;34m\]\w\[\033[00m\]\$ '

@@ -1,18 +1,13 @@
 # FSRS for Obsidian
 
-- [🇷🇺](README.ru.md)
-- [🇺🇸](README.md)
+- [🇷🇺](https://github.com/Evgene-Kopylov/fsrs_plugin/blob/main/README.ru.md)
+- [🇺🇸](https://github.com/Evgene-Kopylov/fsrs_plugin/blob/main/README.md)
 - [🇨🇳](README.zh.md) <
 
 **Free Spaced Repetition Scheduler** — Obsidian 的现代间隔重复算法。
 将笔记转化为基于 FSRS 的记忆卡片。
 
-[![Obsidian](https://img.shields.io/badge/Obsidian-%23483699.svg?&logo=obsidian&logoColor=white)](https://obsidian.md)
-[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?&logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/)
-[![Rust](https://img.shields.io/badge/Rust-000000.svg?&logo=Rust&logoColor=white)](https://www.rust-lang.org/)
-[![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?)](LICENSE)
-[![pipeline status](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/badges/main/pipeline.svg)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin)
-[![DeepSeek](https://img.shields.io/badge/AI-DeepSeek-536DFE.svg)](https://deepseek.com)
+[![Obsidian](https://img.shields.io/badge/Obsidian-%23483699.svg?&logo=obsidian&logoColor=white)](https://obsidian.md) [![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?&logo=TypeScript&logoColor=white)](https://www.typescriptlang.org/) [![Rust](https://img.shields.io/badge/Rust-000000.svg?&logo=Rust&logoColor=white)](https://www.rust-lang.org/) [![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?)](LICENSE) [![pipeline status](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/badges/main/pipeline.svg)](https://gitlab.com/Evgene-Kopylov/FSRS-plugin) [![DeepSeek](https://img.shields.io/badge/AI-DeepSeek-536DFE.svg)](https://deepseek.com)
 
 ## 📋 目录
 
@@ -105,7 +100,7 @@ LIMIT 30
 - `SELECT`、`WHERE`、`ORDER BY` 中的未知字段 — 错误并指明字段名
 - `SELECT` 中的列顺序保留在显示的表格中
 
-**更多：** [SQL 解析器工作原理](docs/sql-parser.ru.md)
+**更多：** [SQL 解析器工作原理](https://github.com/Evgene-Kopylov/fsrs_plugin/blob/main/docs/sql-parser.ru.md)
 
 **示例：**
 
@@ -120,7 +115,7 @@ LIMIT 20
 ```
 ````
 
-2. 所有卡片按日期排序：
+1. 所有卡片按日期排序：
 
 ````markdown
 ```fsrs-table
@@ -140,7 +135,7 @@ LIMIT 100
 **用户可配置**（设置 → FSRS → 算法参数）：
 
 | 参数 | 默认值 | 描述 |
-|---|---|---|
+| --- | --- | --- |
 | `request_retention` | 0.9 (90%) | 目标记忆保持率 |
 | `maximum_interval` | 36500 天 | 复习之间的最大间隔 |
 | `enable_fuzz` | true | 随机化间隔以防止卡片扎堆 |
@@ -347,7 +342,3 @@ npm run dev
 - [Obsidian 论坛讨论](https://forum.obsidian.md/)
 - [Issues 和功能请求](https://gitlab.com/Evgene-Kopylov/FSRS-plugin/-/work_items)
 - [fsrs-table 使用指南](docs/intended_use.zh.md)
-
-***
-
-**注意：** 插件正在积极开发中。功能可能会有小幅变化。

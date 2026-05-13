@@ -11,6 +11,7 @@
 Сейчас для каждой даты собирается `Vec<(path, rating)>` — клонирование путей, аллокации, хранение rating. Всё это только ради `.len()`. После выноса `reviews` в отдельный метод этот `Vec` не нужен.
 
 **Было:**
+
 ```rust
 let mut reviews_by_date: HashMap<String, Vec<(String, u8)>> = HashMap::new();
 // ... push((file_path.clone(), session.rating))
@@ -18,6 +19,7 @@ let count = reviews.map_or(0, |r| r.len() as u32);
 ```
 
 **Стало:**
+
 ```rust
 let mut count_by_date: HashMap<String, u32> = HashMap::new();
 // ... *entry += 1

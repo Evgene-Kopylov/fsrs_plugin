@@ -9,7 +9,7 @@
 Извлекает FSRS-карточку из YAML-строки через WASM.
 
 | Файл | Функция | Зачем |
-|------|---------|-------|
+| ------ | --------- | ------- |
 | `src/main.ts` | `scanSingleCard()` | Обновление одной карточки при изменении/удалении файла |
 | `src/commands/review/review-card.ts` | `reviewCardByFile()` | Рецензирование карточки |
 | `src/commands/review/delete-last-review.ts` | `deleteLastReview()` | Удаление последнего повторения |
@@ -22,7 +22,7 @@
 Извлекает сырой текст frontmatter между `---`.
 
 | Файл | Функция | Зачем |
-|------|---------|-------|
+| ------ | --------- | ------- |
 | `src/main.ts` | `scanSingleCard()` | Извлечение frontmatter для передачи в WASM |
 | `src/commands/add-default-table.ts` | `addDefaultTableToContent()` | Вставка блока `fsrs-table` после frontmatter |
 | `src/commands/add-fsrs-fields.ts` | `addFsrsFieldsToCurrentFile()` | Добавление FSRS-полей в frontmatter (через `process`) |

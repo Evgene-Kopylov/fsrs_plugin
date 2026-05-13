@@ -1,0 +1,15 @@
+docs/tasks/
+docs/notes/
+docs/NOTES.md
+docs/GLOSSARY.md
+docs/GLOSSARY.zh.md
+docs/ABC of FSRS.md
+docs/notes_and_articles.md
+docs/name-origin.md
+docs/name-origin.ru.md
+docs/name-origin.zh.md
+docs/WASM-INTEGRATION.md
+node_modules/
+wasm-lib/target/
+wasm-lib/pkg/
+main.js

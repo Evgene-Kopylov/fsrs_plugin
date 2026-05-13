@@ -12,7 +12,7 @@ SELECT file, reps WHERE state = 'New' LIMIT 10
 
 Лексер проходит посимвольно и выдаёт поток токенов:
 
-```
+```text
 KEYWORD("SELECT")  IDENT("file")  OP(",")  IDENT("reps")
 KEYWORD("WHERE")   IDENT("state") OP("=")  STRING("New")
 KEYWORD("LIMIT")   NUMBER(10)     EOF
@@ -28,7 +28,7 @@ KEYWORD("LIMIT")   NUMBER(10)     EOF
 
 Парсер читает токены и наполняет `ParsedQuery`:
 
-```
+```rust
 ParsedQuery {
     columns: [file, reps],
     where_condition: state = 'New',
@@ -49,13 +49,13 @@ ParsedQuery {
 
 `WHERE`-условие — это дерево выражений. Парсер собирает его рекурсивно, соблюдая приоритет `AND` над `OR`:
 
-```
+```text
 WHERE reps > 0 AND state = 'New' OR retrievability < 0.3
 ```
 
 Превращается в:
 
-```
+```text
 OR
 ├── AND
 │   ├── reps > 0
@@ -84,7 +84,7 @@ SELECT file, difficulty as "D", date_format(due, '%d.%m.%Y') as "Дата"
 После парсинга валидатор проверяет собранную структуру. Все ошибки — критические, таблица не рендерится:
 
 | Проверка | Нарушение | Результат |
-|---|---|---|
+| --- | --- | --- |
 | Поле в SELECT существует? | `SELECT foo` | **Ошибка** «Неизвестное поле в SELECT: 'foo'» |
 | Поле в WHERE существует? | `WHERE foo = 1` | **Ошибка** «Неизвестное поле в WHERE: 'foo'» |
 | Поле в ORDER BY существует? | `ORDER BY foo` | **Ошибка** «Неизвестное поле в ORDER BY: 'foo'» |
@@ -94,7 +94,7 @@ SELECT file, difficulty as "D", date_format(due, '%d.%m.%Y') as "Дата"
 Ошибки этапа парсинга (не валидации) — критические, таблица не рендерится:
 
 | Запрос | Ошибка |
-|---|---|
+| --- | --- |
 | `ORDER BY due` | Нет `SELECT` |
 | `SELECT` | Нет полей после SELECT |
 | `SELECT * , file` | Запятая после `*` |

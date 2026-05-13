@@ -3,6 +3,7 @@
 ## Язык и локализация
 
 Разработка — на русском:
+
 - коммиты (только заголовок)
 - документация, комментарии, логи
 
@@ -13,6 +14,7 @@ UI локализуется.
 Задачи — `docs/tasks/`, по файлу на задачу. Перед изменениями читать `docs/tasks/index.md`.
 
 Порядок:
+
 1. Взять свободную из `index.md`: `[ ]` → `[>]`
 2. Выполнить (код, тесты)
 3. Коммит → уведомить пользователя
@@ -66,7 +68,8 @@ Example:
 Task: change `const port = 3000;` to `const port = 8080;`
 
 ✅ Correct `old_text`:
-```
+
+```javascript
 const express = require('express');
 const app = express();
 const port = 3000;
@@ -77,7 +80,8 @@ app.listen(port, () => {
 ```
 
 ✅ Correct `new_text`:
-```
+
+```javascript
 const express = require('express');
 const app = express();
 const port = 8080;
@@ -94,6 +98,7 @@ app.listen(port, () => {
 1. Сохранить файл и повторить
 2. Не вышло — жди и пробуй (2с → 4с → 8с). После каждой попытки: «Файл выглядит заблокированным, повторяю через N секунд…»
 3. Не вышло — выведи:
+
 ```text
 ОШИБКА: Не удаётся получить доступ к <файл> после нескольких попыток.
 Вероятно он заблокирован другим процессом.
@@ -101,6 +106,7 @@ app.listen(port, () => {
 ```
 
 ### Несохранённые изменения в файлах
+
 Unsaved changes → `save_file` → продолжай. Без спроса.
 
 ## 🔥 Строгое отношение к неиспользуемому коду
@@ -160,7 +166,7 @@ npm run build
 - Source in `src/`. `main.ts` small → plugin lifecycle (load, unload, register commands).
 - **Example structure**:
 
-  ```
+  ```text
   src/
     main.ts
     settings.ts
@@ -189,7 +195,7 @@ npm run build
 
 - Manual test: copy `main.js`, `manifest.json`, `styles.css` (if any) to:
 
-  ```
+  ```text
   <Vault>/.obsidian/plugins/<plugin-id>/
   ```
 
@@ -306,7 +312,7 @@ Follow Obsidian's **Developer Policies** + **Plugin Guidelines**:
 
 ## Agent do/don't
 
-**Do**
+### Do
 
 - Add commands with stable IDs (don't rename after release).
 - Provide defaults + validation in settings.
@@ -314,7 +320,7 @@ Follow Obsidian's **Developer Policies** + **Plugin Guidelines**:
 - Use `this.register*` helpers for everything needing cleanup.
 - **ОБЯЗАТЕЛЬНО** всю логику FSRS держать в Rust; TS только вызывает WASM и кэширует результаты.
 
-**Don't**
+### Don't
 
 - Network calls without obvious user-facing reason + docs.
 - Features requiring cloud services without clear disclosure + explicit opt-in.
