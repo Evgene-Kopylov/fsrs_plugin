@@ -339,10 +339,9 @@ impl<'a> ParserState<'a> {
 
         // Проверяем, не было ли уже условия WHERE
         if self.result.where_condition.is_some() {
-            warn!("Обнаружено дублирующееся условие WHERE");
-            self.result
-                .warnings
-                .push(ParseWarning::DuplicateWhere("WHERE".to_string()));
+            return Err(ParseError::Syntax(
+                "Дублирующееся условие WHERE".to_string(),
+            ));
         }
 
         let condition = self.parse_expression()?;

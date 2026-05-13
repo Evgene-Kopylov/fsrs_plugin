@@ -13,8 +13,6 @@ use crate::table_processing::types::{TableParams, is_valid_table_field};
 pub enum ParseWarning {
     /// Некорректное значение LIMIT
     InvalidLimit(usize),
-    /// Дублирующееся условие WHERE
-    DuplicateWhere(String),
     /// Прочее предупреждение
     Other(String),
 }
@@ -28,10 +26,6 @@ impl serde::Serialize for ParseWarning {
             ParseWarning::InvalidLimit(limit) => {
                 ("InvalidLimit", format!("Некорректный LIMIT: {}", limit))
             }
-            ParseWarning::DuplicateWhere(field) => (
-                "DuplicateWhere",
-                format!("Дублирующееся условие WHERE: '{}'", field),
-            ),
             ParseWarning::Other(msg) => ("Other", msg.clone()),
         };
 
@@ -59,9 +53,6 @@ impl std::fmt::Display for ParseWarning {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ParseWarning::InvalidLimit(limit) => write!(f, "Некорректный LIMIT: {}", limit),
-            ParseWarning::DuplicateWhere(field) => {
-                write!(f, "Дублирующееся условие WHERE: '{}'", field)
-            }
             ParseWarning::Other(msg) => write!(f, "{}", msg),
         }
     }
@@ -279,9 +270,6 @@ mod tests {
     fn test_parse_warning_display() {
         let warning = ParseWarning::InvalidLimit(5000);
         assert_eq!(warning.to_string(), "Некорректный LIMIT: 5000");
-
-        let warning = ParseWarning::DuplicateWhere("test".to_string());
-        assert_eq!(warning.to_string(), "Дублирующееся условие WHERE: 'test'");
 
         let warning = ParseWarning::Other("test message".to_string());
         assert_eq!(warning.to_string(), "test message");
