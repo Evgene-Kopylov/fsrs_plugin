@@ -105,6 +105,8 @@ LIMIT 30
 - Unknown field in `WHERE` — error with field name indicated
 - Column order in `SELECT` is preserved in the displayed table
 
+**More:** [How the SQL parser works](docs/sql-parser.ru.md)
+
 **Examples:**
 
 1. Urgent cards (by due date):
