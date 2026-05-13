@@ -10,7 +10,7 @@ mod validator;
 // Реэкспорт публичных типов и функций
 pub use expression::{ComparisonOp, Expression, LogicalOp, Value};
 pub use parser::parse_sql_block;
-pub use validator::{ParseWarning, validate_table_params};
+pub use validator::validate_table_params;
 
 use std::fmt;
 
@@ -43,12 +43,12 @@ pub struct ParseResult<T> {
     /// Результат парсинга
     pub value: T,
     /// Предупреждения, обнаруженные во время парсинга
-    pub warnings: Vec<ParseWarning>,
+    pub warnings: Vec<String>,
 }
 
 impl<T> ParseResult<T> {
     /// Создает новый результат парсинга
-    pub fn new(value: T, warnings: Vec<ParseWarning>) -> Self {
+    pub fn new(value: T, warnings: Vec<String>) -> Self {
         Self { value, warnings }
     }
 }
@@ -94,13 +94,9 @@ pub fn parse_fsrs_table_block(
     // Парсинг SQL-подобного синтаксиса
     let parse_result = parse_sql_block(source)?;
 
-    // Валидация параметров таблицы (может вернуть ошибку для WHERE)
-    let validation_result = validate_table_params(&parse_result.value)?;
-
-    // Объединяем предупреждения из парсинга и валидации
-    let mut all_warnings = parse_result.warnings;
-    all_warnings.extend(validation_result.warnings);
+    // Валидация параметров таблицы
+    validate_table_params(&parse_result.value)?;
 
     debug!("Парсинг завершен успешно");
-    Ok(ParseResult::new(parse_result.value, all_warnings))
+    Ok(ParseResult::new(parse_result.value, parse_result.warnings))
 }

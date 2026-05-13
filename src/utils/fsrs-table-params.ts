@@ -37,20 +37,12 @@ export interface TableParams {
 }
 
 /**
- * Предупреждение парсинга из WASM
- */
-interface WasmParseWarning {
-    type: string;
-    message: string;
-}
-
-/**
  * Результат парсинга из WASM
  */
 interface WasmParseResult {
     error?: string;
     params?: unknown;
-    warnings: WasmParseWarning[];
+    warnings: string[];
 }
 
 /**
@@ -221,15 +213,6 @@ export function parseSqlBlock(source: string): TableParams {
                     )}`,
                 ),
             );
-        }
-
-        // Обрабатываем предупреждения, если есть
-        if (parsedResult.warnings && parsedResult.warnings.length > 0) {
-            for (const warning of parsedResult.warnings) {
-                console.warn(
-                    `Предупреждение парсинга (${warning.type}): ${warning.message}`,
-                );
-            }
         }
 
         return tableParams;

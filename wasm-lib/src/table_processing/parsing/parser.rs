@@ -4,8 +4,7 @@
 use log::{debug, info, warn};
 
 use super::lexer::{SqlLexer, Token, TokenType};
-#[allow(unused_imports)]
-use super::{ComparisonOp, Expression, LogicalOp, ParseError, ParseResult, ParseWarning, Value};
+use super::{ComparisonOp, Expression, LogicalOp, ParseError, ParseResult, Value};
 use crate::table_processing::types::{
     AVAILABLE_FIELDS, SortDirection, SortParam, TableColumn, TableParams,
 };
@@ -22,8 +21,6 @@ struct ParsedQuery {
     sort: Option<SortDefinition>,
     /// Ограничение количества строк (0 = не указано)
     limit: usize,
-    /// Предупреждения, обнаруженные во время парсинга
-    warnings: Vec<ParseWarning>,
 }
 
 /// Определение колонки с полем и алиасом
@@ -396,20 +393,8 @@ impl<'a> ParserState<'a> {
         self.advance()?;
 
         match limit_str.parse::<usize>() {
-            Ok(limit) if limit > 0 => {
+            Ok(limit) => {
                 self.result.limit = limit;
-                Ok(())
-            }
-            Ok(0) => {
-                warn!("LIMIT 0 не имеет смысла, будет проигнорирован");
-                self.result.warnings.push(ParseWarning::InvalidLimit(0));
-                Ok(())
-            }
-            Ok(_) => {
-                warn!("Отрицательный LIMIT, будет проигнорирован");
-                self.result
-                    .warnings
-                    .push(ParseWarning::InvalidLimit(limit_str.parse().unwrap_or(0)));
                 Ok(())
             }
             Err(_) => Err(ParseError::Syntax(format!(
@@ -547,7 +532,7 @@ impl<'a> ParserState<'a> {
             where_condition: self.result.where_condition,
         };
 
-        ParseResult::new(params, self.result.warnings)
+        ParseResult::new(params, vec![])
     }
 }
 
