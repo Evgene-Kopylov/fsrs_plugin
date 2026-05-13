@@ -11,8 +11,6 @@ use crate::table_processing::types::{TableParams, is_valid_table_field};
 /// Типы предупреждений, обнаруженных при валидации
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParseWarning {
-    /// Дублирующееся поле в SELECT
-    DuplicateField(String),
     /// Некорректное значение LIMIT
     InvalidLimit(usize),
     /// Дублирующееся условие WHERE
@@ -27,9 +25,6 @@ impl serde::Serialize for ParseWarning {
         S: serde::Serializer,
     {
         let (type_str, message) = match self {
-            ParseWarning::DuplicateField(field) => {
-                ("DuplicateField", format!("Дублирующееся поле: '{}'", field))
-            }
             ParseWarning::InvalidLimit(limit) => {
                 ("InvalidLimit", format!("Некорректный LIMIT: {}", limit))
             }
@@ -63,7 +58,6 @@ impl<'de> serde::Deserialize<'de> for ParseWarning {
 impl std::fmt::Display for ParseWarning {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ParseWarning::DuplicateField(field) => write!(f, "Дублирующееся поле: '{}'", field),
             ParseWarning::InvalidLimit(limit) => write!(f, "Некорректный LIMIT: {}", limit),
             ParseWarning::DuplicateWhere(field) => {
                 write!(f, "Дублирующееся условие WHERE: '{}'", field)
@@ -104,7 +98,7 @@ fn collect_fields_from_expression(expr: &Expression) -> Vec<String> {
 
 /// Валидирует параметры таблицы, полученные из парсинга
 /// Возвращает `Ok(ValidationResult)` с предупреждениями для некритичных проблем
-/// (дубликаты полей, большой лимит).
+/// (большой лимит).
 /// Возвращает `Err(ParseError)` для неизвестных полей в SELECT, WHERE, ORDER BY —
 /// запрос невыполним.
 pub fn validate_table_params(params: &TableParams) -> Result<ValidationResult, ParseError> {
@@ -112,21 +106,14 @@ pub fn validate_table_params(params: &TableParams) -> Result<ValidationResult, P
     debug!("Валидация параметры таблицы: {:?}", params);
 
     // Проверяем поля в SELECT
-    let mut seen_fields = std::collections::HashSet::new();
     for column in &params.columns {
         let field = &column.field;
 
-        // Проверяем, является ли поле допустимым
         if !is_valid_table_field(field) {
             return Err(ParseError::Syntax(format!(
                 "Неизвестное поле в SELECT: '{}'",
                 field
             )));
-        }
-
-        // Проверяем дублирование полей
-        if !seen_fields.insert(field.clone()) {
-            warnings.push(ParseWarning::DuplicateField(field.clone()));
         }
     }
 
@@ -177,36 +164,6 @@ pub fn validate_table_params(params: &TableParams) -> Result<ValidationResult, P
 mod tests {
     use super::*;
     use crate::table_processing::types::{SortDirection, SortParam, TableColumn};
-
-    #[test]
-    fn test_validate_duplicate_field() {
-        let params = TableParams {
-            columns: vec![
-                TableColumn {
-                    field: "file".to_string(),
-                    title: "file".to_string(),
-                    width: None,
-                    date_format: None,
-                },
-                TableColumn {
-                    field: "file".to_string(),
-                    title: "file2".to_string(),
-                    width: None,
-                    date_format: None,
-                },
-            ],
-            limit: 0,
-            sort: None,
-            where_condition: None,
-        };
-
-        let result = validate_table_params(&params).unwrap();
-        assert_eq!(result.warnings.len(), 1);
-        match &result.warnings[0] {
-            ParseWarning::DuplicateField(field) => assert_eq!(field, "file"),
-            _ => panic!("Ожидалось предупреждение DuplicateField"),
-        }
-    }
 
     #[test]
     fn test_validate_unknown_field_in_select() {
@@ -320,9 +277,6 @@ mod tests {
 
     #[test]
     fn test_parse_warning_display() {
-        let warning = ParseWarning::DuplicateField("test".to_string());
-        assert_eq!(warning.to_string(), "Дублирующееся поле: 'test'");
-
         let warning = ParseWarning::InvalidLimit(5000);
         assert_eq!(warning.to_string(), "Некорректный LIMIT: 5000");
 
@@ -336,8 +290,8 @@ mod tests {
     #[test]
     fn test_validation_result() {
         let warnings = vec![
-            ParseWarning::DuplicateField("test".to_string()),
             ParseWarning::InvalidLimit(5000),
+            ParseWarning::Other("test".to_string()),
         ];
         let result = ValidationResult::new(warnings.clone());
         assert_eq!(result.warnings.len(), 2);

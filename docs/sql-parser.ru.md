@@ -88,7 +88,6 @@ SELECT file, difficulty as "D", date_format(due, '%d.%m.%Y') as "Дата"
 | Поле в SELECT существует? | `SELECT foo` | **Ошибка** «Неизвестное поле в SELECT: 'foo'» |
 | Поле в WHERE существует? | `WHERE foo = 1` | **Ошибка** «Неизвестное поле в WHERE: 'foo'» |
 | Поле в ORDER BY существует? | `ORDER BY foo` | **Ошибка** «Неизвестное поле в ORDER BY: 'foo'» |
-| Нет дубликатов в SELECT? | `SELECT file, file` | Предупреждение `DuplicateField` |
 | Лимит не слишком большой? | `LIMIT 99999` | Предупреждение `InvalidLimit` |
 
 ## Примеры ошибок парсинга
