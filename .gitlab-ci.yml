@@ -150,24 +150,6 @@ plugin-build:
         policy: pull-push
     timeout: 10m
 
-push_to_github:
-    stage: release
-    image: alpine:latest
-    rules:
-        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-    variables:
-        GIT_STRATEGY: clone
-        GIT_DEPTH: 0
-        REPO_OWNER: "Evgene-Kopylov"
-        REPO_NAME: "fsrs_plugin"
-    before_script:
-        - apk update
-        - apk add --no-cache git curl jq zip
-    script:
-        - git remote add github "https://oauth2:${GITHUB_TOKEN}@github.com/${REPO_OWNER}/${REPO_NAME}"
-        - git push github HEAD:refs/heads/main --force
-    timeout: 10m
-
 release_to_github:
     stage: release
     when: manual
@@ -190,4 +172,24 @@ release_to_github:
         export VERSION="$LATEST_TAG"
         chmod +x scripts/release-to-github.sh
         ./scripts/release-to-github.sh
+    timeout: 10m
+
+push_to_github:
+    stage: release
+    image: alpine:latest
+    rules:
+        - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    needs:
+        - release_to_github
+    variables:
+        GIT_STRATEGY: clone
+        GIT_DEPTH: 0
+        REPO_OWNER: "Evgene-Kopylov"
+        REPO_NAME: "fsrs_plugin"
+    before_script:
+        - apk update
+        - apk add --no-cache git curl jq zip
+    script:
+        - git remote add github "https://oauth2:${GITHUB_TOKEN}@github.com/${REPO_OWNER}/${REPO_NAME}"
+        - git push github HEAD:refs/heads/main --force
     timeout: 10m
