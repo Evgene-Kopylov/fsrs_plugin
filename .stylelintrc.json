@@ -2,6 +2,7 @@
   "extends": ["stylelint-config-recommended"],
   "rules": {
     "declaration-no-important": true,
+    "color-hex-length": "long",
     "no-descending-specificity": null
   }
 }

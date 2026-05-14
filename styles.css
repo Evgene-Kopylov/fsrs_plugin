@@ -497,7 +497,7 @@
     --fsrs-color-hard: #ffe0b2;
     --fsrs-color-good: #c8e6c9;
     --fsrs-color-easy: #bbdefb;
-    --fsrs-button-text: #333;
+    --fsrs-button-text: #333333;
     --fsrs-heatmap-border: rgba(140, 170, 200, 0.5);
 }
 
@@ -506,7 +506,7 @@
     --fsrs-color-hard: #b8945e;
     --fsrs-color-good: #6e9670;
     --fsrs-color-easy: #638bab;
-    --fsrs-button-text: #000;
+    --fsrs-button-text: #000000;
     --fsrs-heatmap-border: rgba(220, 220, 220, 0.5);
 }
 
