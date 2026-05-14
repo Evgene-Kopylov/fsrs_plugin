@@ -10,11 +10,11 @@
 .markdown-rendered .block-language-fsrs-table.fsrs-table-loaded,
 .cm-preview-code-block.block-language-fsrs-table.fsrs-table-loaded,
 .cm-embed-block.block-language-fsrs-table.fsrs-table-loaded {
-    border: none !important;
-    background: transparent !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    box-shadow: none !important;
+    border: none;
+    background: transparent;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
 }
 
 .fsrs-table-container {
@@ -23,25 +23,25 @@
     overflow-x: auto;
 }
 
-.fsrs-table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    table-layout: auto !important;
-    font-size: 0.85em !important;
-    line-height: 1.4 !important;
-    margin: 0 !important;
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+    font-size: 0.85em;
+    line-height: 1.4;
+    margin: 0;
 }
 
-.fsrs-table th,
-.fsrs-table td {
-    border: 1px solid var(--background-modifier-border) !important;
-    padding: 6px 10px !important;
-    vertical-align: middle !important;
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table th,
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table td {
+    border: 1px solid var(--background-modifier-border);
+    padding: 6px 10px;
+    vertical-align: middle;
     box-sizing: border-box;
 }
 
-.fsrs-sortable-header {
-    padding: 0 !important;
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-sortable-header {
+    padding: 0;
 }
 
 .fsrs-sort-header {
@@ -82,39 +82,39 @@
     transform: translateY(-50%);
 }
 
-.fsrs-table td.fsrs-col-file {
-    text-align: left !important;
-    width: auto !important;
-    white-space: nowrap !important;
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table td.fsrs-col-file {
+    text-align: left;
+    width: auto;
+    white-space: nowrap;
     max-width: 300px;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.fsrs-table td.fsrs-col-file a.internal-link {
-    display: inline-block !important;
-    margin: 0 !important;
-    padding: 0 !important;
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table td.fsrs-col-file a.internal-link {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
     color: var(--text-accent);
     vertical-align: top;
-    text-decoration: none !important;
+    text-decoration: none;
 }
 
-.fsrs-table .fsrs-col-reps,
-.fsrs-table .fsrs-col-stability,
-.fsrs-table .fsrs-col-difficulty,
-.fsrs-table .fsrs-col-retrievability,
-.fsrs-table .fsrs-col-elapsed,
-.fsrs-table .fsrs-col-scheduled,
-.fsrs-table .fsrs-col-due,
-.fsrs-table .fsrs-col-state,
-.fsrs-table .fsrs-col-next,
-.fsrs-table .fsrs-col-in,
-.fsrs-table .fsrs-col-interval {
-    width: 1% !important;
-    white-space: nowrap !important;
-    text-align: center !important;
-    padding: 4px 12px !important;
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-reps,
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-stability,
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-difficulty,
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-retrievability,
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-elapsed,
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-scheduled,
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-due,
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-state,
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-next,
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-in,
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-interval {
+    width: 1%;
+    white-space: nowrap;
+    text-align: center;
+    padding: 4px 12px;
 }
 
 .fsrs-table th {
@@ -122,12 +122,12 @@
     font-weight: 600;
 }
 
-.fsrs-table th:not(.fsrs-col-file) {
-    text-align: center !important;
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table th:not(.fsrs-col-file) {
+    text-align: center;
 }
 
-.fsrs-table th.fsrs-col-file {
-    text-align: left !important;
+.block-language-fsrs-table.fsrs-table-loaded .fsrs-table th.fsrs-col-file {
+    text-align: left;
 }
 
 .fsrs-table tr:hover {
