@@ -186,7 +186,7 @@
     overflow-y: auto;
     max-height: 60vh;
     padding-right: 10px;
-    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 .fsrs-help-content-container p {
@@ -491,12 +491,14 @@
 }
 
 /* Цвета кнопок повторения — пастель на светлой теме, сочнее на тёмной */
+/* Границы для визуального разделения месяцев */
 :root {
     --fsrs-color-again: #ffcdd2;
     --fsrs-color-hard: #ffe0b2;
     --fsrs-color-good: #c8e6c9;
     --fsrs-color-easy: #bbdefb;
     --fsrs-button-text: #333;
+    --fsrs-heatmap-border: rgba(140, 170, 200, 0.5);
 }
 
 .theme-dark {
@@ -505,6 +507,7 @@
     --fsrs-color-good: #6e9670;
     --fsrs-color-easy: #638bab;
     --fsrs-button-text: #000;
+    --fsrs-heatmap-border: rgba(220, 220, 220, 0.5);
 }
 
 /* ========================================================================
@@ -622,14 +625,6 @@
 
 .fsrs-heatmap-cell:hover {
     outline-color: var(--text-muted);
-}
-
-/* Границы для визуального разделения месяцев */
-:root {
-    --fsrs-heatmap-border: rgba(140, 170, 200, 0.5);
-}
-.theme-dark {
-    --fsrs-heatmap-border: rgba(220, 220, 220, 0.5);
 }
 
 .fsrs-heatmap-bt {

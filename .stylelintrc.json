@@ -1,0 +1,7 @@
+{
+  "extends": ["stylelint-config-recommended"],
+  "rules": {
+    "declaration-no-important": true,
+    "no-descending-specificity": null
+  }
+}

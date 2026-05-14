@@ -5,6 +5,10 @@ pre-commit:
           glob: "*.{ts,mts}"
           run: npx eslint {staged_files}
 
+        - name: stylelint
+          glob: "*.css"
+          run: npx stylelint {staged_files}
+
         - name: cargo fmt
           glob: "*.rs"
           run: cargo fmt --check
