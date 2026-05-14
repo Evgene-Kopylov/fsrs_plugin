@@ -97,9 +97,9 @@ It inserts a ready-to-use `fsrs-table` block with an SQL-like query:
 ````markdown
 ```fsrs-table
 SELECT file as "Card",
-       retrievability as "R",
-       stability as "S",
-       difficulty as "D",
+       r as "R",
+       s as "S",
+       d as "D",
        due as "Due"
 LIMIT 20
 ```

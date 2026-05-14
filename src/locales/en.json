@@ -121,9 +121,9 @@
             "descriptions": {
                 "file": "File name (clickable link)",
                 "reps": "Number of completed reviews",
-                "stability": "Stability (S) — FSRS parameter determining growth interval",
-                "difficulty": "Difficulty (D) — value from 0 to 10",
-                "retrievability": "Retrievability (R) — probability of correct answer at this moment",
+                "stability": "Stability (S) — FSRS parameter determining growth interval. Alias: `s`",
+                "difficulty": "Difficulty (D) — value from 0 to 10. Alias: `d`",
+                "retrievability": "Retrievability (R) — probability of correct answer at this moment. Alias: `r`",
                 "due": "Date and time of next review",
                 "state": "Card state: New, Learning, Review, Relearning",
                 "elapsed": "Days since last review",

@@ -97,9 +97,9 @@ reviews:
 ````markdown
 ```fsrs-table
 SELECT file as "Карточка",
-       retrievability as "R",
-       stability as "S",
-       difficulty as "D",
+       r as "R",
+       s as "S",
+       d as "D",
        due as "Следующее"
 LIMIT 20
 ```

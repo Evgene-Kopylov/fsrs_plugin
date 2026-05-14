@@ -68,14 +68,33 @@ OR
 ### Колонки и алиасы
 
 ```sql
-SELECT file, difficulty as "D", date_format(due, '%d.%m.%Y') as "Дата"
+SELECT file, d as "D", date_format(due, '%d.%m.%Y') as "Дата"
 ```
 
 - `file` — просто поле
-- `difficulty as "D"` — поле с заголовком «D»
+- `d as "D"` — поле difficulty с заголовком «D»
 - `date_format(due, '%d.%m.%Y')` — поле `due`, отформатированное по шаблону, с заголовком «Дата»
 
 `SELECT *` раскрывается во все 9 доступных полей: `file`, `reps`, `stability`, `difficulty`, `retrievability`, `due`, `state`, `elapsed`, `scheduled`.
+
+### Псевдонимы полей (однобуквенные сокращения)
+
+Для трёх основных FSRS-параметров доступны однобуквенные сокращения:
+
+| Сокращение | Полное имя |
+|-----------|------------|
+| `d` | `difficulty` |
+| `s` | `stability` |
+| `r` | `retrievability` |
+
+```sql
+SELECT d, s, r WHERE s > 3.0 ORDER BY r DESC LIMIT 10
+-- равносильно:
+SELECT difficulty, stability, retrievability WHERE stability > 3.0 ORDER BY retrievability DESC LIMIT 10
+```
+
+Псевдонимы разрешаются в парсере на этапе построения AST. Весь downstream
+(валидатор, evaluator, sorter, TypeScript) работает с полными именами полей.
 
 Единственная функция — `date_format`. Формат как в SQL: `%Y` — год, `%m` — месяц, `%d` — день, `%H` — час, `%M` — минута.
 
