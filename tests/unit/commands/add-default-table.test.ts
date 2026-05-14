@@ -49,7 +49,9 @@ describe("findInsertLine (чистая функция)", () => {
 describe("DEFAULT_TABLE_BLOCK", () => {
     it("содержит корректный SQL", () => {
         expect(DEFAULT_TABLE_BLOCK).toContain("SELECT file");
-        expect(DEFAULT_TABLE_BLOCK).toContain("retrievability");
+        expect(DEFAULT_TABLE_BLOCK).toContain("d as");
+        expect(DEFAULT_TABLE_BLOCK).toContain("s as");
+        expect(DEFAULT_TABLE_BLOCK).toContain("r as");
         expect(DEFAULT_TABLE_BLOCK).toContain("LIMIT 20");
         expect(DEFAULT_TABLE_BLOCK).toContain("```fsrs-table");
         expect(DEFAULT_TABLE_BLOCK.endsWith("\n")).toBe(true);

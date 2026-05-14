@@ -66,6 +66,14 @@ impl Default for TableParams {
     }
 }
 
+/// Псевдонимы полей (сокращение → полное имя)
+/// Используются для упрощения ручного написания SQL-запросов
+pub static FIELD_ALIASES: [(&str, &str); 3] = [
+    ("d", "difficulty"),
+    ("s", "stability"),
+    ("r", "retrievability"),
+];
+
 /// Доступные поля для отображения в таблице
 pub static AVAILABLE_FIELDS: [&str; 9] = [
     "file",
@@ -79,6 +87,17 @@ pub static AVAILABLE_FIELDS: [&str; 9] = [
     "scheduled",
 ];
 
+/// Разрешает псевдоним поля в полное имя.
+/// Если переданное имя не является псевдонимом, возвращается как есть.
+pub fn resolve_field_alias(field: &str) -> &str {
+    for &(alias, full) in &FIELD_ALIASES {
+        if field == alias {
+            return full;
+        }
+    }
+    field
+}
+
 /// Колонки по умолчанию при отсутствии SELECT в запросе
 /// Возвращает одну колонку с полем file
 pub fn default_columns() -> Vec<TableColumn> {
@@ -90,9 +109,10 @@ pub fn default_columns() -> Vec<TableColumn> {
     }]
 }
 
-/// Проверяет, является ли поле допустимым для использования в таблице
+/// Проверяет, является ли поле (или его псевдоним) допустимым для использования в таблице
 pub fn is_valid_table_field(field: &str) -> bool {
-    HashSet::from(AVAILABLE_FIELDS).contains(field)
+    let resolved = resolve_field_alias(field);
+    HashSet::from(AVAILABLE_FIELDS).contains(resolved)
 }
 
 #[cfg(test)]
@@ -105,6 +125,23 @@ mod tests {
         assert!(is_valid_table_field("reps"));
         assert!(is_valid_table_field("stability"));
         assert!(!is_valid_table_field("unknown_field"));
+    }
+
+    #[test]
+    fn test_field_aliases() {
+        assert_eq!(resolve_field_alias("d"), "difficulty");
+        assert_eq!(resolve_field_alias("s"), "stability");
+        assert_eq!(resolve_field_alias("r"), "retrievability");
+        // Не псевдоним — возвращается как есть
+        assert_eq!(resolve_field_alias("file"), "file");
+        assert_eq!(resolve_field_alias("unknown"), "unknown");
+    }
+
+    #[test]
+    fn test_is_valid_table_field_with_aliases() {
+        assert!(is_valid_table_field("d"));
+        assert!(is_valid_table_field("s"));
+        assert!(is_valid_table_field("r"));
     }
 
     #[test]

@@ -94,9 +94,9 @@ reviews:
 ````markdown
 ```fsrs-table
 SELECT file as "卡片",
-       retrievability as "R",
-       stability as "S",
-       difficulty as "D",
+       r as "R",
+       s as "S",
+       d as "D",
        due as "下次复习"
 LIMIT 20
 ```

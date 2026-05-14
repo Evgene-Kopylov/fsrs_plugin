@@ -6,7 +6,7 @@ use log::{debug, info, warn};
 use super::lexer::{SqlLexer, Token, TokenType};
 use super::{ComparisonOp, Expression, ParseError, ParseResult, Value};
 use crate::table_processing::types::{
-    AVAILABLE_FIELDS, SortDirection, SortParam, TableColumn, TableParams,
+    AVAILABLE_FIELDS, SortDirection, SortParam, TableColumn, TableParams, resolve_field_alias,
 };
 
 /// Промежуточная структура для хранения результата парсинга
@@ -236,7 +236,7 @@ impl<'a> ParserState<'a> {
                 let (field, date_format) = if self.current_token.is_operator('(') {
                     self.parse_function_call(&name)?
                 } else {
-                    (name, None)
+                    (resolve_field_alias(&name).to_string(), None)
                 };
 
                 let mut alias = None;
@@ -296,7 +296,8 @@ impl<'a> ParserState<'a> {
                 self.current_token.value
             )));
         }
-        let field = self.current_token.value.clone().to_lowercase();
+        let raw_field = self.current_token.value.clone().to_lowercase();
+        let field = resolve_field_alias(&raw_field).to_string();
         self.advance()?;
 
         // Запятая
@@ -359,7 +360,8 @@ impl<'a> ParserState<'a> {
             )));
         }
 
-        let field = self.current_token.value.clone().to_lowercase();
+        let raw_field = self.current_token.value.clone().to_lowercase();
+        let field = resolve_field_alias(&raw_field).to_string();
         self.advance()?;
 
         // Определяем направление сортировки (по умолчанию ASC)
@@ -445,7 +447,8 @@ impl<'a> ParserState<'a> {
                 self.current_token.value
             )));
         }
-        let field = self.current_token.value.clone().to_lowercase();
+        let raw_field = self.current_token.value.clone().to_lowercase();
+        let field = resolve_field_alias(&raw_field).to_string();
         self.advance()?;
 
         // Оператор
@@ -607,6 +610,73 @@ mod tests {
         assert_eq!(params.columns[1].title, "stability"); // заголовок по умолчанию
         assert_eq!(params.columns[2].field, "difficulty");
         assert_eq!(params.columns[2].title, "Задержка");
+    }
+
+    #[test]
+    fn test_parse_field_aliases_in_select() {
+        let result = parse_sql_block("SELECT d, s, r").unwrap();
+        let params = result.value;
+
+        assert_eq!(params.columns.len(), 3);
+        assert_eq!(params.columns[0].field, "difficulty");
+        assert_eq!(params.columns[0].title, "difficulty");
+        assert_eq!(params.columns[1].field, "stability");
+        assert_eq!(params.columns[1].title, "stability");
+        assert_eq!(params.columns[2].field, "retrievability");
+        assert_eq!(params.columns[2].title, "retrievability");
+    }
+
+    #[test]
+    fn test_parse_field_aliases_with_as() {
+        let result = parse_sql_block(r#"SELECT d as "D", s as "S", r as "R""#).unwrap();
+        let params = result.value;
+
+        assert_eq!(params.columns.len(), 3);
+        assert_eq!(params.columns[0].field, "difficulty");
+        assert_eq!(params.columns[0].title, "D");
+        assert_eq!(params.columns[1].field, "stability");
+        assert_eq!(params.columns[1].title, "S");
+        assert_eq!(params.columns[2].field, "retrievability");
+        assert_eq!(params.columns[2].title, "R");
+    }
+
+    #[test]
+    fn test_parse_field_aliases_in_where() {
+        let result = parse_sql_block("SELECT file WHERE s > 3.0").unwrap();
+        let params = result.value;
+
+        assert_eq!(params.columns.len(), 1);
+        assert!(params.where_condition.is_some());
+        // Проверяем, что поле разрешилось в полное имя
+        match &params.where_condition.as_ref().unwrap() {
+            Expression::Comparison { field, .. } => {
+                assert_eq!(field, "stability");
+            }
+            _ => panic!("Ожидается сравнение"),
+        }
+    }
+
+    #[test]
+    fn test_parse_field_aliases_in_order_by() {
+        let result = parse_sql_block("SELECT file ORDER BY d DESC").unwrap();
+        let params = result.value;
+
+        assert!(params.sort.is_some());
+        let sort = params.sort.unwrap();
+        assert_eq!(sort.field, "difficulty");
+        assert_eq!(sort.direction, SortDirection::Desc);
+    }
+
+    #[test]
+    fn test_parse_field_aliases_in_date_format() {
+        let result = parse_sql_block(r#"SELECT date_format(d, '%Y-%m-%d') as "Дата""#).unwrap();
+        let params = result.value;
+
+        assert_eq!(params.columns.len(), 1);
+        assert_eq!(params.columns[0].field, "difficulty");
+        assert_eq!(params.columns[0].title, "Дата");
+        assert!(params.columns[0].date_format.is_some());
+        assert_eq!(params.columns[0].date_format.as_ref().unwrap(), "%Y-%m-%d");
     }
 
     #[test]

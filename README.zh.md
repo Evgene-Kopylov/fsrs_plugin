@@ -108,8 +108,8 @@ LIMIT 30
 
 ````markdown
 ```fsrs-table
-SELECT file as " ", difficulty as "D",
-       stability as "S", retrievability as "R",
+SELECT file as " ", d as "D",
+       s as "S", r as "R",
        due as "下次复习"
 LIMIT 20
 ```
