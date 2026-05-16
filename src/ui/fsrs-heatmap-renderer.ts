@@ -309,9 +309,9 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
             } else {
                 row.createSpan({ cls: "fsrs-heatmap-tip-file", text: r.file });
             }
-            const ratingKey =
-                (["again", "hard", "good", "easy"] as const)[r.rating] ??
-                "good";
+            const ratingKey = (["again", "hard", "good", "easy"] as const)[
+                r.rating
+            ]!;
             const customLabel =
                 this.plugin.settings.customButtonLabels?.[ratingKey];
             const label =
