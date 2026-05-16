@@ -91,7 +91,10 @@
     text-overflow: ellipsis;
 }
 
-.block-language-fsrs-table.fsrs-table-loaded .fsrs-table td.fsrs-col-file a.internal-link {
+.block-language-fsrs-table.fsrs-table-loaded
+    .fsrs-table
+    td.fsrs-col-file
+    a.internal-link {
     display: inline-block;
     margin: 0;
     padding: 0;
@@ -103,7 +106,9 @@
 .block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-reps,
 .block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-stability,
 .block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-difficulty,
-.block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-retrievability,
+.block-language-fsrs-table.fsrs-table-loaded
+    .fsrs-table
+    .fsrs-col-retrievability,
 .block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-elapsed,
 .block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-scheduled,
 .block-language-fsrs-table.fsrs-table-loaded .fsrs-table .fsrs-col-due,
@@ -122,7 +127,9 @@
     font-weight: 600;
 }
 
-.block-language-fsrs-table.fsrs-table-loaded .fsrs-table th:not(.fsrs-col-file) {
+.block-language-fsrs-table.fsrs-table-loaded
+    .fsrs-table
+    th:not(.fsrs-col-file) {
     text-align: center;
 }
 
@@ -743,4 +750,56 @@ body.fsrs-hide-frontmatter
     .hover-popover:has(.fsrs-review-button)
     .metadata-container {
     display: none;
+}
+
+/* Стилизация поля reviews во фронтматтере */
+.metadata-property[data-property-key="reviews"].fsrs-reviews-styled
+    .metadata-property-value {
+    display: none;
+}
+
+.metadata-property[data-property-key="reviews"].fsrs-reviews-styled,
+.markdown-reading-view:has(.fsrs-review-button) .metadata-container {
+    overflow: visible;
+}
+
+.fsrs-reviews-pills {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 2px;
+    align-items: center;
+}
+
+.fsrs-reviews-pill {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    position: relative;
+    cursor: default;
+    transition: outline 0.1s;
+    outline: 1px solid transparent;
+    outline-offset: -1px;
+}
+
+.fsrs-reviews-pill:hover {
+    outline-color: var(--text-muted);
+}
+
+.fsrs-reviews-pill-tip {
+    display: none;
+    position: fixed;
+    z-index: 10;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 0.8em;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.fsrs-reviews-pill:hover .fsrs-reviews-pill-tip {
+    display: block;
 }
