@@ -14,11 +14,10 @@ import { ReviewHistoryModal } from "./review-history-modal";
 import { showNotice } from "../utils/notice";
 import { MINIMUM_REVIEW_INTERVAL_MINUTES } from "../constants";
 import { getLocalizedNoun, i18n } from "../utils/i18n";
+import { ReviewsPills } from "./reviews-pills";
 
 /**
  * Рендерер кнопки повторения карточки FSRS для блока `fsrs-review-button`
- * Инкапсулирует всю логику создания и управления кнопкой
- * Интегрируется с Obsidian's Markdown render lifecycle через MarkdownRenderChild
  */
 export class ReviewButtonRenderer extends MarkdownRenderChild {
     private mainButton: HTMLButtonElement;
@@ -28,8 +27,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 
     private fileChangeHandler?: (file: TAbstractFile) => void;
 
-    /** Элемент metadata-property[data-property-key="reviews"] для стилизации */
-    private reviewsProperty: HTMLElement | null = null;
+    private pills: ReviewsPills;
 
     /**
      * Создает новый рендерер кнопки
@@ -65,6 +63,8 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 
         // Устанавливаем фиксированный класс для контейнера
         container.className = "fsrs-review-button-container";
+
+        this.pills = new ReviewsPills(plugin, container);
     }
 
     /**
@@ -86,7 +86,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
      */
     onunload(): void {
         this.cleanup();
-        this.cleanupReviewsField();
+        this.pills.destroy();
     }
 
     /**
@@ -141,7 +141,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             }
 
             const card = parseResult.card;
-            this.styleReviewsField(card.reviews);
+            this.pills.render(card.reviews);
             const isDue = isCardDue(card, this.plugin.settings);
 
             if (!isDue) {
@@ -210,99 +210,6 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
         const custom = this.plugin.settings.customButtonLabels?.[rating];
         if (custom && custom.trim() !== "") return custom;
         return i18n.t(`review.buttons.${rating}`);
-    }
-
-    /**
-     * Стилизует поле reviews во фронтматтере: скрывает сырое значение,
-     * показывает цветные плиточки с тултипами.
-     */
-    private styleReviewsField(
-        reviews: Array<{ date: string; rating: number }>,
-    ): void {
-        // Найти metadata-property[data-property-key="reviews"]
-        let ancestor = this.containerEl.parentElement;
-        while (ancestor && !ancestor.querySelector(".metadata-container")) {
-            ancestor = ancestor.parentElement;
-        }
-        const prop: HTMLElement | null =
-            ancestor?.querySelector(
-                '.metadata-property[data-property-key="reviews"]',
-            ) ?? null;
-
-        // Если элемент не найден или пустые reviews — убрать старые плиточки и выйти
-        if (!prop || reviews.length === 0) {
-            this.cleanupReviewsField();
-            this.reviewsProperty = null;
-            return;
-        }
-
-        // Удалить предыдущие плиточки если свойство то же самое
-        if (this.reviewsProperty === prop) {
-            const existing = prop.querySelector(".fsrs-reviews-pills");
-            if (existing) existing.remove();
-        } else if (prop.querySelector(".fsrs-reviews-pills")) {
-            // Другой рендерер уже создал плиточки — не дублировать
-            this.cleanupReviewsField();
-            this.reviewsProperty = prop;
-            return;
-        } else {
-            this.cleanupReviewsField();
-        }
-        this.reviewsProperty = prop;
-
-        // Создать контейнер плиточек
-        const pills = createDiv({ cls: "fsrs-reviews-pills" });
-
-        for (const r of reviews) {
-            const key = numberToRating(r.rating);
-
-            // Цвет: кастомный или CSS-переменная
-            const customColor = this.plugin.settings.customButtonColors?.[key];
-            const color =
-                customColor && customColor.trim() !== ""
-                    ? customColor
-                    : `var(--fsrs-color-${key})`;
-
-            // Лейбл: кастомный или i18n (без номера клавиши)
-            const customLabel = this.plugin.settings.customButtonLabels?.[key];
-            const label =
-                customLabel && customLabel.trim() !== ""
-                    ? customLabel
-                    : i18n.t(`review.buttons.${key}`).replace(/ \(\d\)$/, "");
-
-            const pill = pills.createDiv({ cls: "fsrs-reviews-pill" });
-            pill.style.backgroundColor = color;
-
-            // Тултип внутри плиточки
-            const tip = pill.createDiv({ cls: "fsrs-reviews-pill-tip" });
-
-            // Дата без времени
-            const d = window.moment(r.date);
-            const dateStr = d.isValid() ? d.format("YYYY-MM-DD") : r.date;
-            tip.createSpan({ text: dateStr });
-            tip.createSpan({ text: " " });
-
-            // Оценка цветным лейблом
-            tip.createSpan({
-                text: label,
-                cls: `fsrs-heatmap-tip-rating fsrs-heatmap-tip-r${r.rating}`,
-            });
-        }
-
-        prop.classList.add("fsrs-reviews-styled");
-        prop.appendChild(pills);
-    }
-
-    /** Убирает плиточки и восстанавливает видимость сырого значения */
-    private cleanupReviewsField(): void {
-        if (this.reviewsProperty) {
-            this.reviewsProperty.classList.remove("fsrs-reviews-styled");
-            const pills = this.reviewsProperty.querySelector(
-                ".fsrs-reviews-pills",
-            );
-            if (pills) pills.remove();
-            this.reviewsProperty = null;
-        }
     }
 
     /**
