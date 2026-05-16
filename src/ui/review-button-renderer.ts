@@ -269,12 +269,12 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
                     ? customColor
                     : `var(--fsrs-color-${key})`;
 
-            // Лейбл: кастомный или numberToRating
+            // Лейбл: кастомный или i18n (без номера клавиши)
             const customLabel = this.plugin.settings.customButtonLabels?.[key];
             const label =
                 customLabel && customLabel.trim() !== ""
                     ? customLabel
-                    : ratingName;
+                    : i18n.t(`review.buttons.${key}`).replace(/ \(\d\)$/, "");
 
             const pill = pills.createDiv({ cls: "fsrs-reviews-pill" });
             pill.style.backgroundColor = color;

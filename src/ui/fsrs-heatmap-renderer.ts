@@ -22,13 +22,6 @@ declare const activeDocument: Document;
 
 const DEFAULT_WEEKS = 53;
 
-const RATING_LABELS: Record<number, string> = {
-    0: "Again",
-    1: "Hard",
-    2: "Good",
-    3: "Easy",
-};
-
 // ---------------------------------------------------------------------------
 // FsrsHeatmapRenderer
 // ---------------------------------------------------------------------------
@@ -316,8 +309,12 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
             } else {
                 row.createSpan({ cls: "fsrs-heatmap-tip-file", text: r.file });
             }
+            const ratingKey =
+                ["again", "hard", "good", "easy"][r.rating] ?? "good";
             row.createSpan({
-                text: RATING_LABELS[r.rating] ?? "?",
+                text: i18n
+                    .t(`review.buttons.${ratingKey}`)
+                    .replace(/ \(\d\)$/, ""),
                 cls: `fsrs-heatmap-tip-rating fsrs-heatmap-tip-r${r.rating}`,
             });
         }
