@@ -24,7 +24,7 @@ export const DEFAULT_SETTINGS: FsrsPluginSettings = {
     ...(DEFAULT_SETTINGS_FROM_CONSTANTS as FsrsPluginSettings),
     language: "system",
     verbose_logging: false,
-    hide_frontmatter_in_preview: true,
+    hide_frontmatter_in_preview: false,
     customButtonLabels: {
         again: "",
         hard: "",
