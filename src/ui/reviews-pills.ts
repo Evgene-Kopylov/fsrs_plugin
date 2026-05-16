@@ -69,28 +69,32 @@ export class ReviewsPills {
 
         prop.classList.add("fsrs-reviews-styled");
         prop.appendChild(pills);
+
+        // overflow: visible на контейнере метаданных (без :has)
+        const container = prop.closest(".metadata-container");
+        if (container) container.classList.add("fsrs-reviews-active");
     }
 
     /** Убрать плиточки и вернуть видимость сырому значению */
     destroy(): void {
         if (this.property) {
             this.property.classList.remove("fsrs-reviews-styled");
+            const container = this.property.closest(".metadata-container");
+            if (container) container.classList.remove("fsrs-reviews-active");
             const pills = this.property.querySelector(".fsrs-reviews-pills");
             if (pills) pills.remove();
             this.property = null;
         }
     }
 
-    /** Подняться по DOM до элемента с .metadata-container и найти свойство reviews */
+    /** Найти свойство reviews в DOM через ближайший контейнер вьюхи */
     private findProperty(): HTMLElement | null {
-        let ancestor = this.containerEl.parentElement;
-        while (ancestor && !ancestor.querySelector(".metadata-container")) {
-            ancestor = ancestor.parentElement;
-        }
-        return (
-            ancestor?.querySelector<HTMLElement>(
-                '.metadata-property[data-property-key="reviews"]',
-            ) ?? null
+        const view = this.containerEl.closest<HTMLElement>(
+            ".markdown-reading-view, .cm-scroller",
+        );
+        if (!view) return null;
+        return view.querySelector<HTMLElement>(
+            '.metadata-property[data-property-key="reviews"]',
         );
     }
 }

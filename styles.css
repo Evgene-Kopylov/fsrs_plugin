@@ -759,7 +759,7 @@ body.fsrs-hide-frontmatter
 }
 
 .metadata-property[data-property-key="reviews"].fsrs-reviews-styled,
-.markdown-reading-view:has(.fsrs-review-button) .metadata-container {
+.metadata-container.fsrs-reviews-active {
     overflow: visible;
 }
 
