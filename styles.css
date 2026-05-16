@@ -768,6 +768,7 @@ body.fsrs-hide-frontmatter
     flex-wrap: wrap;
     gap: 2px;
     align-items: center;
+    align-self: center;
 }
 
 .fsrs-reviews-pill {
