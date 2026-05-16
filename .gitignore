@@ -28,6 +28,5 @@ data.json
 .DS_Store
 
 # Rust
-Cargo.lock
 target/
 .last_rebuild_timestamp
