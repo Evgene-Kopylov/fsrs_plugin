@@ -241,6 +241,11 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
         if (this.reviewsProperty === prop) {
             const existing = prop.querySelector(".fsrs-reviews-pills");
             if (existing) existing.remove();
+        } else if (prop.querySelector(".fsrs-reviews-pills")) {
+            // Другой рендерер уже создал плиточки — не дублировать
+            this.cleanupReviewsField();
+            this.reviewsProperty = prop;
+            return;
         } else {
             this.cleanupReviewsField();
         }
