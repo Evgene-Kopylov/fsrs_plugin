@@ -65,15 +65,15 @@ describe("fsrs-table-params", () => {
                 title: " ",
             });
             expect(params.columns[1]).toMatchObject({
-                field: "d",
+                field: "difficulty",
                 title: "D",
             });
             expect(params.columns[2]).toMatchObject({
-                field: "s",
+                field: "stability",
                 title: "S",
             });
             expect(params.columns[3]).toMatchObject({
-                field: "r",
+                field: "retrievability",
                 title: "R",
             });
             expect(params.limit).toBe(20);
