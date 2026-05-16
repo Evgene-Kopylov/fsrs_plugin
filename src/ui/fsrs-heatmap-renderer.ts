@@ -310,11 +310,18 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
                 row.createSpan({ cls: "fsrs-heatmap-tip-file", text: r.file });
             }
             const ratingKey =
-                ["again", "hard", "good", "easy"][r.rating] ?? "good";
+                (["again", "hard", "good", "easy"] as const)[r.rating] ??
+                "good";
+            const customLabel =
+                this.plugin.settings.customButtonLabels?.[ratingKey];
+            const label =
+                customLabel && customLabel.trim() !== ""
+                    ? customLabel
+                    : i18n
+                          .t(`review.buttons.${ratingKey}`)
+                          .replace(/ \(\d\)$/, "");
             row.createSpan({
-                text: i18n
-                    .t(`review.buttons.${ratingKey}`)
-                    .replace(/ \(\d\)$/, ""),
+                text: label,
                 cls: `fsrs-heatmap-tip-rating fsrs-heatmap-tip-r${r.rating}`,
             });
         }
