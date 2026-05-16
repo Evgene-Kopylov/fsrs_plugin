@@ -2,7 +2,7 @@ import tseslint from "typescript-eslint";
 import obsidianmd from "eslint-plugin-obsidianmd";
 import globals from "globals";
 import { globalIgnores } from "eslint/config";
-import eslintComments from "eslint-plugin-eslint-comments";
+import eslintComments from "@eslint-community/eslint-plugin-eslint-comments";
 
 export default tseslint.config(
     {
@@ -46,7 +46,9 @@ export default tseslint.config(
                 "error",
                 {
                     presets: ["native", "microutilities", "preferred"],
-                    allowed: ["eslint-plugin-eslint-comments"],
+                    allowed: [
+                        "@eslint-community/eslint-plugin-eslint-comments",
+                    ],
                 },
             ],
         },
@@ -93,6 +95,7 @@ export default tseslint.config(
         "dist",
         "esbuild.config.mjs",
         "eslint.config.js",
+        "eslint.config.mts",
         "main.js",
         "node_modules",
         "scripts/",
