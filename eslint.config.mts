@@ -95,6 +95,7 @@ export default tseslint.config(
         "dist",
         "esbuild.config.mjs",
         "eslint.config.js",
+        "eslint.config.mts",
         "main.js",
         "node_modules",
         "scripts/",
