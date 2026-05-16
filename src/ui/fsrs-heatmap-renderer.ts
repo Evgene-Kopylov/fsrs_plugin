@@ -8,6 +8,7 @@
 import { MarkdownRenderChild } from "obsidian";
 import type FsrsPlugin from "../main";
 import { OBSIDIAN_ACCENT_VAR } from "../constants";
+import { RATING_KEYS } from "../interfaces/fsrs";
 import type { HeatmapData, HeatmapReviews } from "../utils/fsrs/fsrs-cache";
 import { i18n } from "../utils/i18n";
 import { verboseLog } from "../utils/logger";
@@ -21,13 +22,6 @@ declare const activeDocument: Document;
 // ---------------------------------------------------------------------------
 
 const DEFAULT_WEEKS = 53;
-
-const RATING_LABELS: Record<number, string> = {
-    0: "Again",
-    1: "Hard",
-    2: "Good",
-    3: "Easy",
-};
 
 // ---------------------------------------------------------------------------
 // FsrsHeatmapRenderer
@@ -316,8 +310,17 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
             } else {
                 row.createSpan({ cls: "fsrs-heatmap-tip-file", text: r.file });
             }
+            const ratingKey = RATING_KEYS[r.rating]!;
+            const customLabel =
+                this.plugin.settings.customButtonLabels?.[ratingKey];
+            const label =
+                customLabel && customLabel.trim() !== ""
+                    ? customLabel
+                    : i18n
+                          .t(`review.buttons.${ratingKey}`)
+                          .replace(/ \(\d\)$/, "");
             row.createSpan({
-                text: RATING_LABELS[r.rating] ?? "?",
+                text: label,
                 cls: `fsrs-heatmap-tip-rating fsrs-heatmap-tip-r${r.rating}`,
             });
         }

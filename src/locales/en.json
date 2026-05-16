@@ -107,8 +107,8 @@
             "total_reviews": "Total reviews: {count}",
             "first_review": "First review: {date}",
             "last_review": "Last review: {date}",
-            "last_rating": "Last rating: {rating}",
-            "ratings_distribution": "Ratings: {again}×🟥 {hard}×🟨 {good}×🟩 {easy}×🟦"
+            "last_rating": "Last rating:",
+            "ratings_distribution": "Ratings:"
         }
     },
     "help": {

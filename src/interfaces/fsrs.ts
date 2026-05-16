@@ -4,30 +4,27 @@
 export type FSRSState = "New" | "Learning" | "Review" | "Relearning";
 
 // Оценки для повторения (используется в UI)
-export type FSRSRating = "Again" | "Hard" | "Good" | "Easy";
+export type FSRSRating = RatingKey;
 
-// Маппинг числового rating (из YAML/JSON) в строковый FSRSRating
-const RATING_MAP: Record<number, FSRSRating> = {
-    0: "Again",
-    1: "Hard",
-    2: "Good",
-    3: "Easy",
+/** Ключи оценок в порядке 0-3 */
+export const RATING_KEYS = ["again", "hard", "good", "easy"] as const;
+
+export type RatingKey = (typeof RATING_KEYS)[number];
+
+const RATING_TO_NUM: Record<RatingKey, number> = {
+    again: 0,
+    hard: 1,
+    good: 2,
+    easy: 3,
 };
 
-const RATING_TO_NUM: Record<FSRSRating, number> = {
-    Again: 0,
-    Hard: 1,
-    Good: 2,
-    Easy: 3,
-};
-
-/** Преобразует число (0-3) в FSRSRating для отображения */
-export function numberToRating(n: number): FSRSRating {
-    return RATING_MAP[n] ?? "Good";
+/** Преобразует число (0-3) в ключ оценки */
+export function numberToRating(n: number): RatingKey {
+    return RATING_KEYS[n]!;
 }
 
-/** Преобразует FSRSRating в число для передачи в WASM */
-export function ratingToNumber(r: FSRSRating): number {
+/** Преобразует ключ оценки в число для передачи в WASM */
+export function ratingToNumber(r: RatingKey): number {
     return RATING_TO_NUM[r];
 }
 

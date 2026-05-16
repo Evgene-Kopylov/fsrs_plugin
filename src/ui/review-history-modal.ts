@@ -6,8 +6,8 @@ import {
     extractFrontmatter,
     formatLocalDate,
 } from "../utils/fsrs-helper";
-import type { CardData, FSRSRating, HistoricalState } from "../interfaces/fsrs";
-import { numberToRating } from "../interfaces/fsrs";
+import type { CardData, RatingKey, HistoricalState } from "../interfaces/fsrs";
+import { numberToRating, RATING_KEYS } from "../interfaces/fsrs";
 import type MyPlugin from "../main";
 import { deleteLastReview } from "../commands/review/delete-last-review";
 import { computeCardHistory } from "../utils/fsrs/wasm-state";
@@ -204,8 +204,8 @@ export class ReviewHistoryModal extends Modal {
             // Оценка с переводом
             const ratingCell = row.insertCell();
             if (state.rating !== null && state.rating !== undefined) {
-                ratingCell.textContent = this.translateRating(
-                    numberToRating(state.rating),
+                ratingCell.appendChild(
+                    this.createRatingBadge(numberToRating(state.rating)),
                 );
             } else {
                 ratingCell.textContent = "-";
@@ -355,23 +355,21 @@ export class ReviewHistoryModal extends Modal {
 
             // Оценка последнего повторения
             const lastRatingItem = statsList.createEl("li");
-            lastRatingItem.textContent = i18n.t(
-                "history.statistics.last_rating",
-                {
-                    rating: this.translateRating(
-                        numberToRating(lastReview.rating),
-                    ),
-                },
+            lastRatingItem.appendText(
+                i18n.t("history.statistics.last_rating") + " ",
+            );
+            lastRatingItem.appendChild(
+                this.createRatingBadge(numberToRating(lastReview.rating)),
             );
         }
 
         // Распределение оценок
         if (this.card.reviews.length > 0) {
             const ratingCounts = {
-                Again: 0,
-                Hard: 0,
-                Good: 0,
-                Easy: 0,
+                again: 0,
+                hard: 0,
+                good: 0,
+                easy: 0,
             };
 
             for (const review of this.card.reviews) {
@@ -379,37 +377,31 @@ export class ReviewHistoryModal extends Modal {
             }
 
             const ratingsItem = statsList.createEl("li");
-            ratingsItem.textContent = i18n.t(
-                "history.statistics.ratings_distribution",
-                {
-                    again: ratingCounts.Again,
-                    hard: ratingCounts.Hard,
-                    good: ratingCounts.Good,
-                    easy: ratingCounts.Easy,
-                },
+            ratingsItem.appendText(
+                i18n.t("history.statistics.ratings_distribution") + " ",
             );
+            for (const key of ["again", "hard", "good", "easy"] as const) {
+                ratingsItem.appendText(String(ratingCounts[key]) + "\u00d7");
+                ratingsItem.appendChild(this.createRatingBadge(key));
+                ratingsItem.appendText(" ");
+            }
         }
     }
 
-    /**
-     * Возвращает название оценки с цветным индикатором
-     * Берёт строку из review.buttons.*, отрезает номер клавиши "(N)"
-     */
-    private translateRating(rating: FSRSRating): string {
-        const emojiMap: Record<FSRSRating, string> = {
-            Again: "\u{1F7E5}",
-            Hard: "\u{1F7E8}",
-            Good: "\u{1F7E9}",
-            Easy: "\u{1F7E6}",
-        };
-        const key = rating.toLowerCase() as "again" | "hard" | "good" | "easy";
-        const label = i18n.t(`review.buttons.${key}`).replace(/ \(\d\)$/, "");
-        return `${emojiMap[rating]} ${label}`;
+    /** Возвращает локализованный лейбл оценки (без номера клавиши) */
+    private translateRating(rating: RatingKey): string {
+        return i18n.t(`review.buttons.${rating}`).replace(/ \(\d\)$/, "");
     }
 
-    /**
-     * Вызывается при закрытии модального окна
-     */
+    /** Создаёт span с цветным бейджем оценки */
+    private createRatingBadge(rating: RatingKey): HTMLSpanElement {
+        const idx = RATING_KEYS.indexOf(rating);
+        return createSpan({
+            text: this.translateRating(rating),
+            cls: `fsrs-heatmap-tip-rating fsrs-heatmap-tip-r${idx}`,
+        });
+    }
+
     onClose(): void {
         const { contentEl } = this;
         contentEl.empty();

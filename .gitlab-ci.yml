@@ -23,7 +23,7 @@ cache:
         - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
         - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
 
-build_wasm:
+cargo_fmt:
     stage: build-wasm
     <<: *rules
     image: rust:latest
@@ -34,10 +34,41 @@ build_wasm:
         - cd wasm-lib
         - rustup component add rustfmt
         - cargo fmt -- --check
+    timeout: 3m
+
+cargo_clippy:
+    stage: build-wasm
+    <<: *rules
+    image: rust:latest
+    before_script:
+        - cargo --version
+        - rustc --version
+    script:
+        - cd wasm-lib
         - rustup component add clippy
         - cargo clippy -- -D warnings
+    timeout: 10m
+
+cargo_test:
+    stage: build-wasm
+    <<: *rules
+    image: rust:latest
+    before_script:
+        - cargo --version
+        - rustc --version
+    script:
+        - cd wasm-lib
         - cargo test
-        - cd ..
+    timeout: 10m
+
+build_wasm:
+    stage: build-wasm
+    <<: *rules
+    image: rust:latest
+    before_script:
+        - cargo --version
+        - rustc --version
+    script:
         - curl -fsSL https://github.com/wasm-bindgen/wasm-pack/releases/download/v0.14.0/wasm-pack-v0.14.0-x86_64-unknown-linux-musl.tar.gz | tar -xz -C /usr/local/bin --strip-components=1
         - wasm-pack build wasm-lib --target web --out-dir pkg --out-name wasm_lib
     artifacts:
@@ -51,6 +82,9 @@ encode_wasm:
     <<: *rules
     image: node:${NODE_VERSION}
     needs:
+        - cargo_fmt
+        - cargo_clippy
+        - cargo_test
         - build_wasm
     before_script:
         - node --version
