@@ -1,5 +1,6 @@
 import { Modal, App } from "obsidian";
 import type { CardData, FSRSRating } from "../../interfaces/fsrs";
+import { RATING_KEYS } from "../../interfaces/fsrs";
 import { i18n } from "../../utils/i18n";
 
 /**
@@ -72,9 +73,7 @@ export class ReviewModal extends Modal {
         if (this.card.reviews.length > 0) {
             const last = this.card.reviews[this.card.reviews.length - 1]!;
             small.appendText(" " + new Date(last.date).toLocaleString());
-            const ratingKey = (["again", "hard", "good", "easy"] as const)[
-                last.rating
-            ]!;
+            const ratingKey = RATING_KEYS[last.rating]!;
             small.appendText(" ");
             small.createSpan({
                 text: i18n

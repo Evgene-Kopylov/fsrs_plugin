@@ -8,6 +8,7 @@
 import { MarkdownRenderChild } from "obsidian";
 import type FsrsPlugin from "../main";
 import { OBSIDIAN_ACCENT_VAR } from "../constants";
+import { RATING_KEYS } from "../interfaces/fsrs";
 import type { HeatmapData, HeatmapReviews } from "../utils/fsrs/fsrs-cache";
 import { i18n } from "../utils/i18n";
 import { verboseLog } from "../utils/logger";
@@ -309,9 +310,7 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
             } else {
                 row.createSpan({ cls: "fsrs-heatmap-tip-file", text: r.file });
             }
-            const ratingKey = (["again", "hard", "good", "easy"] as const)[
-                r.rating
-            ]!;
+            const ratingKey = RATING_KEYS[r.rating]!;
             const customLabel =
                 this.plugin.settings.customButtonLabels?.[ratingKey];
             const label =

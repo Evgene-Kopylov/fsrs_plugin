@@ -14,6 +14,9 @@ const RATING_MAP: Record<number, FSRSRating> = {
     3: "Easy",
 };
 
+/** Ключи оценок в порядке 0-3 */
+export const RATING_KEYS = ["again", "hard", "good", "easy"] as const;
+
 const RATING_TO_NUM: Record<FSRSRating, number> = {
     Again: 0,
     Hard: 1,
