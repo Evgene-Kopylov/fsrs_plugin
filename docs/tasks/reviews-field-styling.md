@@ -45,7 +45,7 @@ Obsidian не рендерит вложенные YAML-поля — показы
 
 - Новых констант `RATING_KEYS`, `RATING_LABELS`, `RATING_COLORS`
 - Функций-дубликатов `resolveRatingLabel`, `resolveRatingColor`
-- Хардкода цветов (`#e53935`, `#999`, etc.)
+- Хардкода цветов (`#e53935`, `#999999`, etc.)
 - `!important` в CSS
 - `::after` для тултипов (клипятся `overflow: hidden` предков)
 - `title` для тултипов (задержка браузера)
