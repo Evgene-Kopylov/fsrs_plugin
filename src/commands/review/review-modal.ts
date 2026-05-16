@@ -72,11 +72,14 @@ export class ReviewModal extends Modal {
         if (this.card.reviews.length > 0) {
             const last = this.card.reviews[this.card.reviews.length - 1]!;
             small.appendText(" " + new Date(last.date).toLocaleString());
-            const ratingLabels = ["Again", "Hard", "Good", "Easy"];
-            const ratingLabel = ratingLabels[last.rating] ?? "?";
+            const ratingKey = (["again", "hard", "good", "easy"] as const)[
+                last.rating
+            ]!;
             small.appendText(" ");
             small.createSpan({
-                text: ratingLabel,
+                text: i18n
+                    .t(`review.buttons.${ratingKey}`)
+                    .replace(/ \(\d\)$/, ""),
                 cls: `fsrs-heatmap-tip-rating fsrs-heatmap-tip-r${last.rating}`,
             });
         } else {
