@@ -6,7 +6,7 @@ import {
     extractFrontmatter,
     formatLocalDate,
 } from "../utils/fsrs-helper";
-import type { CardData, FSRSRating, HistoricalState } from "../interfaces/fsrs";
+import type { CardData, RatingKey, HistoricalState } from "../interfaces/fsrs";
 import { numberToRating } from "../interfaces/fsrs";
 import type MyPlugin from "../main";
 import { deleteLastReview } from "../commands/review/delete-last-review";
@@ -368,10 +368,10 @@ export class ReviewHistoryModal extends Modal {
         // Распределение оценок
         if (this.card.reviews.length > 0) {
             const ratingCounts = {
-                Again: 0,
-                Hard: 0,
-                Good: 0,
-                Easy: 0,
+                again: 0,
+                hard: 0,
+                good: 0,
+                easy: 0,
             };
 
             for (const review of this.card.reviews) {
@@ -382,10 +382,10 @@ export class ReviewHistoryModal extends Modal {
             ratingsItem.textContent = i18n.t(
                 "history.statistics.ratings_distribution",
                 {
-                    again: ratingCounts.Again,
-                    hard: ratingCounts.Hard,
-                    good: ratingCounts.Good,
-                    easy: ratingCounts.Easy,
+                    again: ratingCounts.again,
+                    hard: ratingCounts.hard,
+                    good: ratingCounts.good,
+                    easy: ratingCounts.easy,
                 },
             );
         }
@@ -395,15 +395,16 @@ export class ReviewHistoryModal extends Modal {
      * Возвращает название оценки с цветным индикатором
      * Берёт строку из review.buttons.*, отрезает номер клавиши "(N)"
      */
-    private translateRating(rating: FSRSRating): string {
-        const emojiMap: Record<FSRSRating, string> = {
-            Again: "\u{1F7E5}",
-            Hard: "\u{1F7E8}",
-            Good: "\u{1F7E9}",
-            Easy: "\u{1F7E6}",
+    private translateRating(rating: RatingKey): string {
+        const emojiMap: Record<RatingKey, string> = {
+            again: "\u{1F7E5}",
+            hard: "\u{1F7E8}",
+            good: "\u{1F7E9}",
+            easy: "\u{1F7E6}",
         };
-        const key = rating.toLowerCase() as "again" | "hard" | "good" | "easy";
-        const label = i18n.t(`review.buttons.${key}`).replace(/ \(\d\)$/, "");
+        const label = i18n
+            .t(`review.buttons.${rating}`)
+            .replace(/ \(\d\)$/, "");
         return `${emojiMap[rating]} ${label}`;
     }
 

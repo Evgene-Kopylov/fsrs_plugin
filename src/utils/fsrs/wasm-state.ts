@@ -130,12 +130,12 @@ export function getNextReviewDates(
             easy?: string;
         };
         return {
-            Again: dates.again || null,
-            Hard: dates.hard || null,
-            Good: dates.good || null,
-            Easy: dates.easy || null,
+            again: dates.again || null,
+            hard: dates.hard || null,
+            good: dates.good || null,
+            easy: dates.easy || null,
         };
     } catch {
-        return { Again: null, Hard: null, Good: null, Easy: null };
+        return { again: null, hard: null, good: null, easy: null };
     }
 }

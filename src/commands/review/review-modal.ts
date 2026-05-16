@@ -114,22 +114,22 @@ export class ReviewModal extends Modal {
             color: string;
         }[] = [
             {
-                rating: "Again",
+                rating: "again",
                 label: labelOrTranslation("again"),
                 color: colorOrDefault("again"),
             },
             {
-                rating: "Hard",
+                rating: "hard",
                 label: labelOrTranslation("hard"),
                 color: colorOrDefault("hard"),
             },
             {
-                rating: "Good",
+                rating: "good",
                 label: labelOrTranslation("good"),
                 color: colorOrDefault("good"),
             },
             {
-                rating: "Easy",
+                rating: "easy",
                 label: labelOrTranslation("easy"),
                 color: colorOrDefault("easy"),
             },

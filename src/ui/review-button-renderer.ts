@@ -8,7 +8,7 @@ import {
     getMinutesSinceLastReview,
 } from "../utils/fsrs-helper";
 import type FsrsPlugin from "../main";
-import type { FSRSRating } from "../interfaces/fsrs";
+import type { RatingKey } from "../interfaces/fsrs";
 import { numberToRating } from "../interfaces/fsrs";
 import { ReviewHistoryModal } from "./review-history-modal";
 import { showNotice } from "../utils/notice";
@@ -206,11 +206,10 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
      * Возвращает отображаемое название оценки
      * Приоритет: custom label > i18n перевод
      */
-    private translateRating(rating: FSRSRating): string {
-        const key = rating.toLowerCase() as "again" | "hard" | "good" | "easy";
-        const custom = this.plugin.settings.customButtonLabels?.[key];
+    private translateRating(rating: RatingKey): string {
+        const custom = this.plugin.settings.customButtonLabels?.[rating];
         if (custom && custom.trim() !== "") return custom;
-        return i18n.t(`review.buttons.${key}`);
+        return i18n.t(`review.buttons.${rating}`);
     }
 
     /**
@@ -255,12 +254,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
         const pills = createDiv({ cls: "fsrs-reviews-pills" });
 
         for (const r of reviews) {
-            const ratingName = numberToRating(r.rating);
-            const key = ratingName.toLowerCase() as
-                | "again"
-                | "hard"
-                | "good"
-                | "easy";
+            const key = numberToRating(r.rating);
 
             // Цвет: кастомный или CSS-переменная
             const customColor = this.plugin.settings.customButtonColors?.[key];
