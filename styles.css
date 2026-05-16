@@ -787,7 +787,10 @@ body.fsrs-hide-frontmatter
 
 .fsrs-reviews-pill-tip {
     display: none;
-    position: fixed;
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 10;
     background: var(--background-primary);
     color: var(--text-normal);

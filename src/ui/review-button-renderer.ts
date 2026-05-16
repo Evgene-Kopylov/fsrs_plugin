@@ -288,20 +288,6 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
                 text: label,
                 cls: `fsrs-heatmap-tip-rating fsrs-heatmap-tip-r${r.rating}`,
             });
-
-            // Позиционирование тултипа при наведении
-            pill.addEventListener("mouseenter", () => {
-                const pr = pill.getBoundingClientRect();
-                const tr = tip.getBoundingClientRect();
-                const topAbove = pr.top - tr.height - 6;
-                const top = topAbove >= 4 ? topAbove : pr.bottom + 6;
-                const left = Math.min(
-                    Math.max(4, pr.left + pr.width / 2 - tr.width / 2),
-                    window.innerWidth - tr.width - 4,
-                );
-                tip.style.top = `${top}px`;
-                tip.style.left = `${left}px`;
-            });
         }
 
         prop.classList.add("fsrs-reviews-styled");
