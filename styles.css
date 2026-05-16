@@ -753,8 +753,7 @@ body.fsrs-hide-frontmatter
 }
 
 /* Стилизация поля reviews во фронтматтере */
-.metadata-property[data-property-key="reviews"].fsrs-reviews-styled
-    .metadata-property-value {
+.metadata-property[data-property-key="reviews"] .metadata-property-value {
     display: none;
 }
 
