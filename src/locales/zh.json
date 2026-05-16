@@ -107,8 +107,8 @@
             "total_reviews": "总复习次数：{count}",
             "first_review": "首次复习：{date}",
             "last_review": "末次复习：{date}",
-            "last_rating": "末次评分：{rating}",
-            "ratings_distribution": "评分分布：{again}×🟥 {hard}×🟨 {good}×🟩 {easy}×🟦"
+            "last_rating": "末次评分：",
+            "ratings_distribution": "评分分布："
         }
     },
     "help": {

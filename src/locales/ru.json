@@ -44,8 +44,8 @@
             "total_reviews": "Всего повторений: {count}",
             "first_review": "Первое повторение: {date}",
             "last_review": "Последнее повторение: {date}",
-            "last_rating": "Последняя оценка: {rating}",
-            "ratings_distribution": "Оценки: {again}×🟥 {hard}×🟨 {good}×🟩 {easy}×🟦"
+            "last_rating": "Последняя оценка:",
+            "ratings_distribution": "Оценки:"
         }
     },
     "notices": {
