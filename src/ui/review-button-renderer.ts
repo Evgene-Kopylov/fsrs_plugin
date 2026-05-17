@@ -326,15 +326,6 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
                 return;
             }
 
-            const isDue = isCardDue(card, this.plugin.settings);
-
-            if (!isDue) {
-                // Карточка не готова к повторению - разрешаем досрочное
-                console.debug(
-                    `Карточка не по графику, разрешено досрочное повторение (прошло ${minutesSinceLastReview} минут, минимум ${minInterval})`,
-                );
-            }
-
             // Карточка готова к повторению - вызываем стандартный ревью
             const rating = await this.plugin.reviewCardByPath(
                 this.sourceFile.path,
