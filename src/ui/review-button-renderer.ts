@@ -66,7 +66,7 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
 
         this.pills = new ReviewsPills(plugin, container);
 
-        // Пометить hover-popover для CSS-скрытия фронтматтера (вместо :has)
+        // Пометить hover-popover для CSS-скрытия фронтматтера
         const popover = container.closest(".hover-popover");
         if (popover) popover.classList.add("fsrs-review-popup");
     }

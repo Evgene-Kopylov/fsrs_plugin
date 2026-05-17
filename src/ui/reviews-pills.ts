@@ -70,7 +70,7 @@ export class ReviewsPills {
         prop.classList.add("fsrs-reviews-styled");
         prop.appendChild(pills);
 
-        // overflow: visible на контейнере метаданных (без :has)
+        // overflow: visible на контейнере метаданных
         const container = prop.closest(".metadata-container");
         if (container) container.classList.add("fsrs-reviews-active");
     }
