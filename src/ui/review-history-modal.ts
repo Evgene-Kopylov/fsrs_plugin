@@ -6,6 +6,7 @@ import {
     extractFrontmatter,
     formatLocalDate,
 } from "../utils/fsrs-helper";
+import { formatDateTime } from "../utils/date-format";
 import type { CardData, RatingKey, HistoricalState } from "../interfaces/fsrs";
 import { numberToRating, RATING_KEYS } from "../interfaces/fsrs";
 import type MyPlugin from "../main";
@@ -196,7 +197,7 @@ export class ReviewHistoryModal extends Modal {
             const dateCell = row.insertCell();
             try {
                 const date = new Date(state.date);
-                dateCell.textContent = formatLocalDate(date, this.app);
+                dateCell.textContent = formatDateTime(this.app, date);
             } catch {
                 dateCell.textContent = state.date;
             }
