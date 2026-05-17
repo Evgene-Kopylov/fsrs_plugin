@@ -736,18 +736,16 @@
 }
 
 /* Скрыть фронтматтер в попапе предпросмотра FSRS-карточек */
-body.fsrs-hide-frontmatter
-    .hover-popover:has(.fsrs-review-button)
-    .mod-header.mod-ui {
+body.fsrs-hide-frontmatter .hover-popover.fsrs-review-popup .mod-header.mod-ui {
     display: none;
 }
 body.fsrs-hide-frontmatter
-    .hover-popover:has(.fsrs-review-button)
+    .hover-popover.fsrs-review-popup
     .el-pre.mod-frontmatter {
     display: none;
 }
 body.fsrs-hide-frontmatter
-    .hover-popover:has(.fsrs-review-button)
+    .hover-popover.fsrs-review-popup
     .metadata-container {
     display: none;
 }
