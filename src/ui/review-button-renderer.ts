@@ -3,8 +3,6 @@ import {
     parseCardDataFromFrontmatter,
     extractFrontmatterWithMatch,
     isCardDue,
-    computeCardState,
-    formatLocalDate,
     getMinutesSinceLastReview,
 } from "../utils/fsrs-helper";
 import type FsrsPlugin from "../main";
@@ -13,7 +11,7 @@ import { numberToRating } from "../interfaces/fsrs";
 import { ReviewHistoryModal } from "./review-history-modal";
 import { showNotice } from "../utils/notice";
 import { MINIMUM_REVIEW_INTERVAL_MINUTES } from "../constants";
-import { getLocalizedNoun, i18n } from "../utils/i18n";
+import { i18n } from "../utils/i18n";
 import { ReviewsPills } from "./reviews-pills";
 
 /**
@@ -316,46 +314,25 @@ export class ReviewButtonRenderer extends MarkdownRenderChild {
             }
 
             const card = parseResult.card;
+
+            // Минимальный интервал между повторениями
+            const minutesSinceLastReview = getMinutesSinceLastReview(card);
+            const minInterval = MINIMUM_REVIEW_INTERVAL_MINUTES;
+            if (minutesSinceLastReview < minInterval) {
+                showNotice("notices.minimum_interval", {
+                    minutes: minInterval - minutesSinceLastReview,
+                });
+                await this.updateButtonState();
+                return;
+            }
+
             const isDue = isCardDue(card, this.plugin.settings);
 
             if (!isDue) {
-                // Карточка не готова к повторению - проверяем возможность досрочного повторения
-                const minutesSinceLastReview = getMinutesSinceLastReview(card);
-                const minInterval = MINIMUM_REVIEW_INTERVAL_MINUTES;
-
-                if (minutesSinceLastReview >= minInterval) {
-                    // Достаточно времени прошло - разрешаем досрочное повторение
-                    console.debug(
-                        `Карточка не по графику, но разрешено досрочное повторение (прошло ${minutesSinceLastReview} минут, минимум ${minInterval})`,
-                    );
-                    // Продолжаем показ модального окна
-                } else {
-                    // Недостаточно времени прошло - показываем информацию
-                    const remainingMinutes =
-                        minInterval - minutesSinceLastReview;
-                    const state = computeCardState(card, this.plugin.settings);
-                    const nextDate = new Date(state.due);
-
-                    if (remainingMinutes > 0) {
-                        const noun = getLocalizedNoun(
-                            remainingMinutes,
-                            i18n.getLocale() === "ru" ? "минуту" : "minute",
-                            i18n.getLocale() === "ru" ? "минуты" : "minutes",
-                            i18n.getLocale() === "ru" ? "минут" : "minutes",
-                        );
-                        showNotice("notices.early_review_blocked", {
-                            minutes: remainingMinutes,
-                            noun: noun,
-                            date: formatLocalDate(nextDate, this.plugin.app),
-                        });
-                    } else {
-                        showNotice("notices.card_not_due", {
-                            date: formatLocalDate(nextDate, this.plugin.app),
-                        });
-                    }
-                    await this.updateButtonState();
-                    return;
-                }
+                // Карточка не готова к повторению - разрешаем досрочное
+                console.debug(
+                    `Карточка не по графику, разрешено досрочное повторение (прошло ${minutesSinceLastReview} минут, минимум ${minInterval})`,
+                );
             }
 
             // Карточка готова к повторению - вызываем стандартный ревью
