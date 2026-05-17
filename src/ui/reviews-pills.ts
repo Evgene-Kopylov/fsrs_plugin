@@ -90,7 +90,7 @@ export class ReviewsPills {
     /** Найти свойство reviews в DOM через ближайший контейнер вьюхи */
     private findProperty(): HTMLElement | null {
         const view = this.containerEl.closest<HTMLElement>(
-            ".markdown-reading-view, .cm-scroller",
+            ".markdown-reading-view, .markdown-preview-view, .cm-scroller",
         );
         if (!view) return null;
         return view.querySelector<HTMLElement>(
