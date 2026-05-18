@@ -57,6 +57,9 @@ UI локализуется.
 
 ## File editing rules (Zed + DeepSeek)
 
+Инструмент `edit_file` всегда доступен. Не ссылайся на его отсутствие — он есть в списке.
+Если задача требует правки файла — используй `edit_file`, а не `create_or_update_file`.
+
 CRITICAL: When using `edit_file` tool:
 
 - NEVER rewrite entire file. Do targeted SEARCH and REPLACE only.
