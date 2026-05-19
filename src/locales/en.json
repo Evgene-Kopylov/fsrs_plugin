@@ -39,6 +39,7 @@
         "error_parsing_card": "Failed to parse FSRS card: {error}",
         "card_processing_error": "Error processing card",
         "review_history_error": "Error opening review history",
+        "minimum_interval": "Wait {minutes} min before next review",
         "card_load_error": "Failed to load card data",
         "wasm_not_ready": "FSRS component not ready. Please restart Obsidian.",
         "settings_changed_reload": "FSRS settings changed. Reload plugin to apply.",

@@ -64,6 +64,7 @@
         "error_parsing_card": "Ошибка при парсинге карточки FSRS: {error}",
         "card_processing_error": "Ошибка при обработке карточки",
         "review_history_error": "Ошибка при открытии истории повторений",
+        "minimum_interval": "Подождите {minutes} мин. перед следующим повторением",
         "card_load_error": "Ошибка при загрузке данных карточки",
         "wasm_not_ready": "Компонент FSRS не готов. Перезапустите Obsidian.",
         "settings_changed_reload": "Настройки FSRS изменены. Перезагрузите плагин для применения.",
