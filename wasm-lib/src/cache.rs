@@ -9,6 +9,7 @@
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
+use crate::log_error;
 use crate::table_processing::types::TableParams;
 use crate::types::{CardData, ComputedState};
 use serde::{Deserialize, Serialize};
@@ -26,6 +27,7 @@ use wasm_bindgen::JsValue;
 pub struct CachedCard {
     pub card: CardData,
     pub state: ComputedState,
+    pub last_recalc_at: chrono::DateTime<chrono::Utc>,
 }
 
 /// Элемент входного массива для `add_or_update_cards`
@@ -56,10 +58,11 @@ struct RemoveResult {
 // Глобальный кэш
 // ---------------------------------------------------------------------------
 
-/// Данные кэша: карточки + инкрементальный счётчик повторений по датам
+/// Данные кэша: карточки + инкрементальный счётчик повторений по датам + параметры пересчёта
 struct CacheData {
     cards: HashMap<String, CachedCard>,
     count_by_date: HashMap<String, u32>,
+    params: Option<crate::types::FsrsCacheParams>,
 }
 
 /// Возвращает ссылку на глобальный кэш (инициализируется при первом вызове)
@@ -69,6 +72,7 @@ fn global_cache() -> &'static Mutex<CacheData> {
         Mutex::new(CacheData {
             cards: HashMap::new(),
             count_by_date: HashMap::new(),
+            params: None,
         })
     })
 }
@@ -83,6 +87,7 @@ pub fn init_cache() {
     let mut cache = global_cache().lock().unwrap();
     cache.cards.clear();
     cache.count_by_date.clear();
+    cache.params = None;
 }
 
 /// Полностью очищает кэш.
@@ -90,6 +95,25 @@ pub fn clear_cache() {
     let mut cache = global_cache().lock().unwrap();
     cache.cards.clear();
     cache.count_by_date.clear();
+    cache.params = None;
+}
+
+/// Устанавливает параметры FSRS для пересчёта состояния в кэше.
+/// Принимает JSON с полями FsrsCacheParams.
+pub fn set_cache_params(params_json: &str) -> String {
+    let mut cache = global_cache().lock().unwrap();
+    match serde_json::from_str::<crate::types::FsrsCacheParams>(params_json) {
+        Ok(params) => {
+            cache.params = Some(params);
+            serde_json::to_string(&serde_json::json!({"ok": true}))
+                .unwrap_or_else(|_| r#"{"ok":true}"#.to_string())
+        }
+        Err(e) => serde_json::to_string(&serde_json::json!({
+            "ok": false,
+            "error": format!("Ошибка парсинга параметров: {}", e)
+        }))
+        .unwrap_or_else(|_| r#"{"ok":false,"error":"serialization error"}"#.to_string()),
+    }
 }
 
 /// Пакетное добавление или обновление карточек в кэше.
@@ -187,9 +211,14 @@ fn add_or_update_cards_inner(cards_json_array: &str) -> String {
             }
 
             // Вставляем или обновляем в кэше
-            cache
-                .cards
-                .insert(item.file_path.clone(), CachedCard { card, state });
+            cache.cards.insert(
+                item.file_path.clone(),
+                CachedCard {
+                    card,
+                    state,
+                    last_recalc_at: chrono::Utc::now(),
+                },
+            );
             updated += 1;
         }
     }
@@ -270,7 +299,14 @@ fn add_or_update_cards_inner_js(cards: JsValue) -> String {
                 *cache.count_by_date.entry(date_str).or_default() += 1;
             }
 
-            cache.cards.insert(file_path, CachedCard { card, state });
+            cache.cards.insert(
+                file_path,
+                CachedCard {
+                    card,
+                    state,
+                    last_recalc_at: chrono::Utc::now(),
+                },
+            );
             updated += 1;
         }
     }
@@ -584,8 +620,11 @@ fn compute_month_positions(start: chrono::NaiveDate, weeks: usize) -> Vec<serde_
 /// }
 /// ```
 pub fn query_cards(params_json: &str, now_iso: &str) -> String {
-    // Парсим параметры
-    let params: TableParams = match serde_json::from_str(params_json) {
+    use crate::json_parsing::parse_datetime_flexible;
+    use chrono::{DateTime, Utc};
+
+    // Парсим параметры таблицы
+    let table_params: TableParams = match serde_json::from_str(params_json) {
         Ok(p) => p,
         Err(e) => {
             return serde_json::to_string(&serde_json::json!({
@@ -599,9 +638,13 @@ pub fn query_cards(params_json: &str, now_iso: &str) -> String {
         }
     };
 
-    // Получаем все карточки из кэша
-    let all_cards = get_all_cached_cards();
-    if all_cards.is_empty() {
+    // Парсим now
+    let now: DateTime<Utc> = parse_datetime_flexible(now_iso).unwrap_or_else(Utc::now);
+
+    // Блокируем кэш на всё время запроса — пересчёт и сборка результата
+    let mut cache = global_cache().lock().unwrap();
+
+    if cache.cards.is_empty() {
         return serde_json::to_string(&serde_json::json!({
             "cards": [],
             "total_count": 0,
@@ -610,19 +653,131 @@ pub fn query_cards(params_json: &str, now_iso: &str) -> String {
         .unwrap_or_else(|_| r#"{"cards":[],"total_count":0,"errors":[]}"#.to_string());
     }
 
-    // Используем готовые структуры из кэша, без JSON-сериализации
-    let pairs: Vec<(CardData, ComputedState)> = all_cards
-        .iter()
-        .map(|(_, cached)| (cached.card.clone(), cached.state.clone()))
+    let recalc_start = chrono::Utc::now();
+    let mut recalc_count: usize = 0;
+    let total_cards = cache.cards.len();
+
+    // TTL-пересчёт: для каждой карточки проверяем, не истёк ли TTL
+    let params_for_recalc = cache.params.clone();
+    let mut debug_sample: Option<(String, i64, i64)> = None; // (due, age_sec, ttl_sec) первой необновлённой
+    match &params_for_recalc {
+        Some(params) => {
+            for cached in cache.cards.values_mut() {
+                // Парсим due. Невалидная дата — ошибка данных, пропускаем карточку
+                let due_dt = match parse_datetime_flexible(&cached.state.due) {
+                    Some(dt) => dt,
+                    None => {
+                        log_error!(
+                            "FSRS cache: невалидная дата due '{}', пропуск пересчёта",
+                            cached.state.due,
+                        );
+                        continue;
+                    }
+                };
+                let distance_seconds = (due_dt - now).num_seconds().abs() as f64;
+
+                // TTL = max(MIN_TTL, distance / DIVISOR)
+                let ttl_seconds = params
+                    .min_recalc_ttl_seconds
+                    .max(distance_seconds / params.recalc_ttl_divisor);
+                let age_seconds = (now - cached.last_recalc_at).num_seconds().abs();
+
+                if age_seconds > ttl_seconds as i64 {
+                    // Пересчитываем состояние
+                    let params_for_fsrs = crate::types::FsrsParameters {
+                        request_retention: params.request_retention,
+                        maximum_interval: params.maximum_interval,
+                        enable_fuzz: params.enable_fuzz,
+                    };
+                    let new_state = crate::current_state::compute_current_state_from_card(
+                        &cached.card,
+                        now,
+                        &params_for_fsrs,
+                        params.default_stability,
+                        params.default_difficulty,
+                    );
+                    cached.state = new_state;
+                    cached.last_recalc_at = now;
+                    recalc_count += 1;
+                } else if debug_sample.is_none() && age_seconds > 0 {
+                    debug_sample =
+                        Some((cached.state.due.clone(), age_seconds, ttl_seconds as i64));
+                }
+            }
+        }
+        None => {
+            log_error!("FSRS cache: параметры не установлены, пересчёт пропущен");
+        }
+    }
+
+    // Формируем строку лога пересчёта (передадим в TS для вывода в консоль)
+    let recalc_log = if params_for_recalc.is_some() {
+        let recalc_ms = (chrono::Utc::now() - recalc_start).num_milliseconds();
+        let mut msg = format!(
+            "🖩 recalc: {}/{} за {:.3} с | now={} | TTL min={}s div={}",
+            recalc_count,
+            total_cards,
+            recalc_ms as f64 / 1000.0,
+            now.format("%Y-%m-%d %H:%M:%S"),
+            params_for_recalc
+                .as_ref()
+                .map(|p| p.min_recalc_ttl_seconds)
+                .unwrap_or(0.0),
+            params_for_recalc
+                .as_ref()
+                .map(|p| p.recalc_ttl_divisor)
+                .unwrap_or(0.0),
+        );
+        if let Some((due, age, ttl)) = debug_sample {
+            msg.push_str(&format!(
+                " | sample: due={} age={}s ttl={}s",
+                &due[..due.len().min(19)],
+                age,
+                ttl,
+            ));
+        }
+        Some(msg)
+    } else {
+        None
+    };
+
+    // Собираем пары (CardData, ComputedState) для фильтрации/сортировки
+    let pairs: Vec<(crate::types::CardData, crate::types::ComputedState)> = cache
+        .cards
+        .values()
+        .map(|cached| (cached.card.clone(), cached.state.clone()))
         .collect();
+
+    // Освобождаем блокировку перед фильтрацией (filter_and_sort не требует кэша)
+    drop(cache);
 
     // Вызываем filter_and_sort_cards_with_states
     match crate::table_processing::filtering::filter_and_sort_cards_with_states(
-        &pairs, &params, "{}", now_iso,
+        &pairs,
+        &table_params,
+        "{}",
+        now_iso,
     ) {
-        Ok(result) => serde_json::to_string(&result).unwrap_or_else(|_| {
-            r#"{"cards":[],"total_count":0,"errors":["serialization error"]}"#.to_string()
-        }),
+        Ok(result) => {
+            // Сохраняем ошибки фильтрации, чтобы не потерять при ошибке сериализации
+            let result_errors = result.errors.clone();
+            let mut json = serde_json::to_value(&result).unwrap_or_else(|e| {
+                log_error!("FSRS cache: ошибка сериализации результата: {}", e);
+                let mut errs = result_errors;
+                errs.push(format!("ошибка сериализации: {}", e));
+                serde_json::json!({
+                    "cards": [],
+                    "total_count": 0,
+                    "errors": errs
+                })
+            });
+            if let Some(log) = recalc_log {
+                json["recalc_log"] = serde_json::Value::String(log);
+            }
+            serde_json::to_string(&json).unwrap_or_else(|_| {
+                r#"{"cards":[],"total_count":0,"errors":["serialization error"]}"#.to_string()
+            })
+        }
         Err(e) => serde_json::to_string(&serde_json::json!({
             "cards": [],
             "total_count": 0,
@@ -663,18 +818,6 @@ pub fn query_cards_count(params_json: &str, now_iso: &str) -> String {
 // Внутренние функции (для вызова из других модулей Rust)
 // ---------------------------------------------------------------------------
 
-/// Возвращает все карточки из кэша как вектор пар (путь, CachedCard)
-/// для использования внутри Rust без сериализации в JSON.
-pub fn get_all_cached_cards() -> Vec<(String, CachedCard)> {
-    let cache = global_cache();
-    let cache = cache.lock().unwrap();
-    cache
-        .cards
-        .iter()
-        .map(|(path, card)| (path.clone(), card.clone()))
-        .collect()
-}
-
 // ---------------------------------------------------------------------------
 // Тесты
 // ---------------------------------------------------------------------------
@@ -683,6 +826,17 @@ pub fn get_all_cached_cards() -> Vec<(String, CachedCard)> {
 mod tests {
     use super::*;
     use std::sync::Mutex;
+
+    /// Тестовый хелпер: возвращает все карточки из кэша как вектор пар (путь, CachedCard)
+    fn get_all_cached_cards() -> Vec<(String, CachedCard)> {
+        let cache = global_cache();
+        let cache = cache.lock().unwrap();
+        cache
+            .cards
+            .iter()
+            .map(|(path, card)| (path.clone(), card.clone()))
+            .collect()
+    }
 
     /// Мьютекс для последовательного выполнения тестов кэша
     /// (глобальное состояние в статике требует синхронизации)

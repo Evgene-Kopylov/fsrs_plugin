@@ -45,4 +45,9 @@ export const DEFAULT_SETTINGS: FSRSSettings = {
 export const DEFAULT_TABLE_DISPLAY_LIMIT = 20;
 
 /** Интервал автообновления таблицы (секунды), пока она видна */
-export const TABLE_AUTO_REFRESH_INTERVAL_SECONDS = 300;
+export const TABLE_AUTO_REFRESH_INTERVAL_SECONDS = 100;
+
+/** Минимальный TTL пересчёта состояния карточки (секунды) */
+export const MIN_RECALC_TTL_SECONDS = 60;
+/** Делитель расстояния до due для расчёта TTL. TTL = max(MIN, distance/DIVISOR) */
+export const RECALC_TTL_DIVISOR = 100;

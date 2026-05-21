@@ -16,10 +16,16 @@ import type {
     ComputedCardState,
     CachedCard,
     FSRSState,
+    FSRSSettings,
 } from "../../interfaces/fsrs";
 import type { TableParams } from "../../utils/fsrs-table-params";
-import { DEFAULT_TABLE_DISPLAY_LIMIT } from "../../constants";
+import {
+    DEFAULT_TABLE_DISPLAY_LIMIT,
+    MIN_RECALC_TTL_SECONDS,
+    RECALC_TTL_DIVISOR,
+} from "../../constants";
 import * as wasm from "../../../wasm-lib/pkg/wasm_lib";
+import { verboseLog } from "../logger";
 
 // ---------------------------------------------------------------------------
 // Вспомогательные типы
@@ -130,6 +136,30 @@ export class FsrsCache {
      */
     clear(): void {
         wasm.clear_cache();
+    }
+
+    /**
+     * Устанавливает параметры FSRS для TTL-пересчёта состояний в кэше.
+     * Должен вызываться после init() и при изменении настроек.
+     */
+    setParams(settings: FSRSSettings): void {
+        const params = {
+            request_retention: settings.parameters.request_retention,
+            maximum_interval: settings.parameters.maximum_interval,
+            enable_fuzz: settings.parameters.enable_fuzz,
+            default_stability: settings.default_initial_stability,
+            default_difficulty: settings.default_initial_difficulty,
+            min_recalc_ttl_seconds: MIN_RECALC_TTL_SECONDS,
+            recalc_ttl_divisor: RECALC_TTL_DIVISOR,
+        };
+        const raw = wasm.set_cache_params(JSON.stringify(params));
+        const result = JSON.parse(raw) as { ok: boolean; error?: string };
+        if (!result.ok) {
+            console.error(
+                "FSRS: ошибка установки параметров кэша:",
+                result.error,
+            );
+        }
     }
 
     /**
@@ -244,7 +274,12 @@ export class FsrsCache {
             }>;
             total_count: number;
             errors: string[];
+            recalc_log?: string;
         };
+
+        if (raw.recalc_log) {
+            verboseLog(raw.recalc_log);
+        }
 
         const cards: CachedCard[] = raw.cards.map((item) => ({
             card: JSON.parse(item.card_json) as CardData,

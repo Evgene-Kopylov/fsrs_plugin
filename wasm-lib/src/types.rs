@@ -26,6 +26,18 @@ pub struct FsrsParameters {
     pub enable_fuzz: bool,
 }
 
+/// Параметры для пересчёта состояния в кэше (TTL-логика)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FsrsCacheParams {
+    pub request_retention: f64,
+    pub maximum_interval: f64,
+    pub enable_fuzz: bool,
+    pub default_stability: f64,
+    pub default_difficulty: f64,
+    pub min_recalc_ttl_seconds: f64,
+    pub recalc_ttl_divisor: f64,
+}
+
 /// Результат вычисления текущего состояния
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ComputedState {

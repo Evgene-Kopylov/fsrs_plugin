@@ -36,8 +36,18 @@ pub struct CardWithComputedFields {
 pub fn compute_fields_from_state(
     card: &CardData,
     state: &ComputedState,
-    _now_iso: &str,
+    now_iso: &str,
 ) -> CardWithComputedFields {
+    // elapsed_days от последней сессии до now (игнорируем замороженное state.elapsed_days)
+    let elapsed = if let Some(last_session) = card.reviews.last()
+        && let Some(last_date) = parse_datetime_flexible(&last_session.date)
+        && let Some(now_dt) = parse_datetime_flexible(now_iso)
+    {
+        Some((now_dt - last_date).num_days().max(0) as f64)
+    } else {
+        Some(state.elapsed_days as f64)
+    };
+
     let mut result = CardWithComputedFields {
         file: card.file_path.as_ref().map(|p| {
             std::path::Path::new(p)
@@ -52,7 +62,7 @@ pub fn compute_fields_from_state(
         retrievability: Some(state.retrievability),
         due: None,
         state: Some(state.state.clone()),
-        elapsed: Some(state.elapsed_days as f64),
+        elapsed,
         scheduled: Some(state.scheduled_days as f64),
         additional_fields: HashMap::new(),
     };

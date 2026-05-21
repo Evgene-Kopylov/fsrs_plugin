@@ -205,7 +205,10 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
 
             this.addLoadedClass(codeBlockParent);
         } catch (error) {
-            this.renderErrorState(error);
+            const msg = error instanceof Error ? error.message : String(error);
+            const stack = error instanceof Error ? error.stack : "";
+            console.error("Ошибка WASM query_cards:", msg, stack);
+            this.renderErrorState(msg);
         } finally {
             const elapsedMs = performance.now() - start;
             const elapsedSec = elapsedMs / 1000;

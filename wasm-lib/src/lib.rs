@@ -1,5 +1,20 @@
 use wasm_bindgen::prelude::*;
 
+// Устанавливаем panic hook для читаемых сообщений об ошибках в консоли
+#[wasm_bindgen(start)]
+pub fn start() {
+    std::panic::set_hook(Box::new(|info| {
+        let msg = if let Some(s) = info.payload().downcast_ref::<&str>() {
+            *s
+        } else if let Some(s) = info.payload().downcast_ref::<String>() {
+            s.as_str()
+        } else {
+            "неизвестная ошибка WASM"
+        };
+        web_sys::console::error_2(&"FSRS WASM panic:".into(), &msg.into());
+    }));
+}
+
 // Объявляем модули
 mod cache;
 mod card_history;
@@ -267,6 +282,11 @@ pub fn init_cache() {
 #[wasm_bindgen]
 pub fn clear_cache() {
     cache::clear_cache();
+}
+
+#[wasm_bindgen]
+pub fn set_cache_params(params_json: &str) -> String {
+    cache::set_cache_params(params_json)
 }
 
 #[wasm_bindgen]
