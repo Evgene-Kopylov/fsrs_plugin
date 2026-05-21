@@ -94,12 +94,6 @@ impl Value {
         Value::Number(value)
     }
 
-    /// Создает строковое значение
-    #[allow(dead_code)]
-    pub fn string(value: String) -> Self {
-        Value::String(value)
-    }
-
     /// Получает числовое значение, если оно есть (только для тестов)
     #[cfg(test)]
     pub fn as_number(&self) -> Option<f64> {

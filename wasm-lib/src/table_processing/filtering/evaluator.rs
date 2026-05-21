@@ -344,7 +344,7 @@ mod tests {
         let expr = Expression::comparison(
             "due",
             ComparisonOp::Less,
-            Value::string("2024-06-01".to_string()),
+            Value::String("2024-06-01".to_string()),
         );
         assert!(evaluate_condition(&expr, &card).unwrap());
     }
@@ -355,7 +355,7 @@ mod tests {
         let expr = Expression::comparison(
             "due",
             ComparisonOp::Greater,
-            Value::string("2023-01-01".to_string()),
+            Value::String("2023-01-01".to_string()),
         );
         assert!(evaluate_condition(&expr, &card).unwrap());
     }
@@ -366,7 +366,7 @@ mod tests {
         let expr = Expression::comparison(
             "state",
             ComparisonOp::Equal,
-            Value::string("review".to_string()),
+            Value::String("review".to_string()),
         );
         assert!(evaluate_condition(&expr, &card).unwrap());
     }
@@ -377,7 +377,7 @@ mod tests {
         let expr = Expression::comparison(
             "state",
             ComparisonOp::NotEqual,
-            Value::string("learning".to_string()),
+            Value::String("learning".to_string()),
         );
         assert!(evaluate_condition(&expr, &card).unwrap());
     }
@@ -388,7 +388,7 @@ mod tests {
         let expr = Expression::comparison(
             "file",
             ComparisonOp::Equal,
-            Value::string("test.md".to_string()),
+            Value::String("test.md".to_string()),
         );
         assert!(evaluate_condition(&expr, &card).unwrap());
     }
@@ -400,7 +400,7 @@ mod tests {
         let expr = Expression::comparison(
             "file",
             ComparisonOp::NotEqual,
-            Value::string("test.md".to_string()),
+            Value::String("test.md".to_string()),
         );
         assert!(!evaluate_condition(&expr, &card).unwrap());
     }
@@ -412,7 +412,7 @@ mod tests {
         let expr = Expression::comparison(
             "due",
             ComparisonOp::GreaterOrEqual,
-            Value::string("2024-01-01".to_string()),
+            Value::String("2024-01-01".to_string()),
         );
         assert!(evaluate_condition(&expr, &card).unwrap());
     }
@@ -424,7 +424,7 @@ mod tests {
         let expr = Expression::comparison(
             "due",
             ComparisonOp::LessOrEqual,
-            Value::string("2023-12-31".to_string()),
+            Value::String("2023-12-31".to_string()),
         );
         assert!(!evaluate_condition(&expr, &card).unwrap());
     }
@@ -436,7 +436,7 @@ mod tests {
         let expr = Expression::comparison(
             "state",
             ComparisonOp::Less,
-            Value::string("reviewing".to_string()),
+            Value::String("reviewing".to_string()),
         );
         assert!(evaluate_condition(&expr, &card).unwrap());
     }
@@ -449,7 +449,7 @@ mod tests {
             Expression::comparison(
                 "state",
                 ComparisonOp::Equal,
-                Value::string("review".to_string()),
+                Value::String("review".to_string()),
             ),
             Expression::comparison("reps", ComparisonOp::Greater, Value::Number(3.0)),
         );
@@ -464,7 +464,7 @@ mod tests {
             Expression::comparison(
                 "state",
                 ComparisonOp::Equal,
-                Value::string("review".to_string()),
+                Value::String("review".to_string()),
             ),
             Expression::comparison("reps", ComparisonOp::Greater, Value::Number(10.0)),
         );
@@ -486,7 +486,7 @@ mod tests {
         let expr = Expression::comparison(
             "reps",
             ComparisonOp::Equal,
-            Value::string("hello".to_string()),
+            Value::String("hello".to_string()),
         );
         assert!(!evaluate_condition(&expr, &card).unwrap());
     }
@@ -498,7 +498,7 @@ mod tests {
         let expr = Expression::comparison(
             "file",
             ComparisonOp::Regex,
-            Value::string("алге".to_string()),
+            Value::String("алге".to_string()),
         );
         assert!(evaluate_condition(&expr, &card).unwrap());
     }
@@ -510,7 +510,7 @@ mod tests {
         let expr = Expression::comparison(
             "file",
             ComparisonOp::Regex,
-            Value::string("алге".to_string()),
+            Value::String("алге".to_string()),
         );
         assert!(!evaluate_condition(&expr, &card).unwrap());
     }
@@ -522,7 +522,7 @@ mod tests {
         let expr = Expression::comparison(
             "file",
             ComparisonOp::NotRegex,
-            Value::string("алге".to_string()),
+            Value::String("алге".to_string()),
         );
         assert!(evaluate_condition(&expr, &card).unwrap());
     }
@@ -533,7 +533,7 @@ mod tests {
         let expr = Expression::comparison(
             "due",
             ComparisonOp::Regex,
-            Value::string("^2024".to_string()),
+            Value::String("^2024".to_string()),
         );
         assert!(evaluate_condition(&expr, &card).unwrap());
     }
@@ -542,7 +542,7 @@ mod tests {
     fn test_regex_invalid_pattern_returns_error() {
         let card = create_test_card();
         let expr =
-            Expression::comparison("file", ComparisonOp::Regex, Value::string("[".to_string()));
+            Expression::comparison("file", ComparisonOp::Regex, Value::String("[".to_string()));
         assert!(evaluate_condition(&expr, &card).is_err());
     }
 }

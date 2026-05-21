@@ -497,7 +497,7 @@ impl<'a> ParserState<'a> {
             TokenType::String => {
                 let s = self.current_token.value.clone();
                 self.advance()?;
-                Ok(Value::string(s))
+                Ok(Value::String(s))
             }
             _ => Err(ParseError::Syntax(format!(
                 "Ожидается числовое или строковое значение, получено '{}'",
@@ -1021,7 +1021,7 @@ mod tests {
             } => {
                 assert_eq!(field, "state");
                 assert_eq!(operator, ComparisonOp::Equal);
-                assert_eq!(value, Value::string("review".to_string()));
+                assert_eq!(value, Value::String("review".to_string()));
             }
             _ => panic!("Expected Comparison"),
         }
@@ -1044,7 +1044,7 @@ mod tests {
             } => {
                 assert_eq!(field, "file");
                 assert_eq!(operator, ComparisonOp::Equal);
-                assert_eq!(value, Value::string("path/to/file.md".to_string()));
+                assert_eq!(value, Value::String("path/to/file.md".to_string()));
             }
             _ => panic!("Expected Comparison"),
         }
@@ -1067,7 +1067,7 @@ mod tests {
             } => {
                 assert_eq!(field, "state");
                 assert_eq!(operator, ComparisonOp::NotEqual);
-                assert_eq!(value, Value::string("learning".to_string()));
+                assert_eq!(value, Value::String("learning".to_string()));
             }
             _ => panic!("Expected Comparison"),
         }
@@ -1090,7 +1090,7 @@ mod tests {
             } => {
                 assert_eq!(field, "due");
                 assert_eq!(operator, ComparisonOp::Less);
-                assert_eq!(value, Value::string("2024-06-01".to_string()));
+                assert_eq!(value, Value::String("2024-06-01".to_string()));
             }
             _ => panic!("Expected Comparison"),
         }
@@ -1113,7 +1113,7 @@ mod tests {
             } => {
                 assert_eq!(field, "due");
                 assert_eq!(operator, ComparisonOp::GreaterOrEqual);
-                assert_eq!(value, Value::string("2023-01-01".to_string()));
+                assert_eq!(value, Value::String("2023-01-01".to_string()));
             }
             _ => panic!("Expected Comparison"),
         }
@@ -1144,7 +1144,7 @@ mod tests {
                     } => {
                         assert_eq!(field, "state");
                         assert_eq!(operator, ComparisonOp::Equal);
-                        assert_eq!(value, Value::string("review".to_string()));
+                        assert_eq!(value, Value::String("review".to_string()));
                     }
                     _ => panic!("Left should be Comparison"),
                 }
@@ -1187,14 +1187,14 @@ mod tests {
                 match *left {
                     Expression::Comparison { field, value, .. } => {
                         assert_eq!(field, "state");
-                        assert_eq!(value, Value::string("review".to_string()));
+                        assert_eq!(value, Value::String("review".to_string()));
                     }
                     _ => panic!("Left should be Comparison"),
                 }
                 match *right {
                     Expression::Comparison { field, value, .. } => {
                         assert_eq!(field, "state");
-                        assert_eq!(value, Value::string("learning".to_string()));
+                        assert_eq!(value, Value::String("learning".to_string()));
                     }
                     _ => panic!("Right should be Comparison"),
                 }
@@ -1215,7 +1215,7 @@ mod tests {
         match condition {
             Expression::Comparison { field, value, .. } => {
                 assert_eq!(field, "file");
-                assert_eq!(value, Value::string("карточка.md".to_string()));
+                assert_eq!(value, Value::String("карточка.md".to_string()));
             }
             _ => panic!("Expected Comparison"),
         }
@@ -1233,7 +1233,7 @@ mod tests {
         match condition {
             Expression::Comparison { field, value, .. } => {
                 assert_eq!(field, "file");
-                assert_eq!(value, Value::string("my cards/topic one.md".to_string()));
+                assert_eq!(value, Value::String("my cards/topic one.md".to_string()));
             }
             _ => panic!("Expected Comparison"),
         }
@@ -1251,7 +1251,7 @@ mod tests {
         match condition {
             Expression::Comparison { field, value, .. } => {
                 assert_eq!(field, "state");
-                assert_eq!(value, Value::string("".to_string()));
+                assert_eq!(value, Value::String("".to_string()));
             }
             _ => panic!("Expected Comparison"),
         }
@@ -1279,7 +1279,7 @@ mod tests {
             } => {
                 assert_eq!(field, "state");
                 assert_eq!(operator, ComparisonOp::Equal);
-                assert_eq!(value, Value::string("review".to_string()));
+                assert_eq!(value, Value::String("review".to_string()));
             }
             _ => panic!("Expected Comparison"),
         }

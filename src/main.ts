@@ -229,7 +229,8 @@ export default class FsrsPlugin extends Plugin {
             // Инициализируем кэш сразу после WASM (чтобы isWasmReady подразумевал
             // и готовность кэша)
             this.cache.init();
-            verboseLog("5. Кэш инициализирован");
+            this.cache.setParams(this.settings);
+            verboseLog("5. Кэш инициализирован, параметры установлены");
 
             this.isWasmInitialized = true;
 
@@ -525,6 +526,9 @@ export default class FsrsPlugin extends Plugin {
             (await this.loadData()) as FsrsPluginSettings | null;
 
         await this.saveData(this.settings);
+
+        // Обновляем параметры пересчёта в WASM-кэше при изменении настроек
+        this.cache.setParams(this.settings);
 
         if (oldSettings && fsrsParamsChanged(oldSettings, this.settings)) {
             const now = Date.now();

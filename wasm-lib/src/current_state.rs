@@ -10,7 +10,8 @@ use crate::json_parsing::{
 use crate::types::ComputedState;
 use rs_fsrs::State;
 
-/// Вычисляет текущее состояние карточки
+/// Вычисляет текущее состояние карточки (JSON-версия).
+/// Парсит строки и делегирует ядерной функции.
 pub fn compute_current_state(
     card_json: String,
     now_str: String,
@@ -18,11 +19,46 @@ pub fn compute_current_state(
     default_stability: f64,
     default_difficulty: f64,
 ) -> String {
-    // Парсим входные данные
     let card = parse_card_from_json(&card_json);
     let parameters = parse_parameters_from_json(&parameters_json);
     let now = parse_datetime_flexible(&now_str).unwrap_or_else(Utc::now);
 
+    let computed_state = compute_current_state_from_card(
+        &card,
+        now,
+        &parameters,
+        default_stability,
+        default_difficulty,
+    );
+
+    match serde_json::to_string(&computed_state) {
+        Ok(json) => json,
+        Err(_) => {
+            format!(
+                r#"{{"due":"{}","stability":{},"difficulty":{},"state":"{}","elapsed_days":{},"scheduled_days":{},"reps":{},"lapses":{},"retrievability":{}}}"#,
+                computed_state.due,
+                computed_state.stability,
+                computed_state.difficulty,
+                computed_state.state,
+                computed_state.elapsed_days,
+                computed_state.scheduled_days,
+                computed_state.reps,
+                computed_state.lapses,
+                computed_state.retrievability
+            )
+        }
+    }
+}
+
+/// Ядерная функция: вычисляет ComputedState из готовых структур (без JSON).
+/// Используется как из JSON-версии, так и из query_cards для TTL-пересчёта.
+pub fn compute_current_state_from_card(
+    card: &crate::types::CardData,
+    now: DateTime<Utc>,
+    parameters: &crate::types::FsrsParameters,
+    default_stability: f64,
+    default_difficulty: f64,
+) -> ComputedState {
     // Защита от NaN/Inf в дефолтных значениях
     let default_stability = if default_stability.is_finite() && default_stability > 0.0 {
         default_stability
@@ -41,7 +77,7 @@ pub fn compute_current_state(
         &card.reviews,
         default_stability,
         default_difficulty,
-        &parameters,
+        parameters,
         now,
         parameters.enable_fuzz,
     );
@@ -80,8 +116,7 @@ pub fn compute_current_state(
         }
     };
 
-    // Создаем вычисляемое состояние
-    let computed_state = ComputedState {
+    ComputedState {
         due: fsrs_card.due.to_rfc3339(),
         stability,
         difficulty,
@@ -91,26 +126,6 @@ pub fn compute_current_state(
         reps: fsrs_card.reps.max(0) as u64,
         lapses: fsrs_card.lapses.max(0) as u64,
         retrievability,
-    };
-
-    // Сериализация с запасным вариантом на случай невалидных чисел
-    match serde_json::to_string(&computed_state) {
-        Ok(json) => json,
-        Err(_) => {
-            // Ручное создание JSON при ошибке сериализации
-            format!(
-                r#"{{"due":"{}","stability":{},"difficulty":{},"state":"{}","elapsed_days":{},"scheduled_days":{},"reps":{},"lapses":{},"retrievability":{}}}"#,
-                computed_state.due,
-                computed_state.stability,
-                computed_state.difficulty,
-                computed_state.state,
-                computed_state.elapsed_days,
-                computed_state.scheduled_days,
-                computed_state.reps,
-                computed_state.lapses,
-                computed_state.retrievability
-            )
-        }
     }
 }
 
