@@ -8,7 +8,7 @@
         "postinstall": "command -v git >/dev/null && npx lefthook install || true",
         "build-wasm": "WASM_OPT_ARGS=-Oz wasm-pack build wasm-lib --target web --out-dir pkg --out-name wasm_lib",
         "encode-wasm": "node scripts/encode-wasm.js",
-        "wasm": "npm run build-wasm && npm run encode-wasm",
+        "wasm": "npm run build-wasm && npm run encode-wasm && node scripts/strip-wasm-fetch.js",
         "dev": "nodemon --watch wasm-lib/src --ext rs --exec \"npm run wasm && node esbuild.config.mjs\"",
         "build": "npm run wasm && tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
         "build:wasm": "npm run wasm",

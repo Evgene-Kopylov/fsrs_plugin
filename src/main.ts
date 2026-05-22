@@ -32,7 +32,7 @@ import { i18n } from "./utils/i18n";
 import { showNotice } from "./utils/notice";
 import { verboseLog, setVerboseLoggingEnabled } from "./utils/logger";
 
-import init from "../wasm-lib/pkg/wasm_lib";
+import { initSync } from "../wasm-lib/pkg/wasm_lib";
 import { WASM_BASE64 } from "../wasm-lib/pkg/wasm_lib_base64";
 
 /** Интерфейс для рендереров, поддерживающих обновление */
@@ -203,8 +203,8 @@ export default class FsrsPlugin extends Plugin {
         // Инициализация WASM — после полной загрузки UI,
         // чтобы не блокировать onload() тяжёлыми операциями (base64 → bytes, компиляция WASM).
         // Сканирование хранилища — ленивое, запускается по первому запросу к кэшу.
-        this.app.workspace.onLayoutReady(async () => {
-            await this.initializeWasm();
+        this.app.workspace.onLayoutReady(() => {
+            this.initializeWasm();
             verboseLog(
                 "WASM инициализирован, кэш готов. Сканирование — по запросу.",
             );
@@ -216,14 +216,14 @@ export default class FsrsPlugin extends Plugin {
     /**
      * Инициализация WASM модуля
      */
-    private async initializeWasm(): Promise<void> {
+    private initializeWasm(): void {
         try {
             verboseLog("1. Конвертируем base64 в байты...");
             const wasmBytes = base64ToBytes(WASM_BASE64);
             verboseLog("2. Длина WASM байтов:", wasmBytes.length);
 
-            verboseLog("3. Вызываем init...");
-            await init({ module_or_path: wasmBytes });
+            verboseLog("3. Вызываем initSync...");
+            initSync({ module: wasmBytes });
             verboseLog("4. WASM инициализирован");
 
             // Инициализируем кэш сразу после WASM (чтобы isWasmReady подразумевал
