@@ -51,6 +51,10 @@ git fetch origin main:main && git switch main \
 git fetch origin main:main && git switch main
 ```
 
+```bash
+git push github HEAD:staging
+```
+
 ## Terminal
 
 ```bash
