@@ -377,14 +377,6 @@
     font-size: 1rem;
 }
 
-.fsrs-interval-label {
-    min-width: 8em;
-}
-
-.fsrs-interval-days {
-    /* выравнивается автоматически за счёт одинаковой ширины лейблов */
-}
-
 .fsrs-interval-row .fsrs-interval-marker {
     display: inline;
     visibility: hidden;
