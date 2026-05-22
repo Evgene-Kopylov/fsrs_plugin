@@ -276,14 +276,7 @@
     color: var(--text-normal);
 }
 
-.fsrs-history-file-info {
-    font-size: 0.9em;
-    color: var(--text-muted);
-    margin-bottom: 1.5em;
-    border-bottom: 1px solid var(--background-modifier-border);
-    padding-bottom: 1em;
-}
-
+/* Стили для таблицы истории повторений */
 .fsrs-history-empty {
     text-align: center;
     color: var(--text-muted);
@@ -860,4 +853,13 @@ body.fsrs-hide-frontmatter
 
 .fsrs-reviews-pill:hover .fsrs-reviews-pill-tip {
     display: block;
+}
+
+/* Квадратик оценки в истории (без текста) */
+.fsrs-history-rating-square {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    border-radius: 2px;
+    vertical-align: middle;
 }
