@@ -129,7 +129,8 @@ export class ReviewHistoryModal extends Modal {
             const pillsRow = contentEl.createDiv({
                 cls: "fsrs-review-pills",
             });
-            for (const rev of this.card.reviews) {
+            for (let i = 0; i < this.card.reviews.length; i++) {
+                const rev = this.card.reviews[i]!;
                 const key = numberToRating(rev.rating);
                 const color =
                     this.plugin.settings.customButtonColors?.[key]?.trim() ||
@@ -141,6 +142,7 @@ export class ReviewHistoryModal extends Modal {
                 const pill = pillsRow.createDiv({
                     cls: "fsrs-review-pill",
                 });
+                pill.setAttr("data-review-index", String(i));
                 pill.style.backgroundColor = color;
 
                 const tip = pill.createDiv({ cls: "fsrs-review-pill-tip" });
@@ -158,6 +160,29 @@ export class ReviewHistoryModal extends Modal {
 
         // Статистика
         this.renderStatistics(contentEl);
+
+        // Подсветка: плиточка ↔ строка таблицы
+        const pills = contentEl.querySelectorAll<HTMLElement>(
+            ".fsrs-review-pill[data-review-index]",
+        );
+        for (const pill of Array.from(pills)) {
+            const idx = pill.getAttr("data-review-index");
+            if (!idx) continue;
+            const row = contentEl.querySelector<HTMLTableRowElement>(
+                `tr[data-review-index="${idx}"]`,
+            );
+            if (!row) continue;
+            pill.onmouseenter = () =>
+                row.addClass("fsrs-history-row-highlight");
+            pill.onmouseleave = () =>
+                row.removeClass("fsrs-history-row-highlight");
+            pill.onclick = () =>
+                row.scrollIntoView({ behavior: "smooth", block: "center" });
+            row.onmouseenter = () =>
+                pill.addClass("fsrs-review-pill-highlight");
+            row.onmouseleave = () =>
+                pill.removeClass("fsrs-review-pill-highlight");
+        }
     }
 
     /**
@@ -210,6 +235,13 @@ export class ReviewHistoryModal extends Modal {
         for (let i = 0; i < sortedStates.length; i++) {
             const state = sortedStates[i]!;
             const row = tbody.insertRow();
+
+            // Индекс в исходном массиве reviews (для связи с плиточками)
+            const reviewIdx =
+                this.card?.reviews.findIndex((r) => r.date === state.date) ??
+                -1;
+            if (reviewIdx >= 0)
+                row.setAttr("data-review-index", String(reviewIdx));
 
             // Номер повторения (обратный порядок)
             row.insertCell().textContent = (sortedStates.length - i).toString();
