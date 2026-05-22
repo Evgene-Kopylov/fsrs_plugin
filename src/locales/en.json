@@ -11,7 +11,9 @@
             "good": "Good (3)",
             "easy": "Easy (4)",
             "cancel": "Cancel"
-        }
+        },
+        "interval_days": "{days} d",
+        "interval_days_unit": "d"
     },
     "reviewButton": {
         "loading": "Loading...",

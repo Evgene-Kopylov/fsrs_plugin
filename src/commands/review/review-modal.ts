@@ -1,7 +1,15 @@
 import { Modal, App } from "obsidian";
 import type { CardData, FSRSRating } from "../../interfaces/fsrs";
-import { RATING_KEYS } from "../../interfaces/fsrs";
+import { numberToRating } from "../../interfaces/fsrs";
 import { i18n } from "../../utils/i18n";
+
+/** Интервалы в днях для каждой оценки */
+export interface NextReviewIntervals {
+    again: number | null;
+    hard: number | null;
+    good: number | null;
+    easy: number | null;
+}
 
 /**
  * Модальное окно для выбора оценки при повторении карточки
@@ -27,6 +35,7 @@ export class ReviewModal extends Modal {
             good: string;
             easy: string;
         },
+        private nextIntervals?: NextReviewIntervals,
     ) {
         super(app);
         this.card = card;
@@ -49,42 +58,80 @@ export class ReviewModal extends Modal {
         const { contentEl } = this;
         contentEl.empty();
 
-        // Заголовок
-        contentEl.createEl("h3", { text: i18n.t("review.title") });
+        // Заголовок — имя файла
+        const fileName = this.card.filePath
+            .split("/")
+            .pop()!
+            .replace(/\.md$/, "");
+        contentEl.createEl("h3", { text: fileName });
 
-        // Информация о карточке
-        const info = contentEl.createDiv({
-            cls: "fsrs-review-info",
-        });
-        const small = info.createEl("small");
-
-        // Файл
-        small.createEl("strong", { text: i18n.t("review.file_label") });
-        small.appendText(" " + this.card.filePath);
-        small.createEl("br");
-
-        // Сессии
-        small.createEl("strong", { text: i18n.t("review.sessions_label") });
-        small.appendText(" " + this.card.reviews.length);
-        small.createEl("br");
-
-        // Последняя + оценка (одна строка)
-        small.createEl("strong", { text: i18n.t("review.last_review_label") });
+        // Плиточки повторений (как в поле reviews)
         if (this.card.reviews.length > 0) {
-            const last = this.card.reviews[this.card.reviews.length - 1]!;
-            small.appendText(" " + new Date(last.date).toLocaleString());
-            const ratingKey = RATING_KEYS[last.rating]!;
-            small.appendText(" ");
-            small.createSpan({
-                text: i18n
-                    .t(`review.buttons.${ratingKey}`)
-                    .replace(/ \(\d\)$/, ""),
-                cls: `fsrs-heatmap-tip-rating fsrs-heatmap-tip-r${last.rating}`,
+            const pillsRow = contentEl.createDiv({
+                cls: "fsrs-review-pills",
             });
-        } else {
-            small.appendText(" " + i18n.t("review.no_reviews"));
+            for (const rev of this.card.reviews) {
+                const key = numberToRating(rev.rating);
+                const color =
+                    this.customColors?.[key]?.trim() ||
+                    `var(--fsrs-color-${key})`;
+                const label =
+                    this.customLabels?.[key]?.trim() ||
+                    i18n.t(`review.buttons.${key}`).replace(/ \(\d\)$/, "");
+
+                const pill = pillsRow.createDiv({
+                    cls: "fsrs-review-pill",
+                });
+                pill.style.backgroundColor = color;
+
+                const tip = pill.createDiv({ cls: "fsrs-review-pill-tip" });
+                tip.createSpan({ text: rev.date.substring(0, 10) });
+                tip.createSpan({ text: " " });
+                tip.createSpan({
+                    text: label,
+                    cls: `fsrs-heatmap-tip-rating fsrs-heatmap-tip-r${rev.rating}`,
+                });
+            }
         }
-        small.createEl("hr");
+
+        // Список интервалов
+        let intervalRows: Record<string, HTMLElement> = {};
+        if (this.nextIntervals) {
+            const list = contentEl.createDiv({
+                cls: "fsrs-interval-list",
+            });
+            const ratings: FSRSRating[] = ["again", "hard", "good", "easy"];
+            for (const r of ratings) {
+                const days = this.nextIntervals[r];
+                if (days == null) continue;
+                const row = list.createDiv({
+                    cls: "fsrs-interval-row",
+                });
+                row.setAttr("data-rating", r);
+
+                const labelClean =
+                    this.customLabels?.[r]?.trim() ||
+                    i18n.t(`review.buttons.${r}`).replace(/ \(\d\)$/, "");
+
+                row.createSpan({
+                    text: labelClean,
+                    cls: "fsrs-interval-label",
+                });
+
+                const daysSpan = row.createSpan({
+                    cls: "fsrs-interval-days",
+                });
+                daysSpan.createSpan({
+                    cls: "fsrs-interval-marker",
+                    text: "-> ",
+                });
+                daysSpan.createSpan({
+                    text: `${days} ${i18n.t("review.interval_days_unit")}`,
+                });
+
+                intervalRows[r] = row;
+            }
+        }
 
         // Вспомогательная функция: custom label или перевод
         const labelOrTranslation = (
@@ -144,6 +191,15 @@ export class ReviewModal extends Modal {
             button.className = "fsrs-rating-button";
             button.textContent = label;
             button.style.backgroundColor = color;
+
+            // Подсветка строки интервала при наведении
+            const intervalRow = intervalRows[rating];
+            if (intervalRow) {
+                button.onmouseenter = () =>
+                    intervalRow.addClass("fsrs-interval-row-active");
+                button.onmouseleave = () =>
+                    intervalRow.removeClass("fsrs-interval-row-active");
+            }
 
             button.onclick = () => {
                 this.ratingSelected = true;

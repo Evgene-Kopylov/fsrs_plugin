@@ -330,6 +330,71 @@
     opacity: 0.8;
 }
 
+/* Плиточки повторений в модальном окне */
+.fsrs-review-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 12px;
+}
+
+.fsrs-review-pill {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    position: relative;
+    cursor: default;
+}
+
+.fsrs-review-pill-tip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.75em;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.fsrs-review-pill:hover .fsrs-review-pill-tip {
+    display: block;
+}
+
+/* Список интервалов */
+.fsrs-interval-list {
+    margin-bottom: 12px;
+}
+
+.fsrs-interval-row {
+    display: flex;
+    align-items: baseline;
+    padding: 4px 8px 4px 0;
+    font-size: 1rem;
+}
+
+.fsrs-interval-label {
+    min-width: 8em;
+}
+
+.fsrs-interval-days {
+    /* выравнивается автоматически за счёт одинаковой ширины лейблов */
+}
+
+.fsrs-interval-row .fsrs-interval-marker {
+    display: inline;
+    visibility: hidden;
+    margin-right: 0.5em;
+}
+
+.fsrs-interval-row-active .fsrs-interval-marker {
+    visibility: visible;
+}
+
 /* Стили для модального окна справки */
 .fsrs-help-modal {
     width: 80%;

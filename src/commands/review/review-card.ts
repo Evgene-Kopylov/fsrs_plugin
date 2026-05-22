@@ -15,6 +15,7 @@ import {
 import type { FSRSRating } from "../../interfaces/fsrs";
 import type MyPlugin from "../../main";
 import { ReviewModal } from "./review-modal";
+import type { NextReviewIntervals } from "./review-modal";
 import { MINIMUM_REVIEW_INTERVAL_MINUTES } from "../../constants";
 
 /**
@@ -168,11 +169,23 @@ async function reviewCardByFile(
         }
     }
 
+    // Интервалы для списка в модальном окне
+    const rd = getNextReviewDates(card, plugin.settings);
+    const MS = 86_400_000;
+    const ts = Date.now();
+    const nextIntervals: NextReviewIntervals = {
+        again: rd.again ? Math.round((Date.parse(rd.again) - ts) / MS) : null,
+        hard: rd.hard ? Math.round((Date.parse(rd.hard) - ts) / MS) : null,
+        good: rd.good ? Math.round((Date.parse(rd.good) - ts) / MS) : null,
+        easy: rd.easy ? Math.round((Date.parse(rd.easy) - ts) / MS) : null,
+    };
+
     const modal = new ReviewModal(
         app,
         card,
         plugin.settings.customButtonLabels,
         plugin.settings.customButtonColors,
+        nextIntervals,
     );
     const rating = await modal.show();
 
