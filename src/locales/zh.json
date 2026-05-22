@@ -11,7 +11,9 @@
             "good": "良好 (3)",
             "easy": "简单 (4)",
             "cancel": "取消"
-        }
+        },
+        "interval_days": "{days} 天",
+        "interval_days_unit": "天"
     },
     "reviewButton": {
         "loading": "加载中...",

@@ -11,7 +11,9 @@
             "good": "Нормально (3)",
             "easy": "Легко (4)",
             "cancel": "Отмена"
-        }
+        },
+        "interval_days": "{days} дн",
+        "interval_days_unit": "дн"
     },
     "reviewButton": {
         "loading": "Загрузка...",

@@ -124,19 +124,65 @@ export class ReviewHistoryModal extends Modal {
             cls: "fsrs-history-title",
         });
 
-        // Информация о файле
-        const fileInfo = contentEl.createDiv({
-            cls: "fsrs-history-file-info",
-        });
-        fileInfo.createEl("small", {
-            text: `${i18n.t("history.file_label")} ${this.filePath}`,
-        });
+        // Плиточки истории повторений
+        if (this.card.reviews.length > 0) {
+            const pillsRow = contentEl.createDiv({
+                cls: "fsrs-review-pills",
+            });
+            for (let i = 0; i < this.card.reviews.length; i++) {
+                const rev = this.card.reviews[i]!;
+                const key = numberToRating(rev.rating);
+                const color =
+                    this.plugin.settings.customButtonColors?.[key]?.trim() ||
+                    `var(--fsrs-color-${key})`;
+                const label =
+                    this.plugin.settings.customButtonLabels?.[key]?.trim() ||
+                    i18n.t(`review.buttons.${key}`).replace(/ \(\d\)$/, "");
+
+                const pill = pillsRow.createDiv({
+                    cls: "fsrs-review-pill",
+                });
+                pill.setAttr("data-review-index", String(i));
+                pill.style.backgroundColor = color;
+
+                const tip = pill.createDiv({ cls: "fsrs-review-pill-tip" });
+                tip.createSpan({ text: rev.date.substring(0, 10) });
+                tip.createSpan({ text: " " });
+                tip.createSpan({
+                    text: label,
+                    cls: `fsrs-heatmap-tip-rating fsrs-heatmap-tip-r${rev.rating}`,
+                });
+            }
+        }
 
         // Таблица с историей повторений
         this.renderHistoryTable(contentEl);
 
         // Статистика
         this.renderStatistics(contentEl);
+
+        // Подсветка: плиточка ↔ строка таблицы
+        const pills = contentEl.querySelectorAll<HTMLElement>(
+            ".fsrs-review-pill[data-review-index]",
+        );
+        for (const pill of Array.from(pills)) {
+            const idx = pill.getAttr("data-review-index");
+            if (!idx) continue;
+            const row = contentEl.querySelector<HTMLTableRowElement>(
+                `tr[data-review-index="${idx}"]`,
+            );
+            if (!row) continue;
+            pill.onmouseenter = () =>
+                row.addClass("fsrs-history-row-highlight");
+            pill.onmouseleave = () =>
+                row.removeClass("fsrs-history-row-highlight");
+            pill.onclick = () =>
+                row.scrollIntoView({ behavior: "smooth", block: "center" });
+            row.onmouseenter = () =>
+                pill.addClass("fsrs-review-pill-highlight");
+            row.onmouseleave = () =>
+                pill.removeClass("fsrs-review-pill-highlight");
+        }
     }
 
     /**
@@ -189,6 +235,13 @@ export class ReviewHistoryModal extends Modal {
         for (let i = 0; i < sortedStates.length; i++) {
             const state = sortedStates[i]!;
             const row = tbody.insertRow();
+
+            // Индекс в исходном массиве reviews (для связи с плиточками)
+            const reviewIdx =
+                this.card?.reviews.findIndex((r) => r.date === state.date) ??
+                -1;
+            if (reviewIdx >= 0)
+                row.setAttr("data-review-index", String(reviewIdx));
 
             // Номер повторения (обратный порядок)
             row.insertCell().textContent = (sortedStates.length - i).toString();
@@ -353,53 +406,14 @@ export class ReviewHistoryModal extends Modal {
                     { date: lastReview.date },
                 );
             }
-
-            // Оценка последнего повторения
-            const lastRatingItem = statsList.createEl("li");
-            lastRatingItem.appendText(
-                i18n.t("history.statistics.last_rating") + " ",
-            );
-            lastRatingItem.appendChild(
-                this.createRatingBadge(numberToRating(lastReview.rating)),
-            );
-        }
-
-        // Распределение оценок
-        if (this.card.reviews.length > 0) {
-            const ratingCounts = {
-                again: 0,
-                hard: 0,
-                good: 0,
-                easy: 0,
-            };
-
-            for (const review of this.card.reviews) {
-                ratingCounts[numberToRating(review.rating)]++;
-            }
-
-            const ratingsItem = statsList.createEl("li");
-            ratingsItem.appendText(
-                i18n.t("history.statistics.ratings_distribution") + " ",
-            );
-            for (const key of ["again", "hard", "good", "easy"] as const) {
-                ratingsItem.appendText(String(ratingCounts[key]) + "\u00d7");
-                ratingsItem.appendChild(this.createRatingBadge(key));
-                ratingsItem.appendText(" ");
-            }
         }
     }
 
-    /** Возвращает локализованный лейбл оценки (без номера клавиши) */
-    private translateRating(rating: RatingKey): string {
-        return i18n.t(`review.buttons.${rating}`).replace(/ \(\d\)$/, "");
-    }
-
-    /** Создаёт span с цветным бейджем оценки */
+    /** Создаёт цветной квадратик оценки (без текста) */
     private createRatingBadge(rating: RatingKey): HTMLSpanElement {
         const idx = RATING_KEYS.indexOf(rating);
         return createSpan({
-            text: this.translateRating(rating),
-            cls: `fsrs-heatmap-tip-rating fsrs-heatmap-tip-r${idx}`,
+            cls: `fsrs-history-rating-square fsrs-heatmap-tip-r${idx}`,
         });
     }
 

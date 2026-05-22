@@ -7,8 +7,8 @@ export const DEFAULT_PARAMETERS: FSRSParameters = {
     enable_fuzz: true, // включить случайное изменение интервалов
 };
 
-// Минимальный интервал для досрочного повторения (40 минут)
-export const MINIMUM_REVIEW_INTERVAL_MINUTES = 40;
+// Минимальный интервал для досрочного повторения
+export const MINIMUM_REVIEW_INTERVAL_MINUTES = 120;
 
 /** CSS-переменная акцентного цвета Obsidian */
 export const OBSIDIAN_ACCENT_VAR = "var(--interactive-accent)";
