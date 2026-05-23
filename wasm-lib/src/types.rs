@@ -23,7 +23,23 @@ pub struct CardData {
 pub struct FsrsParameters {
     pub request_retention: f64,
     pub maximum_interval: f64,
-    pub enable_fuzz: bool,
+    #[serde(default = "default_w")]
+    pub w: [f32; 21],
+}
+
+fn default_w() -> [f32; 21] {
+    crate::fsrs_schedule::DEFAULT_PARAMETERS
+}
+
+/// Состояние карточки после пересчёта FSRS (v6)
+#[derive(Debug, Clone)]
+pub struct FsrsCard {
+    pub stability: f32,
+    pub difficulty: f32,
+    pub scheduled_days: u32,
+    pub reps: u32,
+    pub lapses: u32,
+    pub last_rating: Option<u32>,
 }
 
 /// Параметры для пересчёта состояния в кэше (TTL-логика)
@@ -31,7 +47,6 @@ pub struct FsrsParameters {
 pub struct FsrsCacheParams {
     pub request_retention: f64,
     pub maximum_interval: f64,
-    pub enable_fuzz: bool,
     pub default_stability: f64,
     pub default_difficulty: f64,
     pub min_recalc_ttl_seconds: f64,

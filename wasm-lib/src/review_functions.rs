@@ -66,7 +66,7 @@ mod tests {
     use serde_json;
 
     fn create_test_parameters_json() -> String {
-        r#"{"request_retention": 0.9, "maximum_interval": 365.0, "enable_fuzz": false}"#.to_string()
+        r#"{"request_retention": 0.9, "maximum_interval": 365.0}"#.to_string()
     }
 
     fn create_empty_card_json() -> String {
@@ -362,15 +362,15 @@ mod tests {
     fn test_review_card_parameter_variations() {
         let test_cases = vec![
             (
-                r#"{"request_retention": 0.85, "maximum_interval": 100.0, "enable_fuzz": false}"#,
+                r#"{"request_retention": 0.85, "maximum_interval": 100.0}"#,
                 "Different retention",
             ),
             (
-                r#"{"request_retention": 0.9, "maximum_interval": 1000.0, "enable_fuzz": true}"#,
+                r#"{"request_retention": 0.9, "maximum_interval": 1000.0}"#,
                 "With fuzz enabled",
             ),
             (
-                r#"{"request_retention": 0.95, "maximum_interval": 36500.0, "enable_fuzz": false}"#,
+                r#"{"request_retention": 0.95, "maximum_interval": 36500.0}"#,
                 "High retention",
             ),
         ];

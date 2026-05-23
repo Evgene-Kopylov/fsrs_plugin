@@ -18,6 +18,10 @@
 
 ## Задачи
 
+### WASM/FSRS
+
+- [x] [миграция с rs-fsrs 1.2.1 (v5) на fsrs 6.0.0 (v6)](fsrs-v6-migration.md)
+
 ### SQL
 
 - [>] [однобуквенные псевдонимы полей d, s, r](field-aliases.md)

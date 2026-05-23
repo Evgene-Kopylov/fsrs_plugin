@@ -21,6 +21,7 @@ mod card_history;
 mod conversion;
 mod current_state;
 mod fsrs_logic;
+mod fsrs_schedule;
 mod json_parsing;
 mod macros;
 mod next_review;
@@ -159,7 +160,7 @@ pub fn get_retrievability(
     default_stability: f64,
     default_difficulty: f64,
 ) -> String {
-    current_state::get_retrievability(
+    current_state::get_retrievability_json(
         card_json,
         now_str,
         parameters_json,
