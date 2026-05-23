@@ -1,6 +1,7 @@
-// Чистая scheduling-логика FSRS v6 без зависимостей от burn.
-// Выдрана из https://github.com/open-spaced-repetition/fsrs-rs (rev af8448e).
-// Только функции планирования повторений — оптимизатор не нужен.
+// Scheduling-логика FSRS v6 — вычислительные формулы (без burn/оптимизатора).
+//
+// Источник: https://github.com/open-spaced-repetition/fsrs-rs (rev af8448e)
+// Адаптировано: удалена зависимость burn, оставлены только f32-формулы.
 
 /// Константы FSRS v6
 pub const DEFAULT_PARAMETERS: [f32; 21] = [
