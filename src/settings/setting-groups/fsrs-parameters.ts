@@ -5,7 +5,7 @@ import { DEFAULT_SETTINGS } from "../types";
 
 /**
  * Рендерит группу параметров алгоритма FSRS.
- * Включает настройки: request_retention, maximum_interval, enable_fuzz.
+ * Включает настройки: request_retention, maximum_interval.
  */
 export function renderFsrsParameters(
     containerEl: HTMLElement,
@@ -74,35 +74,6 @@ export function renderFsrsParameters(
                     DEFAULT_SETTINGS.parameters.maximum_interval;
                 maxIntervalText.setValue(
                     DEFAULT_SETTINGS.parameters.maximum_interval.toString(),
-                );
-                await plugin.saveSettings();
-            });
-    });
-
-    // Параметр enable_fuzz
-    const enableFuzzSetting = new Setting(containerEl)
-        .setName(i18n.t("settings.fsrs_algorithm.enable_fuzz.name"))
-        .setDesc(i18n.t("settings.fsrs_algorithm.enable_fuzz.desc"));
-
-    let enableFuzzToggle: import("obsidian").ToggleComponent;
-    enableFuzzSetting.addToggle((toggle) => {
-        enableFuzzToggle = toggle;
-        toggle
-            .setValue(plugin.settings.parameters.enable_fuzz)
-            .onChange(async (value) => {
-                plugin.settings.parameters.enable_fuzz = value;
-                await plugin.saveSettings();
-            });
-    });
-
-    enableFuzzSetting.addExtraButton((btn) => {
-        btn.setIcon("reset")
-            .setTooltip("Сбросить")
-            .onClick(async () => {
-                plugin.settings.parameters.enable_fuzz =
-                    DEFAULT_SETTINGS.parameters.enable_fuzz;
-                enableFuzzToggle.setValue(
-                    DEFAULT_SETTINGS.parameters.enable_fuzz,
                 );
                 await plugin.saveSettings();
             });

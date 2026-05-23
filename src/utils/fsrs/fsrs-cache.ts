@@ -146,7 +146,6 @@ export class FsrsCache {
         const params = {
             request_retention: settings.parameters.request_retention,
             maximum_interval: settings.parameters.maximum_interval,
-            enable_fuzz: settings.parameters.enable_fuzz,
             default_stability: settings.default_initial_stability,
             default_difficulty: settings.default_initial_difficulty,
             min_recalc_ttl_seconds: MIN_RECALC_TTL_SECONDS,

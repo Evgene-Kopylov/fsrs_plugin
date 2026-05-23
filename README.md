@@ -15,7 +15,7 @@ The plugin turns your notes into FSRS-based flashcards for effective memorizatio
 
 ## 🚀 Features
 
-- **📊 FSRS Algorithm** — more efficient than SM-2
+- **📊 FSRS-6 Algorithm** — more efficient than SM-2
 - **🎯 Retention Control** — 70–97% target level
 - **⚡ High Performance** — Rust/WASM for fast computations
 - **🔄 Dynamic Interface** — auto-updating lists
@@ -138,7 +138,7 @@ The plugin uses [rs-fsrs](https://crates.io/crates/rs-fsrs) — the official Rus
 | --- | --- | --- |
 | `request_retention` | 0.9 (90%) | Target retention rate |
 | `maximum_interval` | 36500 days | Maximum interval between reviews |
-| `enable_fuzz` | true | Randomize intervals to counter card grouping |
+
 
 **Not yet configurable:**
 
@@ -203,7 +203,6 @@ reviews:
 | --------- | ------------- | --------- |
 | **Request Retention** | Target retention level | 0.9 (90%) |
 | **Maximum Interval** | Max interval (days) | 36500 (~100 years) |
-| **Enable Interval Fuzz** | Randomize intervals (±5%) | Enabled |
 
 ### Default Settings for New Cards
 
@@ -227,7 +226,7 @@ reviews:
 ## 🧠 The FSRS Algorithm
 
 **FSRS** is a modern spaced repetition algorithm by Jarrett Ye.
-Implements [FSRS-5](https://github.com/open-spaced-repetition/awesome-fsrs/wiki/The-Algorithm) ([rs-fsrs](https://github.com/open-spaced-repetition/fsrs-rs) v1.2.1). Compared to SM-2:
+Implements [FSRS-6](https://github.com/open-spaced-repetition/fsrs-rs) (v6.0.0, rev af8448e). Compared to SM-2:
 
 - Learns memory patterns via machine learning
 - Adapts to your memory speed

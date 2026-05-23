@@ -75,10 +75,8 @@ export interface CachedCard {
 
 // Интерфейс для параметров алгоритма FSRS
 export interface FSRSParameters {
-    // Параметры алгоритма (используются фиксированные веса из библиотеки rs-fsrs)
-    request_retention: number; // целевой уровень запоминания (0.0-1.0)
-    maximum_interval: number; // максимальный интервал в днях
-    enable_fuzz: boolean; // включить случайное изменение интервалов
+    request_retention: number;
+    maximum_interval: number;
 }
 
 // Интерфейс для настроек FSRS плагина

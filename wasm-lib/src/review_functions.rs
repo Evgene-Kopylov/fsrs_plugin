@@ -367,7 +367,7 @@ mod tests {
             ),
             (
                 r#"{"request_retention": 0.9, "maximum_interval": 1000.0}"#,
-                "With fuzz enabled",
+                "Standard retention",
             ),
             (
                 r#"{"request_retention": 0.95, "maximum_interval": 36500.0}"#,

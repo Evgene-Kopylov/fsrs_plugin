@@ -1,10 +1,9 @@
 import type { FSRSParameters, FSRSSettings } from "./interfaces/fsrs";
 
-// Параметры алгоритма FSRS по умолчанию (совместимые с rs-fsrs)
-export const DEFAULT_PARAMETERS: FSRSParameters = {
-    request_retention: 0.9, // целевой уровень запоминания 90%
-    maximum_interval: 36500, // максимальный интервал 100 лет
-    enable_fuzz: true, // включить случайное изменение интервалов
+// Параметры алгоритма FSRS по умолчанию
+const DEFAULT_PARAMETERS: FSRSParameters = {
+    request_retention: 0.9,
+    maximum_interval: 36500,
 };
 
 // Минимальный интервал для досрочного повторения

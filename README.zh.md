@@ -15,7 +15,7 @@
 
 ## 🚀 特性
 
-- **📊 FSRS 算法** — 比 SM-2 更高效
+- **📊 FSRS-6 算法** — 比 SM-2 更高效
 - **🎯 记忆控制** — 70-97% 的保留率
 - **⚡ 高性能** — Rust/WASM 实现快速计算
 - **🔄 动态界面** — 列表自动刷新
@@ -127,10 +127,7 @@ LIMIT 100
 
 ### FSRS 参数与配置
 
-插件使用 [rs-fsrs](https://crates.io/crates/rs-fsrs) — 算法作者（L-M-Sherlock）的官方 Rust FSRS 实现。选择理由：
-
-- **rs-fsrs** — 由 FSRS 团队维护，与 Python 参考实现同步，积极更新。
-- **fsrs-rs** — 第三方实现，长期未更新，与当前 FSRS 版本不兼容。
+插件使用 FSRS-6 算法实现。
 
 **用户可配置**（设置 → FSRS → 算法参数）：
 
@@ -138,11 +135,10 @@ LIMIT 100
 | --- | --- | --- |
 | `request_retention` | 0.9 (90%) | 目标记忆保持率 |
 | `maximum_interval` | 36500 天 | 复习之间的最大间隔 |
-| `enable_fuzz` | true | 随机化间隔以防止卡片扎堆 |
 
 **暂不可配置：**
 
-- **`w` 权重（17 个参数）** — FSRS 的核心，决定遗忘曲线。插件使用 FSRS 作者在 Anki 语料库（数百万次复习）上优化的默认值。
+- **`w` 权重（21 个参数）** — FSRS 的核心，决定遗忘曲线。插件使用 FSRS 作者在 Anki 语料库（数百万次复习）上优化的默认值。
 - **基于用户统计的参数优化** — 不支持。用户无法用自己的回答数据重新训练权重。计划在未来版本中实现。
 
 ### 笔记中的复习按钮 `fsrs-review-button`
@@ -220,7 +216,7 @@ reviews:
 
 ## 🧠 FSRS 算法
 
-**FSRS** — Jarrett Ye 开发的现代间隔重复算法。基于 [FSRS-5](https://github.com/open-spaced-repetition/awesome-fsrs/wiki/The-Algorithm) 实现（[rs-fsrs](https://github.com/open-spaced-repetition/fsrs-rs) v1.2.1）。
+**FSRS** — Jarrett Ye 开发的现代间隔重复算法。基于 [FSRS-6](https://github.com/open-spaced-repetition/fsrs-rs) 实现（v6.0.0, rev af8448e）。
 与 SM-2 的区别：
 
 - 通过机器学习学习记忆模式

@@ -48,7 +48,8 @@ struct CachedCard {
 1. WASM-модуль декодируется из base64 и компилируется
 2. `cache.init()` — очищает HashMap, сбрасывает параметры
 3. `cache.setParams(settings)` — записывает `FsrsCacheParams`:
-   - Параметры FSRS (`request_retention`, `maximum_interval`, `enable_fuzz`)
+   - Параметры FSRS (`request_retention`, `maximum_interval`)
+   - `w` (21 параметр, FSRS-6)
    - Дефолтные stability/difficulty
    - Константы TTL (`min_recalc_ttl_seconds = 60`, `recalc_ttl_divisor = 100`)
 
