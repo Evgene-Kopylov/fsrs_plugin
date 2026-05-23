@@ -251,4 +251,112 @@ mod tests {
         assert_eq!(ms.stability, 3.0);
         assert_eq!(ms.difficulty, 5.0);
     }
+
+    #[test]
+    fn test_hard_rating() {
+        let reviews = vec![review("2026-01-01T10:00:00Z", 1)];
+        let card = compute_card_from_reviews(&reviews, 2.5, 5.0, &test_params());
+        assert_eq!(card.reps, 1);
+        assert_eq!(card.lapses, 0);
+        assert!(card.stability > 0.0);
+        assert!(card.difficulty > 0.0);
+        assert_eq!(card.last_rating, Some(2)); // Hard = 2 в v6
+        assert_ne!(card_state_label(&card), "New");
+    }
+
+    #[test]
+    fn test_invalid_date_skipped() {
+        let reviews = vec![review("not-a-date", 2)];
+        let card = compute_card_from_reviews(&reviews, 2.5, 5.0, &test_params());
+        assert_eq!(card.reps, 0);
+        assert_eq!(card.lapses, 0);
+    }
+
+    #[test]
+    fn test_lapses_good_then_again() {
+        let reviews = vec![
+            review("2026-01-01T10:00:00Z", 2),
+            review("2026-01-02T10:00:00Z", 0),
+        ];
+        let card = compute_card_from_reviews(&reviews, 2.5, 5.0, &test_params());
+        assert_eq!(card.reps, 2);
+        assert_eq!(card.lapses, 1);
+    }
+
+    #[test]
+    fn test_lapses_again_good_again() {
+        let reviews = vec![
+            review("2026-01-01T10:00:00Z", 0),
+            review("2026-01-02T10:00:00Z", 2),
+            review("2026-01-03T10:00:00Z", 0),
+        ];
+        let card = compute_card_from_reviews(&reviews, 2.5, 5.0, &test_params());
+        assert_eq!(card.reps, 3);
+        assert_eq!(card.lapses, 2);
+    }
+
+    #[test]
+    fn test_lapses_again_again_good() {
+        let reviews = vec![
+            review("2026-01-01T10:00:00Z", 0),
+            review("2026-01-02T10:00:00Z", 0),
+            review("2026-01-03T10:00:00Z", 2),
+        ];
+        let card = compute_card_from_reviews(&reviews, 2.5, 5.0, &test_params());
+        assert_eq!(card.reps, 3);
+        assert_eq!(card.lapses, 2);
+    }
+
+    #[test]
+    fn test_learning_state_after_again() {
+        let reviews = vec![review("2026-01-01T10:00:00Z", 0)];
+        let card = compute_card_from_reviews(&reviews, 2.5, 5.0, &test_params());
+        assert_eq!(card.reps, 1);
+        assert_eq!(card_state_label(&card), "Relearning");
+    }
+
+    #[test]
+    fn test_state_label_consistency() {
+        let new_card = FsrsCard {
+            stability: 0.0,
+            difficulty: 0.0,
+            scheduled_days: 0,
+            reps: 0,
+            lapses: 0,
+            last_rating: None,
+        };
+        let learning_card = FsrsCard {
+            stability: 0.5,
+            difficulty: 6.0,
+            scheduled_days: 1,
+            reps: 1,
+            lapses: 0,
+            last_rating: Some(2),
+        };
+        let review_card = FsrsCard {
+            stability: 5.0,
+            difficulty: 3.0,
+            scheduled_days: 5,
+            reps: 3,
+            lapses: 0,
+            last_rating: Some(3),
+        };
+        let relearning_card = FsrsCard {
+            stability: 1.0,
+            difficulty: 7.0,
+            scheduled_days: 1,
+            reps: 2,
+            lapses: 1,
+            last_rating: Some(1),
+        };
+
+        let labels = [
+            card_state_label(&new_card),
+            card_state_label(&learning_card),
+            card_state_label(&review_card),
+            card_state_label(&relearning_card),
+        ];
+        let unique: std::collections::HashSet<_> = labels.iter().collect();
+        assert_eq!(unique.len(), 4, "Все метки должны быть уникальными");
+    }
 }

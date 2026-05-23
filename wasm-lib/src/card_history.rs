@@ -55,14 +55,18 @@ pub fn compute_card_history(
         };
 
         // Извлекаемость перед ответом
-        let retrievability_before = state.map(|s| {
-            let r = crate::fsrs_schedule::current_retrievability(s, elapsed_days as f32);
-            if r.is_finite() && (0.0..=1.0).contains(&r) {
-                r
-            } else {
-                0.0
+        let retrievability_before = match state {
+            Some(s) => {
+                let r = crate::fsrs_schedule::current_retrievability(s, elapsed_days as f32);
+                let val = if r.is_finite() && (0.0..=1.0).contains(&r) {
+                    r
+                } else {
+                    0.0
+                };
+                Some(val as f64)
             }
-        });
+            None => Some(0.0),
+        };
 
         let rating = rating_to_u32(session.rating);
         let next = crate::fsrs_schedule::next_states(state, retention, elapsed_days, &parameters.w);
@@ -197,8 +201,17 @@ mod tests {
             "После ответа retrievability = 1.0"
         );
         assert!(
+            entry.retrievability_before.is_some_and(|r| r == 0.0),
+            "Для новой карточки retrievability_before должен быть 0, получено {:?}",
+            entry.retrievability_before
+        );
+        assert!(
             entry.retrievability_next.is_some(),
             "Должна быть retrievability_next на now"
+        );
+        assert_ne!(
+            entry.state, "New",
+            "После первого Good карточка не должна быть New"
         );
     }
 
@@ -242,6 +255,18 @@ mod tests {
         assert_eq!(second.rating, Some(2u8));
         assert_eq!(second.elapsed_days, 9, "Между повторениями 9 дней");
         assert_eq!(second.retrievability, 1.0);
+        let r_before = second.retrievability_before.unwrap();
+        assert!(
+            r_before > 0.0,
+            "retrievability_before второго повторения должна быть > 0, получено {}",
+            r_before
+        );
+        let r_next = second.retrievability_next.unwrap();
+        assert!(
+            r_next > 0.0 && r_next < 1.0,
+            "retrievability_next между 0 и 1, получено {}",
+            r_next
+        );
 
         assert!(
             second.stability > first.stability,
