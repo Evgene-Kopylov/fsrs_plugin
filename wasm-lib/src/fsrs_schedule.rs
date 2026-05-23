@@ -11,7 +11,7 @@ pub const DEFAULT_PARAMETERS: [f32; 21] = [
 
 pub const FSRS6_DEFAULT_DECAY: f32 = 0.1542;
 
-const S_MIN: f32 = 0.01;
+const S_MIN: f32 = 0.001;
 const S_MAX: f32 = 36500.0;
 const D_MIN: f32 = 1.0;
 const D_MAX: f32 = 10.0;
@@ -101,7 +101,7 @@ fn stability_after_failure(last_s: f32, last_d: f32, r: f32, w: &[f32; 21]) -> f
 #[inline]
 fn stability_short_term(last_s: f32, rating: u32, w: &[f32; 21]) -> f32 {
     let sinc = (w[17] * (rating as f32 - 3.0 + w[18])).exp() * last_s.powf(-w[19]);
-    if rating >= 3 {
+    if rating >= 2 {
         last_s * sinc.max(1.0)
     } else {
         last_s * sinc
