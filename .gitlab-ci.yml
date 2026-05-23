@@ -65,6 +65,7 @@ build_wasm:
     stage: build-wasm
     <<: *rules
     image: rust:latest
+    when: manual
     before_script:
         - cargo --version
         - rustc --version
