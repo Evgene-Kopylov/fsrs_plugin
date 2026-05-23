@@ -38,6 +38,7 @@ UI локализуется.
 ## Как увидеть консольный вывод Obsidian
 
 - `tests/test_script/rebuild-log.sh` — скрипт сбора логов
+- `scripts/check.sh` — локальный прогон всех проверок (cargo fmt, clippy, test, npm build, lint, npm test). Запуск: `sh scripts/check.sh`.
 - Скрипт: пересборка (`npm run build`), пауза для обновления Obsidian, сбор файлов и логов из тестового хранилища.
 - Уровень логов в тестовом хранилище — Verbose (видны debug).
 - Если не знаешь где, или логов нет → остановись, сообщи пользователю.
