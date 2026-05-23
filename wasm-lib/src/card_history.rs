@@ -127,7 +127,7 @@ pub fn compute_card_history(
             elapsed_days: elapsed_days as u64,
             scheduled_days: scheduled_days as u64,
             retrievability: 1.0, // после ответа
-            retrievability_before: retrievability_before.map(|r| r as f64),
+            retrievability_before,
             retrievability_next: retrievability_next.map(|r| r as f64),
         };
         history.push(hist_state);
