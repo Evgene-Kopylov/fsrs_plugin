@@ -374,4 +374,57 @@ mod tests {
         assert_eq!(state.stability, default_stability);
         assert_eq!(state.difficulty, default_difficulty);
     }
+
+    /// Регрессионный тест на реальной карточке с 6 повторениями
+    /// (2 Again, 3 Hard, 1 Good). Проверяет базовые инварианты.
+    ///
+    /// Известная проблема fsrs-rs: due и retrievability могут
+    /// расходиться — due вычисляется через scheduled_days (округление),
+    /// retrievability через stability (точная формула).
+    /// В TS-коде isDue использует retrievability, а не due.
+    #[test]
+    fn test_real_card_with_six_reviews() {
+        let card_json = r#"{
+            "reviews": [
+                {"date": "2026-05-15T05:59:41.357+00:00", "rating": 0},
+                {"date": "2026-05-17T13:09:53.946+00:00", "rating": 0},
+                {"date": "2026-05-19T10:28:31.722+00:00", "rating": 1},
+                {"date": "2026-05-21T15:23:41.717+00:00", "rating": 1},
+                {"date": "2026-05-22T15:57:25.141+00:00", "rating": 1},
+                {"date": "2026-05-22T23:32:12.067+00:00", "rating": 2}
+            ]
+        }"#
+        .to_string();
+
+        let now = "2026-05-24T12:00:00Z".to_string();
+        let params_json = create_test_parameters_json();
+        let default_stability = 2.5;
+        let default_difficulty = 5.0;
+
+        let result = compute_current_state(
+            card_json,
+            now,
+            params_json,
+            default_stability,
+            default_difficulty,
+        );
+
+        let state: ComputedState =
+            serde_json::from_str(&result).expect("Не удалось распарсить состояние");
+
+        // Карточка с повторениями — всегда Review
+        assert_eq!(state.state, "Review");
+        // 6 повторений, 2 из них Again (rating=0)
+        assert_eq!(state.reps, 6);
+        assert_eq!(state.lapses, 2);
+
+        // scheduled_days ≈ stability (формула next_interval сокращается до stability)
+        let diff = (state.scheduled_days as f64 - state.stability).abs();
+        assert!(
+            diff < 1.5,
+            "scheduled_days={} слишком далеко от stability={:.2}",
+            state.scheduled_days,
+            state.stability,
+        );
+    }
 }
