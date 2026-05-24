@@ -3,6 +3,7 @@ import {
     extractDisplayName,
     translateState,
     formatError,
+    formatDateWithSpecifiers,
 } from "../../../src/utils/fsrs-table-format";
 
 describe("fsrs-table-format pure functions", () => {
@@ -38,6 +39,41 @@ describe("fsrs-table-format pure functions", () => {
         it("returns state name as fallback for unknown state", () => {
             expect(translateState("Unknown")).toBe("Unknown");
             expect(translateState("")).toBe("");
+        });
+    });
+
+    describe("formatDateWithSpecifiers", () => {
+        it("форматирует ISO 8601 дату со спецификаторами", () => {
+            expect(
+                formatDateWithSpecifiers(
+                    "2025-03-07T14:30:00.000Z",
+                    "%Y-%m-%d",
+                ),
+            ).toBe("2025-03-07");
+        });
+
+        it("форматирует Obsidian-дату со спецификаторами", () => {
+            expect(
+                formatDateWithSpecifiers("2025-03-07_14:30", "%d.%m.%Y %H:%M"),
+            ).toBe("07.03.2025 14:30");
+        });
+
+        it("поддерживает только год", () => {
+            expect(
+                formatDateWithSpecifiers("2025-03-07T14:30:00.000Z", "%Y"),
+            ).toBe("2025");
+        });
+
+        it("возвращает исходную строку если не удалось распарсить", () => {
+            expect(formatDateWithSpecifiers("invalid", "%Y-%m-%d")).toBe(
+                "invalid",
+            );
+        });
+
+        it("оставляет неизвестные спецификаторы без изменений", () => {
+            expect(
+                formatDateWithSpecifiers("2025-03-07T14:30:00.000Z", "%Y/%x"),
+            ).toBe("2025/%x");
         });
     });
 

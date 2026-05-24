@@ -1,298 +1,362 @@
-use crate::conversion::{create_fsrs_parameters, rating_from_u8};
+use crate::conversion::{rating_to_u32, state_label};
+use crate::fsrs_schedule::{self, MemoryState, next_states as schedule_next_states};
 use crate::json_parsing::parse_datetime_flexible;
 use crate::log_warn;
-use crate::types::{FsrsParameters, ReviewSession};
+use crate::types::{FsrsCard, FsrsParameters, ReviewSession};
 
 use chrono::{DateTime, Utc};
-use rs_fsrs::{Card, FSRS, State};
 
-/// Создает Card из истории reviews через точный пересчёт
-pub fn create_card_from_last_session(
-    reviews: &[ReviewSession],
-    default_stability: f64,
-    default_difficulty: f64,
-    parameters: &FsrsParameters,
-) -> Card {
-    let now = Utc::now();
-    compute_card_from_reviews(
-        reviews,
-        default_stability,
-        default_difficulty,
-        parameters,
-        now,
-        parameters.enable_fuzz,
-    )
-}
-
-/// Полностью пересчитывает карточку через fsrs.repeat() по всем повторениям.
-/// Используется вместо create_card_from_last_session для точного вычисления состояния
-/// с учётом текущих w-параметров FSRS.
+/// Полностью пересчитывает состояние карточки через fsrs.next_states()
+/// по всем повторениям. Возвращает FsrsCard с MemoryState и метаданными.
 pub fn compute_card_from_reviews(
     reviews: &[ReviewSession],
     default_stability: f64,
     default_difficulty: f64,
     parameters: &FsrsParameters,
-    now: DateTime<Utc>,
-    enable_fuzz: bool,
-) -> Card {
-    // Защита от невалидных параметров, которые могут вызвать панику в FSRS::new()
-    let safe_max_interval = if parameters.maximum_interval > 0.0 {
-        parameters.maximum_interval
+) -> FsrsCard {
+    let retention = if parameters.request_retention > 0.0 && parameters.request_retention <= 1.0 {
+        parameters.request_retention as f32
     } else {
         log_warn!(
-            "maximum_interval = {}, используется 365.0",
-            parameters.maximum_interval
-        );
-        365.0
-    };
-    let safe_request_retention =
-        if parameters.request_retention > 0.0 && parameters.request_retention <= 1.0 {
+            "request_retention = {}, используется 0.9",
             parameters.request_retention
-        } else {
-            log_warn!(
-                "request_retention = {}, используется 0.9",
-                parameters.request_retention
-            );
-            0.9
-        };
-
-    let safe_params = FsrsParameters {
-        request_retention: safe_request_retention,
-        maximum_interval: safe_max_interval,
-        enable_fuzz,
+        );
+        0.9
     };
-    let fsrs_params = create_fsrs_parameters(&safe_params);
-    let fsrs = FSRS::new(fsrs_params);
 
-    // Начальное состояние
-    let mut current_card = Card {
-        stability: default_stability,
-        difficulty: default_difficulty,
-        elapsed_days: 0,
+    let w = &parameters.w;
+
+    let default_card = FsrsCard {
+        stability: default_stability as f32,
+        difficulty: default_difficulty as f32,
         scheduled_days: 0,
         reps: 0,
         lapses: 0,
-        state: State::New,
-        due: now,
-        last_review: now,
+        last_rating: None,
     };
 
     if reviews.is_empty() {
-        return current_card;
+        return default_card;
     }
 
+    let mut state: Option<MemoryState> = None;
     let mut last_review_date: Option<DateTime<Utc>> = None;
+    let mut reps: u32 = 0;
+    let mut lapses: u32 = 0;
+    let mut last_rating: Option<u32> = None;
+    let mut last_scheduled_days: u32 = 0;
 
     for session in reviews {
         let review_date = match parse_datetime_flexible(&session.date) {
             Some(dt) => dt,
             None => {
-                // Пропускаем сессии с неверной датой
+                log_warn!("Неверная дата в сессии: {}", session.date);
                 continue;
             }
         };
 
-        // Вычисляем elapsed_days с предыдущего повторения
         let elapsed_days = if let Some(prev_date) = last_review_date {
-            (review_date - prev_date).num_days().max(0)
+            (review_date - prev_date).num_days().max(0) as u32
         } else {
             0
         };
-        current_card.elapsed_days = elapsed_days;
 
-        let rating = rating_from_u8(session.rating);
-        let repeat_map = fsrs.repeat(current_card.clone(), review_date);
-        let scheduling_info = match repeat_map.get(&rating) {
-            Some(info) => info,
-            None => {
-                log_warn!(
-                    "Рейтинг {:?} не найден в repeat_map для сессии с датой {}",
-                    rating,
-                    session.date
-                );
+        let rating = rating_to_u32(session.rating);
+        let next = schedule_next_states(state, retention, elapsed_days, w);
+
+        let item_state = match rating {
+            1 => &next.again,
+            2 => &next.hard,
+            3 => &next.good,
+            4 => &next.easy,
+            _ => {
+                log_warn!("Неизвестный рейтинг: {}", rating);
                 continue;
             }
         };
-        current_card = scheduling_info.card.clone();
+
+        state = Some(item_state.memory);
+        reps += 1;
+        if rating == 1 {
+            lapses += 1;
+        }
+        last_rating = Some(rating);
         last_review_date = Some(review_date);
+        last_scheduled_days = item_state.interval.round().max(1.0) as u32;
     }
 
-    current_card
+    let (stability, difficulty) = match state {
+        Some(s) => {
+            let stab = if s.stability.is_finite() && s.stability >= 0.0 {
+                s.stability
+            } else {
+                default_stability as f32
+            };
+            let diff = if s.difficulty.is_finite() && s.difficulty >= 0.0 {
+                s.difficulty
+            } else {
+                default_difficulty as f32
+            };
+            (stab, diff)
+        }
+        None => (default_stability as f32, default_difficulty as f32),
+    };
+
+    FsrsCard {
+        stability,
+        difficulty,
+        scheduled_days: last_scheduled_days,
+        reps,
+        lapses,
+        last_rating,
+    }
+}
+
+/// Возвращает извлекаемость для заданного состояния и числа прошедших дней
+pub fn get_retrievability(state: MemoryState, days_elapsed: u32) -> f32 {
+    fsrs_schedule::current_retrievability(state, days_elapsed as f32)
+}
+
+/// Вычисляет MemoryState из FsrsCard для последующего next_states
+pub fn memory_state_from_card(card: &FsrsCard) -> Option<MemoryState> {
+    if card.reps == 0 {
+        None
+    } else {
+        Some(MemoryState {
+            stability: card.stability,
+            difficulty: card.difficulty,
+        })
+    }
+}
+
+/// Определяет метку состояния для FsrsCard
+pub fn card_state_label(card: &FsrsCard) -> &'static str {
+    state_label(card.reps as usize, card.stability, card.last_rating)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::{DateTime, Utc};
 
-    fn create_test_parameters() -> FsrsParameters {
+    fn test_params() -> FsrsParameters {
         FsrsParameters {
             request_retention: 0.9,
             maximum_interval: 365.0,
-            enable_fuzz: false,
+            w: fsrs_schedule::DEFAULT_PARAMETERS,
         }
     }
 
-    fn create_test_review_session(date_str: &str, rating: u8) -> ReviewSession {
+    fn review(date: &str, rating: u8) -> ReviewSession {
         ReviewSession {
-            date: date_str.to_string(),
+            date: date.to_string(),
             rating,
         }
     }
 
     #[test]
-    fn test_create_card_from_last_session_empty_reviews() {
-        let params = create_test_parameters();
-        let default_stability = 2.5;
-        let default_difficulty = 5.0;
-
-        let card =
-            create_card_from_last_session(&[], default_stability, default_difficulty, &params);
-
-        assert_eq!(card.stability, default_stability);
-        assert_eq!(card.difficulty, default_difficulty);
+    fn test_empty_reviews() {
+        let card = compute_card_from_reviews(&[], 2.5, 5.0, &test_params());
         assert_eq!(card.reps, 0);
         assert_eq!(card.lapses, 0);
-        assert_eq!(card.state, State::New);
-        assert_eq!(card.elapsed_days, 0);
-        assert_eq!(card.scheduled_days, 0);
-        // due и last_review должны быть близки к текущему времени
-        let now = Utc::now();
-        let diff_seconds = (card.due - now).num_seconds().abs();
-        assert!(diff_seconds < 2);
+        assert_eq!(card.stability, 2.5);
+        assert_eq!(card.difficulty, 5.0);
+        assert_eq!(card_state_label(&card), "New");
     }
 
     #[test]
-    fn test_create_card_from_last_session_with_single_review() {
-        let params = create_test_parameters();
-        let reviews = vec![create_test_review_session("2026-01-01T10:00:00Z", 2u8)];
-
-        let card = create_card_from_last_session(&reviews, 2.5, 5.0, &params);
-
-        assert!(card.stability > 0.0, "Стабильность должна быть > 0");
-        assert!(card.difficulty > 0.0, "Сложность должна быть > 0");
+    fn test_single_good() {
+        let reviews = vec![review("2026-01-01T10:00:00Z", 2)];
+        let card = compute_card_from_reviews(&reviews, 2.5, 5.0, &test_params());
         assert_eq!(card.reps, 1);
         assert_eq!(card.lapses, 0);
-        // После одного Good через FSRS карта может быть в Learning или Review
-        // Проверяем, что она не New
-        assert_ne!(card.state, State::New);
-        assert_eq!(card.elapsed_days, 0);
-
-        // Проверяем, что due дата вычислена корректно (после last_review)
-        let last_review: DateTime<Utc> = "2026-01-01T10:00:00Z".parse().unwrap();
-        assert!(card.due > last_review);
-        assert!(card.last_review == last_review);
+        assert!(card.stability > 0.0);
+        assert!(card.difficulty > 0.0);
+        assert!(card.last_rating == Some(3)); // Good = 3 в v6
+        assert_ne!(card_state_label(&card), "New");
     }
 
     #[test]
-    fn test_create_card_from_last_session_with_multiple_reviews() {
-        let params = create_test_parameters();
+    fn test_multiple_reviews() {
         let reviews = vec![
-            create_test_review_session("2026-01-01T10:00:00Z", 0u8),
-            create_test_review_session("2026-01-02T10:00:00Z", 2u8),
-            create_test_review_session("2026-01-03T10:00:00Z", 3u8),
+            review("2026-01-01T10:00:00Z", 0), // Again
+            review("2026-01-02T10:00:00Z", 2), // Good
+            review("2026-01-03T10:00:00Z", 3), // Easy
         ];
-
-        let card = create_card_from_last_session(&reviews, 2.5, 5.0, &params);
-
-        assert!(card.stability > 0.0, "Стабильность должна быть > 0");
-        assert!(card.difficulty > 0.0, "Сложность должна быть > 0");
-        // reps: все три сессии (3), lapses: 0 (Again был первым, до успешного повторения)
+        let card = compute_card_from_reviews(&reviews, 2.5, 5.0, &test_params());
         assert_eq!(card.reps, 3);
-        assert_eq!(card.lapses, 0);
-        assert_eq!(card.state, State::Review); // после Easy — точно Review
+        assert_eq!(card.lapses, 1); // Первый Again
+        assert!(card.stability > 0.0);
     }
 
     #[test]
-    fn test_create_card_from_last_session_learning_state() {
-        let params = create_test_parameters();
-        let reviews = vec![create_test_review_session("2026-01-01T10:00:00Z", 0u8)];
+    fn test_state_labels() {
+        // New
+        let card = FsrsCard {
+            stability: 0.0,
+            difficulty: 0.0,
+            scheduled_days: 0,
+            reps: 0,
+            lapses: 0,
+            last_rating: None,
+        };
+        assert_eq!(card_state_label(&card), "New");
 
-        let card = create_card_from_last_session(&reviews, 2.5, 5.0, &params);
+        // Review
+        let card = FsrsCard {
+            stability: 5.0,
+            difficulty: 3.0,
+            scheduled_days: 5,
+            reps: 3,
+            lapses: 0,
+            last_rating: Some(3),
+        };
+        assert_eq!(card_state_label(&card), "Review");
 
-        // После Again через FSRS стабильность может быть < 1.0
-        // Просто проверяем, что не паникует и reps=1
+        // Relearning
+        let card = FsrsCard {
+            stability: 1.0,
+            difficulty: 7.0,
+            scheduled_days: 1,
+            reps: 2,
+            lapses: 1,
+            last_rating: Some(1),
+        };
+        assert_eq!(card_state_label(&card), "Relearning");
+    }
+
+    #[test]
+    fn test_memory_state_from_new_card() {
+        let card = FsrsCard {
+            stability: 0.0,
+            difficulty: 0.0,
+            scheduled_days: 0,
+            reps: 0,
+            lapses: 0,
+            last_rating: None,
+        };
+        assert!(memory_state_from_card(&card).is_none());
+    }
+
+    #[test]
+    fn test_memory_state_from_reviewed_card() {
+        let card = FsrsCard {
+            stability: 3.0,
+            difficulty: 5.0,
+            scheduled_days: 3,
+            reps: 1,
+            lapses: 0,
+            last_rating: Some(3),
+        };
+        let ms = memory_state_from_card(&card).unwrap();
+        assert_eq!(ms.stability, 3.0);
+        assert_eq!(ms.difficulty, 5.0);
+    }
+
+    #[test]
+    fn test_hard_rating() {
+        let reviews = vec![review("2026-01-01T10:00:00Z", 1)];
+        let card = compute_card_from_reviews(&reviews, 2.5, 5.0, &test_params());
         assert_eq!(card.reps, 1);
+        assert_eq!(card.lapses, 0);
+        assert!(card.stability > 0.0);
+        assert!(card.difficulty > 0.0);
+        assert_eq!(card.last_rating, Some(2)); // Hard = 2 в v6
+        assert_ne!(card_state_label(&card), "New");
     }
 
     #[test]
-    fn test_create_card_from_last_session_with_invalid_date() {
-        let params = create_test_parameters();
-        let reviews = vec![ReviewSession {
-            date: "invalid date".to_string(),
-            rating: 2u8,
-        }];
-
-        // Не должно паниковать, должно использовать текущее время для last_review
-        let card = create_card_from_last_session(&reviews, 2.5, 5.0, &params);
-
-        assert!(card.stability > 0.0, "Стабильность должна быть > 0");
-        assert!(card.difficulty > 0.0, "Сложность должна быть > 0");
-        // reps: невалидная дата — сессия пропущена, но это начальная карточка
-        let now = Utc::now();
-        let due_diff = (card.due - now).num_seconds().abs();
-        assert!(due_diff < 5); // due должно быть близко к now (карточка новая)
+    fn test_invalid_date_skipped() {
+        let reviews = vec![review("not-a-date", 2)];
+        let card = compute_card_from_reviews(&reviews, 2.5, 5.0, &test_params());
+        assert_eq!(card.reps, 0);
+        assert_eq!(card.lapses, 0);
     }
 
     #[test]
-    fn test_create_card_from_last_session_lapses_calculation() {
-        let params = create_test_parameters();
-
-        // Test 1: Again before any successful review -> lapses = 0
-        let reviews1 = vec![create_test_review_session("2026-01-01T10:00:00Z", 0u8)];
-        let card1 = create_card_from_last_session(&reviews1, 2.5, 5.0, &params);
-        assert_eq!(card1.reps, 1);
-
-        // Test 2: Good then Again -> lapses вычисляются алгоритмом FSRS
-        let reviews2 = vec![
-            create_test_review_session("2026-01-01T10:00:00Z", 2u8),
-            create_test_review_session("2026-01-02T10:00:00Z", 0u8),
+    fn test_lapses_good_then_again() {
+        let reviews = vec![
+            review("2026-01-01T10:00:00Z", 2),
+            review("2026-01-02T10:00:00Z", 0),
         ];
-        let card2 = create_card_from_last_session(&reviews2, 2.5, 5.0, &params);
-        assert_eq!(card2.reps, 2);
-
-        // Test 3: Good, Good, Again
-        let reviews3 = vec![
-            create_test_review_session("2026-01-01T10:00:00Z", 2u8),
-            create_test_review_session("2026-01-02T10:00:00Z", 2u8),
-            create_test_review_session("2026-01-03T10:00:00Z", 0u8),
-        ];
-        let card3 = create_card_from_last_session(&reviews3, 2.5, 5.0, &params);
-        assert_eq!(card3.reps, 3);
-
-        // Test 4: Again, Good, Again
-        let reviews4 = vec![
-            create_test_review_session("2026-01-01T10:00:00Z", 0u8),
-            create_test_review_session("2026-01-02T10:00:00Z", 2u8),
-            create_test_review_session("2026-01-03T10:00:00Z", 0u8),
-        ];
-        let card4 = create_card_from_last_session(&reviews4, 2.5, 5.0, &params);
-        assert_eq!(card4.reps, 3);
-
-        // Test 5: Again, Again, Good
-        let reviews5 = vec![
-            create_test_review_session("2026-01-01T10:00:00Z", 0u8),
-            create_test_review_session("2026-01-02T10:00:00Z", 0u8),
-            create_test_review_session("2026-01-03T10:00:00Z", 2u8),
-        ];
-        let card5 = create_card_from_last_session(&reviews5, 2.5, 5.0, &params);
-        assert_eq!(card5.reps, 3);
+        let card = compute_card_from_reviews(&reviews, 2.5, 5.0, &test_params());
+        assert_eq!(card.reps, 2);
+        assert_eq!(card.lapses, 1);
     }
 
     #[test]
-    fn test_create_card_from_last_session_with_hard_rating() {
-        let params = create_test_parameters();
-        let reviews = vec![create_test_review_session("2026-01-01T10:00:00Z", 1u8)];
+    fn test_lapses_again_good_again() {
+        let reviews = vec![
+            review("2026-01-01T10:00:00Z", 0),
+            review("2026-01-02T10:00:00Z", 2),
+            review("2026-01-03T10:00:00Z", 0),
+        ];
+        let card = compute_card_from_reviews(&reviews, 2.5, 5.0, &test_params());
+        assert_eq!(card.reps, 3);
+        assert_eq!(card.lapses, 2);
+    }
 
-        let card = create_card_from_last_session(&reviews, 2.5, 5.0, &params);
+    #[test]
+    fn test_lapses_again_again_good() {
+        let reviews = vec![
+            review("2026-01-01T10:00:00Z", 0),
+            review("2026-01-02T10:00:00Z", 0),
+            review("2026-01-03T10:00:00Z", 2),
+        ];
+        let card = compute_card_from_reviews(&reviews, 2.5, 5.0, &test_params());
+        assert_eq!(card.reps, 3);
+        assert_eq!(card.lapses, 2);
+    }
 
-        assert!(card.stability > 0.0, "Стабильность должна быть > 0");
-        assert!(card.difficulty > 0.0, "Сложность должна быть > 0");
-        assert_eq!(card.reps, 1, "reps должно быть 1 для одной сессии с Hard");
-        assert_ne!(
-            card.state,
-            State::New,
-            "Карта не должна быть New после Hard"
-        );
+    #[test]
+    fn test_learning_state_after_again() {
+        let reviews = vec![review("2026-01-01T10:00:00Z", 0)];
+        let card = compute_card_from_reviews(&reviews, 2.5, 5.0, &test_params());
+        assert_eq!(card.reps, 1);
+        assert_eq!(card_state_label(&card), "Relearning");
+    }
+
+    #[test]
+    fn test_state_label_consistency() {
+        let new_card = FsrsCard {
+            stability: 0.0,
+            difficulty: 0.0,
+            scheduled_days: 0,
+            reps: 0,
+            lapses: 0,
+            last_rating: None,
+        };
+        let learning_card = FsrsCard {
+            stability: 0.5,
+            difficulty: 6.0,
+            scheduled_days: 1,
+            reps: 1,
+            lapses: 0,
+            last_rating: Some(2),
+        };
+        let review_card = FsrsCard {
+            stability: 5.0,
+            difficulty: 3.0,
+            scheduled_days: 5,
+            reps: 3,
+            lapses: 0,
+            last_rating: Some(3),
+        };
+        let relearning_card = FsrsCard {
+            stability: 1.0,
+            difficulty: 7.0,
+            scheduled_days: 1,
+            reps: 2,
+            lapses: 1,
+            last_rating: Some(1),
+        };
+
+        let labels = [
+            card_state_label(&new_card),
+            card_state_label(&learning_card),
+            card_state_label(&review_card),
+            card_state_label(&relearning_card),
+        ];
+        let unique: std::collections::HashSet<_> = labels.iter().collect();
+        assert_eq!(unique.len(), 4, "Все метки должны быть уникальными");
     }
 }

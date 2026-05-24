@@ -17,11 +17,10 @@ pub fn parse_card_from_json(card_json: &str) -> CardData {
 /// Парсит параметры алгоритма из JSON строки
 pub fn parse_parameters_from_json(parameters_json: &str) -> FsrsParameters {
     serde_json::from_str(parameters_json).unwrap_or({
-        // Дефолтные параметры
         FsrsParameters {
             request_retention: 0.9,
             maximum_interval: 36500.0,
-            enable_fuzz: true,
+            w: crate::fsrs_schedule::DEFAULT_PARAMETERS,
         }
     })
 }
@@ -79,8 +78,7 @@ pub fn card_to_json(card: &CardData) -> String {
 /// Преобразует параметры в JSON строку
 pub fn parameters_to_json(parameters: &FsrsParameters) -> String {
     serde_json::to_string(parameters).unwrap_or_else(|_| {
-        r#"{"request_retention": 0.9, "maximum_interval": 36500.0, "enable_fuzz": true}"#
-            .to_string()
+        r#"{"request_retention": 0.9, "maximum_interval": 36500.0}"#.to_string()
     })
 }
 
@@ -148,14 +146,12 @@ mod tests {
     fn test_parse_parameters_from_json_valid() {
         let json = r#"{
             "request_retention": 0.85,
-            "maximum_interval": 1000.0,
-            "enable_fuzz": false
+            "maximum_interval": 1000.0
         }"#;
 
         let params = parse_parameters_from_json(json);
         assert_eq!(params.request_retention, 0.85);
         assert_eq!(params.maximum_interval, 1000.0);
-        assert_eq!(params.enable_fuzz, false);
     }
 
     #[test]
@@ -165,7 +161,6 @@ mod tests {
         // Должны вернуться дефолтные значения
         assert_eq!(params.request_retention, 0.9);
         assert_eq!(params.maximum_interval, 36500.0);
-        assert_eq!(params.enable_fuzz, true);
     }
 
     #[test]
@@ -246,7 +241,7 @@ mod tests {
         let original_params = FsrsParameters {
             request_retention: 0.85,
             maximum_interval: 1000.0,
-            enable_fuzz: false,
+            w: crate::fsrs_schedule::DEFAULT_PARAMETERS,
         };
 
         let json = parameters_to_json(&original_params);
@@ -260,7 +255,6 @@ mod tests {
             parsed_params.maximum_interval,
             original_params.maximum_interval
         );
-        assert_eq!(parsed_params.enable_fuzz, original_params.enable_fuzz);
     }
 
     #[test]

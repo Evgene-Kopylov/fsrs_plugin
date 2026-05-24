@@ -625,8 +625,6 @@ function fsrsParamsChanged(
             newSettings.parameters.request_retention ||
         oldSettings.parameters.maximum_interval !==
             newSettings.parameters.maximum_interval ||
-        oldSettings.parameters.enable_fuzz !==
-            newSettings.parameters.enable_fuzz ||
         oldSettings.default_initial_stability !==
             newSettings.default_initial_stability ||
         oldSettings.default_initial_difficulty !==

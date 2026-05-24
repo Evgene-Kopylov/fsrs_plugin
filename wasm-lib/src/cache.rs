@@ -687,7 +687,7 @@ pub fn query_cards(params_json: &str, now_iso: &str) -> String {
                     let params_for_fsrs = crate::types::FsrsParameters {
                         request_retention: params.request_retention,
                         maximum_interval: params.maximum_interval,
-                        enable_fuzz: params.enable_fuzz,
+                        w: crate::fsrs_schedule::DEFAULT_PARAMETERS,
                     };
                     let new_state = crate::current_state::compute_current_state_from_card(
                         &cached.card,

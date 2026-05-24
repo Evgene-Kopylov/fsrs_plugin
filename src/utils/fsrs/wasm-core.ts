@@ -15,7 +15,6 @@ export const parametersToJson = (p: FSRSParameters): string =>
     JSON.stringify({
         request_retention: p.request_retention,
         maximum_interval: p.maximum_interval,
-        enable_fuzz: p.enable_fuzz,
     });
 
 /** Подготовка общих аргументов для большинства функций */

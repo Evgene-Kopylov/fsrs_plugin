@@ -1,11 +1,10 @@
 // Модуль для вычисления следующих дат повторения
 
-use chrono::Utc;
-use rs_fsrs::{FSRS, Rating};
+use chrono::{Duration, Utc};
 use serde::Serialize;
 
-use crate::conversion::create_fsrs_parameters;
-use crate::fsrs_logic::create_card_from_last_session;
+use crate::fsrs_logic::{compute_card_from_reviews, memory_state_from_card};
+use crate::fsrs_schedule;
 use crate::json_parsing::{
     parse_card_from_json, parse_datetime_flexible, parse_parameters_from_json,
 };
@@ -32,55 +31,50 @@ pub fn get_next_review_dates(
     let parameters = parse_parameters_from_json(&parameters_json);
     let now = parse_datetime_flexible(&now_str).unwrap_or_else(Utc::now);
 
-    // Создаем Card для алгоритма FSRS из истории reviews
-    let fsrs_card = create_card_from_last_session(
+    // Пересчитываем состояние карточки
+    let fsrs_card = compute_card_from_reviews(
         &card.reviews,
         default_stability,
         default_difficulty,
         &parameters,
     );
 
-    // Создаем экземпляр FSRS с пользовательскими параметрами
-    let fsrs_params = create_fsrs_parameters(&parameters);
-    let fsrs = FSRS::new(fsrs_params);
+    let retention = parameters.request_retention as f32;
 
-    // Получаем все возможные результаты для разных оценок
-    let record_log = fsrs.repeat(fsrs_card, now);
+    // Определяем elapsed_days от последнего повторения до now
+    let elapsed_days = card
+        .reviews
+        .last()
+        .and_then(|s| parse_datetime_flexible(&s.date))
+        .map(|last_date| (now - last_date).num_days().max(0) as u32)
+        .unwrap_or(0);
 
-    let mut result = NextReviewDates {
-        again: None,
-        hard: None,
-        good: None,
-        easy: None,
+    // Получаем следующие состояния
+    let current_state = memory_state_from_card(&fsrs_card);
+    let next = fsrs_schedule::next_states(current_state, retention, elapsed_days, &parameters.w);
+
+    let mk_date = |interval: f32| -> String {
+        let days = interval.round().max(1.0) as i64;
+        (now + Duration::days(days)).to_rfc3339()
     };
 
-    // Заполняем результат
-    if let Some(scheduling_info) = record_log.get(&Rating::Again) {
-        result.again = Some(scheduling_info.card.due.to_rfc3339());
-    }
+    let result = NextReviewDates {
+        again: Some(mk_date(next.again.interval)),
+        hard: Some(mk_date(next.hard.interval)),
+        good: Some(mk_date(next.good.interval)),
+        easy: Some(mk_date(next.easy.interval)),
+    };
 
-    if let Some(scheduling_info) = record_log.get(&Rating::Hard) {
-        result.hard = Some(scheduling_info.card.due.to_rfc3339());
-    }
-
-    if let Some(scheduling_info) = record_log.get(&Rating::Good) {
-        result.good = Some(scheduling_info.card.due.to_rfc3339());
-    }
-
-    if let Some(scheduling_info) = record_log.get(&Rating::Easy) {
-        result.easy = Some(scheduling_info.card.due.to_rfc3339());
-    }
-
-    // Возвращаем результат в формате JSON
     serde_json::to_string(&result).unwrap_or_else(|_| "{}".to_string())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::DateTime;
 
     fn create_test_parameters_json() -> String {
-        r#"{"request_retention": 0.9, "maximum_interval": 365.0, "enable_fuzz": false}"#.to_string()
+        r#"{"request_retention": 0.9, "maximum_interval": 365.0}"#.to_string()
     }
 
     fn create_empty_card_json() -> String {
@@ -107,10 +101,17 @@ mod tests {
         assert!(parsed_result.is_ok());
 
         let dates = parsed_result.unwrap();
-        // Проверяем, что все поля присутствуют
         assert!(dates.get("again").is_some());
         assert!(dates.get("hard").is_some());
         assert!(dates.get("good").is_some());
         assert!(dates.get("easy").is_some());
+
+        // Проверяем, что даты валидные и в будущем относительно now
+        let now_dt: DateTime<Utc> = "2026-01-01T12:00:00Z".parse().unwrap();
+        for key in &["again", "hard", "good", "easy"] {
+            let date_str = dates[key].as_str().unwrap();
+            let date_dt: DateTime<Utc> = date_str.parse().unwrap();
+            assert!(date_dt > now_dt, "{} should be in the future", key);
+        }
     }
 }

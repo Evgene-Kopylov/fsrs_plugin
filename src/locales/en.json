@@ -175,10 +175,6 @@
             "maximum_interval": {
                 "name": "Maximum interval",
                 "desc": "Maximum days between reviews. 36500 = ~100 years."
-            },
-            "enable_fuzz": {
-                "name": "Enable interval fuzz",
-                "desc": "Add random variation to intervals (±5%) to prevent card grouping."
             }
         },
         "card_defaults": {

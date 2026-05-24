@@ -175,10 +175,6 @@
             "maximum_interval": {
                 "name": "最大间隔",
                 "desc": "两次复习之间的最大天数。36500 = 约 100 年。"
-            },
-            "enable_fuzz": {
-                "name": "启用间隔模糊",
-                "desc": "为间隔添加随机变化（±5%），防止卡片扎堆。"
             }
         },
         "card_defaults": {

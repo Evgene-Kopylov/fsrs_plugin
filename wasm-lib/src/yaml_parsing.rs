@@ -143,7 +143,7 @@ pub fn create_default_parameters() -> FsrsParameters {
     FsrsParameters {
         request_retention: 0.9,
         maximum_interval: 36500.0,
-        enable_fuzz: true,
+        w: crate::fsrs_schedule::DEFAULT_PARAMETERS,
     }
 }
 
@@ -263,13 +263,11 @@ reviews:
         let yaml = r#"
 request_retention: 0.85
 maximum_interval: 1000.0
-enable_fuzz: false
 "#;
         let params = parse_yaml_to_parameters(yaml);
 
         assert_eq!(params.request_retention, 0.85);
         assert_eq!(params.maximum_interval, 1000.0);
-        assert_eq!(params.enable_fuzz, false);
     }
 
     #[test]

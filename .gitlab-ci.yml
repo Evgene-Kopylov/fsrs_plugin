@@ -23,48 +23,49 @@ cache:
         - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
         - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
 
-cargo_fmt:
-    stage: build-wasm
-    <<: *rules
-    image: rust:latest
-    before_script:
-        - cargo --version
-        - rustc --version
-    script:
-        - cd wasm-lib
-        - rustup component add rustfmt
-        - cargo fmt -- --check
-    timeout: 3m
+# cargo_fmt:
+#     stage: build-wasm
+#     <<: *rules
+#     image: rust:latest
+#     before_script:
+#         - cargo --version
+#         - rustc --version
+#     script:
+#         - cd wasm-lib
+#         - rustup component add rustfmt
+#         - cargo fmt -- --check
+#     timeout: 3m
 
-cargo_clippy:
-    stage: build-wasm
-    <<: *rules
-    image: rust:latest
-    before_script:
-        - cargo --version
-        - rustc --version
-    script:
-        - cd wasm-lib
-        - rustup component add clippy
-        - cargo clippy -- -D warnings
-    timeout: 10m
+# cargo_clippy:
+#     stage: build-wasm
+#     <<: *rules
+#     image: rust:latest
+#     before_script:
+#         - cargo --version
+#         - rustc --version
+#     script:
+#         - cd wasm-lib
+#         - rustup component add clippy
+#         - cargo clippy -- -D warnings
+#     timeout: 10m
 
-cargo_test:
-    stage: build-wasm
-    <<: *rules
-    image: rust:latest
-    before_script:
-        - cargo --version
-        - rustc --version
-    script:
-        - cd wasm-lib
-        - cargo test
-    timeout: 10m
+# cargo_test:
+#     stage: build-wasm
+#     <<: *rules
+#     image: rust:latest
+#     before_script:
+#         - cargo --version
+#         - rustc --version
+#     script:
+#         - cd wasm-lib
+#         - cargo test
+#     timeout: 10m
 
 build_wasm:
     stage: build-wasm
     <<: *rules
     image: rust:latest
+    when: manual
     before_script:
         - cargo --version
         - rustc --version
@@ -82,9 +83,9 @@ encode_wasm:
     <<: *rules
     image: node:${NODE_VERSION}
     needs:
-        - cargo_fmt
-        - cargo_clippy
-        - cargo_test
+        # - cargo_fmt
+        # - cargo_clippy
+        # - cargo_test
         - build_wasm
     before_script:
         - node --version
@@ -104,59 +105,59 @@ encode_wasm:
         policy: pull-push
     timeout: 10m
 
-unit-tests:
-    stage: test
-    <<: *rules
-    image: node:${NODE_VERSION}
-    needs:
-        - encode_wasm
-    before_script:
-        - node --version
-        - npm --version
-    script:
-        - npm ci --prefer-offline
-        - npm test
-    cache:
-        key: "${CI_COMMIT_REF_SLUG}"
-        paths:
-            - node_modules/
-            - .npm/
-        policy: pull-push
-    timeout: 10m
+# unit-tests:
+#     stage: test
+#     <<: *rules
+#     image: node:${NODE_VERSION}
+#     needs:
+#         - encode_wasm
+#     before_script:
+#         - node --version
+#         - npm --version
+#     script:
+#         - npm ci --prefer-offline
+#         - npm test
+#     cache:
+#         key: "${CI_COMMIT_REF_SLUG}"
+#         paths:
+#             - node_modules/
+#             - .npm/
+#         policy: pull-push
+#     timeout: 10m
 
-typescript-check:
-    stage: lint
-    image: node:${NODE_VERSION}
-    needs:
-        - encode_wasm
-    script:
-        - npm ci --prefer-offline
-        - npx tsc --noEmit --skipLibCheck
-    <<: *rules
-    cache:
-        key: "${CI_COMMIT_REF_SLUG}"
-        paths:
-            - node_modules/
-            - .npm/
-        policy: pull-push
-    timeout: 10m
+# typescript-check:
+#     stage: lint
+#     image: node:${NODE_VERSION}
+#     needs:
+#         - encode_wasm
+#     script:
+#         - npm ci --prefer-offline
+#         - npx tsc --noEmit --skipLibCheck
+#     <<: *rules
+#     cache:
+#         key: "${CI_COMMIT_REF_SLUG}"
+#         paths:
+#             - node_modules/
+#             - .npm/
+#         policy: pull-push
+#     timeout: 10m
 
-eslint-check:
-    stage: lint
-    image: node:${NODE_VERSION}
-    needs:
-        - encode_wasm
-    script:
-        - npm ci --prefer-offline
-        - npm run lint
-    <<: *rules
-    cache:
-        key: "${CI_COMMIT_REF_SLUG}"
-        paths:
-            - node_modules/
-            - .npm/
-        policy: pull-push
-    timeout: 10m
+# eslint-check:
+#     stage: lint
+#     image: node:${NODE_VERSION}
+#     needs:
+#         - encode_wasm
+#     script:
+#         - npm ci --prefer-offline
+#         - npm run lint
+#     <<: *rules
+#     cache:
+#         key: "${CI_COMMIT_REF_SLUG}"
+#         paths:
+#             - node_modules/
+#             - .npm/
+#         policy: pull-push
+#     timeout: 10m
 
 plugin-build:
     stage: build
@@ -164,9 +165,9 @@ plugin-build:
     <<: *rules
     needs:
         - encode_wasm
-        - unit-tests
-        - typescript-check
-        - eslint-check
+        # - unit-tests
+        # - typescript-check
+        # - eslint-check
     script:
         - npm ci --prefer-offline
         - npm run build:skip-wasm

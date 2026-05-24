@@ -24,11 +24,23 @@ helpers.ts                        — фабрики: reviewCard, newCard, fillC
 fsrs-query-basic.test.ts          — реальный DEFAULT_TABLE_BLOCK, дымовая выборка
 fsrs-query-count.test.ts          — queryCount
 fsrs-limit.test.ts                — LIMIT
-fsrs-where-state.test.ts          — WHERE state
-fsrs-where-file.test.ts           — WHERE file (file = file_stem)
+fsrs-remove-card.test.ts          — removeCard
+fsrs-cache-lifecycle.test.ts      — init, clear, getAll, getHeatmapData
+fsrs-where-state-new.test.ts      — WHERE state = 'New'
+fsrs-where-state-review.test.ts   — WHERE state = 'Review'
+fsrs-where-file.test.ts           — WHERE file = file_stem()
 fsrs-where-retrievability.test.ts — WHERE retrievability < 0.6
+fsrs-where-stability.test.ts      — WHERE stability > 2.0
+fsrs-where-difficulty.test.ts     — WHERE difficulty >= 4.0
 fsrs-order-by-reps.test.ts        — ORDER BY reps DESC
 fsrs-order-by-file.test.ts        — ORDER BY file DESC
+fsrs-order-by-file-asc.test.ts    — ORDER BY file ASC
+fsrs-where-regex-anchor.test.ts   — WHERE file ~ '^анкор'
+fsrs-where-regex-file-tilde.test.ts   — WHERE file ~ 'подстрока'
+fsrs-where-regex-file-not-tilde.test.ts — WHERE file !~ 'паттерн'
+fsrs-where-regex-state.test.ts    — WHERE state ~ 'паттерн'
+fsrs-where-regex-and.test.ts      — WHERE file ~ '...' AND state ~ '...'
+fsrs-where-regex-due.test.ts      — WHERE due ~ '^год'
 ```
 
 ## Пример
