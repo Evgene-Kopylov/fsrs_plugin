@@ -21,7 +21,6 @@ import type {
     CardData,
 } from "../interfaces/fsrs";
 import { generateTableDOM } from "../utils/fsrs-table-helpers";
-import { formatFieldValue } from "../utils/fsrs-table-format";
 import { i18n } from "../utils/i18n";
 import { verboseLog } from "../utils/logger";
 import {
@@ -450,7 +449,7 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         this.stopAutoRefresh();
         this.autoRefreshTimer = activeWindow.setInterval(() => {
             if (this.container.offsetParent === null) return;
-            this.refreshValues();
+            this.refresh().catch(console.error);
         }, TABLE_AUTO_REFRESH_INTERVAL_SECONDS * 1000);
     }
 
@@ -458,52 +457,6 @@ export class FsrsTableRenderer extends MarkdownRenderChild {
         if (this.autoRefreshTimer !== null) {
             activeWindow.clearInterval(this.autoRefreshTimer);
             this.autoRefreshTimer = null;
-        }
-    }
-
-    /**
-     * Лёгкое обновление: перезапрашивает WASM и обновляет
-     * только текст в существующих ячейках, без перестройки DOM.
-     */
-    private refreshValues(): void {
-        if (!this.params || !this.plugin.isWasmReady()) return;
-
-        const now = new Date();
-        const result = this.plugin.cache.query(this.params, now);
-        if (result.cards.length === 0) return;
-
-        // Индекс: filePath → { card, state }
-        const newCards = new Map(result.cards.map((c) => [c.card.filePath, c]));
-
-        const rows = this.container.querySelectorAll<HTMLElement>(
-            ".fsrs-table tbody tr",
-        );
-        const columns = this.params.columns;
-        for (const row of Array.from(rows)) {
-            const filePath = row.dataset.filePath;
-            if (!filePath) continue;
-            const entry = newCards.get(filePath);
-            if (!entry) continue;
-
-            const tds = Array.from(row.querySelectorAll("td"));
-            for (let i = 0; i < tds.length && i < columns.length; i++) {
-                const td = tds[i]!;
-                const col = columns[i]!;
-                // file — ссылка, не трогаем
-                if (col.field === "file") continue;
-
-                const value = formatFieldValue(
-                    col.field,
-                    entry.card,
-                    entry.state,
-                    this.plugin.app,
-                    now,
-                    col.date_format,
-                );
-                if (td.textContent !== value) {
-                    td.textContent = value;
-                }
-            }
         }
     }
 

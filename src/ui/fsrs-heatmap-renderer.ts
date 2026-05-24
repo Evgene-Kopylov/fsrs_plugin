@@ -177,7 +177,7 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
                         cellStyle.opacity = String(ratio);
                     } else {
                         cellStyle.opacity = "1";
-                        cellStyle.filter = `brightness(${1 + (ratio - 1)})`;
+                        cellStyle.filter = `brightness(${1 + (ratio - 1) / 2})`;
                     }
                     Object.assign(el.style, cellStyle);
                 }
