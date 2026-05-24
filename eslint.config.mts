@@ -68,6 +68,10 @@ export default tseslint.config(
             "@typescript-eslint/no-unsafe-member-access": "error",
             "@typescript-eslint/require-await": "error",
 
+            // Мёртвый код
+            "@typescript-eslint/no-unused-vars": "error",
+            "no-unused-private-class-members": "error",
+
             // Правила для eslint-disable директив (как в валидаторе Obsidian)
             "eslint-comments/require-description": "error",
             "eslint-comments/disable-enable-pair": "error",
