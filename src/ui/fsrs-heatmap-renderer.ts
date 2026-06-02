@@ -329,10 +329,54 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
 
         const ar = anchor.getBoundingClientRect();
         const pr = popup.getBoundingClientRect();
-        // Если не помещается сверху — показываем снизу
-        const topAbove = ar.top - pr.height - 6;
-        const top = topAbove >= 4 ? topAbove : ar.bottom + 6;
-        const left = Math.min(
+
+        // Выбираем направление по обеим осям: куда больше места
+        const spaceAbove = ar.top - 4;
+        const spaceBelow = window.innerHeight - ar.bottom - 4;
+        const spaceLeft = ar.left - 4;
+        const spaceRight = window.innerWidth - ar.right - 4;
+
+        let top: number;
+        let left: number;
+
+        // Пробуем вертикальное расположение
+        const fitsAbove = spaceAbove >= pr.height;
+        const fitsBelow = spaceBelow >= pr.height;
+
+        if (fitsAbove) {
+            top = ar.top - pr.height - 6;
+        } else if (fitsBelow) {
+            top = ar.bottom + 6;
+        } else {
+            // Не влезает ни сверху, ни снизу — открываемся в сторону с большим пространством
+            // по горизонтали, центрируясь по вертикали
+            const gap = 8;
+            if (spaceRight >= spaceLeft) {
+                left = ar.right + gap;
+                // Вертикально — по центру ячейки, с clamping
+                top = Math.max(
+                    4,
+                    Math.min(
+                        ar.top + ar.height / 2 - pr.height / 2,
+                        window.innerHeight - pr.height - 4,
+                    ),
+                );
+            } else {
+                left = ar.left - pr.width - gap;
+                top = Math.max(
+                    4,
+                    Math.min(
+                        ar.top + ar.height / 2 - pr.height / 2,
+                        window.innerHeight - pr.height - 4,
+                    ),
+                );
+            }
+            popup.setCssProps({ top: `${top}px`, left: `${left}px` });
+            return popup;
+        }
+
+        // Горизонталь — по центру ячейки
+        left = Math.min(
             Math.max(4, ar.left + ar.width / 2 - pr.width / 2),
             window.innerWidth - pr.width - 4,
         );
