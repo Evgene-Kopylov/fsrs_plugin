@@ -11,16 +11,8 @@ Everything works inside Obsidian — no external services needed.
 
 ## 0. Installation
 
-The plugin is not yet in the Obsidian community catalog —
-install it via **BRAT** (Beta Reviewers Auto-update Tester):
-
-1. Install [BRAT](https://github.com/TfTHacker/obsidian42-brat)
-   from **Settings → Community plugins → Browse**
-2. Open **Settings → BRAT → Add Beta plugin**
-3. Enter the repo URL: `https://github.com/Evgene-Kopylov/fsrs_plugin`
-4. Enable the plugin in **Settings → Community plugins**
-
-BRAT will automatically track updates.
+Install from the Obsidian community catalog:
+**Settings → Community plugins → Browse → FSRS**. Enable the plugin.
 
 ---
 
@@ -154,7 +146,7 @@ without ever switching to another note.
 
 ## Quick-start checklist
 
-- [ ] Plugin installed via BRAT and enabled
+- [ ] Plugin installed and enabled
 - [ ] Run **FSRS: Add FSRS fields to frontmatter**
   on your first card note (the button is added automatically)
 - [ ] Run **FSRS: Insert default fsrs-table**

@@ -27,11 +27,6 @@
 
 从社区目录安装（**设置** → **社区插件** → **浏览** → **FSRS**）。
 
-### 通过 BRAT 测试 Beta 版本
-
-1. 安装 [BRAT](https://github.com/TfTHacker/obsidian42-brat)
-2. 添加仓库：`https://github.com/Evgene-Kopylov/fsrs_plugin`
-
 ### 系统要求
 
 - Obsidian v1.12.7 或更高版本
