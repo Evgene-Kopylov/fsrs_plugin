@@ -27,11 +27,6 @@
 
 Установите из каталога сообщества (**Настройки** → **Community plugins** → **Обзор** → **FSRS**).
 
-### Бета-версии через BRAT
-
-1. Установите [BRAT](https://github.com/TfTHacker/obsidian42-brat)
-2. Добавьте репозиторий: `https://github.com/Evgene-Kopylov/fsrs_plugin`
-
 ### Требования к установке
 
 - Obsidian v1.12.7 или выше

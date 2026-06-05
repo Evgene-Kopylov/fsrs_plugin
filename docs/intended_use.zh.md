@@ -11,15 +11,8 @@
 
 ## 0. 安装
 
-插件尚未上架 Obsidian 社区目录 —
-请通过 **BRAT**（Beta Reviewers Auto-update Tester）安装：
-
-1. 从 **设置 → 第三方插件 → 浏览** 安装 [BRAT](https://github.com/TfTHacker/obsidian42-brat)
-2. 打开 **设置 → BRAT → Add Beta plugin**
-3. 输入仓库 URL：`https://github.com/Evgene-Kopylov/fsrs_plugin`
-4. 在 **设置 → 第三方插件** 中启用插件
-
-BRAT 将自动跟踪更新。
+从 Obsidian 社区目录安装：
+**设置 → 第三方插件 → 浏览 → FSRS**。启用插件。
 
 ---
 
@@ -150,7 +143,7 @@ FSRS 根据复习历史（日期和评分）为每张卡片计算三个参数：
 
 ## 首次使用快速检查清单
 
-- [ ] 已通过 BRAT 安装并启用插件
+- [ ] 插件已安装并启用
 - [ ] 对第一张卡片笔记执行 **FSRS：添加 FSRS 字段到 frontmatter**
   （按钮会自动添加）
 - [ ] 执行 **FSRS：插入默认 fsrs-table**
