@@ -1,4 +1,5 @@
 stages:
+    - cargo-fmt
     - build-wasm
     - encode-wasm
     - test
@@ -24,7 +25,9 @@ cache:
         - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
 
 cargo_fmt:
-    stage: build-wasm
+    stage: cargo-fmt
+    when: manual
+    allow_failure: false
     <<: *rules
     image: rust:latest
     before_script:
@@ -65,7 +68,6 @@ build_wasm:
     stage: build-wasm
     <<: *rules
     image: rust:latest
-    when: manual
     before_script:
         - cargo --version
         - rustc --version
@@ -83,7 +85,6 @@ encode_wasm:
     <<: *rules
     image: node:${NODE_VERSION}
     needs:
-        - cargo_fmt
         - cargo_clippy
         - cargo_test
         - build_wasm
