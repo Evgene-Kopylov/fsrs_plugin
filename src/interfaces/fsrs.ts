@@ -38,6 +38,7 @@ export interface ReviewSession {
 export interface CardData {
     reviews: ReviewSession[]; // история сессий повторения
     filePath: string; // путь к файлу в хранилище Obsidian
+    retired?: boolean; // карточка выведена из повторений
 }
 
 // Историческое состояние карточки после повторения (возвращается из compute_card_history)

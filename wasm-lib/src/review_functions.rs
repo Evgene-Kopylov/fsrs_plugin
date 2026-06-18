@@ -53,10 +53,11 @@ pub fn get_fsrs_yaml_after_review(
     let card: CardData = serde_json::from_str(&updated_card_json).unwrap_or_else(|_| CardData {
         reviews: Vec::new(),
         file_path: None,
+        retired: false,
     });
 
-    // Сериализуем в YAML
-    serde_yaml::to_string(&card).unwrap_or_else(|_| "reviews: []".to_string())
+    // Сериализуем в YAML (без поля retired)
+    crate::yaml_parsing::card_to_yaml(&card)
 }
 
 #[cfg(test)]

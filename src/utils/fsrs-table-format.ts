@@ -105,6 +105,8 @@ export function formatFieldValue(
                 );
             }
             return String(state.scheduled_days);
+        case "retired":
+            return card.retired ? "✓" : "";
         default:
             console.warn(`Неизвестное поле: ${field}`);
             return "";

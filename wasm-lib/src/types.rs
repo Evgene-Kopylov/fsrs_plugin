@@ -16,6 +16,8 @@ pub struct CardData {
     pub reviews: Vec<ReviewSession>,
     #[serde(default, rename = "filePath", skip_serializing_if = "Option::is_none")]
     pub file_path: Option<String>, // путь к файлу в хранилище Obsidian
+    #[serde(default)]
+    pub retired: bool, // карточка выведена из повторений (fsrs_retired: true в YAML)
 }
 
 /// Параметры алгоритма FSRS из настроек плагина

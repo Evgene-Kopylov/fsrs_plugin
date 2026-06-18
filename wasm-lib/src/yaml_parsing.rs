@@ -23,10 +23,21 @@ pub fn parse_yaml_to_card(yaml_str: &str) -> CardData {
     }
 }
 
-/// Преобразует карточку в YAML строку
+/// Преобразует карточку в YAML строку (без поля retired)
 pub fn card_to_yaml(card: &CardData) -> String {
-    match serde_yaml::to_string(card) {
-        Ok(yaml) => yaml,
+    match serde_yaml::to_value(card) {
+        Ok(mut value) => {
+            if let serde_yaml::Value::Mapping(ref mut map) = value {
+                map.remove("retired");
+            }
+            match serde_yaml::to_string(&value) {
+                Ok(yaml) => yaml,
+                Err(_e) => {
+                    log_warn!("Ошибка сериализации карточки в YAML: {}", _e);
+                    create_default_yaml()
+                }
+            }
+        }
         Err(_e) => {
             log_warn!("Ошибка сериализации карточки в YAML: {}", _e);
             create_default_yaml()
@@ -72,19 +83,25 @@ pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<CardData> {
     };
 
     // Проверяем, содержит ли YAML поле "reviews"
-    let reviews = if let serde_yaml::Value::Mapping(mapping) = &yaml_value {
+    let (reviews, retired) = if let serde_yaml::Value::Mapping(mapping) = &yaml_value {
+        let retired = mapping
+            .get("fsrs_retired")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
+
         if !mapping.contains_key("reviews") {
             return None;
         }
 
         // Извлекаем только поле reviews
-        match mapping.get("reviews") {
+        let reviews = match mapping.get("reviews") {
             Some(serde_yaml::Value::Sequence(seq)) => {
                 // Если массив пустой — это валидная карточка без сессий
                 if seq.is_empty() {
                     return Some(CardData {
                         reviews: Vec::new(),
                         file_path: None,
+                        retired,
                     });
                 }
                 // Десериализуем reviews
@@ -106,7 +123,8 @@ pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<CardData> {
                 log_warn!("reviews is not a sequence, type: {:?}", _other);
                 return None;
             }
-        }
+        };
+        (reviews, retired)
     } else {
         log_warn!("YAML is not a mapping");
         return None;
@@ -116,6 +134,7 @@ pub fn extract_fsrs_from_frontmatter(frontmatter: &str) -> Option<CardData> {
     Some(CardData {
         reviews,
         file_path: None,
+        retired,
     })
 }
 
@@ -130,6 +149,7 @@ pub fn create_default_card() -> CardData {
     CardData {
         reviews: Vec::new(),
         file_path: None,
+        retired: false,
     }
 }
 
@@ -245,6 +265,7 @@ reviews:
                 rating: 2u8,
             }],
             file_path: None,
+            retired: false,
         };
 
         let yaml = card_to_yaml(&original_card);
@@ -314,6 +335,7 @@ Content"#;
                 rating: 2u8,
             }],
             file_path: None,
+            retired: false,
         };
 
         let frontmatter = create_frontmatter_with_fsrs(&card);
@@ -333,6 +355,7 @@ Content"#;
                 rating: 2u8,
             }],
             file_path: None,
+            retired: false,
         };
 
         let errors = validate_review_sessions(&card);
@@ -347,6 +370,7 @@ Content"#;
                 rating: 2u8,
             }],
             file_path: None,
+            retired: false,
         };
 
         let errors = validate_review_sessions(&card);
@@ -362,6 +386,7 @@ Content"#;
                 rating: 255u8,
             }],
             file_path: None,
+            retired: false,
         };
 
         let errors = validate_review_sessions(&card);
@@ -417,5 +442,46 @@ reviews: []
         let card = extract_fsrs_from_frontmatter(frontmatter).unwrap();
 
         assert_eq!(card.reviews.len(), 0);
+    }
+
+    #[test]
+    fn test_extract_fsrs_from_frontmatter_retired_true() {
+        let frontmatter = r#"---
+fsrs_retired: true
+reviews:
+  - date: 2026-04-13T09:00:00+02:00
+    rating: 2
+---"#;
+
+        let card = extract_fsrs_from_frontmatter(frontmatter).unwrap();
+        assert!(card.retired);
+        assert_eq!(card.reviews.len(), 1);
+    }
+
+    #[test]
+    fn test_extract_fsrs_from_frontmatter_retired_false() {
+        let frontmatter = r#"---
+fsrs_retired: false
+reviews:
+  - date: 2026-04-13T09:00:00+02:00
+    rating: 2
+---"#;
+
+        let card = extract_fsrs_from_frontmatter(frontmatter).unwrap();
+        assert!(!card.retired);
+        assert_eq!(card.reviews.len(), 1);
+    }
+
+    #[test]
+    fn test_extract_fsrs_from_frontmatter_retired_default() {
+        let frontmatter = r#"---
+reviews:
+  - date: 2026-04-13T09:00:00+02:00
+    rating: 2
+---"#;
+
+        let card = extract_fsrs_from_frontmatter(frontmatter).unwrap();
+        assert!(!card.retired);
+        assert_eq!(card.reviews.len(), 1);
     }
 }

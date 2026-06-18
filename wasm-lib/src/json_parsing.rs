@@ -10,6 +10,7 @@ pub fn parse_card_from_json(card_json: &str) -> CardData {
         CardData {
             reviews: Vec::new(),
             file_path: None,
+            retired: false,
         }
     })
 }
@@ -87,14 +88,14 @@ pub fn create_default_card() -> CardData {
     CardData {
         reviews: Vec::new(),
         file_path: None,
+        retired: false,
     }
 }
 
-/// Получает YAML строку для новой карточки
+/// Получает YAML строку для новой карточки (без поля retired)
 pub fn get_fsrs_yaml() -> String {
-    use serde_yaml;
     let card = create_default_card();
-    serde_yaml::to_string(&card).unwrap_or_else(|_| "reviews: []".to_string())
+    crate::yaml_parsing::card_to_yaml(&card)
 }
 
 /// Получает текущее время в формате ISO 8601
@@ -223,6 +224,7 @@ mod tests {
                 rating: 2u8,
             }],
             file_path: None,
+            retired: false,
         };
 
         let json = card_to_json(&original_card);
