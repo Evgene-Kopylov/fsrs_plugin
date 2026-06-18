@@ -748,6 +748,21 @@ pub fn query_cards(params_json: &str, now_iso: &str) -> String {
         .map(|cached| (cached.card.clone(), cached.state.clone()))
         .collect();
 
+    // Если нет WHERE — по умолчанию исключаем retired
+    let table_params = if table_params.where_condition.is_none() {
+        use crate::table_processing::parsing::{ComparisonOp, Expression, Value};
+        TableParams {
+            where_condition: Some(Expression::Comparison {
+                field: "retired".to_string(),
+                operator: ComparisonOp::Equal,
+                value: Value::Number(0.0),
+            }),
+            ..table_params
+        }
+    } else {
+        table_params
+    };
+
     // Освобождаем блокировку перед фильтрацией (filter_and_sort не требует кэша)
     drop(cache);
 
@@ -855,6 +870,7 @@ mod tests {
                 rating,
             }],
             file_path: Some(file_path.to_string()),
+            retired: false,
         };
         let state = ComputedState {
             due: due.to_string(),
@@ -939,6 +955,7 @@ mod tests {
                 },
             ],
             file_path: Some("t_update_original.md".to_string()),
+            retired: false,
         };
         let state = ComputedState {
             due: "2026-07-01T10:00:00Z".to_string(),
@@ -1243,6 +1260,7 @@ mod tests {
                 rating: 2,
             }],
             file_path: Some("t_qsort_a.md".to_string()),
+            retired: false,
         };
         let state_a = ComputedState {
             due: "2026-06-01T10:00:00Z".to_string(),
@@ -1261,6 +1279,7 @@ mod tests {
                 rating: 3,
             }],
             file_path: Some("t_qsort_b.md".to_string()),
+            retired: false,
         };
         let state_b = ComputedState {
             due: "2026-06-05T10:00:00Z".to_string(),
@@ -1279,6 +1298,7 @@ mod tests {
                 rating: 2,
             }],
             file_path: Some("t_qsort_c.md".to_string()),
+            retired: false,
         };
         let state_c = ComputedState {
             due: "2026-06-10T10:00:00Z".to_string(),

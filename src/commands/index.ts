@@ -10,12 +10,14 @@ import { showReviewHistoryForCurrentFile } from "../ui/review-history-modal";
 import { insertReviewButton } from "./add-review-button";
 import { insertDefaultTable } from "./add-default-table";
 import { insertHeatmap } from "./add-heatmap";
+import { retireCurrentCard } from "./toggle-retire";
 
 /** Карта эмодзи для каждой команды (не зависят от локали) */
 const COMMAND_EMOJIS: Record<string, string> = {
     add_fsrs_fields: "＋",
     review_current_card: "✓",
     delete_last_review: "X",
+    retire_card: "⏹",
     show_fsrs_help: "?",
     show_review_history: "H",
     insert_review_button: "□",
@@ -42,6 +44,7 @@ export function updateCommandNames(app: App): void {
         { id: "add-fields", key: "commands.add_fsrs_fields" },
         { id: "review-current-card", key: "commands.review_current_card" },
         { id: "delete-last-review", key: "commands.delete_last_review" },
+        { id: "retire-card", key: "commands.retire_card" },
         { id: "show-help", key: "commands.show_fsrs_help" },
         { id: "show-review-history", key: "commands.show_review_history" },
         { id: "insert-review-button", key: "commands.insert_review_button" },
@@ -98,6 +101,20 @@ export function registerCommands(plugin: FsrsPlugin): void {
                 // Уведомление показывается внутри метода
                 // Дополнительных действий не требуется
             }
+        },
+    });
+
+    // Команда для вывода текущей карточки из повторений
+    plugin.addCommand({
+        id: "retire-card",
+        name: commandEmojiText("commands.retire_card"),
+        callback: async () => {
+            await retireCurrentCard(
+                plugin.app,
+                plugin.settings,
+                (path) => plugin.rescanFile(path),
+                () => plugin.notifyFsrsTableRenderers(),
+            );
         },
     });
 

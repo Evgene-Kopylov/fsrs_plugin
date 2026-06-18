@@ -166,6 +166,10 @@ fn compare_computed_fields(
         "retrievability" => compare_f64_fields(a.retrievability, b.retrievability),
         "elapsed" => compare_f64_fields(a.elapsed, b.elapsed),
         "scheduled" => compare_f64_fields(a.scheduled, b.scheduled),
+        "retired" => compare_f64_fields(
+            a.retired.map(|r| if r { 1.0 } else { 0.0 }),
+            b.retired.map(|r| if r { 1.0 } else { 0.0 }),
+        ),
         _ => {
             warn!("Неизвестное поле для сортировки: {}", field);
             std::cmp::Ordering::Equal

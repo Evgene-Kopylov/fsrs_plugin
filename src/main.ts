@@ -307,7 +307,11 @@ export default class FsrsPlugin extends Plugin {
                 // Нормализуем даты и рейтинги из кэша Obsidian
                 const reviews = this.parseReviewsFromCache(rawReviews);
 
-                const card: CardData = { reviews, filePath: file.path };
+                const card: CardData = {
+                    reviews,
+                    filePath: file.path,
+                    retired: cachedFrontmatter.fsrs_retired === true,
+                };
                 const state = computeCardState(card, this.settings);
                 batch.push({
                     filePath: file.path,
@@ -374,6 +378,14 @@ export default class FsrsPlugin extends Plugin {
     }
 
     /**
+     * Публичный метод для пересканирования файла.
+     * Используется командами retire/activate для обновления кэша после правки YAML.
+     */
+    async rescanFile(filePath: string): Promise<void> {
+        await this.scanSingleCard(filePath);
+    }
+
+    /**
      * Сканирует одну карточку по пути файла.
      * Читает файл, парсит frontmatter, вычисляет состояние и обновляет кэш.
      * Если карточка не содержит FSRS-данных — удаляет из кэша.
@@ -429,11 +441,14 @@ export default class FsrsPlugin extends Plugin {
 
     /**
      * Добавляет поля FSRS в текущий файл
-</｜DSML｜parameter>
      * Реализация для команды плагина
      */
     async addFsrsFieldsToCurrentFile(): Promise<void> {
-        await addFsrsFieldsToCurrentFileFunction(this.app, this.settings);
+        await addFsrsFieldsToCurrentFileFunction(
+            this.app,
+            this.settings,
+            (path) => this.rescanFile(path),
+        );
         this.notifyFsrsTableRenderers();
     }
 

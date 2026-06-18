@@ -36,6 +36,7 @@ export function parseCardDataFromFrontmatter(
                 date: string;
                 rating: number;
             }>;
+            retired?: boolean;
         }
 
         // Парсим JSON результат из WASM
@@ -87,6 +88,7 @@ export function parseCardDataFromFrontmatter(
         const card: CardData = {
             reviews,
             filePath,
+            retired: parsedCard.retired,
         };
 
         return {

@@ -21,6 +21,8 @@ pub struct CardWithComputedFields {
     pub difficulty: Option<f64>,
     /// Извлекаемость (число с плавающей точкой, 0-1)
     pub retrievability: Option<f64>,
+    /// Выведена из повторений (булево)
+    pub retired: Option<bool>,
     /// Дата следующего повторения в формате Obsidian (строка)
     pub due: Option<String>,
     /// Состояние карточки (строка)
@@ -60,6 +62,7 @@ pub fn compute_fields_from_state(
         stability: Some(state.stability),
         difficulty: Some(state.difficulty),
         retrievability: Some(state.retrievability),
+        retired: Some(card.retired),
         due: None,
         state: Some(state.state.clone()),
         elapsed,

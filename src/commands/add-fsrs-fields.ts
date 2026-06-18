@@ -4,6 +4,12 @@ import {
     getNewCardYaml,
     extractFrontmatterWithMatch,
 } from "../utils/fsrs-helper";
+import {
+    updateFrontmatterInContent,
+    isFrontmatterRetired,
+    RETIRED_YAML_KEY,
+} from "../utils/fsrs/fsrs-frontmatter";
+import { shouldIgnoreFileWithSettings } from "../utils/fsrs/fsrs-filter";
 import type { FsrsPluginSettings } from "../settings/types";
 
 /**
@@ -14,12 +20,24 @@ import type { FsrsPluginSettings } from "../settings/types";
 export async function addFsrsFieldsToCurrentFile(
     app: App,
     settings?: FsrsPluginSettings,
+    rescanFile?: (path: string) => Promise<void>,
 ): Promise<void> {
     try {
         // Получаем активный файл
         const activeFile = app.workspace.getActiveFile();
         if (!activeFile) {
             showNotice("notices.no_active_file");
+            return;
+        }
+
+        if (
+            settings &&
+            shouldIgnoreFileWithSettings(
+                activeFile.path,
+                settings,
+                app.vault.configDir,
+            )
+        ) {
             return;
         }
 
@@ -37,6 +55,35 @@ export async function addFsrsFieldsToCurrentFile(
                 showNotice("notices.frontmatter_empty");
                 return;
             }
+
+            // Реактивация: если карточка выведена — убираем флаг
+            if (isFrontmatterRetired(existingContent)) {
+                await app.vault.process(activeFile, (data) => {
+                    const match = extractFrontmatterWithMatch(data);
+                    if (!match) return data;
+                    const retiredRegex = new RegExp(
+                        `^${RETIRED_YAML_KEY}\\s*:`,
+                    );
+                    const hasReviews = /^reviews\s*:/m.test(match.content);
+                    let updatedContent = match.content
+                        .split("\n")
+                        .filter((line) => !retiredRegex.test(line))
+                        .join("\n");
+                    if (!hasReviews) {
+                        updatedContent =
+                            updatedContent +
+                            (updatedContent.endsWith("\n") || !updatedContent
+                                ? ""
+                                : "\n") +
+                            fsrsYaml;
+                    }
+                    return updateFrontmatterInContent(data, updatedContent);
+                });
+                showNotice("notices.card_activated");
+                if (rescanFile) await rescanFile(activeFile.path);
+                return;
+            }
+
             if (/^reviews\s*:/m.test(existingContent)) {
                 showNotice("notices.fsrs_fields_exists");
                 return;

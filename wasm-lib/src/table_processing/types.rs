@@ -75,12 +75,13 @@ pub static FIELD_ALIASES: [(&str, &str); 3] = [
 ];
 
 /// Доступные поля для отображения в таблице
-pub static AVAILABLE_FIELDS: [&str; 9] = [
+pub static AVAILABLE_FIELDS: [&str; 10] = [
     "file",
     "reps",
     "stability",
     "difficulty",
     "retrievability",
+    "retired",
     "due",
     "state",
     "elapsed",

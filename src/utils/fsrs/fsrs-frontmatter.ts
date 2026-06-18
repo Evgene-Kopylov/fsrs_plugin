@@ -85,3 +85,15 @@ export function removeFrontmatterFromContent(content: string): string {
     const frontmatterRegex = /^---\s*$([\s\S]*?)^---[ \t]*$/m;
     return content.replace(frontmatterRegex, "").trimStart();
 }
+
+/** Ключ YAML для вывода карточки из повторений */
+export const RETIRED_YAML_KEY = "fsrs_retired";
+
+/**
+ * Проверяет, выведена ли карточка из повторений.
+ * @param frontmatterContent Содержимое frontmatter (без разделителей ---)
+ */
+export function isFrontmatterRetired(frontmatterContent: string): boolean {
+    const regex = new RegExp(`^${RETIRED_YAML_KEY}\\s*:\\s*true\\s*$`, "m");
+    return regex.test(frontmatterContent);
+}

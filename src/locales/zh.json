@@ -48,12 +48,16 @@
         "file_not_found": "文件未找到：{path}",
         "card_not_due": "卡片已复习。下次计划复习：{date}",
         "early_review_blocked": "每天只计一次复习。{minutes} {noun} 后可进行下次复习。计划：{date}",
-        "review_button_exists": "该文件中已存在复习按钮块"
+        "review_button_exists": "该文件中已存在复习按钮块",
+        "card_retired": "卡片已退出复习",
+        "card_already_retired": "卡片已经退出复习",
+        "card_activated": "卡片已恢复复习"
     },
     "commands": {
         "add_fsrs_fields": "添加 FSRS 字段到 frontmatter",
         "review_current_card": "复习当前卡片",
         "delete_last_review": "删除最后一次复习",
+        "retire_card": "退出复习",
         "show_fsrs_help": "显示 fsrs-table 语法帮助",
         "show_review_history": "显示复习历史",
         "insert_review_button": "插入复习按钮块",
@@ -74,7 +78,8 @@
             "due": "下次复习",
             "state": "状态",
             "elapsed": "已过天数",
-            "scheduled": "计划天数"
+            "scheduled": "计划天数",
+            "retired": "已退出"
         },
         "states": {
             "New": "新卡片",

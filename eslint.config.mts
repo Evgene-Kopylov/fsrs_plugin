@@ -5,6 +5,7 @@ import { globalIgnores } from "eslint/config";
 import eslintComments from "@eslint-community/eslint-plugin-eslint-comments";
 
 export default tseslint.config(
+    ...tseslint.configs.recommendedTypeChecked,
     {
         languageOptions: {
             globals: {
@@ -66,6 +67,7 @@ export default tseslint.config(
             "@typescript-eslint/no-unsafe-argument": "error",
             "@typescript-eslint/no-unsafe-call": "error",
             "@typescript-eslint/no-unsafe-member-access": "error",
+            "@typescript-eslint/no-unsafe-return": "error",
             "@typescript-eslint/require-await": "error",
 
             // Мёртвый код

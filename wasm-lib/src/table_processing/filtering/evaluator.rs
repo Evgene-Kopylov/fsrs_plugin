@@ -224,6 +224,10 @@ fn get_field_value(field: &str, card: &CardWithComputedFields) -> Result<f64, Ev
         "scheduled" => card
             .scheduled
             .ok_or_else(|| EvaluationError::MissingField("scheduled".to_string())),
+        "retired" => card
+            .retired
+            .map(|r| if r { 1.0 } else { 0.0 })
+            .ok_or_else(|| EvaluationError::MissingField("retired".to_string())),
         _ => Err(EvaluationError::UnknownField(field.to_string())),
     }
 }
@@ -262,6 +266,7 @@ mod tests {
             stability: Some(0.7),
             difficulty: Some(0.3),
             retrievability: Some(0.4),
+            retired: None,
             due: Some("2024-01-01".to_string()),
             state: Some("Review".to_string()),
             elapsed: Some(10.5),
@@ -544,5 +549,27 @@ mod tests {
         let expr =
             Expression::comparison("file", ComparisonOp::Regex, Value::String("[".to_string()));
         assert!(evaluate_condition(&expr, &card).is_err());
+    }
+
+    #[test]
+    fn test_retired_equals_zero_filters_active() {
+        // create_test_card имеет retired: None → MissingField → ошибка
+        // Используем карточку с явным retired: Some(false)
+        let active = CardWithComputedFields {
+            retired: Some(false),
+            ..create_test_card()
+        };
+        let expr = Expression::comparison("retired", ComparisonOp::Equal, Value::Number(0.0));
+        assert!(evaluate_condition(&expr, &active).unwrap());
+    }
+
+    #[test]
+    fn test_retired_equals_one_matches_retired() {
+        let retired = CardWithComputedFields {
+            retired: Some(true),
+            ..create_test_card()
+        };
+        let expr = Expression::comparison("retired", ComparisonOp::Equal, Value::Number(1.0));
+        assert!(evaluate_condition(&expr, &retired).unwrap());
     }
 }
