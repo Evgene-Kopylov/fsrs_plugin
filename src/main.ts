@@ -27,6 +27,7 @@ import {
     parseCardDataFromFrontmatter,
     computeCardState,
 } from "./utils/fsrs";
+import { trackActiveLeaf } from "./utils/fsrs-table-generator";
 import type { FSRSRating, ReviewSession, CardData } from "./interfaces/fsrs";
 import { i18n } from "./utils/i18n";
 import { showNotice } from "./utils/notice";
@@ -197,6 +198,13 @@ export default class FsrsPlugin extends Plugin {
                 ) {
                     this.scheduleCardScan(file.path);
                 }
+            }),
+        );
+
+        // Трекинг последних лифов для открытия из таблицы
+        this.registerEvent(
+            this.app.workspace.on("active-leaf-change", (leaf) => {
+                trackActiveLeaf(leaf);
             }),
         );
 
