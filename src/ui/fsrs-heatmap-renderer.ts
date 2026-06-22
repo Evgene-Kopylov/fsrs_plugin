@@ -13,10 +13,6 @@ import type { HeatmapData, HeatmapReviews } from "../utils/fsrs/fsrs-cache";
 import { i18n } from "../utils/i18n";
 import { verboseLog } from "../utils/logger";
 
-// Глобальные переменные Obsidian для popout window совместимости
-declare const activeWindow: Window & { setTimeout: Window["setTimeout"] };
-declare const activeDocument: Document;
-
 // ---------------------------------------------------------------------------
 // Константы отрисовки (только вёрстка)
 // ---------------------------------------------------------------------------
@@ -252,14 +248,15 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
         this.popupEl = popup;
 
         // Клик вне попапа — закрыть
+        const doc = this.container.ownerDocument;
         const close = (e: MouseEvent) => {
             if (!popup.contains(e.target as Node) && e.target !== anchor) {
                 this.closePopup();
-                activeDocument.removeEventListener("click", close);
+                doc.removeEventListener("click", close);
             }
         };
-        activeWindow.setTimeout(
-            () => activeDocument.addEventListener("click", close),
+        doc.defaultView!.setTimeout(
+            () => doc.addEventListener("click", close),
             0,
         );
     }
@@ -303,8 +300,8 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
                     const file = this.plugin.app.vault.getFileByPath(r.path);
                     if (file) {
                         void this.plugin.app.workspace
-                            .getLeaf(false)
-                            .openFile(file);
+                            .getMostRecentLeaf()
+                            ?.openFile(file);
                     }
                 });
             } else {
@@ -325,7 +322,7 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
             });
         }
 
-        activeDocument.body.appendChild(popup);
+        this.container.ownerDocument.body.appendChild(popup);
 
         const ar = anchor.getBoundingClientRect();
         const pr = popup.getBoundingClientRect();
@@ -334,10 +331,11 @@ export class FsrsHeatmapRenderer extends MarkdownRenderChild {
         // Если справа не влезает — слева.
         // Единый способ, без смены направлений.
         const gap = 8;
-        const fitsRight = ar.right + gap + pr.width <= window.innerWidth - 4;
+        const win = this.container.ownerDocument.defaultView!;
+        const fitsRight = ar.right + gap + pr.width <= win.innerWidth - 4;
 
         const left = fitsRight ? ar.right + gap : ar.left - gap - pr.width;
-        const top = Math.min(ar.top, window.innerHeight - pr.height - 4);
+        const top = Math.min(ar.top, win.innerHeight - pr.height - 4);
 
         popup.setCssProps({ top: `${Math.max(4, top)}px`, left: `${left}px` });
         return popup;
