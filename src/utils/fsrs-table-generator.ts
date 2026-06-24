@@ -230,6 +230,7 @@ export function generateTableDOM(
                     e.stopImmediatePropagation();
                     const file = app.vault.getAbstractFileByPath(card.filePath);
                     if (file instanceof TFile) {
+                        app.workspace.setActiveLeaf(leaf, { focus: true });
                         void leaf.openFile(file);
                     }
                 });
