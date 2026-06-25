@@ -31,3 +31,5 @@ data.json
 # Rust
 target/
 .last_rebuild_timestamp
+vault_logs
+.env

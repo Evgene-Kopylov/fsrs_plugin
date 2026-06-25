@@ -5,8 +5,19 @@
 
 set -e  # Прерывать выполнение при ошибках
 
+# Загружаем TEST_VAULT_PATH из .env если есть
+SCRIPT_DIR="$(dirname "$(readlink -f "$0")")"
+PROJECT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+if [ -f "$PROJECT_DIR/.env" ]; then
+    while IFS='=' read -r key value; do
+        case "$key" in
+            TEST_VAULT_PATH) TEST_VAULT_PATH="$value" ;;
+        esac
+    done < "$PROJECT_DIR/.env"
+fi
+
 # Настройки по умолчанию
-VAULT_PATH=""
+VAULT_PATH="${TEST_VAULT_PATH:-}"
 LOG_FILE=""
 DELAY=5
 VERBOSE=false
@@ -45,7 +56,7 @@ verbose_log() {
 }
 
 # Парсинг аргументов командной строки
-while [[ $# -gt 0 ]]; do
+while [ $# -gt 0 ]; do
     case $1 in
         -v|--vault-path)
             VAULT_PATH="$2"
@@ -157,8 +168,8 @@ echo ""
 log_message "🔍 Шаг 4: Проверка результатов сборки..."
 
 # Проверка существования основных файлов плагина
-PLUGIN_FILES=("main.js" "manifest.json" "styles.css")
-for file in "${PLUGIN_FILES[@]}"; do
+PLUGIN_FILES="main.js manifest.json styles.css"
+for file in $PLUGIN_FILES; do
     if [ -f "$PROJECT_ROOT/$file" ]; then
         size=$(ls -lh "$PROJECT_ROOT/$file" | awk '{print $5}')
         echo "✅ $file найден ($size)"
