@@ -3,7 +3,7 @@
  * Создает HTML разметку таблицы на основе отфильтрованных и отсортированных карточек
  */
 
-import type { App } from "obsidian";
+import { App, TFile, MarkdownView, type WorkspaceLeaf } from "obsidian";
 import type {
     FSRSSettings,
     CardData,
@@ -14,6 +14,82 @@ import type { TableParams } from "./fsrs-table-params";
 import { formatFieldValue } from "./fsrs-table-format";
 import { i18n } from "./i18n";
 import { DEFAULT_TABLE_DISPLAY_LIMIT } from "../constants";
+
+// ---------------------------------------------------------------------------
+// Открытие файла в соседний видимый markdown-лиф
+// ---------------------------------------------------------------------------
+
+/** Последние активные лифы: [самый свежий, предыдущий]. */
+const lastLeaves: WorkspaceLeaf[] = [];
+
+function isSidebarLeaf(leaf: WorkspaceLeaf): boolean {
+    if (!leaf.view) return true; // Уничтоженный лиф — исключаем
+    return leaf.view.containerEl.closest(".mod-root") === null;
+}
+
+function isLeafHidden(leaf: WorkspaceLeaf): boolean {
+    if (!leaf.view) return true;
+    return leaf.view.containerEl.offsetParent === null;
+}
+
+/** Вызывается из main.ts при active-leaf-change */
+export function trackActiveLeaf(leaf: WorkspaceLeaf | null): void {
+    if (!leaf) return;
+    const idx = lastLeaves.indexOf(leaf);
+    if (idx !== -1) lastLeaves.splice(idx, 1);
+    lastLeaves.unshift(leaf);
+    if (lastLeaves.length > 2) lastLeaves.pop();
+}
+
+function pruneLastLeaves(): void {
+    for (let i = lastLeaves.length - 1; i >= 0; i--) {
+        if (!lastLeaves[i]?.view) lastLeaves.splice(i, 1);
+    }
+}
+
+function isValidTarget(
+    leaf: WorkspaceLeaf,
+    currentLeaf: WorkspaceLeaf | undefined,
+): boolean {
+    return (
+        leaf !== currentLeaf &&
+        !isSidebarLeaf(leaf) &&
+        !isLeafHidden(leaf) &&
+        leaf.view?.getViewType() === "markdown"
+    );
+}
+
+function findTargetLeaf(
+    app: App,
+    currentLeaf: WorkspaceLeaf | undefined,
+): WorkspaceLeaf | undefined {
+    // 1. Предыдущий активный markdown-лиф (lastLeaves[1])
+    const prev = lastLeaves.length > 1 ? lastLeaves[1] : undefined;
+    if (prev && isValidTarget(prev, currentLeaf)) return prev;
+
+    // 2. Пустой лиф
+    const emptyLeaf = app.workspace
+        .getLeavesOfType("empty")
+        .find(
+            (l) => l !== currentLeaf && !isSidebarLeaf(l) && !isLeafHidden(l),
+        );
+    if (emptyLeaf) return emptyLeaf;
+
+    // 3. Любой markdown-лиф
+    const mdLeaf = app.workspace
+        .getLeavesOfType("markdown")
+        .find(
+            (l) => l !== currentLeaf && !isSidebarLeaf(l) && !isLeafHidden(l),
+        );
+    if (mdLeaf) return mdLeaf;
+
+    // 4. Любой видимый не-сайдбарный лиф
+    const all: WorkspaceLeaf[] = [];
+    app.workspace.iterateAllLeaves((l) => all.push(l));
+    return all.find(
+        (l) => l !== currentLeaf && !isSidebarLeaf(l) && !isLeafHidden(l),
+    );
+}
 
 // ---------------------------------------------------------------------------
 // Внутренний тип для карточки с состоянием
@@ -134,9 +210,30 @@ export function generateTableDOM(
             if (column.field === "file") {
                 const link = createEl("a");
                 link.href = card.filePath;
+                link.dataset.href = card.filePath;
                 link.dataset.filePath = card.filePath;
                 link.className = "internal-link";
                 link.textContent = value;
+                link.addEventListener("click", (e) => {
+                    // Ctrl+Click / Cmd+Click — стандартное поведение Obsidian
+                    if (e.ctrlKey || e.metaKey) return;
+
+                    pruneLastLeaves();
+
+                    const currentLeaf =
+                        app.workspace.getActiveViewOfType(MarkdownView)?.leaf;
+                    const targetLeaf = findTargetLeaf(app, currentLeaf);
+                    const leaf = targetLeaf ?? currentLeaf;
+                    if (!leaf) return;
+
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
+                    const file = app.vault.getAbstractFileByPath(card.filePath);
+                    if (file instanceof TFile) {
+                        app.workspace.setActiveLeaf(leaf, { focus: true });
+                        void leaf.openFile(file);
+                    }
+                });
                 td.appendChild(link);
             } else {
                 td.textContent = value;
