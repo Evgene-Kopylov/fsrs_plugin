@@ -42,5 +42,12 @@ content = content.replace(
     "export { initSync };",
 );
 
+// Убираем @ts-self-types — директива создаёт неоднозначность
+// для CI-валидаторов, а .d.ts и так резолвится стандартным путём
+content = content.replace(
+    /\/\* @ts-self-types=".\/wasm_lib\.d\.ts" \*\/\n?/,
+    "",
+);
+
 fs.writeFileSync(wasmLibPath, content);
 console.log("Removed __wbg_load and __wbg_init from wasm_lib.js");

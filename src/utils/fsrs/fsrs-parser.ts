@@ -5,7 +5,7 @@ import type {
     ReviewSession,
     ParseResult,
 } from "../../interfaces/fsrs";
-import { extract_fsrs_from_frontmatter_wrapped } from "../../../wasm-lib/pkg/wasm_lib.js";
+import { extract_fsrs_from_frontmatter_wrapped } from "../../../wasm-lib/pkg/wasm_lib";
 
 /**
  * Парсит frontmatter файла и извлекает карточку в новом формате
